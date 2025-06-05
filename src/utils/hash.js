@@ -19,7 +19,8 @@ const hashUtils = {
     const payload = {
       id: user.id,
       username: user.username,
-      role: user.role
+      role: user.role,
+      permissions: user.permissions // Incluir permisos en el token
     };
 
     return jwt.sign(payload, process.env.JWT_SECRET, {

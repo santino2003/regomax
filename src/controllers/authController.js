@@ -44,7 +44,7 @@ const authController = {
   // Controlador para registro
   async register(req, res) {
     try {
-      const { username, password, email, role } = req.body;
+      const { username, password, email, role, permissions } = req.body;
       
       // Validación básica
       if (!username || !password) {
@@ -54,8 +54,14 @@ const authController = {
         });
       }
 
-      // Llamar al servicio de autenticación
-      const result = await authService.register({ username, password, email, role });
+      // Llamar al servicio de autenticación incluyendo los permisos
+      const result = await authService.register({ 
+        username, 
+        password, 
+        email, 
+        role,
+        permissions // Incluimos los permisos seleccionados
+      });
       
       // Devolver respuesta exitosa
       return res.status(201).json({

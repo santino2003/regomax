@@ -19,8 +19,13 @@ class AuthService {
         throw new Error('Credenciales inválidas');
       }
 
-      // Generar token JWT
-      const token = hashUtils.generateToken(user);
+      // Generar token JWT incluyendo permisos
+      const token = hashUtils.generateToken({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        permissions: user.permissions
+      });
 
       // Devolver usuario (sin contraseña) y token
       return {
@@ -45,14 +50,20 @@ class AuthService {
       // Hashear la contraseña
       const hashedPassword = await hashUtils.hashPassword(userData.password);
 
-      // Crear usuario con contraseña hasheada
+      // Crear usuario con contraseña hasheada y permisos
       const newUser = await userRepository.create({
         ...userData,
-        password: hashedPassword
+        password: hashedPassword,
+        permissions: userData.permissions || {} // Asegurarnos de incluir los permisos
       });
 
-      // Generar token JWT
-      const token = hashUtils.generateToken(newUser);
+      // Generar token JWT incluyendo permisos
+      const token = hashUtils.generateToken({
+        id: newUser.id,
+        username: newUser.username,
+        role: newUser.role,
+        permissions: newUser.permissions
+      });
 
       // Devolver usuario (sin contraseña) y token
       return {

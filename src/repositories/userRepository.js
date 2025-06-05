@@ -44,10 +44,13 @@ class UserRepository {
   // Crear un nuevo usuario
   async create(userData) {
     try {
+      // Convertir permisos a formato JSON si existen
+      const permissionsJSON = userData.permissions ? JSON.stringify(userData.permissions) : '{}';
+      
       const result = await db.query(
-        `INSERT INTO users (username, password, email, role) 
-         VALUES (?, ?, ?, ?) RETURNING *`,
-        [userData.username, userData.password, userData.email, userData.role]
+        `INSERT INTO users (username, password, email, role, permissions) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [userData.username, userData.password, userData.email, userData.role, permissionsJSON]
       );
 
       // Para MariaDB, necesitamos verificar el formato de la respuesta
@@ -62,6 +65,23 @@ class UserRepository {
       }
     } catch (error) {
       console.error('Error al crear usuario:', error);
+      throw error;
+    }
+  }
+  
+  // Actualizar permisos de usuario
+  async updatePermissions(userId, permissions) {
+    try {
+      const permissionsJSON = JSON.stringify(permissions);
+      
+      await db.query(
+        `UPDATE users SET permissions = ? WHERE id = ?`,
+        [permissionsJSON, userId]
+      );
+      
+      return await this.findById(userId);
+    } catch (error) {
+      console.error('Error al actualizar permisos:', error);
       throw error;
     }
   }

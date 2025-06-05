@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Regomax</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error-message {
+            color: red;
+            margin-top: 15px;
+        }
+        .success-message {
+            color: green;
+            margin-top: 15px;
+        }
+        .permissions-container {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .permissions-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .permission-item {
+            margin-bottom: 10px;
+        }
+        .permission-item label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+        }
+        .permission-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registro de Usuario</h2>
+        
+        <div class="form-group">
+            <label for="username">Nombre de Usuario:</label>
+            <input type="text" id="username" placeholder="Ingrese nombre de usuario">
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" placeholder="Ingrese email">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" placeholder="Ingrese contraseña">
+        </div>
+        
+        <div class="form-group">
+            <label for="role">Rol:</label>
+            <select id="role">
+                <option value="user">Usuario</option>
+                <option value="admin">Administrador</option>
+            </select>
+        </div>
+        
+        <div class="permissions-container">
+            <div class="permissions-title">Permisos de acceso:</div>
+            
+            <div class="permission-item">
+                <label>
+                    <input type="checkbox" id="perm_ver_perfil"> 
+                    Ver perfil
+                </label>
+            </div>
+            
+            <div class="permission-item">
+                <label>
+                    <input type="checkbox" id="perm_ver_usuarios"> 
+                    Ver usuarios
+                </label>
+            </div>
+            
+            <div class="permission-item">
+                <label>
+                    <input type="checkbox" id="perm_administrar_usuarios"> 
+                    Administrar usuarios
+                </label>
+            </div>
+            
+            <div class="permission-item">
+                <label>
+                    <input type="checkbox" id="perm_ver_reportes"> 
+                    Ver reportes
+                </label>
+            </div>
+            
+            <div class="permission-item">
+                <label>
+                    <input type="checkbox" id="perm_administrar_reportes"> 
+                    Administrar reportes
+                </label>
+            </div>
+            
+            <div class="permission-item">
+                <label>
+                    <input type="checkbox" id="perm_configuracion_sistema"> 
+                    Configuración del sistema
+                </label>
+            </div>
+        </div>
+        
+        <button id="registerButton">Registrar Usuario</button>
+        
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+        
+        <a href="/login" class="back-link">Volver al login</a>
+    </div>
+
+    <script>
+        // Función para mostrar mensajes de error
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Función para mostrar mensajes de éxito
+        function showSuccess(message) {
+            const successElement = document.getElementById('successMessage');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Función para recoger los permisos seleccionados
+        function getSelectedPermissions() {
+            const permissions = {};
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                // Remover el prefijo "perm_" del ID para obtener el nombre real del permiso
+                const permName = checkbox.id.replace('perm_', '');
+                permissions[permName] = checkbox.checked;
+            });
+            
+            return permissions;
+        }
+
+        // Manejar el registro
+        document.getElementById('registerButton').addEventListener('click', async () => {
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const role = document.getElementById('role').value;
+            const permissions = getSelectedPermissions();
+            
+            // Validación simple
+            if (!username || !email || !password) {
+                showError('Por favor complete todos los campos obligatorios');
+                return;
+            }
+
+            try {
+                // Realizar la solicitud de registro
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username,
+                        email,
+                        password,
+                        role,
+                        permissions
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Error al registrar usuario');
+                }
+
+                // Mostrar mensaje de éxito
+                showSuccess('Usuario registrado exitosamente');
+                
+                // Limpiar el formulario
+                document.getElementById('username').value = '';
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('role').value = 'user';
+                
+                // Desmarcar todos los checkboxes
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+    </script>
+</body>
+</html>

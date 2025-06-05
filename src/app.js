@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 // Importar rutas
@@ -13,14 +14,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas
+// Servir archivos estáticos desde la carpeta public
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Rutas API
 app.use('/api/auth', authRoutes);
+
+// Ruta para la página de login
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/login.html'));
+});
+
+// Ruta para la página de registro
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/register.html'));
+});
 
 // Ruta base
 app.get('/', (req, res) => {
-  res.json({
-    message: 'API de Regomax funcionando correctamente'
-  });
+  // Redireccionar a la página de login
+  res.redirect('/login');
 });
 
 // Manejo de errores global
