@@ -4,75 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Regomax</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 300px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .error-message {
-            color: red;
-            margin-top: 10px;
-        }
-        .success-message {
-            color: green;
-            margin-top: 10px;
-        }
-        .user-info {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 4px;
-            display: none;
-        }
-    </style>
+    <link rel="stylesheet" href="/assets/css/login.css">
 </head>
 <body>
     <div class="container">
-        <h2>Login - Regomax</h2>
+        <div class="header-login">
+            <img src="/assets/img/regomax.png" alt="Regomax Logo" class="logo-login">
+            <span class="header-title-login">Regomax S.A.</span>
+        </div>
         <div class="form-group">
             <label for="username">Usuario:</label>
             <input type="text" id="username" placeholder="Ingrese su usuario">
@@ -84,137 +23,7 @@
         <button id="loginButton">Iniciar Sesión</button>
         <div id="errorMessage" class="error-message"></div>
         <div id="successMessage" class="success-message"></div>
-        
-        <div id="userInfo" class="user-info">
-            <h3>Información del Usuario</h3>
-            <pre id="userData"></pre>
-            <button id="checkMeButton">Verificar /me</button>
-            <pre id="meData"></pre>
-            <button id="logoutButton" style="margin-top: 10px; background-color: #f44336;">Cerrar Sesión</button>
-        </div>
     </div>
-
-    <script>
-        // Función para mostrar mensajes de error
-        function showError(message) {
-            const errorElement = document.getElementById('errorMessage');
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
-            document.getElementById('successMessage').style.display = 'none';
-        }
-
-        // Función para mostrar mensajes de éxito
-        function showSuccess(message) {
-            const successElement = document.getElementById('successMessage');
-            successElement.textContent = message;
-            successElement.style.display = 'block';
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
-        // Función para cerrar sesión
-        function logout() {
-            localStorage.removeItem('token');
-            document.getElementById('userInfo').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            showSuccess('Sesión cerrada correctamente');
-        }
-
-        // Manejar el inicio de sesión
-        document.getElementById('loginButton').addEventListener('click', async () => {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            // Validación simple
-            if (!username || !password) {
-                showError('Por favor ingrese usuario y contraseña');
-                return;
-            }
-
-            try {
-                // Realizar la solicitud de login
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.message || 'Error al iniciar sesión');
-                }
-
-                // Mostrar mensaje de éxito
-                showSuccess('Login exitoso');
-                
-                // Guardar el token en localStorage
-                localStorage.setItem('token', data.data.token);
-                
-                // Mostrar información del usuario
-                document.getElementById('userInfo').style.display = 'block';
-                document.getElementById('userData').textContent = 
-                    JSON.stringify(data.data.user, null, 2);
-            } catch (error) {
-                showError(error.message);
-            }
-        });
-
-        // Verificar la ruta /me
-        document.getElementById('checkMeButton').addEventListener('click', async () => {
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                showError('No hay token disponible. Por favor inicie sesión primero.');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/auth/me', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.message || 'Error al verificar usuario');
-                }
-
-                // Mostrar datos de /me
-                document.getElementById('meData').textContent = 
-                    JSON.stringify(data, null, 2);
-            } catch (error) {
-                document.getElementById('meData').textContent = 
-                    `Error: ${error.message}`;
-            }
-        });
-
-        // Botón para cerrar sesión manualmente
-        document.getElementById('logoutButton').addEventListener('click', () => {
-            logout();
-        });
-
-        // Verificar si ya hay un token al cargar la página
-        window.addEventListener('load', () => {
-            const token = localStorage.getItem('token');
-            if (token) {
-                document.getElementById('userInfo').style.display = 'block';
-                document.getElementById('successMessage').textContent = 'Ya has iniciado sesión';
-                document.getElementById('successMessage').style.display = 'block';
-            }
-        });
-
-        // Cerrar sesión cuando el usuario cierra la página o navega a otra URL
-        window.addEventListener('beforeunload', () => {
-            // Eliminar token cuando la página se cierra
-            localStorage.removeItem('token');
-        });
-    </script>
+    <script src="/assets/js/login.js"></script>
 </body>
 </html>

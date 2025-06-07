@@ -1,48 +1,36 @@
 const hashUtils = require('../utils/hash');
 
+/**
+ * Middleware para autenticación y verificación de tokens JWT
+ */
 const authMiddleware = {
   // Middleware para verificar token JWT
   verifyToken(req, res, next) {
     try {
-      // Obtener token del encabezado
-      const authHeader = req.headers.authorization;
-      
-      if (!authHeader) {
-        return res.status(401).json({
-          success: false,
-          message: 'No se proporcionó token de autenticación'
-        });
-      }
-
-      // Formato: Bearer TOKEN
-      const token = authHeader.split(' ')[1];
-      
+      const token = req.cookies && req.cookies.token;
       if (!token) {
-        return res.status(401).json({
-          success: false,
-          message: 'Formato de token inválido'
-        });
+        if (req.originalUrl.startsWith('/api/')) {
+          return res.status(401).json({ success: false, message: 'No autorizado' });
+        } else {
+          return res.redirect('/login');
+        }
       }
-
-      // Verificar token
       const decoded = hashUtils.verifyToken(token);
-      
-      if (!decoded) {
-        return res.status(401).json({
-          success: false,
-          message: 'Token inválido o expirado'
-        });
+      if (!decoded || !decoded.username) {
+        if (req.originalUrl.startsWith('/api/')) {
+          return res.status(401).json({ success: false, message: 'Token inválido' });
+        } else {
+          return res.redirect('/login');
+        }
       }
-
-      // Agregar datos del usuario al request
       req.user = decoded;
       next();
     } catch (error) {
-      return res.status(401).json({
-        success: false,
-        message: 'Error de autenticación',
-        error: error.message
-      });
+      if (req.originalUrl.startsWith('/api/')) {
+        return res.status(401).json({ success: false, message: 'Token inválido' });
+      } else {
+        return res.redirect('/login');
+      }
     }
   }
 };

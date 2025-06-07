@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Regomax</title>
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-left">
+            <img src="/assets/img/regomax.png" alt="Regomax Logo" class="logo-home">
+            <span class="header-title-home">Regomax S.A.</span>
+        </div>
+        <nav class="header-nav">
+            <span>BIENVENIDO/A, <b id="username-placeholder"></b>.</span>
+            <a href="#">VER SITIO</a> /
+            <a href="#">CAMBIAR CONTRASEÑA</a> /
+            <a href="#" id="logout-link">CERRAR SESIÓN</a>
+        </nav>
+    </header>
+    <main class="main-content">
+        <section class="admin-menu">
+            <h2>Administración</h2>
+            <ul class="menu-tree">
+                <li>Producción
+                    <ul>
+                        <li>Órdenes de Trabajo</li>
+                        <li>Registro de producción mensual
+                            <ul>
+                                <li>Plan</li>
+                                <li>Carga diaria</li>
+                                <li>Reportes</li>
+                            </ul>
+                        </li>
+                        <li>Registro de fallas paradas</li>
+                        <li>Productos</li>
+                    </ul>
+                </li>
+                <li>Compras
+                    <ul>
+                        <li>Órdenes de Compra</li>
+                        <li>Gestión de Proveedores</li>
+                    </ul>
+                </li>
+                <li>Ventas y Logística
+                    <ul>
+                        <li>Cargar Órdenes de Venta</li>
+                        <li>Logística</li>
+                    </ul>
+                </li>
+                <li>Almacenes
+                    <ul>
+                        <li>Bienes</li>
+                        <li>Movimientos</li>
+                        <li>Por almacén</li>
+                        <li>Unidades de medida</li>
+                        <li>Categorías</li>
+                        <li>Familias</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+        <aside class="recent-actions">
+            <h3>Acciones recientes</h3>
+            <div class="actions-box">
+                <div><b>Mis acciones</b></div>
+                <div>Ninguna disponible</div>
+            </div>
+        </aside>
+    </main>
+    <script src="/assets/js/home.js"></script>
+</body>
+</html>

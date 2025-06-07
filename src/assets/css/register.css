@@ -1,0 +1,134 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+.header-login {
+    background-color: #4CAF50;
+    padding: 12px 20px;
+    border-radius: 5px 5px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.logo-login {
+    height: 40px;
+    width: auto;
+    display: block;
+    margin: 0;
+}
+.header-title-login {
+    color: #fff;
+    font-size: 1.3em;
+    font-weight: bold;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 32px 30px 24px 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 16px rgba(0,0,0,0.10);
+    width: 340px;
+    max-width: 100vw;
+    margin-top: 40px;
+}
+h2 {
+    text-align: center;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 22px;
+    font-size: 1.35em;
+    font-weight: 600;
+}
+.form-group {
+    margin-bottom: 18px;
+}
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 9px;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #ffffcc;
+    font-size: 1em;
+}
+button {
+    width: 100%;
+    padding: 11px;
+    background-color: #4CAF50 !important;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.08em;
+    margin-top: 10px;
+    font-weight: 600;
+}
+button:hover {
+    background-color: #388e3c !important;
+}
+.error-message {
+    color: red;
+    margin-top: 10px;
+}
+.success-message {
+    color: green;
+    margin-top: 10px;
+}
+.permissions-container {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+.permissions-title {
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+}
+.permission-item {
+    margin-bottom: 10px;
+}
+.permission-item label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+}
+.permission-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+    text-decoration: none;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
+.user-info {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    display: none;
+}

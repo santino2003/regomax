@@ -17,11 +17,19 @@ const authController = {
       // Llamar al servicio de autenticación
       const result = await authService.login(username, password);
       
-      // Devolver respuesta exitosa
+      // Setear cookie HttpOnly con el token
+      res.cookie('token', result.token, {
+        httpOnly: true,
+        secure: false, // true si usas HTTPS
+        sameSite: 'strict',
+        maxAge: 8 * 60 * 60 * 1000 // 8 horas
+      });
+      
+      // Devolver respuesta exitosa (sin token en el body)
       return res.status(200).json({
         success: true,
         message: 'Login exitoso',
-        data: result
+        data: { user: result.user }
       });
     } catch (error) {
       // Manejar errores específicos
