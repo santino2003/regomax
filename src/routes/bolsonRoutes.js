@@ -7,5 +7,8 @@ const bolsonController = require('../controllers/bolsonController');
 // router.post('/nuevo', authMiddleware, bolsonController.nuevoBolson);
 
 router.post('/nuevo', bolsonController.nuevoBolson);
+router.get('/', bolsonController.listarBolsones);
+router.get('/:id', bolsonController.obtenerBolson);
+router.put('/:id', bolsonController.actualizarBolson);
 
 module.exports = router;

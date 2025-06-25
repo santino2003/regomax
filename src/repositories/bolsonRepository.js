@@ -52,5 +52,36 @@ class BolsonRepository {
             throw error;
         }
     }
+    async obtenerTodos() {
+        try {
+            const result = await db.query('SELECT * FROM bolsones');
+            return result;
+        } catch (error) {
+            console.error('Error al obtener todos los bolsones:', error);
+            throw error;
+        }
+    }
+    async obtenerPorId(id) {
+        try {
+            const result = await db.query('SELECT * FROM bolsones WHERE id = ?', [id]);
+            if (!result || result.length === 0) return null;
+            return result[0];
+        } catch (error) {
+            console.error('Error al obtener bolson por ID:', error);
+            throw error;
+        }
+    }
+    async actualizarBolson(id ,producto, peso, precinto) {
+        try {
+            const result = await db.query(
+                `UPDATE bolsones SET producto = ?, peso = ?, precinto = ? WHERE id = ?`,
+                [producto, peso, precinto, id]
+            );
+            return result.affectedRows > 0; // Devuelve true si se actualizó algún registro
+        } catch (error) {
+            console.error('Error al actualizar el bolson:', error);
+            throw error;
+        }
+    }
 }
 module.exports = new BolsonRepository();

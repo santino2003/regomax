@@ -44,6 +44,53 @@ class BolsonService {
             console.error('Error completo al crear el bolson:', error);
             throw new Error('Error al crear el bolson: ' + (error.sqlMessage || error.message));
         }
+
+    }
+    async obtenerTodos() {
+        try {
+            const bolsones = await bolsonRepository.obtenerTodos();
+            return bolsones;
+        } catch (error) {
+            console.error('Error al obtener todos los bolsones:', error);
+            throw new Error('Error al obtener todos los bolsones: ' + error.message);
+        }
+    }
+    async obtenerPorId(id) {
+        try {
+            const bolson = await bolsonRepository.obtenerPorId(id);
+            if (!bolson) {
+                throw new Error('Bolsón no encontrado');
+            }
+            return bolson;
+        } catch (error) {
+            console.error('Error al obtener el bolson por ID:', error);
+            throw new Error('Error al obtener el bolson: ' + error.message);
+        }
+    }
+    async actualizar(id, productoData) {
+        try {
+            const { producto, peso, precinto  } = productoData;
+
+            if (!producto || !peso || !precinto) {
+                throw new Error('Datos incompletos para actualizar el bolson');
+            }
+
+            const bolson = await this.obtenerPorId(id);
+            if (!bolson) {
+                throw new Error('Bolsón no encontrado');
+            }
+
+
+            await bolsonRepository.actualizarBolson(id, producto, peso, precinto);
+            
+            return {
+                success: true,
+                message: 'Bolsón actualizado exitosamente',
+            };
+        } catch (error) {
+            console.error('Error al actualizar el bolson:', error);
+            throw new Error('Error al actualizar el bolson: ' + error.message);
+        }
     }
 }
 
