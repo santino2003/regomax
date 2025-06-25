@@ -57,6 +57,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.message || 'Error al iniciar sesión');
             }
 
+            // Guardar datos del usuario en localStorage
+            localStorage.setItem('token', data.token || 'dummy-token'); // Guardar el token
+            
             // Mostrar mensaje de éxito
             showSuccess('Login exitoso');
             

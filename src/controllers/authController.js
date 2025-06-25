@@ -25,11 +25,12 @@ const authController = {
         maxAge: 8 * 60 * 60 * 1000 // 8 horas
       });
       
-      // Devolver respuesta exitosa (sin token en el body)
+      // Devolver respuesta exitosa (ahora incluyendo el token)
       return res.status(200).json({
         success: true,
         message: 'Login exitoso',
-        data: { user: result.user }
+        data: { user: result.user },
+        token: result.token // Incluir token en la respuesta
       });
     } catch (error) {
       // Manejar errores específicos
