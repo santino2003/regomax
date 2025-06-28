@@ -7,6 +7,7 @@ require('dotenv').config();
 // Importar rutas y middleware
 const authRoutes = require('./routes/authRoutes');
 const bolsonRoutes = require('./routes/bolsonRoutes');
+const ordenDeVentaRoutes = require('./routes/ordenDeVentaRoutes');
 const authMiddleware = require('./middleware/auth');
 
 // Crear aplicación Express
@@ -31,6 +32,8 @@ app.use('/assets', express.static(path.join(__dirname, 'assets')));
 // Rutas API
 app.use('/api/auth', authRoutes);
 app.use('/api/bolsones', bolsonRoutes);
+app.use('/api/ordenes', ordenDeVentaRoutes);
+
 
 // Ruta para la página de login
 app.get('/login', (req, res) => {
