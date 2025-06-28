@@ -83,5 +83,14 @@ class BolsonRepository {
             throw error;
         }
     }
+    async eliminarBolson(id) {
+        try {
+            const result = await db.query('DELETE FROM bolsones WHERE id = ?', [id]);
+            return result.affectedRows > 0; // Devuelve true si se eliminó algún registro
+        } catch (error) {
+            console.error('Error al eliminar el bolson:', error);
+            throw error;
+        }
+    }
 }
 module.exports = new BolsonRepository();

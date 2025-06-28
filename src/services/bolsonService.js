@@ -1,6 +1,7 @@
 const bolsonRepository = require('../repositories/bolsonRepository');
 const { format } = require('date-fns');
 const barcodeGenerator = require('../utils/barcodeGenerator');
+const generarBarcodeBase64 = require('../utils/imageBarcode');
 // const imagenBarcodeGenerator = require('../utils/imagenBarcodeGenerator');
 
 class BolsonService {
@@ -17,7 +18,7 @@ class BolsonService {
             let numero = (await bolsonRepository.getUltimoNumero()) + 1;
             const hoy = format(new Date(), 'yyyy-MM-dd');
             const fechaComparable = ultimaFecha ? format(new Date(ultimaFecha), 'yyyy-MM-dd') : null;
-            console.log('Fecha última:', ultimaFecha, 'Fecha hoy:', hoy, 'Fecha comparable:', fechaComparable);i
+            console.log('Fecha última:', ultimaFecha, 'Fecha hoy:', hoy, 'Fecha comparable:', fechaComparable);
             if (!ultimaFecha || fechaComparable !== hoy) {
                 await bolsonRepository.setUltimaFecha(hoy);
                 await bolsonRepository.setUltimoNumero(1);
@@ -31,6 +32,7 @@ class BolsonService {
             const hora = format(new Date(), 'HH:mm');
 
             const codigo = barcodeGenerator.generateNumericCode(numero);
+            const barcodeBase64 = await generarBarcodeBase64(codigo);
             const seCreoBolson = await bolsonRepository.crearBolson(
                 codigo, producto, peso, precinto, hoy, hora, responsable
             );
@@ -38,6 +40,7 @@ class BolsonService {
             return {
                 success: true,
                 codigo: codigo,
+                barcodeBase64: barcodeBase64,
             };
             
         } catch (error) {

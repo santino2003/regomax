@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolsones - Regomax</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-key me-1"></i> Cambiar contraseña</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/auth/logout" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-box-seam me-2"></i>Gestión de Bolsones
+                        </h4>
+                        <a href="/bolsones/nuevo" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Nuevo Bolsón
+                        </a>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table id="bolsonesTable" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Producto</th>
+                                    <th>Peso (kg)</th>
+                                    <th>Precinto</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Responsable</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if(bolsones && bolsones.length > 0) { %>
+                                    <% bolsones.forEach(bolson => { %>
+                                        <tr>
+                                            <td><%= bolson.codigo %></td>
+                                            <td><%= bolson.producto %></td>
+                                            <td><%= bolson.peso %></td>
+                                            <td><%= bolson.precinto %></td>
+                                            <td><%= new Date(bolson.fecha).toLocaleDateString() %></td>
+                                            <td><%= bolson.hora %></td>
+                                            <td><%= bolson.responsable %></td>
+                                            <td>
+                                                <a href="/bolsones/<%= bolson.id %>" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-danger btn-delete" data-id="<%= bolson.id %>">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="8" class="text-center">No hay bolsones registrados</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col">
+                <a href="/home" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al panel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Inicializar DataTable
+            $('#bolsonesTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                },
+                responsive: true,
+                order: [[4, 'desc'], [5, 'desc']] // Ordenar por fecha y hora descendente
+            });
+
+            // Manejar eliminación de bolsones
+            $('.btn-delete').on('click', function() {
+    const id = $(this).data('id');
+    const row = $(this).closest('tr');
+    
+    if(confirm('¿Está seguro que desea eliminar este bolsón?')) {
+        // Deshabilitar el botón durante la operación
+        $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split"></i>');
+        
+        fetch(`/api/bolsones/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Eliminar la fila de la tabla
+                row.fadeOut(300, function() {
+                    $(this).remove();
+                });
+                
+                // Mostrar mensaje de éxito
+                alert('Bolsón eliminado correctamente');
+            } else {
+                alert('Error: ' + data.message);
+                // Rehabilitar el botón
+                $(this).prop('disabled', false).html('<i class="bi bi-trash"></i>');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar el bolsón');
+            // Rehabilitar el botón
+            $(this).prop('disabled', false).html('<i class="bi bi-trash"></i>');
+        });
+    }   
+});
+        });
+    </script>
+</body>
+</html>

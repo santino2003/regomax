@@ -9,5 +9,6 @@ router.post('/nuevo', bolsonController.nuevoBolson);
 router.get('/', bolsonController.listarBolsones);
 router.get('/:id', bolsonController.obtenerBolson);
 router.put('/:id', bolsonController.actualizarBolson);
+router.delete('/:id', bolsonController.eliminarBolson);
 
 module.exports = router;

@@ -8,6 +8,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const bolsonRoutes = require('./routes/bolsonRoutes');
 const ordenDeVentaRoutes = require('./routes/ordenDeVentaRoutes');
+const viewRoutes = require('./routes/viewRoutes');
 const authMiddleware = require('./middleware/auth');
 
 // Crear aplicación Express
@@ -34,18 +35,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/bolsones', bolsonRoutes);
 app.use('/api/ordenes', ordenDeVentaRoutes);
 
+// Rutas de vistas
+app.use('/', viewRoutes);
 
-// Ruta para la página de login
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/login.html'));
-});
-
-// Proteger home y API verify con el middleware
-app.get('/home', authMiddleware.verifyToken, (req, res) => {
-  console.log('Username en cookie:', req.user.username);
-  res.render('home', { username: req.user.username });
-});
-
+// Ruta para API verify
 app.get('/api/auth/verify', authMiddleware.verifyToken, (req, res) => {
   res.json({
     success: true,
@@ -54,18 +47,6 @@ app.get('/api/auth/verify', authMiddleware.verifyToken, (req, res) => {
       username: req.user.username
     }
   });
-});
-
-// Endpoint de logout: borra la cookie y redirige
-app.get('/logout', (req, res) => {
-  res.clearCookie('token');
-  res.redirect('/login');
-});
-
-// Ruta base
-app.get('/', (req, res) => {
-  // Redireccionar a la página de login
-  res.redirect('/login');
 });
 
 // Manejo de errores global

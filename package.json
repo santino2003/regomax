@@ -13,6 +13,7 @@
   "description": "Sistema ABM para Regomax",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "bwip-js": "^4.6.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
