@@ -135,7 +135,7 @@ const bolsonController = {
                 });
             }
             
-            res.render('bolsones/editar', { 
+            res.render('bolsonesEditar', { 
                 username: req.user.username,
                 bolson: bolson
             });

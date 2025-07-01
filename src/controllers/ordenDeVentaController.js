@@ -64,7 +64,24 @@ const OVController = {
                 error: error.message
             });
         }
-    }
+    },
+    async vistaListarOrdenes(req, res) {
+        try {
+            const ordenes = await OVService.obtenerTodasLasOrdenes();
+            return res.render('listarOrdenes', {
+                title: 'Listado de Órdenes de Venta',
+                username: req.user.username,
+                ordenes: ordenes,
+            });
+        } catch (error) {
+            console.error('Error al listar órdenes de venta:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener órdenes de venta',
+                error: error.message
+            });
+        }
+    },
 }
 
 module.exports = OVController;
