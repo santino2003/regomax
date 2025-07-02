@@ -27,7 +27,7 @@ router.get('/bolsones/nuevo', authMiddleware.verifyToken, bolsonController.vista
 router.get('/bolsones/:id', authMiddleware.verifyToken, bolsonController.vistaEditarBolson);
 
 router.get('/ordenes', authMiddleware.verifyToken, OVController.vistaListarOrdenes);
-
+router.get('/ordenes/nueva', authMiddleware.verifyToken, OVController.vistaNuevaOrden);
 
 // Endpoint de logout
 router.get('/logout', (req, res) => {

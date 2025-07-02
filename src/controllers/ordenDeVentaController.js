@@ -5,7 +5,7 @@ const OVController = {
         try {
             const ordenData = req.body;
             // ordenData.responsable = req.user.username; // Descomenta esta línea si tienes autenticación y quieres usar el usuario autenticado
-            ordenData.responsable = 'admin'; // Cambia esto por el usuario real si tienes autenticación
+            ordenData.responsable = req.user.username; // Cambia esto por el usuario real si tienes autenticación
             const result = await OVService.crearOrdenDeVenta(ordenData);
             return res.status(201).json({
                 success: true,
@@ -82,6 +82,25 @@ const OVController = {
             });
         }
     },
+    async vistaNuevaOrden(req, res) {
+        try {
+            // No necesitamos consultar clientes si es un campo manual
+            return res.render('ordenesNueva', {
+                title: 'Nueva Orden de Venta',
+                username: req.user.username,
+                // Pasamos un array vacío para evitar el error, pero no se usará
+                clientes: [],
+                productos: []
+            });
+        } catch (error) {
+            console.error('Error al renderizar la vista de nueva orden:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al renderizar la vista de nueva orden',
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = OVController;
