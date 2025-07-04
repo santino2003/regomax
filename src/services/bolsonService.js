@@ -95,6 +95,26 @@ class BolsonService {
             throw new Error('Error al actualizar el bolson: ' + error.message);
         }
     }
+    async eliminar(id) {
+        try {
+            // Verificar si el bolsón existe
+            const bolson = await this.obtenerPorId(id);
+            if (!bolson) {
+                return null; // Bolsón no encontrado
+            }
+            
+            // Llamar al repositorio para eliminar el bolsón
+            const resultado = await bolsonRepository.eliminarBolson(id);
+            
+            return {
+                success: true,
+                message: 'Bolsón eliminado exitosamente',
+            };
+        } catch (error) {
+            console.error('Error al eliminar el bolson:', error);
+            throw new Error('Error al eliminar el bolson: ' + error.message);
+        }
+    }
 }
 
 module.exports = new BolsonService();

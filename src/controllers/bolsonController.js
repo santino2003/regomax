@@ -4,8 +4,7 @@ const bolsonController = {
     async nuevoBolson(req, res) {
         try {
             const bolsonData = req.body;
-            // bolsonData.responsable = req.user.username; // Descomenta esta línea si tienes autenticación y quieres usar el usuario autenticado
-            bolsonData.responsable = 'admin'; // Cambia esto por el usuario real si tienes autenticación
+            bolsonData.responsable = req.user.username; // Descomenta esta línea si tienes autenticación y quieres usar el usuario autenticado
             const result = await bolsonService.crearBolson(bolsonData);
             return res.status(201).json({
                 success: true,

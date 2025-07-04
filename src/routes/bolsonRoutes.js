@@ -5,10 +5,10 @@ const bolsonController = require('../controllers/bolsonController');
 // Si usas autenticación, agrega el middleware aquí
 const authMiddleware = require('../middleware/auth');
 
-router.post('/nuevo', bolsonController.nuevoBolson);
-router.get('/', bolsonController.listarBolsones);
-router.get('/:id', bolsonController.obtenerBolson);
-router.put('/:id', bolsonController.actualizarBolson);
-router.delete('/:id', bolsonController.eliminarBolson);
+router.post('/nuevo', authMiddleware.verifyToken, bolsonController.nuevoBolson);
+router.get('/', authMiddleware.verifyToken, bolsonController.listarBolsones);
+router.get('/:id', authMiddleware.verifyToken, bolsonController.obtenerBolson);
+router.put('/:id', authMiddleware.verifyToken, bolsonController.actualizarBolson);
+router.delete('/:id', authMiddleware.verifyToken, bolsonController.eliminarBolson);
 
 module.exports = router;
