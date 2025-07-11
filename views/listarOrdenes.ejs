@@ -65,7 +65,7 @@
                         <div class="col-md-6">
                             <form id="searchForm" action="/ordenes" method="GET" class="d-flex">
                                 <div class="input-group">
-                                    <input type="text" id="searchInput" name="search" class="form-control" placeholder="Buscar por código o cliente..." value="<%= typeof currentSearch !== 'undefined' ? currentSearch : '' %>" aria-label="Buscar">
+                                    <input type="text" id="searchInput" name="search" class="form-control" placeholder="Buscar por ID o cliente..." value="<%= typeof currentSearch !== 'undefined' ? currentSearch : '' %>" aria-label="Buscar">
                                     <button class="btn btn-outline-secondary" type="submit">
                                         <i class="bi bi-search"></i>
                                     </button>
@@ -92,7 +92,7 @@
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>Código</th>
+                                    <th>ID</th>
                                     <th>Cliente</th>
                                     <th>Fecha</th>
                                     <th>Estado</th>
@@ -104,7 +104,7 @@
                                 <% if(ordenes && ordenes.length > 0) { %>
                                     <% ordenes.forEach(orden => { %>
                                         <tr>
-                                            <td><%= orden.codigo_venta %></td>
+                                            <td>OV-<%= orden.id %></td>
                                             <td><%= orden.cliente %></td>
                                             <td><%= new Date(orden.fecha).toLocaleDateString() %></td>
                                             <td>

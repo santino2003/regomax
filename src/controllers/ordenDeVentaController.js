@@ -99,10 +99,24 @@ const OVController = {
             // Si hay un término de búsqueda, filtramos los resultados
             if (search) {
                 const searchLower = search.toLowerCase();
-                resultado.data = resultado.data.filter(orden => 
-                    (orden.codigo_venta && orden.codigo_venta.toLowerCase().includes(searchLower)) || 
-                    (orden.cliente && orden.cliente.toLowerCase().includes(searchLower))
-                );
+                resultado.data = resultado.data.filter(orden => {
+                    // Buscar por cliente
+                    const clienteMatch = orden.cliente && 
+                                         orden.cliente.toLowerCase().includes(searchLower);
+                    
+                    // Buscar por código de venta (si existe)
+                    const codigoVentaMatch = orden.codigo_venta && 
+                                             orden.codigo_venta.toLowerCase().includes(searchLower);
+                    
+                    // Buscar por ID en formato OV-X
+                    const idFormatoOV = `OV-${orden.id}`.toLowerCase();
+                    const idMatch = idFormatoOV.includes(searchLower);
+                    
+                    // Buscar por ID numérico
+                    const idNumericoMatch = orden.id.toString() === search;
+                    
+                    return clienteMatch || codigoVentaMatch || idMatch || idNumericoMatch;
+                });
                 
                 // Ajustar la paginación para reflejar los resultados de búsqueda
                 resultado.pagination.total = resultado.data.length;
@@ -142,6 +156,27 @@ const OVController = {
                 message: 'Error al renderizar la vista de nueva orden',
                 error: error.message
             });
+        }
+    },
+    async vistaVisualizarOrden(req, res) {
+        try {
+            const { id } = req.params;
+            const orden = await OVService.obtenerOrdenPorId(id);
+            
+            return res.render('visualizarOrden', {
+                title: `Orden de Venta #${orden.codigo_venta || orden.id}`,
+                username: req.user.username,
+                orden: orden
+            });
+        } catch (error) {
+            console.error('Error al visualizar orden de venta:', error);
+            return res.status(error.message.includes('no encontrada') ? 404 : 500)
+                .render('error', {
+                    message: error.message.includes('no encontrada') ? 
+                        'La orden solicitada no existe' : 
+                        'Error al cargar los detalles de la orden de venta',
+                    error: error
+                });
         }
     }
 }

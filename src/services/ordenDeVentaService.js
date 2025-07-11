@@ -14,7 +14,7 @@ class OrdenDeVentaService {
             } = ordenData;
             
             // Validaciones básicas
-            if (!fecha || !cliente || !codigoDeVenta || !Array.isArray(productosYCantidades) || productosYCantidades.length === 0) {
+            if (!fecha || !cliente ||  !Array.isArray(productosYCantidades) || productosYCantidades.length === 0) {
                 throw new Error('Datos incompletos para crear la orden de venta');
             }
             
@@ -35,8 +35,11 @@ class OrdenDeVentaService {
                 // CONFIRMAR TRANSACCIÓN
                 await OVRepository.confirmarTransaccion();
                 
-                // Obtener la orden completa con sus productos
-                return await OVRepository.obtenerPorId(ordenId);
+                // Retornar el ID para que el frontend pueda mostrar OV-X
+                return {
+                    success: true,
+                    codigo: ordenId
+                };
                 
             } catch (error) {
                 // REVERTIR TRANSACCIÓN si algo falla

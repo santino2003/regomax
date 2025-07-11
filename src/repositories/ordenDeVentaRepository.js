@@ -51,7 +51,7 @@ class OrdenDeVentaRepository {
             fecha: results[0].fecha,
             cliente: results[0].cliente,
             cliente_final: results[0].cliente_final,
-            codigo_venta: results[0].codigo_venta,
+            codigo_venta: results[0].codigo_venta || `OV-${results[0].id}`, // Usar código existente o generar OV-X
             observaciones: results[0].observaciones,
             responsable: results[0].responsable,
             estado: results[0].estado,
@@ -114,7 +114,7 @@ class OrdenDeVentaRepository {
                     fecha: row.fecha,
                     cliente: row.cliente,
                     cliente_final: row.cliente_final,
-                    codigo_venta: row.codigo_venta,
+                    codigo_venta: row.codigo_venta || `OV-${row.id}`, // Usar código existente o generar OV-X
                     observaciones: row.observaciones,
                     responsable: row.responsable,
                     estado: row.estado,

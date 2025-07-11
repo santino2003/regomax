@@ -30,6 +30,7 @@ router.get('/bolsones/:id', [authMiddleware.verifyToken, noCacheMiddleware], bol
 // Rutas de órdenes - añadiendo noCacheMiddleware
 router.get('/ordenes', [authMiddleware.verifyToken, noCacheMiddleware], OVController.vistaListarOrdenes);
 router.get('/ordenes/nueva', [authMiddleware.verifyToken, noCacheMiddleware], OVController.vistaNuevaOrden);
+router.get('/ordenes/:id', [authMiddleware.verifyToken, noCacheMiddleware], OVController.vistaVisualizarOrden);
 
 // Endpoint de logout
 router.get('/logout', (req, res) => {

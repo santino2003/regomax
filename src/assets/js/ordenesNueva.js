@@ -157,8 +157,8 @@ $(document).ready(function() {
         })
         .then(data => {
             if (data.success) {
-                // Código de éxito existente...
-                showAlert(`¡Orden creada exitosamente! Código: <strong>${data.data}</strong>`);
+                // Mostrar el código de venta en formato OV-X usando el ID
+                showAlert(`¡Orden creada exitosamente! Código: OV-${data.data}`);
                 
                 // Limpiar formulario después de 2 segundos
                 setTimeout(() => {
