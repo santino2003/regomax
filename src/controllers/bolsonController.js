@@ -24,10 +24,18 @@ const bolsonController = {
     },
     async listarBolsones(req, res) {
         try {
-            const bolsones = await bolsonService.obtenerTodos();
+            // Obtener parámetros de paginación y ordenación de la solicitud
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const sortBy = req.query.sortBy || 'id';
+            const sortOrder = req.query.sortOrder || 'DESC';
+            
+            const resultado = await bolsonService.obtenerTodos(page, limit, sortBy, sortOrder);
+            
             return res.status(200).json({
                 success: true,
-                data: bolsones
+                data: resultado.data,
+                pagination: resultado.pagination
             });
         } catch (error) {
             console.error('Error al listar bolsones:', error);
@@ -95,10 +103,17 @@ const bolsonController = {
     // Nuevo método para renderizar la vista de listar bolsones
     async vistaListarBolsones(req, res) {
         try {
-            const bolsones = await bolsonService.obtenerTodos();
+            // Parámetros de paginación para la vista
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            
+            // Por defecto ordenamos por id descendente (del último al primero)
+            const resultado = await bolsonService.obtenerTodos(page, limit, 'id', 'DESC');
+            
             res.render('listarBolsones', { 
                 username: req.user.username,
-                bolsones: bolsones
+                bolsones: resultado.data,
+                pagination: resultado.pagination
             });
         } catch (error) {
             console.error('Error al renderizar vista de bolsones:', error);

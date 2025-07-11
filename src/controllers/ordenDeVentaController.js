@@ -24,10 +24,18 @@ const OVController = {
 
     async listarOrdenes(req, res) {
         try {
-            const ordenes = await OVService.obtenerTodasLasOrdenes();
+            // Obtener parámetros de paginación y ordenación de la solicitud
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const sortBy = req.query.sortBy || 'id';
+            const sortOrder = req.query.sortOrder || 'DESC';
+            
+            const resultado = await OVService.obtenerTodasLasOrdenes(page, limit, sortBy, sortOrder);
+            
             return res.status(200).json({
                 success: true,
-                data: ordenes
+                data: resultado.data,
+                pagination: resultado.pagination
             });
         } catch (error) {
             console.error('Error al listar órdenes:', error);
@@ -67,18 +75,53 @@ const OVController = {
     },
     async vistaListarOrdenes(req, res) {
         try {
-            const ordenes = await OVService.obtenerTodasLasOrdenes();
+            // Parámetros de paginación para la vista
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const search = req.query.search || '';
+            const estado = req.query.estado || '';
+            
+            // Por defecto ordenamos por id descendente (del último al primero)
+            const resultado = await OVService.obtenerTodasLasOrdenes(page, limit, 'id', 'DESC');
+            
+            // Si hay un filtro de estado, filtramos los resultados
+            if (estado && estado !== 'todos') {
+                resultado.data = resultado.data.filter(orden => orden.estado === estado);
+                
+                // Ajustar la paginación para reflejar los resultados filtrados
+                resultado.pagination.total = resultado.data.length;
+                resultado.pagination.totalPages = Math.ceil(resultado.data.length / limit);
+                if (resultado.pagination.page > resultado.pagination.totalPages) {
+                    resultado.pagination.page = 1;
+                }
+            }
+            
+            // Si hay un término de búsqueda, filtramos los resultados
+            if (search) {
+                const searchLower = search.toLowerCase();
+                resultado.data = resultado.data.filter(orden => 
+                    (orden.codigo_venta && orden.codigo_venta.toLowerCase().includes(searchLower)) || 
+                    (orden.cliente && orden.cliente.toLowerCase().includes(searchLower))
+                );
+                
+                // Ajustar la paginación para reflejar los resultados de búsqueda
+                resultado.pagination.total = resultado.data.length;
+                resultado.pagination.totalPages = Math.ceil(resultado.data.length / limit);
+            }
+            
             return res.render('listarOrdenes', {
                 title: 'Listado de Órdenes de Venta',
                 username: req.user.username,
-                ordenes: ordenes,
+                ordenes: resultado.data,
+                pagination: resultado.pagination,
+                currentSearch: search,
+                currentEstado: estado
             });
         } catch (error) {
             console.error('Error al listar órdenes de venta:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Error al obtener órdenes de venta',
-                error: error.message
+            return res.status(500).render('error', {
+                message: 'Error al cargar la lista de órdenes de venta',
+                error: error
             });
         }
     },

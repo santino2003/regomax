@@ -11,9 +11,6 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
 </head>
@@ -66,28 +63,33 @@
                     <!-- Filtros de búsqueda -->
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <form id="searchForm" class="d-flex">
+                            <form id="searchForm" action="/ordenes" method="GET" class="d-flex">
                                 <div class="input-group">
-                                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar por código o cliente..." aria-label="Buscar">
+                                    <input type="text" id="searchInput" name="search" class="form-control" placeholder="Buscar por código o cliente..." value="<%= typeof currentSearch !== 'undefined' ? currentSearch : '' %>" aria-label="Buscar">
                                     <button class="btn btn-outline-secondary" type="submit">
                                         <i class="bi bi-search"></i>
                                     </button>
+                                    <input type="hidden" name="page" value="1">
+                                    <input type="hidden" name="limit" value="<%= pagination ? pagination.limit : 10 %>">
+                                    <% if (typeof currentEstado !== 'undefined' && currentEstado) { %>
+                                        <input type="hidden" name="estado" value="<%= currentEstado %>">
+                                    <% } %>
                                 </div>
                             </form>
                         </div>
                         <div class="col-md-6 text-md-end mt-3 mt-md-0">
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-outline-secondary filter-btn active" data-filter="todos">Todos</button>
-                                <button type="button" class="btn btn-outline-warning filter-btn" data-filter="abierta">Abiertas</button>
-                                <button type="button" class="btn btn-outline-info filter-btn" data-filter="en_logistica">En Logística</button>
-                                <button type="button" class="btn btn-outline-success filter-btn" data-filter="cerrada">Cerradas</button>
+                                <button type="button" class="btn btn-outline-secondary filter-btn <%= !currentEstado || currentEstado === 'todos' ? 'active' : '' %>" data-filter="todos">Todos</button>
+                                <button type="button" class="btn btn-outline-warning filter-btn <%= currentEstado === 'abierta' ? 'active' : '' %>" data-filter="abierta">Abiertas</button>
+                                <button type="button" class="btn btn-outline-info filter-btn <%= currentEstado === 'en_logistica' ? 'active' : '' %>" data-filter="en_logistica">En Logística</button>
+                                <button type="button" class="btn btn-outline-success filter-btn <%= currentEstado === 'cerrada' ? 'active' : '' %>" data-filter="cerrada">Cerradas</button>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Tabla de órdenes -->
                     <div class="table-responsive">
-                        <table id="ordenesTable" class="table table-striped table-hover">
+                        <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th>Código</th>
@@ -102,7 +104,7 @@
                                 <% if(ordenes && ordenes.length > 0) { %>
                                     <% ordenes.forEach(orden => { %>
                                         <tr>
-                                            <td><%= orden.codigo %></td>
+                                            <td><%= orden.codigo_venta %></td>
                                             <td><%= orden.cliente %></td>
                                             <td><%= new Date(orden.fecha).toLocaleDateString() %></td>
                                             <td>
@@ -110,7 +112,7 @@
                                                 <% if (orden.estado === "abierta") { badgeClass = "bg-warning text-dark"; } %>
                                                 <% if (orden.estado === "en_logistica") { badgeClass = "bg-info"; } %>
                                                 <% if (orden.estado === "cerrada") { badgeClass = "bg-success"; } %>
-                                                <span class="badge <%= badgeClass %>"><%= orden.estado.toUpperCase().replace('_', ' ') %></span>
+                                                <span class="badge <%= badgeClass %>"><%= orden.estado ? orden.estado.toUpperCase().replace('_', ' ') : 'PENDIENTE' %></span>
                                             </td>
                                             <td><%= orden.responsable %></td>
                                             <td>
@@ -135,6 +137,50 @@
                                 <% } %>
                             </tbody>
                         </table>
+                        
+                        <!-- Controles de paginación -->
+                        <% if (pagination && pagination.totalPages > 1) { %>
+                            <nav aria-label="Navegación de órdenes">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+                                        <a class="page-link" href="/ordenes?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %>" tabindex="-1">Anterior</a>
+                                    </li>
+                                    
+                                    <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+                                        <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                                            <a class="page-link" href="/ordenes?page=<%= i %>&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %>"><%= i %></a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
+                                        <a class="page-link" href="/ordenes?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %>">Siguiente</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        <% } %>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                Mostrando <%= ordenes.length %> de <%= pagination ? pagination.total : ordenes.length %> órdenes
+                            </div>
+                            <div>
+                                <form class="d-flex" action="/ordenes" method="GET">
+                                    <select class="form-select form-select-sm me-2" name="limit" onchange="this.form.submit()">
+                                        <option value="10" <%= pagination && pagination.limit === 10 ? 'selected' : '' %>>10 por página</option>
+                                        <option value="25" <%= pagination && pagination.limit === 25 ? 'selected' : '' %>>25 por página</option>
+                                        <option value="50" <%= pagination && pagination.limit === 50 ? 'selected' : '' %>>50 por página</option>
+                                        <option value="100" <%= pagination && pagination.limit === 100 ? 'selected' : '' %>>100 por página</option>
+                                    </select>
+                                    <input type="hidden" name="page" value="1">
+                                    <% if (typeof currentSearch !== 'undefined' && currentSearch) { %>
+                                        <input type="hidden" name="search" value="<%= currentSearch %>">
+                                    <% } %>
+                                    <% if (typeof currentEstado !== 'undefined' && currentEstado) { %>
+                                        <input type="hidden" name="estado" value="<%= currentEstado %>">
+                                    <% } %>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -154,10 +200,6 @@
     
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     
     <!-- Common JS (Para funcionalidades compartidas como logout) -->
     <script src="/assets/js/common.js"></script>

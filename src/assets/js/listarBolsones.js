@@ -1,13 +1,4 @@
 $(document).ready(function() {
-    // Inicializar DataTable
-    $('#bolsonesTable').DataTable({
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
-        },
-        responsive: true,
-        order: [[4, 'desc'], [5, 'desc']] // Ordenar por fecha y hora descendente
-    });
-
     // Manejar eliminación de bolsones
     $('.btn-delete').on('click', function() {
         const id = $(this).data('id');
@@ -30,6 +21,11 @@ $(document).ready(function() {
                     // Eliminar la fila de la tabla
                     row.fadeOut(300, function() {
                         $(this).remove();
+                        
+                        // Si era el último elemento de la página, recargar la página
+                        if ($('tbody tr').length === 0) {
+                            window.location.reload();
+                        }
                     });
                     
                     // Mostrar mensaje de éxito

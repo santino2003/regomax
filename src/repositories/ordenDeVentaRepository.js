@@ -72,16 +72,35 @@ class OrdenDeVentaRepository {
         return orden;
     }
     
-    // Obtener todas las órdenes con sus productos usando JOIN
-    async obtenerTodas() {
+    // Método actualizado para obtener todas las órdenes con paginación y ordenación
+    async obtenerTodas(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
+        const offset = (page - 1) * limit;
+        
+        // Consultar datos con paginación
         const results = await db.query(
             `SELECT ov.*, ovd.id as detalle_id, ovd.producto, ovd.cantidad 
              FROM ordenes_venta ov
              LEFT JOIN ordenes_venta_detalle ovd ON ov.id = ovd.orden_venta_id
-             ORDER BY ov.fecha DESC, ov.id DESC`
+             ORDER BY ov.${sortBy} ${sortOrder}
+             LIMIT ? OFFSET ?`,
+            [limit, offset]
         );
         
-        if (!results || results.length === 0) return [];
+        // Obtener el total de registros para la paginación
+        const countResult = await db.query('SELECT COUNT(DISTINCT id) as total FROM ordenes_venta');
+        const total = countResult[0].total;
+        
+        if (!results || results.length === 0) {
+            return {
+                data: [],
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
+        }
         
         // Map para agrupar por ID de orden
         const ordenesMap = new Map();
@@ -114,7 +133,15 @@ class OrdenDeVentaRepository {
         });
         
         // Convertir el Map a un array de órdenes
-        return Array.from(ordenesMap.values());
+        return {
+            data: Array.from(ordenesMap.values()),
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     }
 }
 

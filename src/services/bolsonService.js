@@ -49,10 +49,10 @@ class BolsonService {
         }
 
     }
-    async obtenerTodos() {
+    async obtenerTodos(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
         try {
-            const bolsones = await bolsonRepository.obtenerTodos();
-            return bolsones;
+            const resultado = await bolsonRepository.obtenerTodos(page, limit, sortBy, sortOrder);
+            return resultado;
         } catch (error) {
             console.error('Error al obtener todos los bolsones:', error);
             throw new Error('Error al obtener todos los bolsones: ' + error.message);

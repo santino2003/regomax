@@ -52,10 +52,25 @@ class BolsonRepository {
             throw error;
         }
     }
-    async obtenerTodos() {
+    async obtenerTodos(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
         try {
-            const result = await db.query('SELECT * FROM bolsones');
-            return result;
+            const offset = (page - 1) * limit;
+            const query = `SELECT * FROM bolsones ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`;
+            const result = await db.query(query, [limit, offset]);
+            
+            // Obtener el número total de registros para la paginación
+            const countResult = await db.query('SELECT COUNT(*) as total FROM bolsones');
+            const total = countResult[0].total;
+            
+            return {
+                data: result,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
         } catch (error) {
             console.error('Error al obtener todos los bolsones:', error);
             throw error;

@@ -1,31 +1,21 @@
 $(document).ready(function() {
-    // Inicializar DataTable
-    let dataTable = $('#ordenesTable').DataTable({
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
-        },
-        responsive: true,
-        order: [[2, 'desc']], // Ordenar por fecha descendente
-        columnDefs: [
-            { orderable: false, targets: 5 } // Desactivar ordenamiento en columna de acciones
-        ]
-    });
-
-    // Filtros por estado
+    // Manejar los filtros por estado
     $('.filter-btn').on('click', function() {
         $('.filter-btn').removeClass('active');
         $(this).addClass('active');
         const estado = $(this).data('filter');
         
-        // Filtrar DataTable
+        // Redirigir a la misma página con el filtro como parámetro de consulta
+        let url = new URL(window.location.href);
         if (estado === 'todos') {
-            dataTable.column(3).search('').draw();
+            url.searchParams.delete('estado');
         } else {
-            // Busca el estado en la columna de estado (ajustar al formato que muestra)
-            dataTable.column(3).search(estado.toUpperCase().replace('_', ' ')).draw();
+            url.searchParams.set('estado', estado);
         }
+        url.searchParams.set('page', '1'); // Resetear a la primera página al filtrar
+        window.location.href = url.toString();
     });
-
+    
     // Manejar eliminación de órdenes
     $('.btn-delete').on('click', function() {
         const id = $(this).data('id');
@@ -45,8 +35,15 @@ $(document).ready(function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Eliminar la fila de la tabla usando DataTable
-                    dataTable.row(row).remove().draw();
+                    // Eliminar la fila de la tabla
+                    row.fadeOut(300, function() {
+                        $(this).remove();
+                        
+                        // Si era el último elemento de la página, recargar la página
+                        if ($('tbody tr').length === 0) {
+                            window.location.reload();
+                        }
+                    });
                     
                     // Mostrar mensaje de éxito
                     alert('Orden eliminada correctamente');
@@ -64,10 +61,7 @@ $(document).ready(function() {
             });
         }   
     });
-
-    // Búsqueda personalizada
-    $('#searchForm').on('submit', function(e) {
-        e.preventDefault();
-        dataTable.search($('#searchInput').val()).draw();
-    });
+    
+    // Búsqueda personalizada ya maneja el formulario directamente a través del método GET
+    // No necesita código JavaScript adicional para la búsqueda
 });

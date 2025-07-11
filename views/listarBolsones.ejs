@@ -11,9 +11,6 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
-    <!-- DataTables CSS -->
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
 </head>
@@ -64,7 +61,7 @@
                     </div>
                     
                     <div class="table-responsive">
-                        <table id="bolsonesTable" class="table table-striped table-hover">
+                        <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th>Código</th>
@@ -105,6 +102,43 @@
                                 <% } %>
                             </tbody>
                         </table>
+                        
+                        <% if (pagination && pagination.totalPages > 1) { %>
+                            <nav aria-label="Navegación de bolsones">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+                                        <a class="page-link" href="/bolsones?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %>" tabindex="-1">Anterior</a>
+                                    </li>
+                                    
+                                    <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+                                        <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                                            <a class="page-link" href="/bolsones?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
+                                        <a class="page-link" href="/bolsones?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %>">Siguiente</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        <% } %>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                Mostrando <%= bolsones.length %> de <%= pagination ? pagination.total : bolsones.length %> bolsones
+                            </div>
+                            <div>
+                                <form class="d-flex" action="/bolsones" method="GET">
+                                    <select class="form-select form-select-sm me-2" name="limit" onchange="this.form.submit()">
+                                        <option value="10" <%= pagination && pagination.limit === 10 ? 'selected' : '' %>>10 por página</option>
+                                        <option value="25" <%= pagination && pagination.limit === 25 ? 'selected' : '' %>>25 por página</option>
+                                        <option value="50" <%= pagination && pagination.limit === 50 ? 'selected' : '' %>>50 por página</option>
+                                        <option value="100" <%= pagination && pagination.limit === 100 ? 'selected' : '' %>>100 por página</option>
+                                    </select>
+                                    <input type="hidden" name="page" value="1">
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -124,10 +158,6 @@
     
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     
     <!-- Common JS (Para funcionalidades compartidas como logout) -->
     <script src="/assets/js/common.js"></script>

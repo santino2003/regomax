@@ -50,9 +50,9 @@ class OrdenDeVentaService {
     }
     
     // Obtener todas las órdenes con sus productos
-    async obtenerTodasLasOrdenes() {
+    async obtenerTodasLasOrdenes(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
         try {
-            return await OVRepository.obtenerTodas();
+            return await OVRepository.obtenerTodas(page, limit, sortBy, sortOrder);
         } catch (error) {
             console.error('Error al obtener órdenes:', error);
             throw new Error('Error al obtener órdenes: ' + error.message);
