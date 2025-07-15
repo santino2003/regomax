@@ -66,19 +66,28 @@
                     <!-- Formulario -->
                     <form id="formNuevoBolson">
                         <div class="row g-3">
-                            <!-- Producto -->
+                            <!-- Producto (convertido a selector desplegable) -->
                             <div class="col-md-6">
                                 <label for="producto" class="form-label">
                                     <i class="bi bi-box me-1"></i>Producto *
                                 </label>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="producto" 
-                                       name="producto" 
-                                       required 
-                                       placeholder="Ingrese el nombre del producto">
+                                <div class="input-group">
+                                    <select class="form-select" id="producto" name="producto" required>
+                                        <option value="" selected disabled>Seleccione un producto</option>
+                                        <% if (productos && productos.length > 0) { %>
+                                            <% productos.forEach(producto => { %>
+                                                <option value="<%= producto.nombre %>" data-unidad="<%= producto.unidad %>">
+                                                    <%= producto.nombre %> (<%= producto.unidad %>)
+                                                </option>
+                                            <% }); %>
+                                        <% } %>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" id="btnNuevoProducto" title="Crear nuevo producto">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                </div>
                                 <div class="invalid-feedback">
-                                    Por favor ingrese el producto.
+                                    Por favor seleccione un producto.
                                 </div>
                             </div>
                             

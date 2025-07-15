@@ -1,4 +1,30 @@
 $(document).ready(function() {
+    // Botón para crear un nuevo producto
+    $('#btnNuevoProducto').on('click', function() {
+        // Abrir la ventana de nuevo producto en una ventana emergente
+        window.open('/productos/nuevo', 'NuevoProducto', 'width=800,height=600');
+    });
+    
+    // Escuchar mensajes de la ventana popup
+    window.addEventListener('message', function(event) {
+        // Verificar que el mensaje es del tipo esperado
+        if (event.data && event.data.type === 'newProduct') {
+            const newProduct = event.data.product;
+            
+            // Agregar el nuevo producto al selector
+            $('#producto').append(
+                $('<option>', {
+                    value: newProduct.nombre,
+                    'data-unidad': newProduct.unidad,
+                    text: `${newProduct.nombre} (${newProduct.unidad})`
+                })
+            );
+            
+            // Seleccionar el nuevo producto
+            $('#producto').val(newProduct.nombre).trigger('change');
+        }
+    });
+
     // Función para mostrar alertas
     function showAlert(message, type = 'success') {
         const alertContent = `

@@ -7,8 +7,9 @@ const authMiddleware = require('../middleware/auth');
 // const authMiddleware = require('../middleware/auth');
 // router.post('/nueva', authMiddleware, OVController.crearOrdenDeVenta);
 
-router.post('/nueva',authMiddleware.verifyToken, OVController.crearOrdenDeVenta);
+router.post('/nueva', authMiddleware.verifyToken, OVController.crearOrdenDeVenta);
 router.get('/', OVController.listarOrdenes);
 router.get('/:id', OVController.obtenerOrden);
+router.put('/:id', authMiddleware.verifyToken, OVController.actualizarOrden);
 
 module.exports = router;

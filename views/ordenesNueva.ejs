@@ -201,16 +201,26 @@
                 <div class="modal-body">
                     <form id="formProducto" class="needs-validation" novalidate>
                         <div class="row g-3">
-                            <!-- Producto -->
+                            <!-- Producto (convertido a selector desplegable) -->
                             <div class="col-12">
                                 <label for="nombreProducto" class="form-label">Producto *</label>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="nombreProducto" 
-                                       required
-                                       placeholder="Ingrese nombre del producto">
+                                <div class="input-group">
+                                    <select class="form-select" id="nombreProducto" required>
+                                        <option value="" selected disabled>Seleccione un producto</option>
+                                        <% if (productos && productos.length > 0) { %>
+                                            <% productos.forEach(producto => { %>
+                                                <option value="<%= producto.nombre %>" data-unidad="<%= producto.unidad %>">
+                                                    <%= producto.nombre %> (<%= producto.unidad %>)
+                                                </option>
+                                            <% }); %>
+                                        <% } %>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" id="btnNuevoProducto" title="Crear nuevo producto">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                </div>
                                 <div class="invalid-feedback">
-                                    Por favor ingrese el nombre del producto.
+                                    Por favor seleccione un producto.
                                 </div>
                             </div>
                             
@@ -227,6 +237,7 @@
                                 <div class="invalid-feedback">
                                     Por favor ingrese la cantidad.
                                 </div>
+                                <div class="form-text" id="unidadTexto"></div>
                             </div>
                         </div>
                     </form>

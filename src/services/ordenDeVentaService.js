@@ -75,6 +75,57 @@ class OrdenDeVentaService {
             throw new Error('Error al obtener orden: ' + error.message);
         }
     }
+    
+    // Actualizar una orden existente
+    async actualizarOrden(id, ordenData) {
+        try {
+            // Verificar si la orden existe
+            const ordenExistente = await OVRepository.obtenerPorId(id);
+            if (!ordenExistente) {
+                throw new Error('Orden de venta no encontrada');
+            }
+            
+            // INICIO DE TRANSACCIÓN
+            await OVRepository.iniciarTransaccion();
+            
+            try {
+                // Actualizar datos básicos de la orden
+                await OVRepository.actualizarDatosOrden(id, {
+                    fecha: ordenData.fecha || ordenExistente.fecha,
+                    cliente: ordenData.cliente || ordenExistente.cliente,
+                    cliente_final: ordenData.clienteFinal || ordenExistente.cliente_final,
+                    codigo_venta: ordenData.codigoVenta || ordenExistente.codigo_venta,
+                    observaciones: ordenData.observaciones !== undefined ? ordenData.observaciones : ordenExistente.observaciones,
+                    estado: ordenData.estado || ordenExistente.estado
+                });
+                
+                // Si hay nuevos productos, actualizar los productos
+                if (ordenData.productos && ordenData.productos.length > 0) {
+                    // Eliminar todos los productos existentes
+                    await OVRepository.eliminarDetallesOrden(id);
+                    
+                    // Agregar los nuevos productos
+                    for (const producto of ordenData.productos) {
+                        await OVRepository.agregarDetalleOrden(id, producto.producto, producto.cantidad);
+                    }
+                }
+                
+                // CONFIRMAR TRANSACCIÓN
+                await OVRepository.confirmarTransaccion();
+                
+                // Obtener la orden actualizada con sus productos
+                return await OVRepository.obtenerPorId(id);
+                
+            } catch (error) {
+                // REVERTIR TRANSACCIÓN si algo falla
+                await OVRepository.revertirTransaccion();
+                throw error;
+            }
+        } catch (error) {
+            console.error('Error al actualizar orden de venta:', error);
+            throw new Error(`Error al actualizar orden de venta: ${error.message}`);
+        }
+    }
 }
 
 module.exports = new OrdenDeVentaService();

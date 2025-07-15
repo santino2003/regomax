@@ -143,6 +143,59 @@ class OrdenDeVentaRepository {
             }
         };
     }
+    
+    // Actualizar los datos básicos de una orden
+    async actualizarDatosOrden(id, datosOrden) {
+        // Construir la consulta SQL dinámicamente basada en los campos proporcionados
+        const campos = [];
+        const valores = [];
+
+        // Agregar campos que no sean nulos
+        if (datosOrden.fecha) {
+            campos.push('fecha = ?');
+            valores.push(datosOrden.fecha);
+        }
+        
+        if (datosOrden.cliente) {
+            campos.push('cliente = ?');
+            valores.push(datosOrden.cliente);
+        }
+        
+        if (datosOrden.cliente_final !== undefined) {
+            campos.push('cliente_final = ?');
+            valores.push(datosOrden.cliente_final);
+        }
+        
+        if (datosOrden.codigo_venta !== undefined) {
+            campos.push('codigo_venta = ?');
+            valores.push(datosOrden.codigo_venta);
+        }
+        
+        if (datosOrden.observaciones !== undefined) {
+            campos.push('observaciones = ?');
+            valores.push(datosOrden.observaciones);
+        }
+        
+        if (datosOrden.estado) {
+            campos.push('estado = ?');
+            valores.push(datosOrden.estado);
+        }
+        
+        // Si no hay campos para actualizar, retornar
+        if (campos.length === 0) return;
+        
+        // Agregar el id al final de los valores
+        valores.push(id);
+        
+        // Construir y ejecutar la consulta
+        const query = `UPDATE ordenes_venta SET ${campos.join(', ')} WHERE id = ?`;
+        await db.query(query, valores);
+    }
+    
+    // Eliminar los detalles (productos) de una orden
+    async eliminarDetallesOrden(ordenId) {
+        await db.query('DELETE FROM ordenes_venta_detalle WHERE orden_venta_id = ?', [ordenId]);
+    }
 }
 
 module.exports = new OrdenDeVentaRepository();

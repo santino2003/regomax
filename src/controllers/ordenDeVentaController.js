@@ -1,4 +1,5 @@
 const OVService = require('../services/ordenDeVentaService');
+const ProductoService = require('../services/productoService'); // Añadida nueva importación
 
 const OVController = {
     async crearOrdenDeVenta(req, res) {
@@ -141,13 +142,14 @@ const OVController = {
     },
     async vistaNuevaOrden(req, res) {
         try {
-            // No necesitamos consultar clientes si es un campo manual
+            // Obtener la lista de productos para el desplegable
+            const productos = await ProductoService.obtenerTodosLosProductos();
+            
             return res.render('ordenesNueva', {
                 title: 'Nueva Orden de Venta',
                 username: req.user.username,
-                // Pasamos un array vacío para evitar el error, pero no se usará
-                clientes: [],
-                productos: []
+                productos: productos, // Pasamos la lista de productos
+                clientes: [] // Mantenemos clientes vacío como antes
             });
         } catch (error) {
             console.error('Error al renderizar la vista de nueva orden:', error);
@@ -177,6 +179,53 @@ const OVController = {
                         'Error al cargar los detalles de la orden de venta',
                     error: error
                 });
+        }
+    },
+    async vistaEditarOrden(req, res) {
+        try {
+            const { id } = req.params;
+            const orden = await OVService.obtenerOrdenPorId(id);
+            // Obtener la lista de productos para el desplegable
+            const productos = await ProductoService.obtenerTodosLosProductos();
+            
+            return res.render('ordenesEditar', {
+                title: `Editar Orden de Venta #OV-${orden.id}`,
+                username: req.user.username,
+                orden: orden,
+                productos: productos // Pasamos la lista de productos
+            });
+        } catch (error) {
+            console.error('Error al cargar vista de edición de orden:', error);
+            return res.status(error.message.includes('no encontrada') ? 404 : 500)
+                .render('error', {
+                    message: error.message.includes('no encontrada') ? 
+                        'La orden solicitada no existe' : 
+                        'Error al cargar los datos de la orden de venta',
+                    error: error
+                });
+        }
+    },
+
+    async actualizarOrden(req, res) {
+        try {
+            const { id } = req.params;
+            const ordenData = req.body;
+            ordenData.updatedBy = req.user.username; // Registrar quién hace la modificación
+            
+            const ordenActualizada = await OVService.actualizarOrden(id, ordenData);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Orden de venta actualizada exitosamente',
+                data: ordenActualizada
+            });
+        } catch (error) {
+            console.error('Error al actualizar orden de venta:', error);
+            return res.status(error.message.includes('no encontrada') ? 404 : 500).json({
+                success: false,
+                message: 'Error al actualizar orden de venta',
+                error: error.message
+            });
         }
     }
 }

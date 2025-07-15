@@ -1,4 +1,5 @@
 const bolsonService = require('../services/bolsonService');
+const productoService = require('../services/productoService'); // Añadimos esta importación
 
 const bolsonController = {
     async nuevoBolson(req, res) {
@@ -126,8 +127,12 @@ const bolsonController = {
     
     async vistaNuevoBolson(req, res) {
         try {
+            // Obtener solo productos que están en stock para el desplegable
+            const productos = await productoService.obtenerProductosEnStock();
+            
             res.render('bolsonesNuevo', { 
-                username: req.user.username
+                username: req.user.username,
+                productos: productos // Pasamos los productos a la vista
             });
         } catch (error) {
             console.error('Error al renderizar vista de nuevo bolson:', error);
@@ -149,9 +154,13 @@ const bolsonController = {
                 });
             }
             
+            // Obtener solo productos que están en stock para el desplegable
+            const productos = await productoService.obtenerProductosEnStock();
+            
             res.render('bolsonesEditar', { 
                 username: req.user.username,
-                bolson: bolson
+                bolson: bolson,
+                productos: productos // Pasamos los productos a la vista
             });
         } catch (error) {
             console.error('Error al renderizar vista de editar bolson:', error);

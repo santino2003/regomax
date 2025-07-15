@@ -7,10 +7,49 @@ $(document).ready(function() {
     let productos = [];
     let contadorProductos = 0;
     
+    // Función para actualizar el texto de unidad cuando se selecciona un producto
+    $('#nombreProducto').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const unidad = selectedOption.data('unidad');
+        
+        if (unidad) {
+            $('#unidadTexto').text(`La cantidad se medirá en ${unidad}`);
+        } else {
+            $('#unidadTexto').text('');
+        }
+    });
+    
+    // Botón para crear un nuevo producto
+    $('#btnNuevoProducto').on('click', function() {
+        // Abrir la ventana de nuevo producto en una ventana o pestaña nueva
+        window.open('/productos/nuevo', 'NuevoProducto', 'width=800,height=600');
+    });
+    
+    // Escuchar mensajes de la ventana popup
+    window.addEventListener('message', function(event) {
+        // Verificar que el mensaje es del tipo esperado
+        if (event.data && event.data.type === 'newProduct') {
+            const newProduct = event.data.product;
+            
+            // Agregar el nuevo producto al selector
+            $('#nombreProducto').append(
+                $('<option>', {
+                    value: newProduct.nombre,
+                    'data-unidad': newProduct.unidad,
+                    text: `${newProduct.nombre} (${newProduct.unidad})`
+                })
+            );
+            
+            // Seleccionar el nuevo producto
+            $('#nombreProducto').val(newProduct.nombre).trigger('change');
+        }
+    });
+    
     // Mostrar modal para agregar producto
     $('#btnAgregarProducto').click(function() {
         // Limpiar formulario del modal
         $('#formProducto')[0].reset();
+        $('#unidadTexto').text('');
         $('#productoModal').modal('show');
     });
     
@@ -23,9 +62,10 @@ $(document).ready(function() {
             return;
         }
         
-        // Obtener datos del producto (sin precio)
+        // Obtener datos del producto
         const nombreProducto = $('#nombreProducto').val().trim();
         const cantidad = parseFloat($('#cantidad').val());
+        const unidad = $('#nombreProducto option:selected').data('unidad') || '';
         
         if (!nombreProducto || !cantidad) {
             return;
@@ -40,10 +80,10 @@ $(document).ready(function() {
             $('#filaVacia').hide();
         }
         
-        // Agregar fila a la tabla (eliminando columnas de precio)
+        // Agregar fila a la tabla
         $('#tablaProductos tbody').append(`
             <tr id="${filaId}">
-                <td>${nombreProducto}</td>
+                <td>${nombreProducto} <span class="text-muted">(<small>${unidad}</small>)</span></td>
                 <td class="text-center">${cantidad}</td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-producto"
@@ -54,10 +94,11 @@ $(document).ready(function() {
             </tr>
         `);
         
-        // Guardar en el array (sin precio)
+        // Guardar en el array
         productos.push({
             nombre: nombreProducto,
             cantidad: cantidad,
+            unidad: unidad,
             filaId: filaId
         });
         

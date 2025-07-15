@@ -10,6 +10,7 @@ const bolsonRoutes = require('./routes/bolsonRoutes');
 const ordenDeVentaRoutes = require('./routes/ordenDeVentaRoutes');
 const viewRoutes = require('./routes/viewRoutes');
 const authMiddleware = require('./middleware/auth');
+const productoRoutes = require('./routes/api/productoRoutes'); // Nueva línea
 
 // Crear aplicación Express
 const app = express();
@@ -34,6 +35,7 @@ app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/api/auth', authRoutes);
 app.use('/api/bolsones', bolsonRoutes);
 app.use('/api/ordenes', ordenDeVentaRoutes);
+app.use('/api/productos', productoRoutes); // Nueva línea
 
 // Rutas de vistas
 app.use('/', viewRoutes);
