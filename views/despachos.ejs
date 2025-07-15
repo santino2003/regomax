@@ -79,7 +79,7 @@
                                     <p><strong>Fecha:</strong> <%= new Date(orden.fecha).toLocaleDateString() %></p>
                                 </div>
                                 <div class="col-md-6">
-                                    <p><strong>Estado:</strong> <span class="badge bg-<%= orden.estado === 'en_proceso' ? 'warning' : orden.estado === 'en_logistica' ? 'primary' : 'success' %>"><%= orden.estado %></span></p>
+                                    <p><strong>Estado:</strong> <span class="badge bg-<%= orden.estado === 'abierta' ? 'warning text-dark' : orden.estado === 'en_logistica' ? 'primary' : orden.estado === 'cerrada' ? 'success' : 'secondary' %>"><%= orden.estado ? orden.estado.charAt(0).toUpperCase() + orden.estado.slice(1) : 'Sin estado' %></span></p>
                                     <p><strong>Última Actualización:</strong> <%= new Date(orden.fecha_actualizacion || orden.fecha).toLocaleString() %></p>
                                 </div>
                             </div>
@@ -102,7 +102,7 @@
                                                 <% orden.productos.forEach(prod => { %>
                                                     <tr>
                                                         <td><%= prod.producto %></td>
-                                                        <td><%= prod.cantidad_original %> kg</td>
+                                                        <td><%= prod.cantidad_inicial %> kg</td>
                                                         <td><%= prod.cantidad %> kg</td>
                                                         <td>
                                                             <% if (prod.cantidad <= 0) { %>

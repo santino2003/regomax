@@ -179,16 +179,12 @@ const despachoController = {
             
             const resultado = await despachoService.obtenerBolsonesDespachados(page, limit, filtros);
             
-            // Obtener la lista de órdenes para el filtro
-            const ordenes = await ordenDeVentaService.obtenerTodas();
-            
             res.render('bolsonesDespachados', {
                 title: 'Bolsones Despachados',
                 username: req.user.username,
                 bolsones: resultado.data,
                 pagination: resultado.pagination,
-                filtros: filtros,
-                ordenes: ordenes
+                filtros: filtros
             });
         } catch (error) {
             console.error('Error al renderizar vista de bolsones despachados:', error);

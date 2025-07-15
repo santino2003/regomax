@@ -29,7 +29,7 @@ class OrdenDeVentaRepository {
         await db.query(
             `INSERT INTO ordenes_venta_detalle (orden_venta_id, producto, cantidad, cantidad_inicial) 
              VALUES (?, ?, ?, ?)`,
-            [ordenId, producto, cantidad, cantidad]
+            [ordenId, producto.producto, producto.cantidad, producto.cantidad]
         );
     }
     
@@ -64,7 +64,8 @@ class OrdenDeVentaRepository {
                 orden.productos.push({
                     id: row.detalle_id,
                     producto: row.producto,
-                    cantidad: row.cantidad
+                    cantidad: row.cantidad,
+                    cantidad_inicial: row.cantidad_inicial // ahora sí se incluye
                 });
             }
         });

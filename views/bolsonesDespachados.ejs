@@ -73,20 +73,6 @@
                             <form id="filtrosForm" method="GET" action="/bolsones-despachados">
                                 <div class="row g-3">
                                     <div class="col-md-6 col-lg-3">
-                                        <label for="ordenId" class="form-label">Orden de Venta</label>
-                                        <select class="form-select" id="ordenId" name="ordenId">
-                                            <option value="">Todas las órdenes</option>
-                                            <% if (ordenes && ordenes.length > 0) { %>
-                                                <% ordenes.forEach(orden => { %>
-                                                    <option value="<%= orden.id %>" <%= filtros.ordenId == orden.id ? 'selected' : '' %>>
-                                                        #<%= orden.id %> - <%= orden.cliente %>
-                                                    </option>
-                                                <% }); %>
-                                            <% } %>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="col-md-6 col-lg-3">
                                         <label for="producto" class="form-label">Producto</label>
                                         <input type="text" class="form-control" id="producto" name="producto" 
                                                value="<%= filtros.producto || '' %>" placeholder="Filtrar por producto">
