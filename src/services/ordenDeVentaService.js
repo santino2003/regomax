@@ -126,6 +126,16 @@ class OrdenDeVentaService {
             throw new Error(`Error al actualizar orden de venta: ${error.message}`);
         }
     }
+    
+    // Obtener órdenes filtradas por estado
+    async obtenerOrdenesPorEstado(estado) {
+        try {
+            return await OVRepository.obtenerPorEstado(estado);
+        } catch (error) {
+            console.error('Error al obtener órdenes por estado:', error);
+            throw new Error('Error al obtener órdenes por estado: ' + error.message);
+        }
+    }
 }
 
 module.exports = new OrdenDeVentaService();

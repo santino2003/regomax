@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Error</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8d7da; color: #721c24; padding: 40px; }
+        .container { background: #fff; border-radius: 8px; padding: 30px; max-width: 500px; margin: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ocurrió un error</h1>
+        <p><%= message || 'Ha ocurrido un error inesperado.' %></p>
+        <% if (error && error.stack) { %>
+            <pre><%= error.stack %></pre>
+        <% } %>
+        <a href="/home">Volver al inicio</a>
+    </div>
+</body>
+</html>

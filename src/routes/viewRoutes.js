@@ -6,6 +6,7 @@ const noCacheMiddleware = require('../middleware/noCacheMiddleware');
 const bolsonController = require('../controllers/bolsonController');
 const OVController = require('../controllers/ordenDeVentaController');
 const productoController = require('../controllers/productoController');
+const despachoController = require('../controllers/despachoController');
 
 // Ruta base - redirigir a login
 router.get('/', (req, res) => {
@@ -36,6 +37,11 @@ router.get('/ordenes/:id', [authMiddleware.verifyToken, noCacheMiddleware], OVCo
 
 // Rutas de productos
 router.get('/productos/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], productoController.vistaNuevoProducto);
+
+// Rutas de despachos
+router.get('/despachos/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], despachoController.vistaCrearDespacho);
+router.get('/despachos/orden/:ordenId', [authMiddleware.verifyToken, noCacheMiddleware], despachoController.vistaVerDespachos);
+router.get('/bolsones-despachados', [authMiddleware.verifyToken, noCacheMiddleware], despachoController.vistaListarBolsonesDespachados);
 
 // Endpoint de logout
 router.get('/logout', (req, res) => {

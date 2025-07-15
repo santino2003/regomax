@@ -164,11 +164,14 @@ const OVController = {
         try {
             const { id } = req.params;
             const orden = await OVService.obtenerOrdenPorId(id);
-            
+            // Obtener bolsones despachados asociados a la orden
+            const despachoService = require('../services/despachoService');
+            const bolsonesDespachados = await despachoService.obtenerBolsonesDespachadosPorOrden(id);
             return res.render('visualizarOrden', {
                 title: `Orden de Venta #${orden.codigo_venta || orden.id}`,
                 username: req.user.username,
-                orden: orden
+                orden: orden,
+                bolsonesDespachados: bolsonesDespachados
             });
         } catch (error) {
             console.error('Error al visualizar orden de venta:', error);

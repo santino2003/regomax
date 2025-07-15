@@ -62,6 +62,9 @@
                             <a href="/ordenes/imprimir/<%= orden.id %>" class="btn btn-outline-primary me-2" target="_blank">
                                 <i class="bi bi-printer me-1"></i>Imprimir
                             </a>
+                            <a href="/despachos/orden/<%= orden.id %>" class="btn btn-outline-info me-2">
+                                <i class="bi bi-truck me-1"></i>Ver despachos
+                            </a>
                             <button class="btn btn-outline-danger btn-delete" data-id="<%= orden.id %>">
                                 <i class="bi bi-trash me-1"></i>Eliminar
                             </button>
@@ -150,7 +153,8 @@
                                         <tr>
                                             <th width="70">#</th>
                                             <th>Producto</th>
-                                            <th width="150">Cantidad</th>
+                                            <th width="150">Cantidad inicial</th>
+                                            <th width="150">Cantidad restante</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -159,12 +163,52 @@
                                                 <tr>
                                                     <td><%= index + 1 %></td>
                                                     <td><%= producto.producto %></td>
+                                                    <td><%= producto.cantidad_inicial %></td>
                                                     <td><%= producto.cantidad %></td>
                                                 </tr>
                                             <% }) %>
                                         <% } else { %>
                                             <tr>
-                                                <td colspan="3" class="text-center">No hay productos en esta orden</td>
+                                                <td colspan="4" class="text-center">No hay productos en esta orden</td>
+                                            </tr>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bolsones despachados -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <i class="bi bi-clipboard-check me-2"></i>Bolsones Despachados
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Código</th>
+                                            <th>Producto</th>
+                                            <th>Peso (kg)</th>
+                                            <th>Fecha despacho</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% if (bolsonesDespachados && bolsonesDespachados.length > 0) { %>
+                                            <% bolsonesDespachados.forEach((bolson, idx) => { %>
+                                                <tr>
+                                                    <td><%= idx + 1 %></td>
+                                                    <td><%= bolson.bolson_codigo %></td>
+                                                    <td><%= bolson.producto %></td>
+                                                    <td><%= bolson.peso %></td>
+                                                    <td><%= new Date(bolson.fecha).toLocaleString() %></td>
+                                                </tr>
+                                            <% }) %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="5" class="text-center">No hay bolsones despachados para esta orden</td>
                                             </tr>
                                         <% } %>
                                     </tbody>

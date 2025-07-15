@@ -24,19 +24,19 @@ class OrdenDeVentaRepository {
         return result.insertId;
     }
     
-    // Agregar detalle de producto
+    // Agregar detalle de producto (ahora guarda cantidad_inicial)
     async agregarDetalleOrden(ordenId, producto, cantidad) {
         await db.query(
-            `INSERT INTO ordenes_venta_detalle (orden_venta_id, producto, cantidad) 
-             VALUES (?, ?, ?)`,
-            [ordenId, producto, cantidad]
+            `INSERT INTO ordenes_venta_detalle (orden_venta_id, producto, cantidad, cantidad_inicial) 
+             VALUES (?, ?, ?, ?)`,
+            [ordenId, producto, cantidad, cantidad]
         );
     }
     
     // Obtener orden completa con sus productos
     async obtenerPorId(id) {
         const results = await db.query(
-            `SELECT ov.*, ovd.id as detalle_id, ovd.producto, ovd.cantidad 
+            `SELECT ov.*, ovd.id as detalle_id, ovd.producto, ovd.cantidad, ovd.cantidad_inicial 
              FROM ordenes_venta ov
              LEFT JOIN ordenes_venta_detalle ovd ON ov.id = ovd.orden_venta_id
              WHERE ov.id = ?`,
@@ -195,6 +195,47 @@ class OrdenDeVentaRepository {
     // Eliminar los detalles (productos) de una orden
     async eliminarDetallesOrden(ordenId) {
         await db.query('DELETE FROM ordenes_venta_detalle WHERE orden_venta_id = ?', [ordenId]);
+    }
+    
+    // Obtener todas las órdenes por estado y con productos en stock
+    async obtenerPorEstado(estado) {
+        const results = await db.query(
+            `SELECT DISTINCT ov.*, ovd.id as detalle_id, ovd.producto, ovd.cantidad 
+             FROM ordenes_venta ov
+             LEFT JOIN ordenes_venta_detalle ovd ON ov.id = ovd.orden_venta_id
+             LEFT JOIN productos p ON ovd.producto = p.nombre
+             WHERE ov.estado = ? AND p.en_stock = TRUE
+             ORDER BY ov.id DESC`,
+            [estado]
+        );
+        if (!results || results.length === 0) {
+            return [];
+        }
+        // Agrupar resultados por orden
+        const ordenesMap = new Map();
+        results.forEach(row => {
+            if (!ordenesMap.has(row.id)) {
+                ordenesMap.set(row.id, {
+                    id: row.id,
+                    fecha: row.fecha,
+                    cliente: row.cliente,
+                    cliente_final: row.cliente_final,
+                    codigo_venta: row.codigo_venta || `OV-${row.id}`,
+                    observaciones: row.observaciones,
+                    responsable: row.responsable,
+                    estado: row.estado,
+                    productos: []
+                });
+            }
+            if (row.detalle_id) {
+                ordenesMap.get(row.id).productos.push({
+                    id: row.detalle_id,
+                    producto: row.producto,
+                    cantidad: row.cantidad
+                });
+            }
+        });
+        return Array.from(ordenesMap.values());
     }
 }
 

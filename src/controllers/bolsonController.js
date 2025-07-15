@@ -30,9 +30,8 @@ const bolsonController = {
             const limit = parseInt(req.query.limit) || 10;
             const sortBy = req.query.sortBy || 'id';
             const sortOrder = req.query.sortOrder || 'DESC';
-            
-            const resultado = await bolsonService.obtenerTodos(page, limit, sortBy, sortOrder);
-            
+            // Solo mostrar bolsones no despachados
+            const resultado = await bolsonService.obtenerNoDespachados(page, limit, sortBy, sortOrder);
             return res.status(200).json({
                 success: true,
                 data: resultado.data,
@@ -107,10 +106,8 @@ const bolsonController = {
             // Parámetros de paginación para la vista
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
-            
-            // Por defecto ordenamos por id descendente (del último al primero)
-            const resultado = await bolsonService.obtenerTodos(page, limit, 'id', 'DESC');
-            
+            // Solo mostrar bolsones no despachados
+            const resultado = await bolsonService.obtenerNoDespachados(page, limit, 'id', 'DESC');
             res.render('listarBolsones', { 
                 username: req.user.username,
                 bolsones: resultado.data,

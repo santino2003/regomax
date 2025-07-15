@@ -8,6 +8,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const bolsonRoutes = require('./routes/bolsonRoutes');
 const ordenDeVentaRoutes = require('./routes/ordenDeVentaRoutes');
+const despachoRoutes = require('./routes/despachoRoutes'); // Importamos las rutas de despacho
 const viewRoutes = require('./routes/viewRoutes');
 const authMiddleware = require('./middleware/auth');
 const productoRoutes = require('./routes/api/productoRoutes'); // Nueva línea
@@ -35,7 +36,8 @@ app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/api/auth', authRoutes);
 app.use('/api/bolsones', bolsonRoutes);
 app.use('/api/ordenes', ordenDeVentaRoutes);
-app.use('/api/productos', productoRoutes); // Nueva línea
+app.use('/api/productos', productoRoutes);
+app.use('/api/despachos', despachoRoutes); // Registramos las rutas de despacho
 
 // Rutas de vistas
 app.use('/', viewRoutes);

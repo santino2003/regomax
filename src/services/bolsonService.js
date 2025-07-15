@@ -70,6 +70,18 @@ class BolsonService {
             throw new Error('Error al obtener el bolson: ' + error.message);
         }
     }
+    async obtenerPorCodigo(codigo) {
+        try {
+            const bolson = await bolsonRepository.obtenerPorCodigo(codigo);
+            if (!bolson) {
+                throw new Error(`Bolsón con código ${codigo} no encontrado`);
+            }
+            return bolson;
+        } catch (error) {
+            console.error('Error al obtener el bolsón por código:', error);
+            throw new Error('Error al obtener el bolsón: ' + error.message);
+        }
+    }
     async actualizar(id, productoData) {
         try {
             const { producto, peso, precinto  } = productoData;
@@ -114,6 +126,10 @@ class BolsonService {
             console.error('Error al eliminar el bolson:', error);
             throw new Error('Error al eliminar el bolson: ' + error.message);
         }
+    }
+    // Obtener bolsones no despachados
+    async obtenerNoDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
+        return await bolsonRepository.obtenerNoDespachados(page, limit, sortBy, sortOrder);
     }
 }
 

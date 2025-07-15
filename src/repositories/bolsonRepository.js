@@ -107,5 +107,42 @@ class BolsonRepository {
             throw error;
         }
     }
+    async obtenerPorCodigo(codigo) {
+        try {
+            const result = await db.query('SELECT * FROM bolsones WHERE codigo = ?', [codigo]);
+            if (!result || result.length === 0) return null;
+            return result[0];
+        } catch (error) {
+            console.error('Error al obtener bolsón por código:', error);
+            throw error;
+        }
+   }
+    // Marcar bolsón como despachado
+    async marcarComoDespachadoPorCodigo(codigo) {
+        try {
+            await db.query('UPDATE bolsones SET despachado = 1 WHERE codigo = ?', [codigo]);
+        } catch (error) {
+            console.error('Error al marcar bolsón como despachado:', error);
+            throw error;
+        }
+    }
+    async obtenerNoDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
+        const offset = (page - 1) * limit;
+        const result = await db.query(
+            `SELECT * FROM bolsones WHERE despachado = 0 ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`,
+            [limit, offset]
+        );
+        const countResult = await db.query('SELECT COUNT(*) as total FROM bolsones WHERE despachado = 0');
+        const total = countResult[0].total;
+        return {
+            data: result,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
+    }
 }
 module.exports = new BolsonRepository();
