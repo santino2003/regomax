@@ -213,10 +213,16 @@ const OVController = {
         try {
             const { id } = req.params;
             const ordenData = req.body;
-            ordenData.updatedBy = req.user.username; // Registrar quién hace la modificación
-            
+            ordenData.updatedBy = req.user.username;
+            // Normalizar productos (pueden venir como objeto o array)
+            let productos = [];
+            if (Array.isArray(ordenData.productos)) {
+                productos = ordenData.productos;
+            } else if (typeof ordenData.productos === 'object') {
+                productos = Object.values(ordenData.productos);
+            }
+            ordenData.productos = productos;
             const ordenActualizada = await OVService.actualizarOrden(id, ordenData);
-            
             return res.status(200).json({
                 success: true,
                 message: 'Orden de venta actualizada exitosamente',

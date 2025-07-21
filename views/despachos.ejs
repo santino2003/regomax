@@ -175,7 +175,12 @@
                                                                 <% totalPeso += parseFloat(bolson.peso || 0); %>
                                                                 <tr>
                                                                     <td><%= i + 1 %></td>
-                                                                    <td><code><%= bolson.codigo %></code></td>
+                                                                    <td>
+                                                                        <code><%= bolson.codigo %></code>
+                                                                        <% if (bolson.codigo.startsWith('MANUAL-')) { %>
+                                                                            <span class="badge bg-warning text-dark">MANUAL</span>
+                                                                        <% } %>
+                                                                    </td>
                                                                     <td><%= bolson.producto %></td>
                                                                     <td><%= parseFloat(bolson.peso).toFixed(2) %> kg</td>
                                                                 </tr>

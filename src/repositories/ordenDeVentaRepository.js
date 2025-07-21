@@ -26,10 +26,30 @@ class OrdenDeVentaRepository {
     
     // Agregar detalle de producto (ahora guarda cantidad_inicial)
     async agregarDetalleOrden(ordenId, producto, cantidad) {
+        // Soporta tanto producto como string u objeto {producto, cantidad}
+        const prod = producto?.producto ?? producto ?? null;
+        const cant = producto?.cantidad ?? cantidad ?? null;
+        if (!prod || cant == null) throw new Error('Producto o cantidad no definidos al agregar detalle de orden');
         await db.query(
             `INSERT INTO ordenes_venta_detalle (orden_venta_id, producto, cantidad, cantidad_inicial) 
              VALUES (?, ?, ?, ?)`,
-            [ordenId, producto.producto, producto.cantidad, producto.cantidad]
+            [ordenId, prod, cant, cant]
+        );
+    }
+    
+    // Agregar detalle de producto con cantidad inicial explícita (para edición de órdenes)
+    async agregarDetalleConCantidadInicial(ordenId, producto, cantidad, cantidadInicial) {
+        if (!producto) throw new Error('Producto no definido al agregar detalle de orden');
+        
+        // Si la cantidad inicial no está definida, usamos la cantidad como valor predeterminado
+        const cantInicial = (cantidadInicial !== undefined && cantidadInicial !== null) 
+            ? cantidadInicial 
+            : cantidad;
+            
+        await db.query(
+            `INSERT INTO ordenes_venta_detalle (orden_venta_id, producto, cantidad, cantidad_inicial) 
+             VALUES (?, ?, ?, ?)`,
+            [ordenId, producto, cantidad, cantInicial]
         );
     }
     

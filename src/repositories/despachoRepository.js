@@ -33,14 +33,14 @@ class DespachoRepository {
     }
     
     // Agregar detalle de bolsón a un despacho (ahora incluye fecha_despacho)
-    async agregarDetalleBolson(despachoId, bolsonCodigo, producto, peso) {
+    async agregarDetalleBolson(despachoId, bolsonCodigo, producto, peso, precinto) {
         try {
             const fechaDespacho = new Date().toISOString().slice(0, 19).replace('T', ' ');
             const query = `
-                INSERT INTO despachos_detalle (despacho_id, bolson_codigo, producto, peso, fecha_despacho)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO despachos_detalle (despacho_id, bolson_codigo, producto, peso, precinto, fecha_despacho)
+                VALUES (?, ?, ?, ?, ?, ?)
             `;
-            await db.query(query, [despachoId, bolsonCodigo, producto, peso, fechaDespacho]);
+            await db.query(query, [despachoId, bolsonCodigo, producto, peso, precinto, fechaDespacho]);
             // Marcar bolsón como despachado
             const bolsonRepository = require('./bolsonRepository');
             await bolsonRepository.marcarComoDespachadoPorCodigo(bolsonCodigo);
@@ -72,7 +72,8 @@ class DespachoRepository {
                        dd.id as detalle_id, 
                        dd.bolson_codigo, 
                        dd.producto, 
-                       dd.peso
+                       dd.peso,
+                       dd.precinto
                 FROM despachos d
                 LEFT JOIN despachos_detalle dd ON d.id = dd.despacho_id
                 WHERE d.orden_venta_id = ?
@@ -105,7 +106,8 @@ class DespachoRepository {
                         id: row.detalle_id,
                         codigo: row.bolson_codigo,
                         producto: row.producto,
-                        peso: row.peso
+                        peso: row.peso,
+                        precinto: row.precinto
                     });
                 }
             });
@@ -189,17 +191,18 @@ class DespachoRepository {
         }
     }
     
-    // Obtener todos los bolsones despachados con paginación
+    // Obtener todos los bolsones despachados with paginación
     async obtenerBolsonesDespachados(page = 1, limit = 10, filtros = {}) {
         try {
             const offset = (page - 1) * limit;
             
-            // Construir consulta base
+            // Construir consulta base - excluir los despachos manuales
             let query = `
-                SELECT dd.id, dd.bolson_codigo, dd.producto, dd.peso,
+                SELECT dd.id, dd.bolson_codigo, dd.producto, dd.peso, dd.precinto,
                        d.fecha, d.responsable, d.orden_venta_id
                 FROM despachos_detalle dd
                 JOIN despachos d ON dd.despacho_id = d.id
+                WHERE dd.es_manual = 0 OR dd.es_manual IS NULL
             `;
             
             // Condiciones para filtros
@@ -233,7 +236,7 @@ class DespachoRepository {
             
             // Agregar condiciones a la consulta
             if (condiciones.length > 0) {
-                query += ' WHERE ' + condiciones.join(' AND ');
+                query += ' AND ' + condiciones.join(' AND ');
             }
             
             // Agregar ordenación y paginación
@@ -243,10 +246,12 @@ class DespachoRepository {
             const result = await db.query(query, parametros);
             
             // Consulta para contar el total con los mismos filtros
-            let countQuery = 'SELECT COUNT(*) as total FROM despachos_detalle dd JOIN despachos d ON dd.despacho_id = d.id';
+            let countQuery = `SELECT COUNT(*) as total FROM despachos_detalle dd 
+                             JOIN despachos d ON dd.despacho_id = d.id
+                             WHERE (dd.es_manual = 0 OR dd.es_manual IS NULL)`;
             
             if (condiciones.length > 0) {
-                countQuery += ' WHERE ' + condiciones.join(' AND ');
+                countQuery += ' AND ' + condiciones.join(' AND ');
             }
             
             const countResult = await db.query(countQuery, parametros.slice(0, -2)); // Eliminar limit y offset
@@ -262,6 +267,21 @@ class DespachoRepository {
             };
         } catch (error) {
             console.error('Error al obtener bolsones despachados:', error);
+            throw error;
+        }
+    }
+    
+    // Agregar detalle de producto manual a un despacho (para productos sin códigos)
+    async agregarDetalleManual(despachoId, codigoManual, producto, peso) {
+        try {
+            const fechaDespacho = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            await db.query(
+                `INSERT INTO despachos_detalle (despacho_id, bolson_codigo, producto, peso, es_manual, fecha_despacho) 
+                 VALUES (?, ?, ?, ?, 1, ?)`,
+                [despachoId, codigoManual, producto, peso, fechaDespacho]
+            );
+        } catch (error) {
+            console.error('Error al agregar detalle manual al despacho:', error);
             throw error;
         }
     }

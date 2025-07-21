@@ -5,6 +5,9 @@ $(document).ready(function() {
     let bolsonesEscaneados = [];
     let totalPeso = 0;
     
+    // Diccionario para rastrear bolsones escaneados por orden y evitar duplicados
+    let bolsonesEscaneadosPorOrden = {};
+    
     // Inicializar tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -42,6 +45,11 @@ $(document).ready(function() {
                 if (data.success) {
                     ordenSeleccionada = data.data;
                     detallesOrden = ordenSeleccionada.productos || [];
+                    
+                    // Inicializar o recuperar el diccionario de bolsones para esta orden
+                    if (!bolsonesEscaneadosPorOrden[ordenId]) {
+                        bolsonesEscaneadosPorOrden[ordenId] = {};
+                    }
                     
                     // Mostrar detalles de la orden
                     let detallesHTML = `
@@ -117,9 +125,22 @@ $(document).ready(function() {
     
     // Procesar el código del bolsón
     function procesarCodigoBolson(codigo) {
-        // Verificar si el bolsón ya fue escaneado
+        if (!ordenSeleccionada || !ordenSeleccionada.id) {
+            mostrarError('Debe seleccionar una orden primero');
+            return;
+        }
+        
+        const ordenId = ordenSeleccionada.id;
+        
+        // Verificar si el bolsón ya fue escaneado en la sesión actual
         if (bolsonesEscaneados.some(b => b.codigo === codigo)) {
             mostrarError(`El bolsón con código ${codigo} ya fue agregado al listado actual`);
+            return;
+        }
+        
+        // Verificar si el bolsón ya fue escaneado para esta orden en sesiones anteriores
+        if (bolsonesEscaneadosPorOrden[ordenId][codigo]) {
+            mostrarError(`El bolsón con código ${codigo} ya fue escaneado previamente para esta orden`);
             return;
         }
         
@@ -134,6 +155,8 @@ $(document).ready(function() {
                 
                 if (data.data.despachado) {
                     mostrarError(`El bolsón con código ${codigo} ya fue despachado anteriormente`);
+                    // Registrar en nuestro diccionario para futuras verificaciones
+                    bolsonesEscaneadosPorOrden[ordenId][codigo] = true;
                     return;
                 }
                 
@@ -145,6 +168,9 @@ $(document).ready(function() {
                     mostrarError(`El producto "${bolson.producto}" no está en la orden seleccionada`);
                     return;
                 }
+                
+                // Registrar en el diccionario que este bolsón ha sido escaneado para esta orden
+                bolsonesEscaneadosPorOrden[ordenId][codigo] = true;
                 
                 // Agregar el bolsón a la lista
                 agregarBolsonALista(bolson);
@@ -214,7 +240,17 @@ $(document).ready(function() {
     
     // Eliminar un bolsón de la lista
     function eliminarBolson(index) {
+        // Obtener el código del bolsón que se va a eliminar
+        const codigoBolson = bolsonesEscaneados[index].codigo;
+        
+        // Eliminar del array
         bolsonesEscaneados.splice(index, 1);
+        
+        // Eliminar del diccionario para permitir escanearlo nuevamente si es necesario
+        if (ordenSeleccionada && ordenSeleccionada.id && bolsonesEscaneadosPorOrden[ordenSeleccionada.id]) {
+            delete bolsonesEscaneadosPorOrden[ordenSeleccionada.id][codigoBolson];
+        }
+        
         actualizarTablaBolsones();
         actualizarTotales();
         

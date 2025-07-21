@@ -56,18 +56,40 @@
                             <i class="bi bi-receipt me-2"></i>Orden de Venta #OV-<%= orden.id %>
                         </h4>
                         <div>
-                            <a href="/ordenes/editar/<%= orden.id %>" class="btn btn-outline-secondary me-2">
-                                <i class="bi bi-pencil me-1"></i>Editar
-                            </a>
-                            <a href="/ordenes/imprimir/<%= orden.id %>" class="btn btn-outline-primary me-2" target="_blank">
-                                <i class="bi bi-printer me-1"></i>Imprimir
-                            </a>
-                            <a href="/despachos/orden/<%= orden.id %>" class="btn btn-outline-info me-2">
-                                <i class="bi bi-truck me-1"></i>Ver despachos
-                            </a>
-                            <button class="btn btn-outline-danger btn-delete" data-id="<%= orden.id %>">
-                                <i class="bi bi-trash me-1"></i>Eliminar
-                            </button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear-fill me-1"></i> Acciones
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="/ordenes/editar/<%= orden.id %>">
+                                            <i class="bi bi-pencil me-2"></i>Editar
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="/ordenes/imprimir/<%= orden.id %>" target="_blank">
+                                            <i class="bi bi-printer me-2"></i>Imprimir
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="/despachos/orden/<%= orden.id %>">
+                                            <i class="bi bi-truck me-2"></i>Ver despachos
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item text-success" type="button" id="btnDespachoManual">
+                                            <i class="bi bi-box-seam me-2"></i>Despacho Manual
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item text-danger btn-delete" data-id="<%= orden.id %>">
+                                            <i class="bi bi-trash me-2"></i>Eliminar
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                     
@@ -193,6 +215,7 @@
                                             <th>Producto</th>
                                             <th>Peso (kg)</th>
                                             <th>Fecha despacho</th>
+                                            <th>Tipo</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -202,13 +225,20 @@
                                                     <td><%= idx + 1 %></td>
                                                     <td><%= bolson.bolson_codigo %></td>
                                                     <td><%= bolson.producto %></td>
-                                                    <td><%= bolson.peso %></td>
+                                                    <td><%= parseFloat(bolson.peso).toFixed(2) %></td>
                                                     <td><%= new Date(bolson.fecha).toLocaleString() %></td>
+                                                    <td>
+                                                        <% if (bolson.es_manual) { %>
+                                                            <span class="badge bg-warning text-dark">Manual</span>
+                                                        <% } else { %>
+                                                            <span class="badge bg-info">Escaneado</span>
+                                                        <% } %>
+                                                    </td>
                                                 </tr>
                                             <% }) %>
                                         <% } else { %>
                                             <tr>
-                                                <td colspan="5" class="text-center">No hay bolsones despachados para esta orden</td>
+                                                <td colspan="6" class="text-center">No hay bolsones despachados para esta orden</td>
                                             </tr>
                                         <% } %>
                                     </tbody>
@@ -245,6 +275,73 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para despacho manual -->
+    <div class="modal fade" id="modalDespachoManual" tabindex="-1" aria-labelledby="modalDespachoManualLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalDespachoManualLabel">Despacho Manual (Sin Escaneo)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formDespachoManual">
+                        <div class="mb-3">
+                            <label class="form-label">Orden #<%= orden.id %> - <%= orden.cliente %></label>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="observacionesDespacho" class="form-label">Observaciones:</label>
+                            <textarea class="form-control" id="observacionesDespacho" rows="2" placeholder="Observaciones del despacho manual"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Productos disponibles:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="tablaDespachoManual">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Cantidad Pendiente</th>
+                                            <th>Cantidad a Despachar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% if (orden.productos && orden.productos.length > 0) { %>
+                                            <% orden.productos.forEach((prod, idx) => { 
+                                                if (parseFloat(prod.cantidad) > 0) { %>
+                                                <tr>
+                                                    <td><%= prod.producto %></td>
+                                                    <td><%= parseFloat(prod.cantidad).toFixed(2) %> kg</td>
+                                                    <td>
+                                                        <input type="number" class="form-control cantidad-despachar" 
+                                                               data-producto="<%= prod.producto %>"
+                                                               data-max="<%= parseFloat(prod.cantidad) %>"
+                                                               min="0" max="<%= parseFloat(prod.cantidad) %>" 
+                                                               step="0.01" value="0">
+                                                    </td>
+                                                </tr>
+                                            <% } }) %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="3" class="text-center">No hay productos pendientes</td>
+                                            </tr>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarDespachoManual">
+                        <i class="bi bi-send me-1"></i>Procesar Despacho Manual
+                    </button>
                 </div>
             </div>
         </div>

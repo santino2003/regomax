@@ -143,6 +143,7 @@ const despachoController = {
                 ordenId: req.query.ordenId,
                 producto: req.query.producto,
                 codigo: req.query.codigo,
+                precinto: req.query.precinto,
                 fechaDesde: req.query.fechaDesde,
                 fechaHasta: req.query.fechaHasta
             };
@@ -173,6 +174,7 @@ const despachoController = {
                 ordenId: req.query.ordenId,
                 producto: req.query.producto,
                 codigo: req.query.codigo,
+                precinto: req.query.precinto,
                 fechaDesde: req.query.fechaDesde,
                 fechaHasta: req.query.fechaHasta
             };
@@ -191,6 +193,43 @@ const despachoController = {
             res.status(500).render('error', {
                 message: 'Error al cargar la lista de bolsones despachados',
                 error: error
+            });
+        }
+    },
+    
+    async despachoManual(req, res) {
+        try {
+            const { ordenId } = req.params;
+            const { observaciones, productos } = req.body;
+            
+            if (!productos || !Array.isArray(productos) || productos.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Debe proporcionar al menos un producto para despachar manualmente'
+                });
+            }
+            
+            const despachoData = {
+                ordenVentaId: ordenId,
+                responsable: req.user.username,
+                observaciones: observaciones || 'Despacho manual',
+                productosManual: productos,
+                esManual: true
+            };
+            
+            const result = await despachoService.procesarDespachoManual(despachoData);
+            
+            return res.status(201).json({
+                success: true,
+                message: 'Despacho manual creado exitosamente',
+                data: result
+            });
+        } catch (error) {
+            console.error('Error al crear despacho manual:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al crear despacho manual',
+                error: error.message
             });
         }
     }

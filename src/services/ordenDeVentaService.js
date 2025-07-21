@@ -106,7 +106,13 @@ class OrdenDeVentaService {
                     
                     // Agregar los nuevos productos
                     for (const producto of ordenData.productos) {
-                        await OVRepository.agregarDetalleOrden(id, producto.producto, producto.cantidad);
+                        // Ahora vamos a pasar explícitamente cantidad_inicial y cantidad
+                        await OVRepository.agregarDetalleConCantidadInicial(
+                            id, 
+                            producto.producto,
+                            producto.cantidad,
+                            producto.cantidad_inicial
+                        );
                     }
                 }
                 

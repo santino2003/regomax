@@ -1,5 +1,6 @@
 const despachoRepository = require('../repositories/despachoRepository');
 const bolsonRepository = require('../repositories/bolsonRepository');
+const db = require('../config/db');
 
 class DespachoService {
     async procesarDespacho(datosDespacho) {
@@ -45,7 +46,8 @@ class DespachoService {
                         despachoId,
                         codigoBolson,
                         bolson.producto,
-                        bolson.peso
+                        bolson.peso,
+                        bolson.precinto
                     );
                     
                     // Acumular peso por producto
@@ -117,11 +119,104 @@ class DespachoService {
     }
     
     async obtenerBolsonesDespachadosPorOrden(ordenId) {
-        // Busca todos los bolsones despachados asociados a la orden
-        const page = 1, limit = 1000; // Sin paginación para la vista de orden
-        const filtros = { ordenId };
-        const resultado = await despachoRepository.obtenerBolsonesDespachados(page, limit, filtros);
-        return resultado.data;
+        try {
+            // Para una orden específica, mostramos TODOS los bolsones (incluyendo los manuales)
+            const query = `
+                SELECT dd.id, dd.bolson_codigo, dd.producto, dd.peso, dd.precinto, dd.es_manual,
+                       d.fecha, d.responsable, d.orden_venta_id
+                FROM despachos_detalle dd
+                JOIN despachos d ON dd.despacho_id = d.id
+                WHERE d.orden_venta_id = ?
+                ORDER BY d.fecha DESC, dd.id DESC
+            `;
+            
+            const result = await db.query(query, [ordenId]);
+            return result;
+        } catch (error) {
+            console.error('Error al obtener bolsones despachados por orden:', error);
+            throw error;
+        }
+    }
+
+    // Procesar un despacho manual (sin escaneo de bolsones)
+    async procesarDespachoManual(datosDespacho) {
+        try {
+            // Validar datos
+            if (!datosDespacho.ordenVentaId) {
+                throw new Error('El ID de la orden de venta es obligatorio');
+            }
+            
+            if (!datosDespacho.productosManual || !Array.isArray(datosDespacho.productosManual) || datosDespacho.productosManual.length === 0) {
+                throw new Error('Se debe proporcionar al menos un producto para despachar manualmente');
+            }
+            
+            // Iniciar transacción para asegurar que todas las operaciones se hagan o ninguna
+            await despachoRepository.iniciarTransaccion();
+            
+            try {
+                // Crear el despacho principal con marca de manual
+                const observacionesCompletas = `[MANUAL] ${datosDespacho.observaciones || 'Despacho manual sin códigos'}`;
+                const despachoId = await despachoRepository.crearDespacho(
+                    datosDespacho.ordenVentaId,
+                    datosDespacho.responsable,
+                    observacionesCompletas
+                );
+                
+                const detalleActualizaciones = [];
+                
+                // Actualizar el peso despachado en la orden de venta para cada producto
+                for (const producto of datosDespacho.productosManual) {
+                    // Actualizar cantidad despachada en la orden
+                    const resultado = await despachoRepository.actualizarPesoProductoOrden(
+                        datosDespacho.ordenVentaId,
+                        producto.producto,
+                        parseFloat(producto.cantidad)
+                    );
+                    
+                    // Registrar en despacho_detalle con código especial para manuales
+                    const codigoManual = `MANUAL-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+                    await despachoRepository.agregarDetalleManual(
+                        despachoId,
+                        codigoManual,
+                        producto.producto,
+                        parseFloat(producto.cantidad)
+                    );
+                    
+                    detalleActualizaciones.push({
+                        producto: producto.producto,
+                        cantidad: parseFloat(producto.cantidad),
+                        ...resultado
+                    });
+                }
+                
+                // Verificar si la orden está completa (todos los productos en cantidad 0)
+                const ordenCompleta = await despachoRepository.verificarOrdenCompleta(datosDespacho.ordenVentaId);
+                
+                // Si está completa, actualizar el estado
+                if (ordenCompleta) {
+                    await despachoRepository.actualizarEstadoOrden(datosDespacho.ordenVentaId, 'en_logistica');
+                }
+                
+                // Confirmar todas las operaciones
+                await despachoRepository.confirmarTransaccion();
+                
+                // Devolver información sobre el despacho
+                return {
+                    despachoId,
+                    productosActualizados: detalleActualizaciones.length,
+                    actualizacionesProductos: detalleActualizaciones,
+                    ordenCompleta
+                };
+                
+            } catch (error) {
+                // Si hay algún error, revertir todas las operaciones
+                await despachoRepository.revertirTransaccion();
+                throw error;
+            }
+        } catch (error) {
+            console.error('Error en procesarDespachoManual:', error);
+            throw new Error(`Error al procesar despacho manual: ${error.message}`);
+        }
     }
 }
 
