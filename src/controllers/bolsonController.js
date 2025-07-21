@@ -1,5 +1,6 @@
 const bolsonService = require('../services/bolsonService');
 const productoService = require('../services/productoService'); // Añadimos esta importación
+const generarBarcodeBase64 = require('../utils/imageBarcode');
 
 const bolsonController = {
     async nuevoBolson(req, res) {
@@ -149,6 +150,15 @@ const bolsonController = {
                 return res.status(404).render('error', { 
                     message: 'Bolsón no encontrado'
                 });
+            }
+            
+            // Generar el código de barras en base64 si no existe
+            if (!bolson.barcodeBase64 && bolson.codigo) {
+                try {
+                    bolson.barcodeBase64 = await generarBarcodeBase64(bolson.codigo);
+                } catch (e) {
+                    console.error('Error al generar código de barras:', e);
+                }
             }
             
             // Obtener solo productos que están en stock para el desplegable

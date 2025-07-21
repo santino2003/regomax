@@ -71,22 +71,16 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 text-center">
-                                    <h6>Código</h6>
-                                    <strong class="fs-5"><%= bolson.codigo %></strong>
-                                    <p class="text-muted small mb-0">Creado el: <%= new Date(bolson.fecha).toLocaleDateString() %></p>
-                                </div>
+                            <div class="row justify-content-center">
                                 <% if (bolson.barcodeBase64) { %>
-                                <div class="col-md-6 text-center">
-                                    <h6>Código de Barras</h6>
+                                <div class="col-md-8 text-center">
                                     <img src="data:image/png;base64,<%= bolson.barcodeBase64 %>" 
                                          alt="Código de barras <%= bolson.codigo %>" 
-                                         class="img-fluid mb-2" 
-                                         style="max-width: 200px; border: 1px solid #dee2e6; padding: 10px; background: white;">
-                                    <div>
-                                        <button onclick="imprimirCodigo('<%= bolson.barcodeBase64 %>', '<%= bolson.codigo %>')" class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-printer me-1"></i>Imprimir
+                                         class="img-fluid mb-3" 
+                                         style="max-width: 250px; border: 1px solid #dee2e6; padding: 10px; background: white;">
+                                    <div class="mt-2">
+                                        <button type="button" onclick="imprimirCodigo('<%= bolson.barcodeBase64 %>', '<%= bolson.codigo %>')" class="btn btn-primary">
+                                            <i class="bi bi-printer me-1"></i>Reimprimir Código
                                         </button>
                                     </div>
                                 </div>

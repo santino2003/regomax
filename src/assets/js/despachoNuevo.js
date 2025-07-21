@@ -5,6 +5,11 @@ $(document).ready(function() {
     let bolsonesEscaneados = [];
     let totalPeso = 0;
     
+    // Botón de volver atrás
+    $('#btnVolver').on('click', function() {
+        window.history.back();
+    });
+    
     // Diccionario para rastrear bolsones escaneados por orden y evitar duplicados
     let bolsonesEscaneadosPorOrden = {};
     

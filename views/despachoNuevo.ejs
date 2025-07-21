@@ -55,9 +55,21 @@
                         <h4 class="menu-heading mb-0">
                             <i class="bi bi-truck me-2"></i>Despacho de Bolsones
                         </h4>
-                        <a href="/ordenes" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left me-2"></i>Volver a lista de órdenes
+                        <a href="/home" id="btnVolver" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Volver
                         </a>
+                        
+                        <!-- Script para manejar el botón volver -->
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                var btnVolver = document.getElementById('btnVolver');
+                                // Si existe un referrer (la página anterior), usamos eso
+                                if (document.referrer && document.referrer !== '') {
+                                    btnVolver.href = document.referrer;
+                                }
+                                // En caso contrario, nos quedamos con el href="/home" predeterminado
+                            });
+                        </script>
                     </div>
                     
                     <!-- Alert para mensajes -->
