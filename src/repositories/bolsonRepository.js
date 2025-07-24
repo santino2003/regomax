@@ -144,5 +144,100 @@ class BolsonRepository {
             }
         };
     }
+
+    /**
+     * Obtiene los bolsones que han sido despachados
+     * @param {number} page - Página actual
+     * @param {number} limit - Cantidad de items por página
+     * @param {string} sortBy - Campo por el cual ordenar
+     * @param {string} sortOrder - Orden de clasificación (ASC o DESC)
+     * @returns {Promise<Object>} Bolsones despachados con información de paginación
+     */
+    async obtenerDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
+        const offset = (page - 1) * limit;
+        const result = await db.query(
+            `SELECT * FROM bolsones WHERE despachado = 1 ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`,
+            [limit, offset]
+        );
+        const countResult = await db.query('SELECT COUNT(*) as total FROM bolsones WHERE despachado = 1');
+        const total = countResult[0].total;
+        return {
+            data: result,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
+    }
+
+    /**
+     * Obtiene todos los bolsones disponibles (que no han sido despachados)
+     * @returns {Promise<Array>} Array de bolsones disponibles
+     */
+    async obtenerBolsonesDisponibles() {
+        try {
+            const result = await db.query(`
+                SELECT 
+                    b.id, 
+                    b.codigo, 
+                    b.producto, 
+                    b.peso, 
+                    b.precinto, 
+                    b.fecha, 
+                    b.hora, 
+                    b.responsable,
+                    p.nombre AS nombreProducto
+                FROM 
+                    bolsones b
+                LEFT JOIN 
+                    productos p ON b.producto = p.id
+                WHERE 
+                    b.despachado = 0
+                ORDER BY 
+                    b.fecha DESC, b.id DESC
+            `);
+            return result;
+        } catch (error) {
+            console.error('Error en repositorio al obtener bolsones disponibles:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtiene todos los bolsones que no están asociados a ningún parte diario
+     * @returns {Promise<Array>} Array de bolsones no asociados
+     */
+    async obtenerBolsonesNoAsociados() {
+        try {
+            const result = await db.query(`
+                SELECT 
+                    b.id, 
+                    b.codigo, 
+                    b.producto, 
+                    b.peso, 
+                    b.precinto, 
+                    b.fecha, 
+                    b.hora, 
+                    b.responsable,
+                    p.nombre AS nombreProducto
+                FROM 
+                    bolsones b
+                LEFT JOIN 
+                    productos p ON b.producto = p.id
+                WHERE 
+                    (b.asociado_a_parte = 0 OR b.asociado_a_parte IS NULL)
+                    AND b.parte_diario_id IS NULL
+                ORDER BY 
+                    b.fecha ASC, b.id ASC
+            `);
+            return result;
+        } catch (error) {
+            console.error('Error en repositorio al obtener bolsones no asociados:', error);
+            throw error;
+        }
+    }
 }
+
 module.exports = new BolsonRepository();

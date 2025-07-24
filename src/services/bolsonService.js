@@ -131,6 +131,44 @@ class BolsonService {
     async obtenerNoDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
         return await bolsonRepository.obtenerNoDespachados(page, limit, sortBy, sortOrder);
     }
+
+    /**
+     * Obtiene los bolsones que han sido despachados
+     * @param {number} page - Página actual
+     * @param {number} limit - Cantidad de items por página
+     * @param {string} sortBy - Campo por el cual ordenar
+     * @param {string} sortOrder - Orden de clasificación (ASC o DESC)
+     * @returns {Promise<Object>} Bolsones despachados con información de paginación
+     */
+    async obtenerDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
+        return await bolsonRepository.obtenerDespachados(page, limit, sortBy, sortOrder);
+    }
+
+    /**
+     * Obtiene todos los bolsones disponibles (no despachados)
+     * @returns {Promise<Array>} Lista de bolsones disponibles
+     */
+    async obtenerBolsonesDisponibles() {
+        try {
+            return await bolsonRepository.obtenerBolsonesDisponibles();
+        } catch (error) {
+            console.error('Error en servicio al obtener bolsones disponibles:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtiene todos los bolsones pendientes de asociar a un parte diario
+     * @returns {Promise<Array>} Lista de bolsones pendientes de asociar
+     */
+    async obtenerBolsonesPendientes() {
+        try {
+            return await bolsonRepository.obtenerBolsonesNoAsociados();
+        } catch (error) {
+            console.error('Error en servicio al obtener bolsones pendientes:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new BolsonService();

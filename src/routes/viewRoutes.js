@@ -7,6 +7,7 @@ const bolsonController = require('../controllers/bolsonController');
 const OVController = require('../controllers/ordenDeVentaController');
 const productoController = require('../controllers/productoController');
 const despachoController = require('../controllers/despachoController');
+const parteDiarioController = require('../controllers/parteDiarioController');
 
 // Ruta base - redirigir a login
 router.get('/', (req, res) => {
@@ -42,6 +43,11 @@ router.get('/productos/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], 
 router.get('/despachos/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], despachoController.vistaCrearDespacho);
 router.get('/despachos/orden/:ordenId', [authMiddleware.verifyToken, noCacheMiddleware], despachoController.vistaVerDespachos);
 router.get('/bolsones-despachados', [authMiddleware.verifyToken, noCacheMiddleware], despachoController.vistaListarBolsonesDespachados);
+
+// Rutas de partes diarios
+router.get('/partes-diarios', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaListarPartesDiarios);
+router.get('/partes-diarios/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaNuevoParteDiario);
+router.get('/partes-diarios/:id', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaDetalleParteDiario);
 
 // Endpoint de logout
 router.get('/logout', (req, res) => {

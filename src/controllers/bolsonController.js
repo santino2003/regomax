@@ -144,12 +144,29 @@ const bolsonController = {
     async vistaEditarBolson(req, res) {
         try {
             const { id } = req.params;
-            const bolson = await bolsonService.obtenerPorId(id);
             
-            if (!bolson) {
-                return res.status(404).render('error', { 
-                    message: 'Bolsón no encontrado'
+            // Verificar si el ID es válido antes de buscar
+            if (!id || isNaN(parseInt(id))) {
+                return res.status(400).render('error', { 
+                    message: 'ID de bolsón inválido',
+                    error: { status: 400, stack: 'El ID proporcionado no es válido' }
                 });
+            }
+            
+            // Intentar obtener el bolsón
+            let bolson;
+            try {
+                bolson = await bolsonService.obtenerPorId(id);
+            } catch (error) {
+                // Si el error es específicamente "Bolsón no encontrado"
+                if (error.message.includes('Bolsón no encontrado')) {
+                    return res.status(404).render('error', { 
+                        message: `El bolsón con ID ${id} no existe o ha sido eliminado`,
+                        error: { status: 404, stack: error.message }
+                    });
+                }
+                // Para otros errores, propagarlos
+                throw error;
             }
             
             // Generar el código de barras en base64 si no existe
@@ -200,6 +217,47 @@ const bolsonController = {
                 message: 'Error al eliminar bolsón',
                 error: error.message
             });
+        }
+    },
+
+    /**
+     * Renderiza la vista de bolsones despachados
+     */
+    async vistaBolsonesDespachados(req, res) {
+        try {
+            // Parámetros de paginación para la vista
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            
+            // Obtener bolsones despachados (si existe este método en el servicio)
+            const resultado = await bolsonService.obtenerDespachados(page, limit, 'id', 'DESC');
+            
+            res.render('bolsonesDespachados', { 
+                username: req.user.username,
+                bolsones: resultado.data,
+                pagination: resultado.pagination
+            });
+        } catch (error) {
+            console.error('Error al renderizar vista de bolsones despachados:', error);
+            res.status(500).render('error', { 
+                message: 'Error al cargar la lista de bolsones despachados',
+                error: error
+            });
+        }
+    },
+
+    /**
+     * Obtiene todos los bolsones disponibles (no despachados)
+     * @param {Object} req - Objeto de solicitud
+     * @param {Object} res - Objeto de respuesta
+     */
+    async obtenerTodosLosBolsones(req, res) {
+        try {
+            const bolsones = await bolsonService.obtenerBolsonesDisponibles();
+            res.status(200).json({ success: true, bolsones });
+        } catch (error) {
+            console.error('Error al obtener bolsones:', error);
+            res.status(500).json({ success: false, message: 'Error al obtener bolsones', error: error.message });
         }
     }
 };

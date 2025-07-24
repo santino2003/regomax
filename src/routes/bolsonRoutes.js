@@ -1,14 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const bolsonController = require('../controllers/bolsonController');
+const auth = require('../middleware/auth');
 
-// Si usas autenticación, agrega el middleware aquí
-const authMiddleware = require('../middleware/auth');
 
-router.post('/nuevo', authMiddleware.verifyToken, bolsonController.nuevoBolson);
-router.get('/', authMiddleware.verifyToken, bolsonController.listarBolsones);
-router.get('/:id', authMiddleware.verifyToken, bolsonController.obtenerBolson);
-router.put('/:id', authMiddleware.verifyToken, bolsonController.actualizarBolson);
-router.delete('/:id', authMiddleware.verifyToken, bolsonController.eliminarBolson);
+// Rutas para vistas
+router.get('/nuevo', auth.verifyToken, bolsonController.vistaNuevoBolson);
+router.get('/listar', auth.verifyToken, bolsonController.vistaListarBolsones);
+router.get('/editar/:id', auth.verifyToken, bolsonController.vistaEditarBolson);
+router.get('/despachados', auth.verifyToken, bolsonController.vistaBolsonesDespachados);
+
+// Rutas para API
+router.post('/nuevo', auth.verifyToken, bolsonController.nuevoBolson);
+router.get('/get/:id', auth.verifyToken, bolsonController.obtenerBolson);
+router.put('/actualizar/:id', auth.verifyToken, bolsonController.actualizarBolson);
+router.delete('/eliminar/:id', auth.verifyToken, bolsonController.eliminarBolson);
+router.get('/all', auth.verifyToken, bolsonController.obtenerTodosLosBolsones);
 
 module.exports = router;

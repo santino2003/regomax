@@ -8,10 +8,11 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const bolsonRoutes = require('./routes/bolsonRoutes');
 const ordenDeVentaRoutes = require('./routes/ordenDeVentaRoutes');
-const despachoRoutes = require('./routes/despachoRoutes'); // Importamos las rutas de despacho
+const despachoRoutes = require('./routes/despachoRoutes');
+const parteDiarioRoutes = require('./routes/parteDiarioRoutes'); // Importamos las rutas del parte diario
 const viewRoutes = require('./routes/viewRoutes');
 const authMiddleware = require('./middleware/auth');
-const productoRoutes = require('./routes/api/productoRoutes'); // Nueva línea
+const productoRoutes = require('./routes/api/productoRoutes');
 
 // Crear aplicación Express
 const app = express();
@@ -37,7 +38,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/bolsones', bolsonRoutes);
 app.use('/api/ordenes', ordenDeVentaRoutes);
 app.use('/api/productos', productoRoutes);
-app.use('/api/despachos', despachoRoutes); // Registramos las rutas de despacho
+app.use('/api/despachos', despachoRoutes);
+app.use('/api/partes-diarios', parteDiarioRoutes); // Registramos las rutas del parte diario
 
 // Rutas de vistas
 app.use('/', viewRoutes);
