@@ -95,45 +95,104 @@ $(document).ready(function() {
     $('#formNuevoParteDiario').on('submit', function(e) {
         e.preventDefault();
         
-        // Recopilar todos los datos del formulario
+        // Recopilar todos los datos del formulario en formato FormData
+        const formEl = document.getElementById('formNuevoParteDiario');
         const formData = {};
-        const dataArray = $(this).serializeArray();
         
-        // Procesar los campos del formulario
-        dataArray.forEach(item => {
-            // Manejar los campos anidados (con notación punto)
-            if (item.name.includes('.')) {
-                const parts = item.name.split('.');
-                if (!formData[parts[0]]) {
-                    formData[parts[0]] = {};
-                }
-                formData[parts[0]][parts[1]] = item.value;
-            } 
-            // Manejar arrays (con notación [])
-            else if (item.name.includes('[')) {
-                const matches = item.name.match(/([^\[]+)\[(\d+)\]\.(.+)/);
-                if (matches) {
-                    const [, arrayName, index, property] = matches;
-                    if (!formData[arrayName]) {
-                        formData[arrayName] = [];
-                    }
-                    if (!formData[arrayName][index]) {
-                        formData[arrayName][index] = {};
-                    }
-                    formData[arrayName][index][property] = item.value;
-                } else {
-                    formData[item.name] = item.value;
-                }
-            } 
-            // Campos normales
-            else {
-                formData[item.name] = item.value;
-            }
+        // Obtener datos básicos
+        formData.fecha = $('#fecha').val();
+        formData.turno = $('#turno').val();
+        
+        // Procesar datos de control (paso 2)
+        formData.datosControl = {};
+        const controlInputs = formEl.querySelectorAll('[name^="datosControl."]');
+        controlInputs.forEach(input => {
+            const fieldName = input.name.replace('datosControl.', '');
+            formData.datosControl[fieldName] = input.value;
         });
+        
+        // Procesar datos de grupos (paso 3)
+        formData.grupos = [];
+        
+        // Procesar G1
+        const grupoG1 = {
+            nombre: 'G1',
+            kgPorHora: $('#kgPorHoraG1').val() || null,
+            porcentajeCarga: $('#porcentajeCargaG1').val() || null,
+            porcentajeDebajo3350: $('#porcentajeDebajo3350G1').val() || null,
+            criba: $('#cribaG1').val() || null
+        };
+        formData.grupos.push(grupoG1);
+        
+        // Procesar G2
+        const grupoG2 = {
+            nombre: 'G2',
+            kgPorHora: $('#kgPorHoraG2').val() || null,
+            porcentajeCarga: $('#porcentajeCargaG2').val() || null,
+            porcentajeDebajo3350: $('#porcentajeDebajo3350G2').val() || null,
+            criba: $('#cribaG2').val() || null
+        };
+        formData.grupos.push(grupoG2);
+        
+        // Procesar G3
+        const grupoG3 = {
+            nombre: 'G3',
+            kgPorHora: $('#kgPorHoraG3').val() || null,
+            porcentajeCarga: $('#porcentajeCargaG3').val() || null,
+            porcentajeDebajo3350: $('#porcentajeDebajo3350G3').val() || null,
+            criba: $('#cribaG3').val() || null
+        };
+        formData.grupos.push(grupoG3);
+        
+        // Procesar G4
+        const grupoG4 = {
+            nombre: 'G4',
+            kgPorHora: $('#kgPorHoraG4').val() || null,
+            porcentajeCarga: $('#porcentajeCargaG4').val() || null,
+            porcentajeDebajo3350: $('#porcentajeDebajo3350G4').val() || null,
+            criba: $('#cribaG4').val() || null
+        };
+        formData.grupos.push(grupoG4);
+        
+        // Procesar checklist de pala mecánica (paso 4) - Aplanar la estructura para el backend
+        formData.checkListPala = {
+            horasEquipo: $('#horasEquipo').val() || null,
+            horometro: $('#horometro').val() || null
+        };
+        
+        // Agregar propiedades aplanadas para nivel de combustible
+        formData.checkListPala.nivelCombustibleEstado = $('#nivelCombustibleEstado').val() || null;
+        formData.checkListPala.nivelCombustibleObs = $('#nivelCombustibleObs').val() || null;
+        
+        // Agregar propiedades aplanadas para nivel de refrigerante
+        formData.checkListPala.nivelRefrigeranteEstado = $('#nivelRefrigeranteEstado').val() || null;
+        formData.checkListPala.nivelRefrigeranteObs = $('#nivelRefrigeranteObs').val() || null;
+        
+        // Agregar propiedades aplanadas para nivel de aceite motor
+        formData.checkListPala.nivelAceiteMotorEstado = $('#nivelAceiteMotorEstado').val() || null;
+        formData.checkListPala.nivelAceiteMotorObs = $('#nivelAceiteMotorObs').val() || null;
+        
+        // Agregar propiedades aplanadas para nivel de aceite hidráulico
+        formData.checkListPala.nivelAceiteHidraulicoEstado = $('#nivelAceiteHidraulicoEstado').val() || null;
+        formData.checkListPala.nivelAceiteHidraulicoObs = $('#nivelAceiteHidraulicoObs').val() || null;
+        
+        // Agregar propiedades aplanadas para filtro aire motor
+        formData.checkListPala.filtroAireMotorEstado = $('#filtroAireMotorEstado').val() || null;
+        formData.checkListPala.filtroAireMotorObs = $('#filtroAireMotorObs').val() || null;
+        
+        // Agregar propiedades aplanadas para presión neumáticos
+        formData.checkListPala.presionNeumaticosEstado = $('#presionNeumaticosEstado').val() || null;
+        formData.checkListPala.presionNeumaticosObs = $('#presionNeumaticosObs').val() || null;
+        
+        // Agregar propiedades aplanadas para limpieza general
+        formData.checkListPala.limpiezaGeneralEstado = $('#limpiezaGeneralEstado').val() || null;
+        formData.checkListPala.limpiezaGeneralObs = $('#limpiezaGeneralObs').val() || null;
         
         // Deshabilitar botón durante la operación
         const $btnSubmit = $('#submitForm');
         $btnSubmit.prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Guardando...');
+        
+        console.log('Datos a enviar:', formData); // Log para depuración
         
         // Enviar datos al servidor
         fetch('/api/partes-diarios/nuevo', {

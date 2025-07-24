@@ -4,7 +4,7 @@ const bolsonRepository = require('../repositories/bolsonRepository');
 class ParteDiarioService {
     async crearParteDiario(datosCompletos) {
         try {
-            const { fecha, turno, datosControl, grupos } = datosCompletos;
+            const { fecha, turno, datosControl, grupos, checkListPala } = datosCompletos;
 
             if (!fecha || !turno || !datosControl) {
                 throw new Error('Datos incompletos para crear el parte diario');
@@ -36,6 +36,19 @@ class ParteDiarioService {
                         grupo.criba
                     );
                 }
+            }
+            
+            // Si hay datos de checklist de pala, agregarlos
+            if (checkListPala) {
+                // Convertir valores booleanos para el checklist
+                const checklistFormateado = {};
+                
+                // Procesar cada campo del checklist convirtiéndolo a valor booleano (0/1)
+                for (const [campo, valor] of Object.entries(checkListPala)) {
+                    checklistFormateado[campo] = this._convertirABooleano(valor);
+                }
+                
+                await parteDiarioRepository.agregarChecklistPala(parteDiarioId, checklistFormateado);
             }
 
             // Obtener todos los bolsones que no están asociados a ningún parte diario

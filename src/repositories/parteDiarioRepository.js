@@ -4,6 +4,13 @@ class ParteDiarioRepository {
     // Crear un nuevo parte diario - Datos de control
     async crearParteDiario(fecha, turno, datos) {
         try {
+            // Procesar valores decimales para convertir cadenas vacías en NULL
+            const cosFi = datos.cosFi === '' ? null : datos.cosFi;
+            const temperaturaLiqHidT1 = datos.temperaturaLiqHidT1 === '' ? null : datos.temperaturaLiqHidT1;
+            const temperaturaSalidaG1 = datos.temperaturaSalidaG1 === '' ? null : datos.temperaturaSalidaG1;
+            const temperaturaSalidaG2 = datos.temperaturaSalidaG2 === '' ? null : datos.temperaturaSalidaG2;
+            const temperaturaSalidaG3 = datos.temperaturaSalidaG3 === '' ? null : datos.temperaturaSalidaG3;
+
             // Insertar el encabezado del parte diario
             const query = `
                 INSERT INTO partes_diarios (fecha, turno, cos_fi, protecciones_vallas, 
@@ -17,16 +24,16 @@ class ParteDiarioRepository {
             const result = await db.query(query, [
                 fecha,
                 turno,
-                datos.cosFi,
+                cosFi,
                 datos.proteccionesVallas,
                 datos.pref1EncendidoVacio,
                 datos.nivelLiquidoHidraulicoT1,
                 datos.nivelLiquidoCajaT1,
                 datos.nivelLiqHidraulicoD1,
-                datos.temperaturaLiqHidT1,
-                datos.temperaturaSalidaG1,
-                datos.temperaturaSalidaG2,
-                datos.temperaturaSalidaG3,
+                temperaturaLiqHidT1,
+                temperaturaSalidaG1,
+                temperaturaSalidaG2,
+                temperaturaSalidaG3,
                 datos.responsable || null
             ]);
             
@@ -98,6 +105,130 @@ class ParteDiarioRepository {
         }
     }
     
+    /**
+     * Agrega los datos del checklist de pala mecánica a un parte diario específico
+     * @param {number} parteDiarioId - ID del parte diario
+     * @param {Object} checklistData - Datos del checklist de la pala
+     * @returns {Promise<boolean>} - Resultado de la operación
+     */
+    async agregarChecklistPala(parteDiarioId, checklistData) {
+        try {
+            // Actualizar la estructura de la tabla para incluir todos los campos necesarios
+            await db.query(`
+                CREATE TABLE IF NOT EXISTS parte_diario_checklist_pala (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    parte_diario_id INT NOT NULL,
+                    horas_equipo VARCHAR(20) DEFAULT NULL,
+                    horometro VARCHAR(20) DEFAULT NULL,
+                    nivel_combustible_estado VARCHAR(10) DEFAULT NULL,
+                    nivel_combustible_obs TEXT DEFAULT NULL,
+                    nivel_refrigerante_estado VARCHAR(10) DEFAULT NULL,
+                    nivel_refrigerante_obs TEXT DEFAULT NULL,
+                    nivel_aceite_motor_estado VARCHAR(10) DEFAULT NULL,
+                    nivel_aceite_motor_obs TEXT DEFAULT NULL,
+                    nivel_aceite_hidraulico_estado VARCHAR(10) DEFAULT NULL,
+                    nivel_aceite_hidraulico_obs TEXT DEFAULT NULL,
+                    filtro_aire_motor_estado VARCHAR(10) DEFAULT NULL,
+                    filtro_aire_motor_obs TEXT DEFAULT NULL,
+                    presion_neumaticos_estado VARCHAR(10) DEFAULT NULL,
+                    presion_neumaticos_obs TEXT DEFAULT NULL,
+                    limpieza_general_estado VARCHAR(10) DEFAULT NULL,
+                    limpieza_general_obs TEXT DEFAULT NULL,
+                    nivel_aceite_motor INT DEFAULT 0,
+                    nivel_agua_radiador INT DEFAULT 0,
+                    nivel_aceite_hidraulico INT DEFAULT 0,
+                    nivel_combustible INT DEFAULT 0,
+                    luces INT DEFAULT 0,
+                    estado_neumaticos INT DEFAULT 0,
+                    estado_cuchara INT DEFAULT 0,
+                    cinturon_seguridad INT DEFAULT 0,
+                    freno_mano INT DEFAULT 0,
+                    freno_servicio INT DEFAULT 0,
+                    alarma_retroceso INT DEFAULT 0,
+                    bocina INT DEFAULT 0,
+                    matafuego INT DEFAULT 0,
+                    sistema_levante INT DEFAULT 0,
+                    fugas_aceite INT DEFAULT 0,
+                    fugas_agua INT DEFAULT 0,
+                    fugas_aire INT DEFAULT 0,
+                    estado_vidrios INT DEFAULT 0,
+                    observaciones TEXT DEFAULT NULL,
+                    fecha_creacion DATETIME DEFAULT NULL,
+                    UNIQUE KEY unique_parte_diario (parte_diario_id),
+                    FOREIGN KEY (parte_diario_id) REFERENCES partes_diarios(id) ON DELETE CASCADE
+                )
+            `);
+            
+            // Preparar la consulta dinámica con los campos disponibles
+            const campos = [];
+            const placeholders = [];
+            const valores = [];
+            
+            // Agregar el ID del parte diario
+            campos.push('parte_diario_id');
+            placeholders.push('?');
+            valores.push(parteDiarioId);
+            
+            // Agregar fecha de creación
+            campos.push('fecha_creacion');
+            placeholders.push('?');
+            valores.push(new Date());
+            
+            // Agregar todos los campos del checklist que estén presentes
+            for (const [campo, valor] of Object.entries(checklistData)) {
+                // Convertir el nombre del campo a formato de base de datos (snake_case)
+                const dbCampo = campo.replace(/([A-Z])/g, '_$1').toLowerCase();
+                
+                // Solo agregar si el valor no es undefined
+                if (typeof valor !== 'undefined') {
+                    campos.push(dbCampo);
+                    placeholders.push('?');
+                    valores.push(valor);
+                }
+            }
+            
+            // Crear la consulta SQL dinámica
+            const query = `
+                INSERT INTO parte_diario_checklist_pala (${campos.join(', ')})
+                VALUES (${placeholders.join(', ')})
+                ON DUPLICATE KEY UPDATE 
+                ${campos.slice(1).map(campo => `${campo} = VALUES(${campo})`).join(', ')}
+            `;
+            
+            await db.query(query, valores);
+            
+            return true;
+        } catch (error) {
+            console.error('Error al agregar checklist de pala al parte diario:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Obtiene los datos del checklist de pala mecánica de un parte diario específico
+     * @param {number} parteDiarioId - ID del parte diario
+     * @returns {Promise<Object|null>} - Datos del checklist o null si no existe
+     */
+    async obtenerChecklistPala(parteDiarioId) {
+        try {
+            const query = `
+                SELECT * FROM parte_diario_checklist_pala
+                WHERE parte_diario_id = ?
+            `;
+            
+            const resultado = await db.query(query, [parteDiarioId]);
+            
+            if (resultado && resultado.length > 0) {
+                return resultado[0];
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Error al obtener checklist de pala:', error);
+            throw error;
+        }
+    }
+    
     // Obtener un parte diario específico con sus grupos
     async obtenerParteDiarioPorId(id) {
         try {
@@ -128,10 +259,19 @@ class ParteDiarioRepository {
             
             const grupos = await db.query(queryGrupos, [id]);
             
+            // Consulta para obtener el checklist de la pala
+            const queryChecklist = `
+                SELECT * FROM parte_diario_checklist_pala
+                WHERE parte_diario_id = ?
+            `;
+            
+            const checklist = await db.query(queryChecklist, [id]);
+            
             // Combinar los resultados
             return {
                 ...parte[0],
-                grupos: grupos
+                grupos: grupos,
+                checklistPala: checklist.length > 0 ? checklist[0] : null
             };
         } catch (error) {
             console.error('Error al obtener parte diario por ID:', error);
