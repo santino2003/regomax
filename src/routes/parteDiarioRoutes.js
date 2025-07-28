@@ -7,8 +7,8 @@ const authMiddleware = require('../middleware/auth');
 router.use(authMiddleware.verifyToken);
 
 // Rutas de API para Parte Diario
-router.post('/nuevo', parteDiarioController.crearParteDiario);
-router.get('/', parteDiarioController.listarPartesDiarios);
-router.get('/:id', parteDiarioController.obtenerParteDiario);
+router.post('/nuevo',authMiddleware.verifyToken ,parteDiarioController.crearParteDiario);
+router.get('/', authMiddleware.verifyToken,parteDiarioController.listarPartesDiarios);
+router.get('/:id', authMiddleware.verifyToken,parteDiarioController.obtenerParteDiario);
 
 module.exports = router;

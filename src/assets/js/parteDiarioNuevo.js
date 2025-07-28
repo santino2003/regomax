@@ -154,39 +154,27 @@ $(document).ready(function() {
         };
         formData.grupos.push(grupoG4);
         
-        // Procesar checklist de pala mecánica (paso 4) - Aplanar la estructura para el backend
+        // Procesar checklist de pala mecánica (paso 4) - NUEVO FORMATO SIMPLIFICADO
         formData.checkListPala = {
+            // Corregido para usar horasEquipo en vez de horas_trabajadas
             horasEquipo: $('#horasEquipo').val() || null,
-            horometro: $('#horometro').val() || null
+            
+            // Observaciones generales
+            observaciones: $('#observacionesGenerales').val() || null,
+            
+            // Campos de checklist simplificados (solo el estado, sin estructura anidada)
+            nivel_combustible: $('[name="checkListPala.nivelCombustible.estado"]').val() || null,
+            sopleteado_radiadores: $('[name="checkListPala.sopleteadoRadiadores.estado"]').val() || null,
+            nivel_refrigerante: $('[name="checkListPala.nivelRefrigerante.estado"]').val() || null,
+            nivel_aceite_motor: $('[name="checkListPala.nivelAceiteMotor.estado"]').val() || null,
+            nivel_liquido_hidraulico: $('[name="checkListPala.nivelLiquidoHidraulico.estado"]').val() || null,
+            control_luces: $('[name="checkListPala.controlLuces.estado"]').val() || null,
+            sistemas_art: $('[name="checkListPala.sistemasART.estado"]').val() || null,
+            limpieza_interior: $('[name="checkListPala.limpiezaInterior.estado"]').val() || null,
+            control_alambres: $('[name="checkListPala.controlAlambres.estado"]').val() || null,
+            lavado_exterior: $('[name="checkListPala.lavadoExterior.estado"]').val() || null,
+            engrase_general: $('[name="checkListPala.engraseGeneral.estado"]').val() || null
         };
-        
-        // Agregar propiedades aplanadas para nivel de combustible
-        formData.checkListPala.nivelCombustibleEstado = $('#nivelCombustibleEstado').val() || null;
-        formData.checkListPala.nivelCombustibleObs = $('#nivelCombustibleObs').val() || null;
-        
-        // Agregar propiedades aplanadas para nivel de refrigerante
-        formData.checkListPala.nivelRefrigeranteEstado = $('#nivelRefrigeranteEstado').val() || null;
-        formData.checkListPala.nivelRefrigeranteObs = $('#nivelRefrigeranteObs').val() || null;
-        
-        // Agregar propiedades aplanadas para nivel de aceite motor
-        formData.checkListPala.nivelAceiteMotorEstado = $('#nivelAceiteMotorEstado').val() || null;
-        formData.checkListPala.nivelAceiteMotorObs = $('#nivelAceiteMotorObs').val() || null;
-        
-        // Agregar propiedades aplanadas para nivel de aceite hidráulico
-        formData.checkListPala.nivelAceiteHidraulicoEstado = $('#nivelAceiteHidraulicoEstado').val() || null;
-        formData.checkListPala.nivelAceiteHidraulicoObs = $('#nivelAceiteHidraulicoObs').val() || null;
-        
-        // Agregar propiedades aplanadas para filtro aire motor
-        formData.checkListPala.filtroAireMotorEstado = $('#filtroAireMotorEstado').val() || null;
-        formData.checkListPala.filtroAireMotorObs = $('#filtroAireMotorObs').val() || null;
-        
-        // Agregar propiedades aplanadas para presión neumáticos
-        formData.checkListPala.presionNeumaticosEstado = $('#presionNeumaticosEstado').val() || null;
-        formData.checkListPala.presionNeumaticosObs = $('#presionNeumaticosObs').val() || null;
-        
-        // Agregar propiedades aplanadas para limpieza general
-        formData.checkListPala.limpiezaGeneralEstado = $('#limpiezaGeneralEstado').val() || null;
-        formData.checkListPala.limpiezaGeneralObs = $('#limpiezaGeneralObs').val() || null;
         
         // Deshabilitar botón durante la operación
         const $btnSubmit = $('#submitForm');

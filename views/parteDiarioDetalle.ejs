@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Regomax</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-key me-1"></i> Cambiar contraseña</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-clipboard-data me-2"></i><%= title %>
+                        </h4>
+                        <div>
+                            <a href="/partes-diarios" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Volver a la lista
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Información General -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-info-circle me-2"></i>Información General
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <p class="mb-1"><strong>Fecha:</strong></p>
+                                    <p><%= new Date(parteDiario.fecha).toLocaleDateString() %></p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p class="mb-1"><strong>Turno:</strong></p>
+                                    <p><%= parteDiario.turno %></p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p class="mb-1"><strong>Responsable:</strong></p>
+                                    <p><%= parteDiario.responsable || 'No especificado' %></p>
+                                </div>
+                                <div class="col-md-3">
+                                    <p class="mb-1"><strong>COS (fi):</strong></p>
+                                    <p><%= parteDiario.cos_fi || 'No registrado' %></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Control Diario -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-clipboard-check me-2"></i>Control Diario
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Protecciones y vallas:</strong></p>
+                                    <p>
+                                        <% if(parteDiario.protecciones_vallas === 1 || parteDiario.protecciones_vallas === '1') { %>
+                                            <span class="badge bg-success">OK</span>
+                                        <% } else if(parteDiario.protecciones_vallas === 0 || parteDiario.protecciones_vallas === '0') { %>
+                                            <span class="badge bg-danger">NO OK</span>
+                                        <% } else { %>
+                                            <%= parteDiario.protecciones_vallas || 'No registrado' %>
+                                        <% } %>
+                                    </p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>PREF1 encendido y vacío:</strong></p>
+                                    <p>
+                                        <% if(parteDiario.pref1_encendido_vacio === 1 || parteDiario.pref1_encendido_vacio === '1') { %>
+                                            <span class="badge bg-success">OK</span>
+                                        <% } else if(parteDiario.pref1_encendido_vacio === 0 || parteDiario.pref1_encendido_vacio === '0') { %>
+                                            <span class="badge bg-danger">NO OK</span>
+                                        <% } else { %>
+                                            <%= parteDiario.pref1_encendido_vacio || 'No registrado' %>
+                                        <% } %>
+                                    </p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Nivel líquido hidráulico T1:</strong></p>
+                                    <p>
+                                        <% if(parteDiario.nivel_liquido_hidraulico_t1 === 1 || parteDiario.nivel_liquido_hidraulico_t1 === '1') { %>
+                                            <span class="badge bg-success">OK</span>
+                                        <% } else if(parteDiario.nivel_liquido_hidraulico_t1 === 0 || parteDiario.nivel_liquido_hidraulico_t1 === '0') { %>
+                                            <span class="badge bg-danger">NO OK</span>
+                                        <% } else { %>
+                                            <%= parteDiario.nivel_liquido_hidraulico_t1 || 'No registrado' %>
+                                        <% } %>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Nivel líquido caja T1:</strong></p>
+                                    <p>
+                                        <% if(parteDiario.nivel_liquido_caja_t1 === 1 || parteDiario.nivel_liquido_caja_t1 === '1') { %>
+                                            <span class="badge bg-success">OK</span>
+                                        <% } else if(parteDiario.nivel_liquido_caja_t1 === 0 || parteDiario.nivel_liquido_caja_t1 === '0') { %>
+                                            <span class="badge bg-danger">NO OK</span>
+                                        <% } else { %>
+                                            <%= parteDiario.nivel_liquido_caja_t1 || 'No registrado' %>
+                                        <% } %>
+                                    </p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Nivel líq. hidráulico D1:</strong></p>
+                                    <p>
+                                        <% if(parteDiario.nivel_liq_hidraulico_d1 === 1 || parteDiario.nivel_liq_hidraulico_d1 === '1') { %>
+                                            <span class="badge bg-success">OK</span>
+                                        <% } else if(parteDiario.nivel_liq_hidraulico_d1 === 0 || parteDiario.nivel_liq_hidraulico_d1 === '0') { %>
+                                            <span class="badge bg-danger">NO OK</span>
+                                        <% } else { %>
+                                            <%= parteDiario.nivel_liq_hidraulico_d1 || 'No registrado' %>
+                                        <% } %>
+                                    </p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Temperatura líq. hid. T1:</strong></p>
+                                    <p><%= parteDiario.temperatura_liq_hid_t1 ? parteDiario.temperatura_liq_hid_t1 + ' °C' : 'No registrado' %></p>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Temperatura salida G1:</strong></p>
+                                    <p><%= parteDiario.temperatura_salida_g1 ? parteDiario.temperatura_salida_g1 + ' °C' : 'No registrado' %></p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Temperatura salida G2:</strong></p>
+                                    <p><%= parteDiario.temperatura_salida_g2 ? parteDiario.temperatura_salida_g2 + ' °C' : 'No registrado' %></p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Temperatura salida G3:</strong></p>
+                                    <p><%= parteDiario.temperatura_salida_g3 ? parteDiario.temperatura_salida_g3 + ' °C' : 'No registrado' %></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Grupos -->
+                    <% if (parteDiario.grupos && parteDiario.grupos.length > 0) { %>
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-gear-wide-connected me-2"></i>Datos de Granuladores
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <% parteDiario.grupos.forEach(grupo => { %>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-light">
+                                                    <h6 class="mb-0"><i class="bi bi-gear me-2"></i>Grupo <%= grupo.grupo %></h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="mb-2"><strong>Kg por hora:</strong> <%= grupo.kg_por_hora || 'No registrado' %> kg/h</p>
+                                                    <p class="mb-2"><strong>Porcentaje de carga:</strong> <%= grupo.porcentaje_carga || 'No registrado' %> %</p>
+                                                    <p class="mb-2"><strong>Porcentaje debajo 3350:</strong> <%= grupo.porcentaje_debajo_3350 || 'No registrado' %> %</p>
+                                                    <p class="mb-0"><strong>Criba:</strong> <%= grupo.criba || 'No registrado' %></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <!-- Checklist de Pala Mecánica -->
+                    <% if (parteDiario.checklistPala) { %>
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-list-check me-2"></i>Checklist de Pala Mecánica
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <p class="mb-1"><strong>Horas del equipo:</strong></p>
+                                        <p><%= parteDiario.checklistPala.horas_trabajadas || 'No registrado' %> hs</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 75%">Ítem</th>
+                                                <th style="width: 25%">Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% 
+                                            // Array de elementos a mostrar del checklist
+                                            const checklistItems = [
+                                                { name: 'Nivel de combustible', estado: parteDiario.checklistPala.nivel_combustible },
+                                                { name: 'Sopleteado de radiadores', estado: parteDiario.checklistPala.sopleteado_radiadores },
+                                                { name: 'Nivel refrigerante', estado: parteDiario.checklistPala.nivel_refrigerante },
+                                                { name: 'Nivel aceite motor', estado: parteDiario.checklistPala.nivel_aceite_motor },
+                                                { name: 'Nivel líquido hidráulico', estado: parteDiario.checklistPala.nivel_liquido_hidraulico },
+                                                { name: 'Control luces', estado: parteDiario.checklistPala.control_luces },
+                                                { name: 'Sistemas ART', estado: parteDiario.checklistPala.sistemas_art },
+                                                { name: 'Limpieza interior', estado: parteDiario.checklistPala.limpieza_interior },
+                                                { name: 'Control alambres', estado: parteDiario.checklistPala.control_alambres },
+                                                { name: 'Lavado exterior', estado: parteDiario.checklistPala.lavado_exterior },
+                                                { name: 'Engrase general', estado: parteDiario.checklistPala.engrase_general }
+                                            ];
+                                            %>
+                                            
+                                            <% checklistItems.forEach(item => { %>
+                                                <tr>
+                                                    <td><%= item.name %></td>
+                                                    <td class="text-center">
+                                                        <% if (item.estado == 1) { %>
+                                                            <span class="badge bg-success">OK</span>
+                                                        <% } else if (item.estado == 0) { %>
+                                                            <span class="badge bg-danger">NO OK</span>
+                                                        <% } else { %>
+                                                            <span class="badge bg-secondary">N/A</span>
+                                                        <% } %>
+                                                    </td>
+                                                </tr>
+                                            <% }); %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h6><i class="bi bi-chat-right-text me-2"></i>Observaciones Generales:</h6>
+                                    <p class="border p-3 rounded bg-light">
+                                        <%= parteDiario.checklistPala.observaciones || 'Sin observaciones adicionales' %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <!-- Bolsones Asociados -->
+                    <% if (parteDiario.bolsones && parteDiario.bolsones.length > 0) { %>
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-box me-2"></i>Bolsones Asociados
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Código</th>
+                                                <th>Producto</th>
+                                                <th>Peso (kg)</th>
+                                                <th>Precinto</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% parteDiario.bolsones.forEach(bolson => { %>
+                                                <tr>
+                                                    <td><strong><%= bolson.codigo %></strong></td>
+                                                    <td><%= bolson.producto || 'No especificado' %></td>
+                                                    <td><%= bolson.peso %> kg</td>
+                                                    <td><%= bolson.precinto || 'N/A' %></td>
+                                                    <td>
+                                                        <% if (bolson.despachado) { %>
+                                                            <span class="badge bg-success">Despachado</span>
+                                                        <% } else { %>
+                                                            <span class="badge bg-warning">En Stock</span>
+                                                        <% } %>
+                                                    </td>
+                                                </tr>
+                                            <% }); %>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="2" class="text-end"><strong>Total:</strong></td>
+                                                <td colspan="3"><strong><%= parteDiario.bolsones.reduce((sum, b) => sum + parseFloat(b.peso || 0), 0).toFixed(2) %> kg</strong></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-primary"><%= parteDiario.bolsones.length %> bolsones en total</span>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col">
+                <a href="/partes-diarios" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Volver a la lista
+                </a>
+                
+                <a href="/partes-diarios/<%= parteDiario.id %>" class="btn btn-primary">
+                    <i class="bi bi-pencil me-2"></i>Editar
+                </a>
+                
+                <button type="button" class="btn btn-danger" id="btnEliminar" data-id="<%= parteDiario.id %>">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación para Eliminar -->
+    <div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar este parte diario? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Common JS (Para funcionalidades compartidas como logout) -->
+    <script src="/assets/js/common.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Modal de confirmación para eliminar
+            let parteDiarioIdAEliminar;
+            
+            $('#btnEliminar').on('click', function() {
+                parteDiarioIdAEliminar = $(this).data('id');
+                $('#eliminarModal').modal('show');
+            });
+            
+            $('#btnConfirmarEliminar').on('click', function() {
+                // Enviar solicitud para eliminar el parte diario
+                $.ajax({
+                    url: `/api/partes-diarios/${parteDiarioIdAEliminar}`,
+                    method: 'DELETE',
+                    success: function(response) {
+                        if (response.success) {
+                            // Redireccionar a la lista de partes diarios
+                            window.location.href = '/partes-diarios';
+                        } else {
+                            alert('Error al eliminar: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Error de conexión al intentar eliminar el parte diario');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

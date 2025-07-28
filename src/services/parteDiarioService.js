@@ -40,13 +40,27 @@ class ParteDiarioService {
             
             // Si hay datos de checklist de pala, agregarlos
             if (checkListPala) {
-                // Convertir valores booleanos para el checklist
+                // Formatear el checklist separando los campos booleanos de los numéricos y de texto
                 const checklistFormateado = {};
                 
-                // Procesar cada campo del checklist convirtiéndolo a valor booleano (0/1)
+                // Procesar cada campo del checklist
                 for (const [campo, valor] of Object.entries(checkListPala)) {
-                    checklistFormateado[campo] = this._convertirABooleano(valor);
+                    if (campo === 'horasEquipo') {
+                        // Las horas del equipo se guardan como horas_trabajadas y conservamos el valor numérico
+                        checklistFormateado['horas_trabajadas'] = valor !== null && valor !== '' ? parseFloat(valor) : null;
+                    } 
+                    else if (campo === 'observaciones') {
+                        // Las observaciones se conservan como texto
+                        checklistFormateado[campo] = valor;
+                    }
+                    else {
+                        // Para los demás campos (los estados de cada ítem del checklist), se convierten a booleano
+                        checklistFormateado[campo] = this._convertirABooleano(valor);
+                    }
                 }
+                
+                // Log para depuración
+                console.log('ChecklistPala formateado para la BD:', checklistFormateado);
                 
                 await parteDiarioRepository.agregarChecklistPala(parteDiarioId, checklistFormateado);
             }

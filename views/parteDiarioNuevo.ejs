@@ -457,9 +457,8 @@
                                         <table class="table table-bordered">
                                             <thead class="table-light">
                                                 <tr>
-                                                    <th style="width: 60%">Ítem</th>
-                                                    <th class="text-center" style="width: 20%">Estado</th>
-                                                    <th class="text-center" style="width: 20%">Observaciones</th>
+                                                    <th style="width: 75%">Ítem</th>
+                                                    <th class="text-center" style="width: 25%">Estado</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -472,9 +471,6 @@
                                                             <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.nivelCombustible.observaciones">
-                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Sopleteado de radiadores y filtros</td>
@@ -484,9 +480,6 @@
                                                             <option value="NO OK">NO OK</option>
                                                             <option value="N/A">N/A</option>
                                                         </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.sopleteadoRadiadores.observaciones">
                                                     </td>
                                                 </tr>
                                                 <tr>
@@ -498,9 +491,6 @@
                                                             <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.nivelRefrigerante.observaciones">
-                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Control de nivel de aceite motor</td>
@@ -510,9 +500,6 @@
                                                             <option value="NO OK">NO OK</option>
                                                             <option value="N/A">N/A</option>
                                                         </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.nivelAceiteMotor.observaciones">
                                                     </td>
                                                 </tr>
                                                 <tr>
@@ -524,9 +511,6 @@
                                                             <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.nivelLiquidoHidraulico.observaciones">
-                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Control de luces</td>
@@ -536,9 +520,6 @@
                                                             <option value="NO OK">NO OK</option>
                                                             <option value="N/A">N/A</option>
                                                         </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.controlLuces.observaciones">
                                                     </td>
                                                 </tr>
                                                 <tr>
@@ -550,9 +531,6 @@
                                                             <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.sistemasART.observaciones">
-                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Limpieza interior + desinfección*</td>
@@ -562,9 +540,6 @@
                                                             <option value="NO OK">NO OK</option>
                                                             <option value="N/A">N/A</option>
                                                         </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.limpiezaInterior.observaciones">
                                                     </td>
                                                 </tr>
                                                 <tr>
@@ -576,9 +551,6 @@
                                                             <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.controlAlambres.observaciones">
-                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Lavado exterior</td>
@@ -589,9 +561,6 @@
                                                             <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.lavadoExterior.observaciones">
-                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td>Engrase general</td>
@@ -601,9 +570,6 @@
                                                             <option value="NO OK">NO OK</option>
                                                             <option value="N/A">N/A</option>
                                                         </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm" name="checkListPala.engraseGeneral.observaciones">
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -667,7 +633,8 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-12">
-                                            <textarea class="form-control" id="observacionesGenerales" name="checkListPala.observacionesGenerales" rows="3" placeholder="Ingrese aquí cualquier observación adicional sobre el equipo..."></textarea>
+                                            <textarea class="form-control" id="observacionesGenerales" name="checkListPala.observaciones" rows="4" placeholder="Ingrese aquí cualquier observación adicional sobre el equipo o problemas detectados en el checklist..."></textarea>
+                                            <small class="text-muted">Detalle aquí cualquier observación relacionada con los ítems que marcó como "NO OK" en el checklist.</small>
                                         </div>
                                     </div>
                                 </div>

@@ -78,7 +78,7 @@ class ParteDiarioRepository {
                        pd.pref1_encendido_vacio, pd.nivel_liquido_hidraulico_t1, 
                        pd.nivel_liquido_caja_t1, pd.nivel_liq_hidraulico_d1, 
                        pd.temperatura_liq_hid_t1, pd.temperatura_salida_g1, 
-                       pd.temperatura_salida_g2, pd.temperatura_salida_g3
+                       pd.temperatura_salida_g2, pd.temperatura_salida_g3, pd.responsable
                 FROM partes_diarios pd
                 ORDER BY pd.fecha DESC, pd.id DESC
                 LIMIT ? OFFSET ?
@@ -113,45 +113,23 @@ class ParteDiarioRepository {
      */
     async agregarChecklistPala(parteDiarioId, checklistData) {
         try {
-            // Actualizar la estructura de la tabla para incluir todos los campos necesarios
+            // Asegurarse de que existe la tabla con la estructura correcta
             await db.query(`
                 CREATE TABLE IF NOT EXISTS parte_diario_checklist_pala (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     parte_diario_id INT NOT NULL,
-                    horas_equipo VARCHAR(20) DEFAULT NULL,
-                    horometro VARCHAR(20) DEFAULT NULL,
-                    nivel_combustible_estado VARCHAR(10) DEFAULT NULL,
-                    nivel_combustible_obs TEXT DEFAULT NULL,
-                    nivel_refrigerante_estado VARCHAR(10) DEFAULT NULL,
-                    nivel_refrigerante_obs TEXT DEFAULT NULL,
-                    nivel_aceite_motor_estado VARCHAR(10) DEFAULT NULL,
-                    nivel_aceite_motor_obs TEXT DEFAULT NULL,
-                    nivel_aceite_hidraulico_estado VARCHAR(10) DEFAULT NULL,
-                    nivel_aceite_hidraulico_obs TEXT DEFAULT NULL,
-                    filtro_aire_motor_estado VARCHAR(10) DEFAULT NULL,
-                    filtro_aire_motor_obs TEXT DEFAULT NULL,
-                    presion_neumaticos_estado VARCHAR(10) DEFAULT NULL,
-                    presion_neumaticos_obs TEXT DEFAULT NULL,
-                    limpieza_general_estado VARCHAR(10) DEFAULT NULL,
-                    limpieza_general_obs TEXT DEFAULT NULL,
-                    nivel_aceite_motor INT DEFAULT 0,
-                    nivel_agua_radiador INT DEFAULT 0,
-                    nivel_aceite_hidraulico INT DEFAULT 0,
-                    nivel_combustible INT DEFAULT 0,
-                    luces INT DEFAULT 0,
-                    estado_neumaticos INT DEFAULT 0,
-                    estado_cuchara INT DEFAULT 0,
-                    cinturon_seguridad INT DEFAULT 0,
-                    freno_mano INT DEFAULT 0,
-                    freno_servicio INT DEFAULT 0,
-                    alarma_retroceso INT DEFAULT 0,
-                    bocina INT DEFAULT 0,
-                    matafuego INT DEFAULT 0,
-                    sistema_levante INT DEFAULT 0,
-                    fugas_aceite INT DEFAULT 0,
-                    fugas_agua INT DEFAULT 0,
-                    fugas_aire INT DEFAULT 0,
-                    estado_vidrios INT DEFAULT 0,
+                    nivel_combustible VARCHAR(10) DEFAULT NULL,
+                    sopleteado_radiadores VARCHAR(10) DEFAULT NULL,
+                    nivel_refrigerante VARCHAR(10) DEFAULT NULL,
+                    nivel_aceite_motor VARCHAR(10) DEFAULT NULL,
+                    nivel_liquido_hidraulico VARCHAR(10) DEFAULT NULL,
+                    control_luces VARCHAR(10) DEFAULT NULL,
+                    sistemas_art VARCHAR(10) DEFAULT NULL,
+                    limpieza_interior VARCHAR(10) DEFAULT NULL,
+                    control_alambres VARCHAR(10) DEFAULT NULL,
+                    lavado_exterior VARCHAR(10) DEFAULT NULL,
+                    engrase_general VARCHAR(10) DEFAULT NULL,
+                    horas_trabajadas DECIMAL(10,2) DEFAULT NULL,
                     observaciones TEXT DEFAULT NULL,
                     fecha_creacion DATETIME DEFAULT NULL,
                     UNIQUE KEY unique_parte_diario (parte_diario_id),
@@ -159,43 +137,35 @@ class ParteDiarioRepository {
                 )
             `);
             
-            // Preparar la consulta dinámica con los campos disponibles
-            const campos = [];
-            const placeholders = [];
-            const valores = [];
+            // Los datos ya están en el formato correcto, solo agregamos los campos base
+            const datosInsert = {
+                parte_diario_id: parteDiarioId,
+                fecha_creacion: new Date(),
+                ...checklistData  // Ahora podemos extender directamente ya que los nombres coinciden
+            };
             
-            // Agregar el ID del parte diario
-            campos.push('parte_diario_id');
-            placeholders.push('?');
-            valores.push(parteDiarioId);
-            
-            // Agregar fecha de creación
-            campos.push('fecha_creacion');
-            placeholders.push('?');
-            valores.push(new Date());
-            
-            // Agregar todos los campos del checklist que estén presentes
-            for (const [campo, valor] of Object.entries(checklistData)) {
-                // Convertir el nombre del campo a formato de base de datos (snake_case)
-                const dbCampo = campo.replace(/([A-Z])/g, '_$1').toLowerCase();
-                
-                // Solo agregar si el valor no es undefined
-                if (typeof valor !== 'undefined') {
-                    campos.push(dbCampo);
-                    placeholders.push('?');
-                    valores.push(valor);
+            // Filtrar campos que no son null o undefined
+            const validFields = {};
+            for (const [key, value] of Object.entries(datosInsert)) {
+                if (value !== null && value !== undefined) {
+                    validFields[key] = value;
                 }
             }
             
-            // Crear la consulta SQL dinámica
+            // Preparar la consulta dinámica
+            const fields = Object.keys(validFields);
+            const placeholders = fields.map(() => '?');
+            const values = Object.values(validFields);
+            
+            // Crear la consulta SQL
             const query = `
-                INSERT INTO parte_diario_checklist_pala (${campos.join(', ')})
+                INSERT INTO parte_diario_checklist_pala (${fields.join(', ')})
                 VALUES (${placeholders.join(', ')})
                 ON DUPLICATE KEY UPDATE 
-                ${campos.slice(1).map(campo => `${campo} = VALUES(${campo})`).join(', ')}
+                ${fields.filter(f => f !== 'parte_diario_id').map(f => `${f} = VALUES(${f})`).join(', ')}
             `;
             
-            await db.query(query, valores);
+            await db.query(query, values);
             
             return true;
         } catch (error) {
@@ -229,7 +199,7 @@ class ParteDiarioRepository {
         }
     }
     
-    // Obtener un parte diario específico con sus grupos
+    // Obtener un parte diario específico with sus grupos
     async obtenerParteDiarioPorId(id) {
         try {
             // Consulta para obtener el parte diario
@@ -238,7 +208,7 @@ class ParteDiarioRepository {
                        pd.pref1_encendido_vacio, pd.nivel_liquido_hidraulico_t1, 
                        pd.nivel_liquido_caja_t1, pd.nivel_liq_hidraulico_d1, 
                        pd.temperatura_liq_hid_t1, pd.temperatura_salida_g1, 
-                       pd.temperatura_salida_g2, pd.temperatura_salida_g3
+                       pd.temperatura_salida_g2, pd.temperatura_salida_g3, pd.responsable
                 FROM partes_diarios pd
                 WHERE pd.id = ?
             `;
