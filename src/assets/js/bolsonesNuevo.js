@@ -36,7 +36,7 @@ $(document).ready(function() {
         // Si hay imagen, agregarla
         if (imageData && type === 'success') {
             alertContent += `
-                <div class="text-center mt-3">
+                <div class="text-center mt-3" id="barcodeContainer">
                     <hr>
                     <h6><i class="bi bi-upc-scan me-2"></i>Código de Barras Generado:</h6>
                     <img src="data:image/png;base64,${imageData.barcodeBase64}" 
@@ -47,10 +47,6 @@ $(document).ready(function() {
                     <strong>Código: ${imageData.codigo}</strong>
                     <br>
                     <div class="mt-2">
-                        <button onclick="descargarImagen('${imageData.barcodeBase64}', '${imageData.codigo}')" 
-                                class="btn btn-sm btn-outline-primary me-2">
-                            <i class="bi bi-download me-1"></i>Descargar PNG
-                        </button>
                         <button onclick="imprimirCodigo('${imageData.barcodeBase64}', '${imageData.codigo}')" 
                                 class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-printer me-1"></i>Imprimir
@@ -128,9 +124,15 @@ $(document).ready(function() {
                 try {
                     printFrame.contentWindow.focus();
                     printFrame.contentWindow.print();
+                    
+                    // Borrar el código de barras después de imprimir
+                    setTimeout(function() {
+                        $('#barcodeContainer').remove();
+                    }, 500);
+                    
                 } catch(e) {
                     console.error('Error al imprimir:', e);
-                    alert('Hubo un problema al imprimir. Intente con "Descargar PNG" y luego imprima la imagen.');
+                    alert('Hubo un problema al imprimir.');
                 }
                 
                 // Eliminar el iframe después de imprimir
