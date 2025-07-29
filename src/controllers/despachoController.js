@@ -1,6 +1,8 @@
 const despachoService = require('../services/despachoService');
 const bolsonService = require('../services/bolsonService');
 const ordenDeVentaService = require('../services/ordenDeVentaService');
+const Excel = require('exceljs');
+const db = require('../config/db'); // Importar la conexión a la base de datos
 
 const despachoController = {
     async nuevoDespacho(req, res) {
@@ -235,7 +237,122 @@ const despachoController = {
                 error: error.message
             });
         }
-    }
+    },
+    
+    /**
+     * Exporta todos los bolsones despachados a un archivo Excel
+     * @param {Object} req - Objeto de solicitud
+     * @param {Object} res - Objeto de respuesta
+     */
+    async exportarBolsonesDespachados(req, res) {
+        try {
+            console.log('Iniciando proceso de exportación de bolsones despachados');
+            
+            // Crear un nuevo libro de Excel
+            const workbook = new Excel.Workbook();
+            const worksheet = workbook.addWorksheet('Bolsones Despachados');
+            
+            // Añadir encabezados
+            worksheet.columns = [
+                { header: '#', key: 'numero', width: 8 },
+                { header: 'Código', key: 'codigo', width: 15 },
+                { header: 'Producto', key: 'producto', width: 20 },
+                { header: 'Peso (kg)', key: 'peso', width: 10 },
+                { header: 'Precinto', key: 'precinto', width: 15 },
+                { header: 'Fecha', key: 'fecha', width: 15 },
+                { header: 'Responsable', key: 'responsable', width: 20 },
+                { header: 'Orden de Venta', key: 'orden_venta', width: 15 }
+            ];
+            
+            // Dar formato al encabezado
+            worksheet.getRow(1).font = { bold: true };
+            worksheet.getRow(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF4F81BD' }
+            };
+            worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+            
+            console.log('Obteniendo datos de bolsones despachados para exportar');
+            
+            // Obtener todos los bolsones despachados con información de la orden de venta
+            // Usando la tabla correcta despachos_detalle en lugar de despacho_items
+            const query = `
+                SELECT 
+                    dd.id,
+                    dd.bolson_codigo,
+                    dd.producto,
+                    dd.peso,
+                    dd.precinto,
+                    d.fecha,
+                    d.responsable,
+                    d.orden_venta_id
+                FROM 
+                    despachos_detalle dd
+                JOIN 
+                    despachos d ON dd.despacho_id = d.id
+                WHERE 
+                    (dd.es_manual = 0 OR dd.es_manual IS NULL)
+                ORDER BY 
+                    d.fecha DESC, dd.id DESC
+            `;
+            
+            const resultado = await db.query(query);
+            
+            if (!resultado || resultado.length === 0) {
+                console.log('No se encontraron bolsones despachados para exportar');
+                return res.status(404).render('error', {
+                    message: 'No hay bolsones despachados para exportar',
+                    error: { status: 404, stack: 'No se encontraron bolsones despachados en la base de datos' }
+                });
+            }
+            
+            console.log(`Se encontraron ${resultado.length} bolsones despachados para exportar`);
+            
+            // Añadir los datos
+            resultado.forEach((bolson, index) => {
+                worksheet.addRow({
+                    numero: index + 1,
+                    codigo: bolson.bolson_codigo || 'N/A',
+                    producto: bolson.producto || 'N/A',
+                    peso: bolson.peso ? parseFloat(bolson.peso).toFixed(2) : 'N/A',
+                    precinto: bolson.precinto || 'N/A',
+                    fecha: bolson.fecha ? new Date(bolson.fecha).toLocaleDateString() : 'N/A',
+                    responsable: bolson.responsable || 'N/A',
+                    orden_venta: bolson.orden_venta_id ? `OV-${bolson.orden_venta_id}` : 'N/A'
+                });
+            });
+            
+            // Configurar el nombre del archivo con la fecha actual
+            const fecha = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+            const filename = `bolsones_despachados_${fecha}.xlsx`;
+            
+            console.log(`Generando archivo Excel: ${filename}`);
+            
+            // Configurar las cabeceras para la descarga
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+            
+            try {
+                // Escribir a la respuesta
+                await workbook.xlsx.write(res);
+                res.end();
+                console.log('Exportación de bolsones despachados completada exitosamente');
+            } catch (writeError) {
+                console.error('Error al escribir el archivo Excel:', writeError);
+                return res.status(500).render('error', {
+                    message: 'Error al generar el archivo Excel',
+                    error: { status: 500, stack: writeError.message }
+                });
+            }
+        } catch (error) {
+            console.error('Error al exportar bolsones despachados:', error);
+            return res.status(500).render('error', {
+                message: 'Error al exportar bolsones despachados',
+                error: { status: 500, stack: error.message || 'Error desconocido al exportar bolsones despachados' }
+            });
+        }
+    },
 };
 
 module.exports = despachoController;

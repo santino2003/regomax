@@ -2,7 +2,6 @@ Cliente (Postman) → Rutas → Controladores(req res) → Servicios (logca de n
 dbeaver-ce &
 TO DO:
 
-Ov solucionar problemas
 agregar matafuegos
 permisos
 crear users

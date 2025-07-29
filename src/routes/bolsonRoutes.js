@@ -9,6 +9,7 @@ router.get('/nuevo', auth.verifyToken, bolsonController.vistaNuevoBolson);
 router.get('/listar', auth.verifyToken, bolsonController.vistaListarBolsones);
 router.get('/editar/:id', auth.verifyToken, bolsonController.vistaEditarBolson);
 router.get('/despachados', auth.verifyToken, bolsonController.vistaBolsonesDespachados);
+router.get('/exportar', auth.verifyToken, bolsonController.exportarBolsones);
 
 // Rutas para API
 router.post('/nuevo', auth.verifyToken, bolsonController.nuevoBolson);

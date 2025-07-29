@@ -137,14 +137,27 @@ $(document).ready(function() {
         $btnGuardar.prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Guardando...');
         
         // Enviar datos al servidor
-        fetch('/api/bolsones/' + bolsonId, {
+        fetch('/api/bolsones/actualizar/' + bolsonId, {  // Cambio a la ruta correcta con /actualizar/
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(formData)
         })
-        .then(response => response.json())
+        .then(response => {
+            // Verificar si la respuesta es exitosa
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            
+            // Verificar el tipo de contenido antes de intentar parsear como JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.indexOf('application/json') !== -1) {
+                return response.json();
+            } else {
+                throw new Error('La respuesta no es un JSON válido');
+            }
+        })
         .then(data => {
             if (data.success) {
                 showAlert('¡Bolsón actualizado exitosamente!', 'success');
@@ -156,7 +169,7 @@ $(document).ready(function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            showAlert('Error de conexión al actualizar el bolsón', 'danger');
+            showAlert('Error de conexión al actualizar el bolsón: ' + error.message, 'danger');
         })
         .finally(() => {
             // Rehabilitar botón

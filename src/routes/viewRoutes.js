@@ -28,6 +28,7 @@ router.get('/home', [authMiddleware.verifyToken, noCacheMiddleware], (req, res) 
 // Rutas de vistas para bolsones - añadiendo noCacheMiddleware
 router.get('/bolsones', [authMiddleware.verifyToken, noCacheMiddleware], bolsonController.vistaListarBolsones);
 router.get('/bolsones/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], bolsonController.vistaNuevoBolson);
+router.get('/bolsones/exportar', [authMiddleware.verifyToken, noCacheMiddleware], bolsonController.exportarBolsones);
 router.get('/bolsones/:id', [authMiddleware.verifyToken, noCacheMiddleware], bolsonController.vistaEditarBolson);
 
 // Rutas de órdenes - añadiendo noCacheMiddleware

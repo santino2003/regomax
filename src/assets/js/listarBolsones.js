@@ -1,4 +1,22 @@
 $(document).ready(function() {
+    // Manejar exportación de bolsones
+    $('#exportar-bolsones').on('click', function() {
+        const $button = $(this);
+        
+        // Cambiar el estado del botón para mostrar que está procesando
+        $button.prop('disabled', true)
+               .html('<i class="bi bi-hourglass-split me-2"></i>Exportando...');
+        
+        // Redirigir a la ruta de exportación
+        window.location.href = '/bolsones/exportar';
+        
+        // Restaurar el botón después de un tiempo
+        setTimeout(function() {
+            $button.prop('disabled', false)
+                  .html('<i class="bi bi-file-earmark-excel me-2"></i>Exportar');
+        }, 3000);
+    });
+
     // Manejar eliminación de bolsones
     $('.btn-delete').on('click', function() {
         const id = $(this).data('id');

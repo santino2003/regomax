@@ -9,5 +9,6 @@ router.post('/manual/:ordenId', authMiddleware.verifyToken, despachoController.d
 router.get('/orden/:ordenId', authMiddleware.verifyToken, despachoController.obtenerDespachosPorOrden);
 router.get('/verificar-bolson/:codigo', authMiddleware.verifyToken, despachoController.verificarBolson);
 router.get('/bolsones-despachados', authMiddleware.verifyToken, despachoController.listarBolsonesDespachados);
+router.get('/exportar-despachados', authMiddleware.verifyToken, despachoController.exportarBolsonesDespachados);
 
 module.exports = router;

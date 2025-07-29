@@ -1,6 +1,8 @@
 const bolsonService = require('../services/bolsonService');
-const productoService = require('../services/productoService'); // Añadimos esta importación
+const productoService = require('../services/productoService');
 const generarBarcodeBase64 = require('../utils/imageBarcode');
+const Excel = require('exceljs');
+const db = require('../config/db'); // Importar la conexión a la base de datos
 
 const bolsonController = {
     async nuevoBolson(req, res) {
@@ -259,7 +261,99 @@ const bolsonController = {
             console.error('Error al obtener bolsones:', error);
             res.status(500).json({ success: false, message: 'Error al obtener bolsones', error: error.message });
         }
-    }
+    },
+
+    /**
+     * Exporta los bolsones no despachados a un archivo Excel
+     * @param {Object} req - Objeto de solicitud
+     * @param {Object} res - Objeto de respuesta
+     */
+    async exportarBolsones(req, res) {
+        try {
+            console.log('Iniciando proceso de exportación de bolsones no despachados');
+            
+            // Crear un nuevo libro de Excel
+            const workbook = new Excel.Workbook();
+            const worksheet = workbook.addWorksheet('Bolsones No Despachados');
+            
+            // Añadir encabezados
+            worksheet.columns = [
+                { header: 'Código', key: 'codigo', width: 15 },
+                { header: 'Producto', key: 'producto', width: 20 },
+                { header: 'Peso (kg)', key: 'peso', width: 10 },
+                { header: 'Precinto', key: 'precinto', width: 15 },
+                { header: 'Fecha', key: 'fecha', width: 15 },
+                { header: 'Hora', key: 'hora', width: 10 },
+                { header: 'Responsable', key: 'responsable', width: 20 }
+            ];
+            
+            // Dar formato al encabezado
+            worksheet.getRow(1).font = { bold: true };
+            worksheet.getRow(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF4F81BD' }
+            };
+            worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+            
+            console.log('Obteniendo datos de bolsones no despachados para exportar');
+            
+            // Obtener solo los bolsones no despachados
+            const resultado = await db.query('SELECT * FROM bolsones WHERE despachado = 0 ORDER BY id DESC');
+            
+            if (!resultado || resultado.length === 0) {
+                console.log('No se encontraron bolsones no despachados para exportar');
+                return res.status(404).render('error', {
+                    message: 'No hay bolsones no despachados para exportar',
+                    error: { status: 404, stack: 'No se encontraron bolsones no despachados en la base de datos' }
+                });
+            }
+            
+            console.log(`Se encontraron ${resultado.length} bolsones no despachados para exportar`);
+            
+            // Añadir los datos
+            resultado.forEach(bolson => {
+                worksheet.addRow({
+                    codigo: bolson.codigo || 'N/A',
+                    producto: bolson.producto || 'N/A',
+                    peso: bolson.peso || 'N/A',
+                    precinto: bolson.precinto || 'N/A',
+                    fecha: bolson.fecha ? new Date(bolson.fecha).toLocaleDateString() : 'N/A',
+                    hora: bolson.hora || 'N/A',
+                    responsable: bolson.responsable || 'N/A'
+                });
+            });
+            
+            // Configurar el nombre del archivo con la fecha actual
+            const fecha = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+            const filename = `bolsones_no_despachados_${fecha}.xlsx`;
+            
+            console.log(`Generando archivo Excel: ${filename}`);
+            
+            // Configurar las cabeceras para la descarga
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+            
+            try {
+                // Escribir a la respuesta
+                await workbook.xlsx.write(res);
+                res.end();
+                console.log('Exportación completada exitosamente');
+            } catch (writeError) {
+                console.error('Error al escribir el archivo Excel:', writeError);
+                return res.status(500).render('error', {
+                    message: 'Error al generar el archivo Excel',
+                    error: { status: 500, stack: writeError.message }
+                });
+            }
+        } catch (error) {
+            console.error('Error al exportar bolsones:', error);
+            return res.status(500).render('error', {
+                message: 'Error al exportar bolsones',
+                error: { status: 500, stack: error.message || 'Error desconocido al exportar bolsones' }
+            });
+        }
+    },
 };
 
 module.exports = bolsonController;

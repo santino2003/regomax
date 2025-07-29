@@ -15,6 +15,25 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('producto').value = producto;
     document.getElementById('codigo').value = codigo;
     document.getElementById('precinto').value = precinto;
+
+    // Manejar la exportación de bolsones despachados
+    const exportarBtn = document.getElementById('exportar-despachados');
+    if (exportarBtn) {
+        exportarBtn.addEventListener('click', function() {
+            // Cambiar el estado del botón para mostrar que está procesando
+            exportarBtn.disabled = true;
+            exportarBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Exportando...';
+            
+            // Redirigir a la ruta de exportación
+            window.location.href = '/api/despachos/exportar-despachados';
+            
+            // Restaurar el botón después de un tiempo
+            setTimeout(function() {
+                exportarBtn.disabled = false;
+                exportarBtn.innerHTML = '<i class="bi bi-file-earmark-excel me-2"></i>Exportar';
+            }, 3000);
+        });
+    }
     
     // Asegurarse de que los enlaces de paginación mantengan los filtros
     document.querySelectorAll('.pagination .page-link').forEach(link => {
