@@ -181,6 +181,9 @@ const despachoController = {
             
             const resultado = await despachoService.obtenerBolsonesDespachados(page, limit, filtros);
             
+            // Depurar para ver la estructura exacta de los datos
+            console.log("Datos de bolsones:", JSON.stringify(resultado.data.slice(0, 1), null, 2));
+            
             res.render('bolsonesDespachados', {
                 title: 'Bolsones Despachados',
                 username: req.user.username,

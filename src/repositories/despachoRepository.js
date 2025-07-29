@@ -202,7 +202,7 @@ class DespachoRepository {
                        d.fecha, d.responsable, d.orden_venta_id
                 FROM despachos_detalle dd
                 JOIN despachos d ON dd.despacho_id = d.id
-                WHERE dd.es_manual = 0 OR dd.es_manual IS NULL
+                WHERE (dd.es_manual = 0 OR dd.es_manual IS NULL)
             `;
             
             // Condiciones para filtros
@@ -220,8 +220,13 @@ class DespachoRepository {
             }
             
             if (filtros.codigo) {
-                condiciones.push('dd.bolson_codigo LIKE ?');
-                parametros.push(`%${filtros.codigo}%`);
+                condiciones.push('dd.bolson_codigo = ?');
+                parametros.push(filtros.codigo);
+            }
+            
+            if (filtros.precinto) {
+                condiciones.push('dd.precinto LIKE ?');
+                parametros.push(`%${filtros.precinto}%`);
             }
             
             if (filtros.fechaDesde) {
