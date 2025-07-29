@@ -1,7 +1,7 @@
 $(document).ready(function() {
     // Navegación entre pasos
     $("#nextToStep2").click(function() {
-        if (!$("#fecha").val() || !$("#turno").val()) {
+        if (!validateStep1()) {
             showAlert("Por favor complete los campos obligatorios.", "danger");
             return false;
         }
@@ -19,6 +19,10 @@ $(document).ready(function() {
     });
     
     $("#nextToStep3").click(function() {
+        if (!validateStep2()) {
+            showAlert("Por favor complete todos los campos obligatorios del Control Diario.", "danger");
+            return false;
+        }
         $("#step2").removeClass("active");
         $("#step3").addClass("active");
         $("#step2-indicator").removeClass("active").addClass("completed");
@@ -33,6 +37,10 @@ $(document).ready(function() {
     });
     
     $("#nextToStep4").click(function() {
+        if (!validateStep3()) {
+            showAlert("Por favor complete todos los campos obligatorios de los grupos.", "danger");
+            return false;
+        }
         $("#step3").removeClass("active");
         $("#step4").addClass("active");
         $("#step3-indicator").removeClass("active").addClass("completed");
@@ -49,21 +57,88 @@ $(document).ready(function() {
         $("#step3-indicator").removeClass("completed").addClass("active");
     });
     
-    // Validación de formulario en el envío
-    $("#submitForm").click(function() {
-        // Validar que todos los campos requeridos estén completos
+    // Validar paso 1
+    function validateStep1() {
         let isValid = true;
-        $(".form-step#step3 [required]").each(function() {
+        
+        if (!$("#fecha").val()) {
+            $("#fecha").addClass("is-invalid");
+            isValid = false;
+        } else {
+            $("#fecha").removeClass("is-invalid");
+        }
+        
+        if (!$("#turno").val()) {
+            $("#turno").addClass("is-invalid");
+            isValid = false;
+        } else {
+            $("#turno").removeClass("is-invalid");
+        }
+        
+        return isValid;
+    }
+    
+    // Validar paso 2
+    function validateStep2() {
+        let isValid = true;
+        
+        // Comprobar todos los campos requeridos en el paso 2
+        $(".form-step#step2 select[required], .form-step#step2 input[required]").each(function() {
             if (!$(this).val()) {
-                isValid = false;
                 $(this).addClass("is-invalid");
+                isValid = false;
             } else {
                 $(this).removeClass("is-invalid");
             }
         });
         
-        if (!isValid) {
-            showAlert("Por favor complete todos los campos requeridos.", "danger");
+        return isValid;
+    }
+    
+    // Validar paso 3 (Grupos)
+    function validateStep3() {
+        let isValid = true;
+        
+        // Comprobar todos los campos requeridos en el paso 3
+        $(".form-step#step3 select[required], .form-step#step3 input[required]").each(function() {
+            if (!$(this).val()) {
+                $(this).addClass("is-invalid");
+                isValid = false;
+            } else {
+                $(this).removeClass("is-invalid");
+            }
+        });
+        
+        return isValid;
+    }
+    
+    // Validar paso 4 (checkList)
+    function validateStep4() {
+        let isValid = true;
+        
+        // Comprobar todos los selects requeridos en el paso 4
+        $(".form-step#step4 select[required]").each(function() {
+            if (!$(this).val()) {
+                $(this).addClass("is-invalid");
+                isValid = false;
+                
+                // Añadir mensaje de error visual (div)
+                if (!$(this).next(".invalid-feedback").length) {
+                    $(this).after('<div class="invalid-feedback">Este campo es obligatorio.</div>');
+                }
+            } else {
+                $(this).removeClass("is-invalid");
+            }
+        });
+        
+        return isValid;
+    }
+    
+    // Validación de formulario en el envío
+    $("#submitForm").click(function() {
+        // Validar el último paso
+        if (!validateStep4()) {
+            showAlert("Por favor complete todos los campos obligatorios del checklist.", "danger");
             return false;
         }
         

@@ -165,75 +165,105 @@
                                 <div class="card-body">
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label for="cosFi" class="form-label">COS (fi)</label>
-                                            <input type="number" class="form-control" id="cosFi" name="datosControl.cosFi" step="0.01">
+                                            <label for="cosFi" class="form-label">COS (fi) *</label>
+                                            <input type="number" class="form-control" id="cosFi" name="datosControl.cosFi" step="0.01" required>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
+                                            </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="proteccionesVallas" class="form-label">Protecciones y vallas</label>
-                                            <select class="form-select" id="proteccionesVallas" name="datosControl.proteccionesVallas">
+                                            <label for="proteccionesVallas" class="form-label">Protecciones y vallas *</label>
+                                            <select class="form-select" id="proteccionesVallas" name="datosControl.proteccionesVallas" required>
+                                                <option value="" selected></option>
                                                 <option value="OK">OK</option>
                                                 <option value="No OK">No OK</option>
-                                                <option value="N/A">N/A</option>
                                             </select>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
+                                            </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="pref1EncendidoVacio" class="form-label">PREF1 encendido y vacío</label>
-                                            <select class="form-select" id="pref1EncendidoVacio" name="datosControl.pref1EncendidoVacio">
+                                            <label for="pref1EncendidoVacio" class="form-label">PREF1 encendido y vacío *</label>
+                                            <select class="form-select" id="pref1EncendidoVacio" name="datosControl.pref1EncendidoVacio" required>
+                                                <option value="" selected></option>
                                                 <option value="OK">OK</option>
                                                 <option value="No OK">No OK</option>
-                                                <option value="N/A">N/A</option>
                                             </select>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
+                                            </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="nivelLiquidoHidraulicoT1" class="form-label">Nivel líquido hidráulico T1</label>
-                                            <select class="form-select" id="nivelLiquidoHidraulicoT1" name="datosControl.nivelLiquidoHidraulicoT1">
+                                            <label for="nivelLiquidoHidraulicoT1" class="form-label">Nivel líquido hidráulico T1 *</label>
+                                            <select class="form-select" id="nivelLiquidoHidraulicoT1" name="datosControl.nivelLiquidoHidraulicoT1" required>
+                                                <option value="" selected></option>
                                                 <option value="OK">OK</option>
                                                 <option value="No OK">Bajo</option>
-                                                <option value="N/A">N/A</option>
                                             </select>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
+                                            </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="nivelLiquidoCajaT1" class="form-label">Nivel líquido caja T1</label>
-                                            <select class="form-select" id="nivelLiquidoCajaT1" name="datosControl.nivelLiquidoCajaT1">
+                                            <label for="nivelLiquidoCajaT1" class="form-label">Nivel líquido caja T1 *</label>
+                                            <select class="form-select" id="nivelLiquidoCajaT1" name="datosControl.nivelLiquidoCajaT1" required>
+                                                <option value="" selected></option>
                                                 <option value="OK">OK</option>
                                                 <option value="No OK">Bajo</option>
-                                                <option value="N/A">N/A</option>
                                             </select>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
+                                            </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="nivelLiqHidraulicoD1" class="form-label">Nivel líq. hidráulico D1</label>
-                                            <select class="form-select" id="nivelLiqHidraulicoD1" name="datosControl.nivelLiqHidraulicoD1">
+                                            <label for="nivelLiqHidraulicoD1" class="form-label">Nivel líq. hidráulico D1 *</label>
+                                            <select class="form-select" id="nivelLiqHidraulicoD1" name="datosControl.nivelLiqHidraulicoD1" required>
+                                                <option value="" selected></option>
                                                 <option value="OK">OK</option>
                                                 <option value="Bajo">Bajo</option>
-                                                <option value="N/A">N/A</option>
                                             </select>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label for="temperaturaLiqHidT1" class="form-label">Temperatura líq. hid. T1</label>
-                                            <div class="input-group">
-                                                <input type="number" class="form-control" id="temperaturaLiqHidT1" name="datosControl.temperaturaLiqHidT1" step="0.1">
-                                                <span class="input-group-text">°C</span>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <label for="temperaturaSalidaG1" class="form-label">Temperatura salida G1</label>
+                                            <label for="temperaturaLiqHidT1" class="form-label">Temperatura líq. hid. T1 *</label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control" id="temperaturaSalidaG1" name="datosControl.temperaturaSalidaG1" step="0.1">
+                                                <input type="number" class="form-control" id="temperaturaLiqHidT1" name="datosControl.temperaturaLiqHidT1" step="0.1" required>
                                                 <span class="input-group-text">°C</span>
+                                            </div>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <label for="temperaturaSalidaG2" class="form-label">Temperatura salida G2</label>
+                                            <label for="temperaturaSalidaG1" class="form-label">Temperatura salida G1 *</label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control" id="temperaturaSalidaG2" name="datosControl.temperaturaSalidaG2" step="0.1">
+                                                <input type="number" class="form-control" id="temperaturaSalidaG1" name="datosControl.temperaturaSalidaG1" step="0.1" required>
                                                 <span class="input-group-text">°C</span>
+                                            </div>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <label for="temperaturaSalidaG3" class="form-label">Temperatura salida G3</label>
+                                            <label for="temperaturaSalidaG2" class="form-label">Temperatura salida G2 *</label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control" id="temperaturaSalidaG3" name="datosControl.temperaturaSalidaG3" step="0.1">
+                                                <input type="number" class="form-control" id="temperaturaSalidaG2" name="datosControl.temperaturaSalidaG2" step="0.1" required>
                                                 <span class="input-group-text">°C</span>
+                                            </div>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="temperaturaSalidaG3" class="form-label">Temperatura salida G3 *</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="temperaturaSalidaG3" name="datosControl.temperaturaSalidaG3" step="0.1" required>
+                                                <span class="input-group-text">°C</span>
+                                            </div>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
                                             </div>
                                         </div>
                                     </div>
@@ -266,29 +296,41 @@
                                         <div class="card-body">
                                             <div class="row g-3">
                                                 <div class="col-md-6">
-                                                    <label for="kgPorHoraG1" class="form-label">Kilogramo por hora</label>
+                                                    <label for="kgPorHoraG1" class="form-label">Kilogramo por hora *</label>
                                                     <div class="input-group">
-                                                        <input type="number" class="form-control" id="kgPorHoraG1" name="grupos[0].kgPorHora" step="0.01">
+                                                        <input type="number" class="form-control" id="kgPorHoraG1" name="grupos[0].kgPorHora" step="0.01" required>
                                                         <span class="input-group-text">kg/h</span>
                                                     </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="porcentajeCargaG1" class="form-label">Porcentaje de carga</label>
-                                                    <div class="input-group">
-                                                        <input type="number" class="form-control" id="porcentajeCargaG1" name="grupos[0].porcentajeCarga" step="0.01">
-                                                        <span class="input-group-text">%</span>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="porcentajeDebajo3350G1" class="form-label">Porcentaje debajo de 3350</label>
+                                                    <label for="porcentajeCargaG1" class="form-label">Porcentaje de carga *</label>
                                                     <div class="input-group">
-                                                        <input type="number" class="form-control" id="porcentajeDebajo3350G1" name="grupos[0].porcentajeDebajo3350" step="0.01">
+                                                        <input type="number" class="form-control" id="porcentajeCargaG1" name="grupos[0].porcentajeCarga" step="0.01" required>
                                                         <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="cribaG1" class="form-label">Criba</label>
-                                                    <input type="text" class="form-control" id="cribaG1" name="grupos[0].criba">
+                                                    <label for="porcentajeDebajo3350G1" class="form-label">Porcentaje debajo de 3350 *</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="porcentajeDebajo3350G1" name="grupos[0].porcentajeDebajo3350" step="0.01" required>
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="cribaG1" class="form-label">Criba *</label>
+                                                    <input type="text" class="form-control" id="cribaG1" name="grupos[0].criba" required>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
+                                                    </div>
                                                 </div>
                                             </div>
                                             <input type="hidden" name="grupos[0].nombre" value="G1">
@@ -307,29 +349,41 @@
                                         <div class="card-body">
                                             <div class="row g-3">
                                                 <div class="col-md-6">
-                                                    <label for="kgPorHoraG2" class="form-label">Kilogramo por hora</label>
+                                                    <label for="kgPorHoraG2" class="form-label">Kilogramo por hora *</label>
                                                     <div class="input-group">
-                                                        <input type="number" class="form-control" id="kgPorHoraG2" name="grupos[1].kgPorHora" step="0.01">
+                                                        <input type="number" class="form-control" id="kgPorHoraG2" name="grupos[1].kgPorHora" step="0.01" required>
                                                         <span class="input-group-text">kg/h</span>
                                                     </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="porcentajeCargaG2" class="form-label">Porcentaje de carga</label>
-                                                    <div class="input-group">
-                                                        <input type="number" class="form-control" id="porcentajeCargaG2" name="grupos[1].porcentajeCarga" step="0.01">
-                                                        <span class="input-group-text">%</span>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="porcentajeDebajo3350G2" class="form-label">Porcentaje debajo de 3350</label>
+                                                    <label for="porcentajeCargaG2" class="form-label">Porcentaje de carga *</label>
                                                     <div class="input-group">
-                                                        <input type="number" class="form-control" id="porcentajeDebajo3350G2" name="grupos[1].porcentajeDebajo3350" step="0.01">
+                                                        <input type="number" class="form-control" id="porcentajeCargaG2" name="grupos[1].porcentajeCarga" step="0.01" required>
                                                         <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="cribaG2" class="form-label">Criba</label>
-                                                    <input type="text" class="form-control" id="cribaG2" name="grupos[1].criba">
+                                                    <label for="porcentajeDebajo3350G2" class="form-label">Porcentaje debajo de 3350 *</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="porcentajeDebajo3350G2" name="grupos[1].porcentajeDebajo3350" step="0.01" required>
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="cribaG2" class="form-label">Criba *</label>
+                                                    <input type="text" class="form-control" id="cribaG2" name="grupos[1].criba" required>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
+                                                    </div>
                                                 </div>
                                             </div>
                                             <input type="hidden" name="grupos[1].nombre" value="G2">
@@ -348,29 +402,41 @@
                                         <div class="card-body">
                                             <div class="row g-3">
                                                 <div class="col-md-6">
-                                                    <label for="kgPorHoraG3" class="form-label">Kilogramo por hora</label>
+                                                    <label for="kgPorHoraG3" class="form-label">Kilogramo por hora *</label>
                                                     <div class="input-group">
-                                                        <input type="number" class="form-control" id="kgPorHoraG3" name="grupos[2].kgPorHora" step="0.01">
+                                                        <input type="number" class="form-control" id="kgPorHoraG3" name="grupos[2].kgPorHora" step="0.01" required>
                                                         <span class="input-group-text">kg/h</span>
                                                     </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="porcentajeCargaG3" class="form-label">Porcentaje de carga</label>
-                                                    <div class="input-group">
-                                                        <input type="number" class="form-control" id="porcentajeCargaG3" name="grupos[2].porcentajeCarga" step="0.01">
-                                                        <span class="input-group-text">%</span>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="porcentajeDebajo3350G3" class="form-label">Porcentaje debajo de 3350</label>
+                                                    <label for="porcentajeCargaG3" class="form-label">Porcentaje de carga *</label>
                                                     <div class="input-group">
-                                                        <input type="number" class="form-control" id="porcentajeDebajo3350G3" name="grupos[2].porcentajeDebajo3350" step="0.01">
+                                                        <input type="number" class="form-control" id="porcentajeCargaG3" name="grupos[2].porcentajeCarga" step="0.01" required>
                                                         <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="cribaG3" class="form-label">Criba</label>
-                                                    <input type="text" class="form-control" id="cribaG3" name="grupos[2].criba">
+                                                    <label for="porcentajeDebajo3350G3" class="form-label">Porcentaje debajo de 3350 *</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="porcentajeDebajo3350G3" name="grupos[2].porcentajeDebajo3350" step="0.01" required>
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="cribaG3" class="form-label">Criba *</label>
+                                                    <input type="text" class="form-control" id="cribaG3" name="grupos[2].criba" required>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
+                                                    </div>
                                                 </div>
                                             </div>
                                             <input type="hidden" name="grupos[2].nombre" value="G3">
@@ -389,29 +455,41 @@
                                         <div class="card-body">
                                             <div class="row g-3">
                                                 <div class="col-md-6">
-                                                    <label for="kgPorHoraG4" class="form-label">Kilogramo por hora</label>
+                                                    <label for="kgPorHoraG4" class="form-label">Kilogramo por hora *</label>
                                                     <div class="input-group">
-                                                        <input type="number" class="form-control" id="kgPorHoraG4" name="grupos[3].kgPorHora" step="0.01">
+                                                        <input type="number" class="form-control" id="kgPorHoraG4" name="grupos[3].kgPorHora" step="0.01" required>
                                                         <span class="input-group-text">kg/h</span>
                                                     </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="porcentajeCargaG4" class="form-label">Porcentaje de carga</label>
-                                                    <div class="input-group">
-                                                        <input type="number" class="form-control" id="porcentajeCargaG4" name="grupos[3].porcentajeCarga" step="0.01">
-                                                        <span class="input-group-text">%</span>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="porcentajeDebajo3350G4" class="form-label">Porcentaje debajo de 3350</label>
+                                                    <label for="porcentajeCargaG4" class="form-label">Porcentaje de carga *</label>
                                                     <div class="input-group">
-                                                        <input type="number" class="form-control" id="porcentajeDebajo3350G4" name="grupos[3].porcentajeDebajo3350" step="0.01">
+                                                        <input type="number" class="form-control" id="porcentajeCargaG4" name="grupos[3].porcentajeCarga" step="0.01" required>
                                                         <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label for="cribaG4" class="form-label">Criba</label>
-                                                    <input type="text" class="form-control" id="cribaG4" name="grupos[3].criba">
+                                                    <label for="porcentajeDebajo3350G4" class="form-label">Porcentaje debajo de 3350 *</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="porcentajeDebajo3350G4" name="grupos[3].porcentajeDebajo3350" step="0.01" required>
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="cribaG4" class="form-label">Criba *</label>
+                                                    <input type="text" class="form-control" id="cribaG4" name="grupos[3].criba" required>
+                                                    <div class="invalid-feedback">
+                                                        Este campo es obligatorio.
+                                                    </div>
                                                 </div>
                                             </div>
                                             <input type="hidden" name="grupos[3].nombre" value="G4">
@@ -445,10 +523,13 @@
                                 <div class="card-body">
                                     <div class="row mb-3">
                                         <div class="col-md-6">
-                                            <label for="horasEquipo" class="form-label">Horas del equipo</label>
+                                            <label for="horasEquipo" class="form-label">Horas del equipo *</label>
                                             <div class="input-group">
-                                                <input type="number" class="form-control" id="horasEquipo" name="checkListPala.horasEquipo" step="0.1">
+                                                <input type="number" class="form-control" id="horasEquipo" name="checkListPala.horasEquipo" step="0.1" required>
                                                 <span class="input-group-text">hs</span>
+                                            </div>
+                                            <div class="invalid-feedback">
+                                                Este campo es obligatorio.
                                             </div>
                                         </div>
                                     </div>
@@ -463,112 +544,112 @@
                                             </thead>
                                             <tbody>
                                                 <tr>
-                                                    <td>Nivel de combustible</td>
+                                                    <td>Nivel de combustible *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.nivelCombustible.estado">
+                                                        <select class="form-select" name="checkListPala.nivelCombustible.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Sopleteado de radiadores y filtros</td>
+                                                    <td>Sopleteado de radiadores y filtros *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.sopleteadoRadiadores.estado">
+                                                        <select class="form-select" name="checkListPala.sopleteadoRadiadores.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Control de nivel líquido refrigerante</td>
+                                                    <td>Control de nivel líquido refrigerante *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.nivelRefrigerante.estado">
+                                                        <select class="form-select" name="checkListPala.nivelRefrigerante.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Control de nivel de aceite motor</td>
+                                                    <td>Control de nivel de aceite motor *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.nivelAceiteMotor.estado">
+                                                        <select class="form-select" name="checkListPala.nivelAceiteMotor.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Control de nivel de líquido hidráulico</td>
+                                                    <td>Control de nivel de líquido hidráulico *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.nivelLiquidoHidraulico.estado">
+                                                        <select class="form-select" name="checkListPala.nivelLiquidoHidraulico.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Control de luces</td>
+                                                    <td>Control de luces *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.controlLuces.estado">
+                                                        <select class="form-select" name="checkListPala.controlLuces.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Control de sistemas de ART (Baliza, matafuego, alarma de marcha atrás, bocina, cinturón de seguridad)</td>
+                                                    <td>Control de sistemas de ART (Baliza, matafuego, alarma de marcha atrás, bocina, cinturón de seguridad) *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.sistemasART.estado">
+                                                        <select class="form-select" name="checkListPala.sistemasART.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Limpieza interior + desinfección*</td>
+                                                    <td>Limpieza interior + desinfección *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.limpiezaInterior.estado">
+                                                        <select class="form-select" name="checkListPala.limpiezaInterior.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Control alambres en ruedas y pistones</td>
+                                                    <td>Control alambres en ruedas y pistones *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.controlAlambres.estado">
+                                                        <select class="form-select" name="checkListPala.controlAlambres.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Lavado exterior</td>
+                                                    <td>Lavado exterior *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.lavadoExterior.estado">
+                                                        <select class="form-select" name="checkListPala.lavadoExterior.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Engrase general</td>
+                                                    <td>Engrase general *</td>
                                                     <td class="text-center">
-                                                        <select class="form-select" name="checkListPala.engraseGeneral.estado">
+                                                        <select class="form-select" name="checkListPala.engraseGeneral.estado" required>
+                                                            <option value="" selected></option>
                                                             <option value="OK">OK</option>
                                                             <option value="NO OK">NO OK</option>
-                                                            <option value="N/A">N/A</option>
                                                         </select>
                                                     </td>
                                                 </tr>
