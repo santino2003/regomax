@@ -24,7 +24,6 @@ router.get('/cliente/:clienteId',
 
 router.get('/:id', 
     auth.verifyToken, 
-    historialMiddleware.orden.consultar(), 
     ordenDeVentaController.obtenerOrden
 );
 

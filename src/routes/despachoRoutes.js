@@ -7,13 +7,13 @@ const historialMiddleware = require('../middleware/historialMiddleware');
 // Rutas API
 router.post('/nuevo', 
     auth.verifyToken, 
-    historialMiddleware.despacho.crear(),
+    historialMiddleware.despacho.despacharBolson(),  // Usamos el middleware específico para despachar bolsones
     despachoController.nuevoDespacho
 );
 
 router.post('/manual/:ordenId', 
     auth.verifyToken, 
-    historialMiddleware.despacho.crear(),
+    historialMiddleware.despacho.despacharBolson(),  // Usamos el middleware específico para despachar bolsones
     despachoController.despachoManual
 );
 

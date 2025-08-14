@@ -8,6 +8,9 @@ const historialService = require('../services/historialService');
  */
 function registrarHistorial(accion, entidad, detallesExtractor = null) {
     return async (req, res, next) => {
+        // Flag para controlar si ya se registró la acción
+        let accionRegistrada = false;
+        
         // Guardamos la respuesta original para interceptarla después
         const originalSend = res.send;
         const originalJson = res.json;
@@ -16,19 +19,28 @@ function registrarHistorial(accion, entidad, detallesExtractor = null) {
         try {
             // Interceptamos res.send
             res.send = function (body) {
-                registrarAccionSiExitosa(res, req, body);
+                if (!accionRegistrada) {
+                    registrarAccionSiExitosa(res, req, body);
+                    accionRegistrada = true;
+                }
                 return originalSend.call(this, body);
             };
 
             // Interceptamos res.json
             res.json = function (body) {
-                registrarAccionSiExitosa(res, req, body);
+                if (!accionRegistrada) {
+                    registrarAccionSiExitosa(res, req, body);
+                    accionRegistrada = true;
+                }
                 return originalJson.call(this, body);
             };
 
             // Interceptamos res.render
             res.render = function (view, locals, callback) {
-                registrarAccionSiExitosa(res, req);
+                if (!accionRegistrada) {
+                    registrarAccionSiExitosa(res, req);
+                    accionRegistrada = true;
+                }
                 return originalRender.call(this, view, locals, callback);
             };
 
@@ -385,21 +397,100 @@ const despachoDetalles = {
      * Extractor de detalles para creación de despacho
      */
     crear: (req, res, body) => {
+        // Capturar datos relevantes de la entrada
         const detalles = {
-            datos_entrada: {
-                orden_id: req.body.orden_id,
-                bolsones: req.body.bolsones
-            }
+            datos_entrada: {}
         };
         
+        // Capturar ID de orden si existe
+        if (req.body.orden_id) {
+            detalles.datos_entrada.orden_id = req.body.orden_id;
+        } else if (req.params.ordenId) {
+            detalles.datos_entrada.orden_id = req.params.ordenId;
+        }
+        
+        // Capturar bolsones a despachar
+        if (req.body.bolsones && Array.isArray(req.body.bolsones)) {
+            detalles.datos_entrada.bolsones = req.body.bolsones;
+        } else if (req.body.bolsones && typeof req.body.bolsones === 'string') {
+            try {
+                detalles.datos_entrada.bolsones = JSON.parse(req.body.bolsones);
+            } catch (e) {
+                detalles.datos_entrada.bolsones = req.body.bolsones;
+            }
+        } else if (req.body.codigos && Array.isArray(req.body.codigos)) {
+            detalles.datos_entrada.codigos = req.body.codigos;
+        }
+        
+        // Si hay datos de bolsón individual
+        if (req.body.codigo) {
+            detalles.datos_entrada.codigo = req.body.codigo;
+        }
+        
+        // Extraer datos de respuesta
         if (body) {
             try {
                 const data = typeof body === 'string' ? JSON.parse(body) : body;
                 if (data.data) {
+                    detalles.resultado = {};
+                    
+                    // Guardar ID del despacho si existe
+                    if (data.data.id) {
+                        detalles.resultado.id = data.data.id;
+                    }
+                    
+                    // Guardar información sobre los bolsones despachados
+                    if (data.data.bolsones_despachados) {
+                        if (Array.isArray(data.data.bolsones_despachados)) {
+                            detalles.resultado.bolsones_despachados = data.data.bolsones_despachados.map(bolson => ({
+                                id: bolson.id,
+                                codigo: bolson.codigo
+                            }));
+                        } else {
+                            detalles.resultado.bolsones_despachados = data.data.bolsones_despachados;
+                        }
+                    }
+                    
+                    // Si hay mensajes específicos
+                    if (data.message) {
+                        detalles.resultado.mensaje = data.message;
+                    }
+                } else if (data.success && data.bolsones) {
+                    // Formato alternativo de respuesta
                     detalles.resultado = {
-                        id: data.data.id,
-                        bolsones_despachados: data.data.bolsones_despachados
+                        bolsones_despachados: data.bolsones
                     };
+                }
+            } catch (e) {
+                // Si no se puede parsear, continuamos sin datos de respuesta
+                console.warn('Error al parsear respuesta de despacho:', e);
+            }
+        }
+        
+        return detalles;
+    },
+    
+    /**
+     * Extractor de detalles para consulta de despacho
+     */
+    consultar: (req, res, body) => {
+        const detalles = {};
+        
+        // Capturar ID de orden si existe
+        if (req.params.ordenId) {
+            detalles.orden_id = req.params.ordenId;
+        } else if (req.query.ordenId) {
+            detalles.orden_id = req.query.ordenId;
+        }
+        
+        // Extraer datos de respuesta
+        if (body) {
+            try {
+                const data = typeof body === 'string' ? JSON.parse(body) : body;
+                if (data.data) {
+                    detalles.despachos = Array.isArray(data.data) ? 
+                        data.data.map(d => ({ id: d.id, fecha: d.fecha, bolsones: d.bolsones?.length || 0 })) : 
+                        data.data;
                 }
             } catch (e) {
                 // Si no se puede parsear, continuamos sin datos de respuesta
@@ -445,9 +536,8 @@ const parteDiario = {
  */
 const despacho = {
     crear: () => registrarHistorial('crear', 'despacho', despachoDetalles.crear),
-    consultar: () => registrarHistorial('consultar', 'despacho', (req) => ({
-        orden_id: req.params.ordenId || req.query.ordenId
-    }))
+    consultar: () => registrarHistorial('consultar', 'despacho', despachoDetalles.consultar),
+    despacharBolson: () => registrarHistorial('despachar', 'bolson', despachoDetalles.crear)
 };
 
 module.exports = { 
