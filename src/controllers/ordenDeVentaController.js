@@ -236,6 +236,58 @@ const OVController = {
                 error: error.message
             });
         }
+    },
+
+    // Agregar método para buscar órdenes por cliente
+    async buscarOrdenesPorCliente(req, res) {
+        try {
+            const { clienteId } = req.params;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            
+            const resultado = await OVService.obtenerOrdenesPorCliente(clienteId, page, limit);
+            
+            return res.status(200).json({
+                success: true,
+                data: resultado.data,
+                pagination: resultado.pagination
+            });
+        } catch (error) {
+            console.error('Error al buscar órdenes por cliente:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener órdenes por cliente',
+                error: error.message
+            });
+        }
+    },
+    
+    // Agregar método para eliminar una orden de venta
+    async eliminarOrdenDeVenta(req, res) {
+        try {
+            const { id } = req.params;
+            await OVService.eliminarOrden(id);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Orden de venta eliminada exitosamente'
+            });
+        } catch (error) {
+            console.error('Error al eliminar orden de venta:', error);
+            
+            if (error.message.includes('no encontrada')) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Orden de venta no encontrada'
+                });
+            }
+            
+            return res.status(500).json({
+                success: false,
+                message: 'Error al eliminar orden de venta',
+                error: error.message
+            });
+        }
     }
 }
 

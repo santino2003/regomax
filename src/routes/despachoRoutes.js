@@ -1,14 +1,41 @@
 const express = require('express');
 const router = express.Router();
 const despachoController = require('../controllers/despachoController');
-const authMiddleware = require('../middleware/auth');
+const auth = require('../middleware/auth');
+const historialMiddleware = require('../middleware/historialMiddleware');
 
 // Rutas API
-router.post('/nuevo', authMiddleware.verifyToken, despachoController.nuevoDespacho);
-router.post('/manual/:ordenId', authMiddleware.verifyToken, despachoController.despachoManual);
-router.get('/orden/:ordenId', authMiddleware.verifyToken, despachoController.obtenerDespachosPorOrden);
-router.get('/verificar-bolson/:codigo', authMiddleware.verifyToken, despachoController.verificarBolson);
-router.get('/bolsones-despachados', authMiddleware.verifyToken, despachoController.listarBolsonesDespachados);
-router.get('/exportar-despachados', authMiddleware.verifyToken, despachoController.exportarBolsonesDespachados);
+router.post('/nuevo', 
+    auth.verifyToken, 
+    historialMiddleware.despacho.crear(),
+    despachoController.nuevoDespacho
+);
+
+router.post('/manual/:ordenId', 
+    auth.verifyToken, 
+    historialMiddleware.despacho.crear(),
+    despachoController.despachoManual
+);
+
+router.get('/orden/:ordenId', 
+    auth.verifyToken, 
+    historialMiddleware.despacho.consultar(),
+    despachoController.obtenerDespachosPorOrden
+);
+
+router.get('/verificar-bolson/:codigo', 
+    auth.verifyToken, 
+    despachoController.verificarBolson
+);
+
+router.get('/bolsones-despachados', 
+    auth.verifyToken, 
+    despachoController.listarBolsonesDespachados
+);
+
+router.get('/exportar-despachados', 
+    auth.verifyToken, 
+    despachoController.exportarBolsonesDespachados
+);
 
 module.exports = router;

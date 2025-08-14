@@ -177,7 +177,39 @@
                             <h5 class="card-title fw-bold text-primary">
                                 <i class="bi bi-person-circle me-2"></i>Mis acciones
                             </h5>
-                            <p class="card-text text-muted">Ninguna disponible</p>
+                            
+                            <% if (typeof accionesRecientes !== 'undefined' && accionesRecientes.length > 0) { %>
+                                <ul class="list-group list-group-flush mt-3">
+                                    <% accionesRecientes.forEach(function(accion) { %>
+                                        <li class="list-group-item px-0">
+                                            <div class="d-flex align-items-center">
+                                                <% if (accion.accion === 'crear') { %>
+                                                    <span class="badge bg-success me-2">Creación</span>
+                                                <% } else if (accion.accion === 'editar') { %>
+                                                    <span class="badge bg-warning text-dark me-2">Edición</span>
+                                                <% } else if (accion.accion === 'eliminar') { %>
+                                                    <span class="badge bg-danger me-2">Eliminación</span>
+                                                <% } else if (accion.accion === 'login') { %>
+                                                    <span class="badge bg-info text-dark me-2">Login</span>
+                                                <% } else if (accion.accion === 'logout') { %>
+                                                    <span class="badge bg-secondary me-2">Logout</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-primary me-2"><%= accion.accion %></span>
+                                                <% } %>
+                                                <div>
+                                                    <div><%= accion.descripcion %></div>
+                                                    <small class="text-muted"><%= accion.fecha %></small>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    <% }); %>
+                                </ul>
+                                <div class="text-end mt-2">
+                                    <a href="/historial" class="btn btn-sm btn-outline-primary">Ver todo</a>
+                                </div>
+                            <% } else { %>
+                                <p class="card-text text-muted">Ninguna acción disponible</p>
+                            <% } %>
                         </div>
                     </div>
                     

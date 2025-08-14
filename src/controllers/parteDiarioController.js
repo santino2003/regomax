@@ -148,6 +148,71 @@ const parteDiarioController = {
                 error: error
             });
         }
+    },
+    
+    // Agregar el método para actualizar un parte diario
+    async actualizarParteDiario(req, res) {
+        try {
+            const { id } = req.params;
+            const datosParteDiario = req.body;
+            datosParteDiario.actualizadoPor = req.user.username; // Registrar quién actualizó
+            
+            // Verificar si el parte diario existe
+            const parteDiarioExistente = await parteDiarioService.obtenerParteDiarioPorId(id);
+            if (!parteDiarioExistente) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Parte diario no encontrado'
+                });
+            }
+            
+            // Actualizar el parte diario
+            const resultado = await parteDiarioService.actualizarParteDiario(id, datosParteDiario);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Parte diario actualizado exitosamente',
+                data: resultado
+            });
+        } catch (error) {
+            console.error('Error al actualizar parte diario:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al actualizar parte diario',
+                error: error.message
+            });
+        }
+    },
+    
+    // Agregar el método para eliminar un parte diario
+    async eliminarParteDiario(req, res) {
+        try {
+            const { id } = req.params;
+            
+            // Verificar si el parte diario existe
+            const parteDiarioExistente = await parteDiarioService.obtenerParteDiarioPorId(id);
+            if (!parteDiarioExistente) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Parte diario no encontrado'
+                });
+            }
+            
+            // Eliminar el parte diario
+            await parteDiarioService.eliminarParteDiario(id);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Parte diario eliminado exitosamente'
+            });
+        } catch (error) {
+            console.error('Error al eliminar parte diario:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al eliminar parte diario',
+                error: error.message
+            });
+        }
     }
 };
 
