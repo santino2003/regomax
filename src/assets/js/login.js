@@ -1,50 +1,86 @@
 /**
- * Lógica de frontend para la página de login
+ * Lógica de frontend para la página de login con Bootstrap 5
  */
+
+// Verificar si el usuario ya está autenticado mediante cookies
+function checkAuthStatus() {
+    // No necesitamos verificar localStorage porque usamos cookies HttpOnly
+    // Las cookies son manejadas por el servidor automáticamente
+    return false; // Permitir que el formulario se muestre
+}
 
 // Función para mostrar mensajes de error
 function showError(message) {
     const errorElement = document.getElementById('errorMessage');
-    errorElement.textContent = message;
-    errorElement.style.display = 'block';
-    document.getElementById('successMessage').style.display = 'none';
+    errorElement.querySelector('span').textContent = message;
+    errorElement.classList.remove('d-none');
+    document.getElementById('successMessage').classList.add('d-none');
 }
 
 // Función para mostrar mensajes de éxito
 function showSuccess(message) {
     const successElement = document.getElementById('successMessage');
-    successElement.textContent = message;
-    successElement.style.display = 'block';
-    document.getElementById('errorMessage').style.display = 'none';
+    successElement.querySelector('span').textContent = message;
+    successElement.classList.remove('d-none');
+    document.getElementById('errorMessage').classList.add('d-none');
 }
 
 // Función para cerrar sesión
 function logout() {
-    localStorage.removeItem('token');
-    document.getElementById('userInfo').style.display = 'none';
-    document.getElementById('successMessage').style.display = 'none';
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
-    showSuccess('Sesión cerrada correctamente');
+    // Hacer una petición al servidor para eliminar la cookie
+    fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin' // Importante para incluir cookies
+    })
+    .then(() => {
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        showSuccess('Sesión cerrada correctamente');
+        setTimeout(() => {
+            window.location.replace('/login');
+        }, 1000);
+    })
+    .catch(error => {
+        console.error('Error al cerrar sesión:', error);
+    });
 }
 
 // Inicialización cuando el DOM está cargado
 document.addEventListener('DOMContentLoaded', function() {
-    // Manejar el inicio de sesión
-    document.getElementById('loginButton').addEventListener('click', async () => {
+    // Verificar si el usuario ya está autenticado
+    if (checkAuthStatus()) {
+        return; // Detener ejecución si ya está autenticado y redirigiendo
+    }
+    
+    // Bootstrap form validation
+    const form = document.getElementById('loginForm');
+    
+    // Manejar el envío del formulario
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Validar el formulario usando Bootstrap validation
+        form.classList.add('was-validated');
+        
+        if (!form.checkValidity()) {
+            return;
+        }
+        
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
         
-        // Validación simple
-        if (!username || !password) {
-            showError('Por favor ingrese usuario y contraseña');
-            return;
-        }
+        // Deshabilitar el botón durante la solicitud
+        const loginButton = document.getElementById('loginButton');
+        const originalText = loginButton.innerHTML;
+        loginButton.disabled = true;
+        loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Iniciando sesión...';
 
         try {
-            // Realizar la solicitud de login
+            // Realizar la solicitud de login incluyendo las cookies
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
+                credentials: 'same-origin', // Importante para incluir y recibir cookies
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -57,53 +93,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.message || 'Error al iniciar sesión');
             }
 
-            // Guardar datos del usuario en localStorage
-            localStorage.setItem('token', data.token || 'dummy-token'); // Guardar el token
+            // No necesitamos guardar el token en localStorage porque ya está en cookies
+            // Las cookies HttpOnly son manejadas automáticamente por el navegador
             
             // Mostrar mensaje de éxito
-            showSuccess('Login exitoso');
+            showSuccess('Login exitoso! Redirigiendo...');
             
             // Redirigir al usuario a la página principal después de un breve retraso
             setTimeout(() => {
-                window.location.href = '/home';
+                window.location.replace('/home'); // Usamos replace en vez de href
             }, 1000);
             
         } catch (error) {
             showError(error.message);
+            // Restaurar el botón
+            loginButton.disabled = false;
+            loginButton.innerHTML = originalText;
+        } finally {
+            // Si por alguna razón no se redirige, aseguramos que el botón vuelva a su estado normal
+            setTimeout(() => {
+                if (document.getElementById('loginButton')) {
+                    loginButton.disabled = false;
+                    loginButton.innerHTML = originalText;
+                }
+            }, 3000); // Tiempo de seguridad
         }
     });
-
-    // Si existe el botón de logout, agregar el evento
-    const logoutButton = document.getElementById('logoutButton');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', logout);
-    }
-
-    // Establecer interceptor para agregar el token a todas las solicitudes
-    // Esta función se ejecuta cuando se carga la página
-    setAuthInterceptor();
 });
-
-// Función para configurar el interceptor de fetch
-function setAuthInterceptor() {
-    // Guardamos la referencia original de fetch
-    const originalFetch = window.fetch;
-    
-    // Sobreescribimos fetch para incluir el token en todas las solicitudes
-    window.fetch = async function(url, options = {}) {
-        // Si hay un token en localStorage, lo incluimos en el header
-        const token = localStorage.getItem('token');
-        
-        if (token) {
-            // Creamos o extendemos los headers
-            options.headers = options.headers || {};
-            options.headers = {
-                ...options.headers,
-                'Authorization': `Bearer ${token}`
-            };
-        }
-        
-        // Llamamos al fetch original con los headers actualizados
-        return originalFetch(url, options);
-    };
-}

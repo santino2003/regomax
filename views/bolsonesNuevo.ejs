@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Bolsón - Regomax</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-key me-1"></i> Cambiar contraseña</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-plus-circle me-2"></i>Crear Nuevo Bolsón
+                        </h4>
+                        <a href="/bolsones" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Volver a lista
+                        </a>
+                    </div>
+                    
+                    <!-- Alert para mensajes -->
+                    <div id="alertContainer"></div>
+                    
+                    <!-- Formulario -->
+                    <form id="formNuevoBolson">
+                        <div class="row g-3">
+                            <!-- Producto (convertido a selector desplegable) -->
+                            <div class="col-md-6">
+                                <label for="producto" class="form-label">
+                                    <i class="bi bi-box me-1"></i>Producto *
+                                </label>
+                                <div class="input-group">
+                                    <select class="form-select" id="producto" name="producto" required>
+                                        <option value="" selected disabled>Seleccione un producto</option>
+                                        <% if (productos && productos.length > 0) { %>
+                                            <% productos.forEach(producto => { %>
+                                                <option value="<%= producto.nombre %>" data-unidad="<%= producto.unidad %>">
+                                                    <%= producto.nombre %> (<%= producto.unidad %>)
+                                                </option>
+                                            <% }); %>
+                                        <% } %>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" id="btnNuevoProducto" title="Crear nuevo producto">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Por favor seleccione un producto.
+                                </div>
+                            </div>
+                            
+                            <!-- Peso -->
+                            <div class="col-md-6">
+                                <label for="peso" class="form-label">
+                                    <i class="bi bi-speedometer me-1"></i>Peso (kg) *
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="peso" 
+                                       name="peso" 
+                                       step="0.01" 
+                                       min="0" 
+                                       required 
+                                       placeholder="0.00">
+                                <div class="invalid-feedback">
+                                    Por favor ingrese un peso válido.
+                                </div>
+                            </div>
+                            
+                            <!-- Precinto -->
+                            <div class="col-12">
+                                <label for="precinto" class="form-label">
+                                    <i class="bi bi-lock me-1"></i>Precinto *
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="precinto" 
+                                       name="precinto" 
+                                       required 
+                                       placeholder="Ingrese el número de precinto">
+                                <div class="invalid-feedback">
+                                    Por favor ingrese el precinto.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary" id="btnGuardar">
+                                        <i class="bi bi-save me-2"></i>Crear Bolsón
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-clockwise me-2"></i>Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Common JS (Para funcionalidades compartidas como logout) -->
+    <script src="/assets/js/common.js"></script>
+    
+    <!-- Custom JS for this page -->
+    <script src="/assets/js/bolsonesNuevo.js"></script>
+</body>
+</html>

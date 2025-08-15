@@ -94,6 +94,36 @@ const authController = {
         error: error.message
       });
     }
+  },
+
+  // Controlador para logout
+  logout(req, res) {
+    try {
+      // Limpiar la cookie del token
+      res.clearCookie('token');
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Sesión cerrada exitosamente'
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error al cerrar sesión',
+        error: error.message
+      });
+    }
+  },
+
+  // Controlador para verificar estado de autenticación
+  check(req, res) {
+    // Este endpoint será protegido por el middleware de autenticación
+    // Si llega aquí, significa que el token es válido
+    return res.status(200).json({
+      success: true,
+      message: 'Usuario autenticado',
+      user: req.user // El middleware ya asignó el usuario decodificado a req.user
+    });
   }
 };
 

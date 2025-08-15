@@ -1,0 +1,313 @@
+$(document).ready(function() {
+    // Navegación entre pasos
+    $("#nextToStep2").click(function() {
+        if (!validateStep1()) {
+            showAlert("Por favor complete los campos obligatorios.", "danger");
+            return false;
+        }
+        $("#step1").removeClass("active");
+        $("#step2").addClass("active");
+        $("#step1-indicator").removeClass("active").addClass("completed");
+        $("#step2-indicator").addClass("active");
+    });
+    
+    $("#backToStep1").click(function() {
+        $("#step2").removeClass("active");
+        $("#step1").addClass("active");
+        $("#step2-indicator").removeClass("active");
+        $("#step1-indicator").removeClass("completed").addClass("active");
+    });
+    
+    $("#nextToStep3").click(function() {
+        if (!validateStep2()) {
+            showAlert("Por favor complete todos los campos obligatorios del Control Diario.", "danger");
+            return false;
+        }
+        $("#step2").removeClass("active");
+        $("#step3").addClass("active");
+        $("#step2-indicator").removeClass("active").addClass("completed");
+        $("#step3-indicator").addClass("active");
+    });
+    
+    $("#backToStep2").click(function() {
+        $("#step3").removeClass("active");
+        $("#step2").addClass("active");
+        $("#step3-indicator").removeClass("active");
+        $("#step2-indicator").removeClass("completed").addClass("active");
+    });
+    
+    $("#nextToStep4").click(function() {
+        if (!validateStep3()) {
+            showAlert("Por favor complete todos los campos obligatorios de los grupos.", "danger");
+            return false;
+        }
+        $("#step3").removeClass("active");
+        $("#step4").addClass("active");
+        $("#step3-indicator").removeClass("active").addClass("completed");
+        $("#step4-indicator").addClass("active");
+        
+        // Mostrar mensaje de información sobre la asociación automática de bolsones
+        showAlert("Los bolsones no asociados serán automáticamente vinculados a este parte diario al guardarlo.", "info");
+    });
+    
+    $("#backToStep3").click(function() {
+        $("#step4").removeClass("active");
+        $("#step3").addClass("active");
+        $("#step4-indicator").removeClass("active");
+        $("#step3-indicator").removeClass("completed").addClass("active");
+    });
+    
+    // Validar paso 1
+    function validateStep1() {
+        let isValid = true;
+        
+        if (!$("#fecha").val()) {
+            $("#fecha").addClass("is-invalid");
+            isValid = false;
+        } else {
+            $("#fecha").removeClass("is-invalid");
+        }
+        
+        if (!$("#turno").val()) {
+            $("#turno").addClass("is-invalid");
+            isValid = false;
+        } else {
+            $("#turno").removeClass("is-invalid");
+        }
+        
+        return isValid;
+    }
+    
+    // Validar paso 2
+    function validateStep2() {
+        let isValid = true;
+        
+        // Comprobar todos los campos requeridos en el paso 2
+        $(".form-step#step2 select[required], .form-step#step2 input[required]").each(function() {
+            if (!$(this).val()) {
+                $(this).addClass("is-invalid");
+                isValid = false;
+            } else {
+                $(this).removeClass("is-invalid");
+            }
+        });
+        
+        return isValid;
+    }
+    
+    // Validar paso 3 (Grupos)
+    function validateStep3() {
+        let isValid = true;
+        
+        // Comprobar todos los campos requeridos en el paso 3
+        $(".form-step#step3 select[required], .form-step#step3 input[required]").each(function() {
+            if (!$(this).val()) {
+                $(this).addClass("is-invalid");
+                isValid = false;
+            } else {
+                $(this).removeClass("is-invalid");
+            }
+        });
+        
+        return isValid;
+    }
+    
+    // Validar paso 4 (checkList)
+    function validateStep4() {
+        let isValid = true;
+        
+        // Comprobar todos los selects requeridos en el paso 4
+        $(".form-step#step4 select[required]").each(function() {
+            if (!$(this).val()) {
+                $(this).addClass("is-invalid");
+                isValid = false;
+                
+                // Añadir mensaje de error visual (div)
+                if (!$(this).next(".invalid-feedback").length) {
+                    $(this).after('<div class="invalid-feedback">Este campo es obligatorio.</div>');
+                }
+            } else {
+                $(this).removeClass("is-invalid");
+            }
+        });
+        
+        return isValid;
+    }
+    
+    // Validación de formulario en el envío
+    $("#submitForm").click(function() {
+        // Validar el último paso
+        if (!validateStep4()) {
+            showAlert("Por favor complete todos los campos obligatorios del checklist.", "danger");
+            return false;
+        }
+        
+        // Si es válido, enviar el formulario
+        $("#formNuevoParteDiario").submit();
+    });
+    
+    // Función para mostrar alertas
+    function showAlert(message, type = 'success') {
+        const alertHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        
+        $('#alertContainer').html(alertHTML);
+        
+        // Auto-hide para mensajes de éxito después de 5 segundos
+        if (type === 'success' || type === 'info') {
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
+        }
+    }
+    
+    // Envío del formulario
+    $('#formNuevoParteDiario').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Recopilar todos los datos del formulario en formato FormData
+        const formEl = document.getElementById('formNuevoParteDiario');
+        const formData = {};
+        
+        // Obtener datos básicos
+        formData.fecha = $('#fecha').val();
+        formData.turno = $('#turno').val();
+        
+        // Procesar datos de control (paso 2)
+        formData.datosControl = {};
+        const controlInputs = formEl.querySelectorAll('[name^="datosControl."]');
+        controlInputs.forEach(input => {
+            const fieldName = input.name.replace('datosControl.', '');
+            formData.datosControl[fieldName] = input.value;
+        });
+        
+        // Procesar datos de grupos (paso 3)
+        formData.grupos = [];
+        
+        // Procesar G1
+        const grupoG1 = {
+            nombre: 'G1',
+            kgPorHora: $('#kgPorHoraG1').val() || null,
+            porcentajeCarga: $('#porcentajeCargaG1').val() || null,
+            porcentajeDebajo3350: $('#porcentajeDebajo3350G1').val() || null,
+            criba: $('#cribaG1').val() || null
+        };
+        formData.grupos.push(grupoG1);
+        
+        // Procesar G2
+        const grupoG2 = {
+            nombre: 'G2',
+            kgPorHora: $('#kgPorHoraG2').val() || null,
+            porcentajeCarga: $('#porcentajeCargaG2').val() || null,
+            porcentajeDebajo3350: $('#porcentajeDebajo3350G2').val() || null,
+            criba: $('#cribaG2').val() || null
+        };
+        formData.grupos.push(grupoG2);
+        
+        // Procesar G3
+        const grupoG3 = {
+            nombre: 'G3',
+            kgPorHora: $('#kgPorHoraG3').val() || null,
+            porcentajeCarga: $('#porcentajeCargaG3').val() || null,
+            porcentajeDebajo3350: $('#porcentajeDebajo3350G3').val() || null,
+            criba: $('#cribaG3').val() || null
+        };
+        formData.grupos.push(grupoG3);
+        
+        // Procesar G4
+        const grupoG4 = {
+            nombre: 'G4',
+            kgPorHora: $('#kgPorHoraG4').val() || null,
+            porcentajeCarga: $('#porcentajeCargaG4').val() || null,
+            porcentajeDebajo3350: $('#porcentajeDebajo3350G4').val() || null,
+            criba: $('#cribaG4').val() || null
+        };
+        formData.grupos.push(grupoG4);
+        
+        // Procesar checklist de pala mecánica (paso 4) - NUEVO FORMATO SIMPLIFICADO
+        formData.checkListPala = {
+            // Corregido para usar horasEquipo en vez de horas_trabajadas
+            horasEquipo: $('#horasEquipo').val() || null,
+            
+            // Observaciones generales
+            observaciones: $('#observacionesGenerales').val() || null,
+            
+            // Campos de checklist simplificados (solo el estado, sin estructura anidada)
+            nivel_combustible: $('[name="checkListPala.nivelCombustible.estado"]').val() || null,
+            sopleteado_radiadores: $('[name="checkListPala.sopleteadoRadiadores.estado"]').val() || null,
+            nivel_refrigerante: $('[name="checkListPala.nivelRefrigerante.estado"]').val() || null,
+            nivel_aceite_motor: $('[name="checkListPala.nivelAceiteMotor.estado"]').val() || null,
+            nivel_liquido_hidraulico: $('[name="checkListPala.nivelLiquidoHidraulico.estado"]').val() || null,
+            control_luces: $('[name="checkListPala.controlLuces.estado"]').val() || null,
+            sistemas_art: $('[name="checkListPala.sistemasART.estado"]').val() || null,
+            limpieza_interior: $('[name="checkListPala.limpiezaInterior.estado"]').val() || null,
+            control_alambres: $('[name="checkListPala.controlAlambres.estado"]').val() || null,
+            lavado_exterior: $('[name="checkListPala.lavadoExterior.estado"]').val() || null,
+            engrase_general: $('[name="checkListPala.engraseGeneral.estado"]').val() || null
+        };
+        
+        // Deshabilitar botón durante la operación
+        const $btnSubmit = $('#submitForm');
+        $btnSubmit.prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Guardando...');
+        
+        console.log('Datos a enviar:', formData); // Log para depuración
+        
+        // Enviar datos al servidor
+        fetch('/api/partes-diarios/nuevo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message || '¡Parte diario creado exitosamente!', 'success');
+                
+                // Resetear formulario y volver al paso 1 después de unos segundos
+                setTimeout(() => {
+                    $('#formNuevoParteDiario')[0].reset();
+                    
+                    // Regresar al paso 1
+                    $(".form-step").removeClass("active");
+                    $("#step1").addClass("active");
+                    
+                    // Resetear indicadores
+                    $(".step").removeClass("active").removeClass("completed");
+                    $("#step1-indicator").addClass("active");
+                    
+                    // Configurar fecha actual por defecto
+                    configurarFechaActual();
+                }, 2000);
+            } else {
+                showAlert('Error: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error de conexión al crear el parte diario', 'danger');
+        })
+        .finally(() => {
+            // Rehabilitar botón
+            $btnSubmit.prop('disabled', false).html('<i class="bi bi-save me-1"></i>Guardar Parte Diario');
+        });
+    });
+    
+    // Función para configurar la fecha actual
+    function configurarFechaActual() {
+        const today = new Date();
+        // Asegurar que la zona horaria local sea utilizada para la fecha
+        const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const formattedDate = localDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+        $('#fecha').val(formattedDate);
+    }
+    
+    // Configurar fecha actual por defecto al cargar la página
+    configurarFechaActual();
+})

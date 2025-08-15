@@ -7,7 +7,13 @@ require('dotenv').config();
 // Importar rutas y middleware
 const authRoutes = require('./routes/authRoutes');
 const bolsonRoutes = require('./routes/bolsonRoutes');
+const ordenDeVentaRoutes = require('./routes/ordenDeVentaRoutes');
+const despachoRoutes = require('./routes/despachoRoutes');
+const parteDiarioRoutes = require('./routes/parteDiarioRoutes'); // Importamos las rutas del parte diario
+const historialRoutes = require('./routes/historialRoutes');
+const viewRoutes = require('./routes/viewRoutes');
 const authMiddleware = require('./middleware/auth');
+const productoRoutes = require('./routes/api/productoRoutes');
 
 // Crear aplicación Express
 const app = express();
@@ -31,18 +37,16 @@ app.use('/assets', express.static(path.join(__dirname, 'assets')));
 // Rutas API
 app.use('/api/auth', authRoutes);
 app.use('/api/bolsones', bolsonRoutes);
+app.use('/api/ordenes', ordenDeVentaRoutes);
+app.use('/api/productos', productoRoutes);
+app.use('/api/despachos', despachoRoutes);
+app.use('/api/partes-diarios', parteDiarioRoutes); // Registramos las rutas del parte diario
+app.use('/api/historial', historialRoutes);
 
-// Ruta para la página de login
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/login.html'));
-});
+// Rutas de vistas
+app.use('/', viewRoutes);
 
-// Proteger home y API verify con el middleware
-app.get('/home', authMiddleware.verifyToken, (req, res) => {
-  console.log('Username en cookie:', req.user.username);
-  res.render('home', { username: req.user.username });
-});
-
+// Ruta para API verify
 app.get('/api/auth/verify', authMiddleware.verifyToken, (req, res) => {
   res.json({
     success: true,
@@ -51,18 +55,6 @@ app.get('/api/auth/verify', authMiddleware.verifyToken, (req, res) => {
       username: req.user.username
     }
   });
-});
-
-// Endpoint de logout: borra la cookie y redirige
-app.get('/logout', (req, res) => {
-  res.clearCookie('token');
-  res.redirect('/login');
-});
-
-// Ruta base
-app.get('/', (req, res) => {
-  // Redireccionar a la página de login
-  res.redirect('/login');
 });
 
 // Manejo de errores global

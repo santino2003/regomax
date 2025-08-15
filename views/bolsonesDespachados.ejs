@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Regomax</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-key me-1"></i> Cambiar contraseña</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-box-seam me-2"></i>Bolsones Despachados
+                        </h4>
+                        <div>
+                            <button id="exportar-despachados" class="btn btn-secondary me-2">
+                                <i class="bi bi-file-earmark-excel me-2"></i>Exportar
+                            </button>
+                            <a href="/despachos/nuevo" class="btn btn-primary">
+                                <i class="bi bi-truck me-2"></i>Nuevo Despacho
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Filtros -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-funnel me-2"></i>Filtros
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="filtrosForm" method="GET" action="/bolsones-despachados">
+                                <div class="row g-3">
+                                    <div class="col-md-6 col-lg-3">
+                                        <label for="producto" class="form-label">Producto</label>
+                                        <input type="text" class="form-control" id="producto" name="producto" 
+                                               value="<%= filtros.producto || '' %>" placeholder="Filtrar por producto">
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-lg-3">
+                                        <label for="codigo" class="form-label">Código de Bolsón</label>
+                                        <input type="text" class="form-control" id="codigo" name="codigo" 
+                                               value="<%= filtros.codigo || '' %>" placeholder="Buscar por código">
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-lg-3">
+                                        <label for="precinto" class="form-label">Precinto</label>
+                                        <input type="text" class="form-control" id="precinto" name="precinto" 
+                                               value="<%= filtros.precinto || '' %>" placeholder="Buscar por precinto">
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-lg-3 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary me-2">
+                                            <i class="bi bi-search me-1"></i>Buscar
+                                        </button>
+                                        <a href="/bolsones-despachados" class="btn btn-outline-secondary">
+                                            <i class="bi bi-x-circle me-1"></i>Limpiar
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabla de bolsones despachados -->
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-list-check me-2"></i>Lista de Bolsones Despachados
+                                </h5>
+                                <span class="badge bg-primary rounded-pill">
+                                    <%= pagination.total %> bolsones
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <% if (bolsones && bolsones.length > 0) { %>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Código</th>
+                                                <th>Producto</th>
+                                                <th>Peso (kg)</th>
+                                                <th>Precinto</th>
+                                                <th>Fecha</th>
+                                                <th>Responsable</th>
+                                                <th>Orden de Venta</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% bolsones.forEach((bolson, index) => { %>
+                                                <tr>
+                                                    <td><%= (pagination.page - 1) * pagination.limit + index + 1 %></td>
+                                                    <td><%= bolson.bolson_codigo %></td>
+                                                    <td><%= bolson.producto %></td>
+                                                    <td><%= parseFloat(bolson.peso).toFixed(2) %></td>
+                                                    <td>
+                                                        <% if (bolson.precinto) { %>
+                                                            <%= bolson.precinto %>
+                                                        <% } else { %>
+                                                            <span class="text-muted">-</span>
+                                                        <% } %>
+                                                    </td>
+                                                    <td><%= new Date(bolson.fecha).toLocaleString() %></td>
+                                                    <td><%= bolson.responsable %></td>
+                                                    <td>
+                                                        <% if (bolson.orden_venta_id) { %>
+                                                            <a href="/ordenes/<%= bolson.orden_venta_id %>" class="text-primary">
+                                                                OV-<%= bolson.orden_venta_id %>
+                                                            </a>
+                                                        <% } else { %>
+                                                            <span class="text-muted">-</span>
+                                                        <% } %>
+                                                    </td>
+                                                </tr>
+                                            <% }); %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Paginación -->
+                                <% if (pagination.totalPages > 1) { %>
+                                    <nav class="mt-4" aria-label="Paginación de bolsones despachados">
+                                        <ul class="pagination justify-content-center">
+                                            <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+                                                <a class="page-link" href="/bolsones-despachados?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= filtros.ordenId ? '&ordenId=' + filtros.ordenId : '' %><%= filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros.precinto ? '&precinto=' + filtros.precinto : '' %>">
+                                                    Anterior
+                                                </a>
+                                            </li>
+                                            
+                                            <% 
+                                            let startPage = Math.max(1, pagination.page - 2);
+                                            let endPage = Math.min(pagination.totalPages, startPage + 4);
+                                            
+                                            if (endPage - startPage < 4) {
+                                                startPage = Math.max(1, endPage - 4);
+                                            }
+                                            
+                                            for (let i = startPage; i <= endPage; i++) { 
+                                            %>
+                                                <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                                                    <a class="page-link" href="/bolsones-despachados?page=<%= i %>&limit=<%= pagination.limit %><%= filtros.ordenId ? '&ordenId=' + filtros.ordenId : '' %><%= filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros.precinto ? '&precinto=' + filtros.precinto : '' %>">
+                                                        <%= i %>
+                                                    </a>
+                                                </li>
+                                            <% } %>
+                                            
+                                            <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
+                                                <a class="page-link" href="/bolsones-despachados?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= filtros.ordenId ? '&ordenId=' + filtros.ordenId : '' %><%= filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros.precinto ? '&precinto=' + filtros.precinto : '' %>">
+                                                    Siguiente
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                <% } %>
+                            <% } else { %>
+                                <div class="alert alert-info text-center">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    No hay bolsones despachados que coincidan con los filtros aplicados.
+                                </div>
+                                <div class="text-center mt-3">
+                                    <a href="/despachos/nuevo" class="btn btn-primary">
+                                        <i class="bi bi-truck me-2"></i>Crear Nuevo Despacho
+                                    </a>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Common Scripts -->
+    <script src="/assets/js/common.js"></script>
+    
+    <!-- Page specific scripts -->
+    <script src="/assets/js/bolsonesDespachados.js"></script>
+</body>
+</html>
