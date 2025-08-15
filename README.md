@@ -8,11 +8,10 @@ permisos
 crear users (puede ser para la que viene)
 Mailing (puede ser para la que viene)
 Crear reporte
-historial(semi)
-modifcar responsable parte diario 
+historial (Pareciera que OK, mostrar mas lindo detalles)
 imprimir las cosas
+modifcar responsable parte diario y kg
 editar y cerrar partes diarios
 reacomodar las cosas
-Editar parte diario 
 Agregar el filtrar a bolsones no despachados
 DEPLOYAR
