@@ -72,14 +72,19 @@ class ParteDiarioRepository {
         try {
             const offset = (page - 1) * limit;
             
-            // Consulta para obtener los partes diarios
+            // Consulta para obtener los partes diarios con la cantidad de bolsones y el peso total
             const query = `
                 SELECT pd.id, pd.fecha, pd.turno, pd.cos_fi, pd.protecciones_vallas, 
                        pd.pref1_encendido_vacio, pd.nivel_liquido_hidraulico_t1, 
                        pd.nivel_liquido_caja_t1, pd.nivel_liq_hidraulico_d1, 
                        pd.temperatura_liq_hid_t1, pd.temperatura_salida_g1, 
-                       pd.temperatura_salida_g2, pd.temperatura_salida_g3, pd.responsable
+                       pd.temperatura_salida_g2, pd.temperatura_salida_g3, pd.responsable,
+                       COUNT(DISTINCT pdb.bolson_id) AS cantidadBolsones,
+                       COALESCE(SUM(b.peso), 0) AS totalPeso
                 FROM partes_diarios pd
+                LEFT JOIN parte_diario_bolsones pdb ON pd.id = pdb.parte_diario_id
+                LEFT JOIN bolsones b ON pdb.bolson_id = b.id
+                GROUP BY pd.id
                 ORDER BY pd.fecha DESC, pd.id DESC
                 LIMIT ? OFFSET ?
             `;
