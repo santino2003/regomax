@@ -6,9 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Manejar el evento de eliminación de parte diario
     setupDeleteButtons();
     
-    // Manejar los eventos de aprobación y rechazo
+    // Manejar los eventos de aprobación
     setupApproveButtons();
-    setupRejectButtons();
 });
 
 /**
@@ -99,53 +98,6 @@ function setupApproveButtons() {
                     // Restaurar el botón
                     this.disabled = false;
                     this.innerHTML = '<i class="bi bi-check-circle"></i>';
-                });
-            }
-        });
-    });
-}
-
-/**
- * Configurar los botones de rechazar parte diario
- */
-function setupRejectButtons() {
-    const rejectButtons = document.querySelectorAll('.btn-rechazar');
-    
-    rejectButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const parteDiarioId = this.getAttribute('data-id');
-            
-            if (confirm('¿Está seguro que desea RECHAZAR este parte diario?')) {
-                // Deshabilitar el botón mientras se procesa
-                this.disabled = true;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-                
-                // Enviar petición para rechazar el parte diario
-                fetch(`/api/partes-diarios/${parteDiarioId}/rechazar`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Parte diario rechazado exitosamente');
-                        // Recargar la página para actualizar la lista
-                        window.location.reload();
-                    } else {
-                        alert(`Error: ${data.message || 'No se pudo rechazar el parte diario'}`);
-                        // Restaurar el botón
-                        this.disabled = false;
-                        this.innerHTML = '<i class="bi bi-x-circle"></i>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al rechazar parte diario:', error);
-                    alert('Error al rechazar parte diario. Intente nuevamente.');
-                    // Restaurar el botón
-                    this.disabled = false;
-                    this.innerHTML = '<i class="bi bi-x-circle"></i>';
                 });
             }
         });

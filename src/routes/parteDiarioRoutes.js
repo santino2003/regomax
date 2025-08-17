@@ -38,13 +38,6 @@ router.post('/:id/aprobar',
     parteDiarioController.aprobarParteDiario
 );
 
-// Ruta para rechazar un parte diario
-router.post('/:id/rechazar',
-    authMiddleware.verifyToken,
-    historialMiddleware.parteDiario.editar(),
-    parteDiarioController.rechazarParteDiario
-);
-
 router.put('/:id', 
     authMiddleware.verifyToken, 
     historialMiddleware.parteDiario.editar(),
@@ -55,6 +48,19 @@ router.delete('/:id',
     authMiddleware.verifyToken, 
     historialMiddleware.parteDiario.eliminar(),
     parteDiarioController.eliminarParteDiario
+);
+
+// Rutas para gestionar bolsones en partes diarios
+router.post('/:id/bolsones',
+    authMiddleware.verifyToken,
+    historialMiddleware.parteDiario.editar(),
+    parteDiarioController.asociarBolsonAParteDiario
+);
+
+router.delete('/:id/bolsones/:bolsonId',
+    authMiddleware.verifyToken,
+    historialMiddleware.parteDiario.editar(),
+    parteDiarioController.desasociarBolsonDeParteDiario
 );
 
 module.exports = router;

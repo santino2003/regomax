@@ -65,7 +65,6 @@
                                     <li><a class="dropdown-item <%= typeof estadoActual === 'undefined' ? 'active' : '' %>" href="/partes-diarios">Todos</a></li>
                                     <li><a class="dropdown-item <%= estadoActual === 'pendiente' ? 'active' : '' %>" href="/partes-diarios/estado/pendiente">Pendientes</a></li>
                                     <li><a class="dropdown-item <%= estadoActual === 'aprobado' ? 'active' : '' %>" href="/partes-diarios/estado/aprobado">Aprobados</a></li>
-                                    <li><a class="dropdown-item <%= estadoActual === 'rechazado' ? 'active' : '' %>" href="/partes-diarios/estado/rechazado">Rechazados</a></li>
                                 </ul>
                             </div>
                             
@@ -104,8 +103,6 @@
                                                     <span class="badge bg-warning text-dark">Pendiente</span>
                                                 <% } else if (parte.estado === 'aprobado') { %>
                                                     <span class="badge bg-success">Aprobado</span>
-                                                <% } else if (parte.estado === 'rechazado') { %>
-                                                    <span class="badge bg-danger">Rechazado</span>
                                                 <% } else { %>
                                                     <span class="badge bg-secondary">Desconocido</span>
                                                 <% } %>
@@ -125,9 +122,6 @@
                                                     <% if (parte.estado === 'pendiente') { %>
                                                         <button class="btn btn-sm btn-success btn-aprobar" data-id="<%= parte.id %>" title="Aprobar">
                                                             <i class="bi bi-check-circle"></i>
-                                                        </button>
-                                                        <button class="btn btn-sm btn-danger btn-rechazar" data-id="<%= parte.id %>" title="Rechazar">
-                                                            <i class="bi bi-x-circle"></i>
                                                         </button>
                                                     <% } %>
                                                 </div>

@@ -47,6 +47,11 @@ class ParteDiarioRepository {
     // Agregar datos de un grupo generador
     async agregarDatosGrupo(parteDiarioId, grupo, kgPorHora, porcentajeCarga, porcentajeDebajo3350, criba) {
         try {
+            // Convertir cadenas vacías a NULL para campos numéricos
+            const kgPorHoraValue = kgPorHora === '' || kgPorHora === null || kgPorHora === undefined ? null : kgPorHora;
+            const porcentajeCargaValue = porcentajeCarga === '' || porcentajeCarga === null || porcentajeCarga === undefined ? null : porcentajeCarga;
+            const porcentajeDebajo3350Value = porcentajeDebajo3350 === '' || porcentajeDebajo3350 === null || porcentajeDebajo3350 === undefined ? null : porcentajeDebajo3350;
+            
             const query = `
                 INSERT INTO partes_diarios_grupos (parte_diario_id, grupo, kg_por_hora, 
                 porcentaje_carga, porcentaje_debajo_3350, criba)
@@ -56,9 +61,9 @@ class ParteDiarioRepository {
             await db.query(query, [
                 parteDiarioId,
                 grupo,
-                kgPorHora,
-                porcentajeCarga,
-                porcentajeDebajo3350,
+                kgPorHoraValue,
+                porcentajeCargaValue,
+                porcentajeDebajo3350Value,
                 criba
             ]);
         } catch (error) {
@@ -328,6 +333,35 @@ class ParteDiarioRepository {
     }
     
     /**
+     * Desasocia un bolsón de un parte diario específico
+     * @param {number} parteDiarioId - ID del parte diario
+     * @param {number} bolsonId - ID del bolsón a desasociar
+     * @returns {Promise<boolean>} - Resultado de la operación
+     */
+    async desasociarBolsonDeParteDiario(parteDiarioId, bolsonId) {
+        try {
+            // Eliminar la asociación
+            await db.query(`
+                DELETE FROM parte_diario_bolsones 
+                WHERE parte_diario_id = ? AND bolson_id = ?
+            `, [parteDiarioId, bolsonId]);
+            
+            // Actualizar el estado del bolsón para indicar que ya no está asociado a un parte diario
+            await db.query(`
+                UPDATE bolsones 
+                SET asociado_a_parte = 0, 
+                    parte_diario_id = NULL 
+                WHERE id = ?
+            `, [bolsonId]);
+            
+            return true;
+        } catch (error) {
+            console.error('Error al desasociar bolsón del parte diario:', error);
+            throw error;
+        }
+    }
+    
+    /**
      * Obtiene los bolsones asociados a un parte diario específico
      * @param {number} parteDiarioId - ID del parte diario
      * @returns {Promise<Array>} Lista de bolsones asociados
@@ -349,14 +383,14 @@ class ParteDiarioRepository {
     /**
      * Actualiza el estado de un parte diario
      * @param {number} parteDiarioId - ID del parte diario
-     * @param {string} estado - Nuevo estado (pendiente, aprobado, rechazado)
-     * @param {string} aprobador - Usuario que aprueba/rechaza el parte diario
+     * @param {string} estado - Nuevo estado (pendiente, aprobado)
+     * @param {string} aprobador - Usuario que aprueba el parte diario
      * @returns {Promise<boolean>} - Resultado de la operación
      */
     async actualizarEstadoParteDiario(parteDiarioId, estado, aprobador) {
         try {
             // Verificar que el estado sea válido
-            const estadosValidos = ['pendiente', 'aprobado', 'rechazado'];
+            const estadosValidos = ['pendiente', 'aprobado'];
             if (!estadosValidos.includes(estado)) {
                 throw new Error(`Estado no válido. Debe ser uno de: ${estadosValidos.join(', ')}`);
             }
@@ -380,13 +414,124 @@ class ParteDiarioRepository {
     
     /**
      * Obtiene los partes diarios por estado
-     * @param {string} estado - Estado de los partes diarios a obtener (pendiente, aprobado, rechazado)
+     * @param {string} estado - Estado de los partes diarios a obtener (pendiente, aprobado)
      * @param {number} page - Número de página
      * @param {number} limit - Límite de registros por página
      * @returns {Promise<Object>} - Resultado paginado con los partes diarios
      */
     async obtenerPartesDiariosPorEstado(estado, page = 1, limit = 10) {
         return this.obtenerPartesDiarios(page, limit, { estado });
+    }
+
+    /**
+     * Actualiza los datos principales de un parte diario
+     * @param {number} parteDiarioId - ID del parte diario
+     * @param {object} datos - Datos actualizados
+     * @returns {Promise<boolean>} - Resultado de la operación
+     */
+    async actualizarParteDiario(parteDiarioId, datos) {
+        try {
+            // Procesar valores para convertir cadenas vacías en NULL
+            const cosFi = datos.cosFi === '' ? null : datos.cosFi;
+            const temperaturaLiqHidT1 = datos.temperaturaLiqHidT1 === '' ? null : datos.temperaturaLiqHidT1;
+            const temperaturaSalidaG1 = datos.temperaturaSalidaG1 === '' ? null : datos.temperaturaSalidaG1;
+            const temperaturaSalidaG2 = datos.temperaturaSalidaG2 === '' ? null : datos.temperaturaSalidaG2;
+            const temperaturaSalidaG3 = datos.temperaturaSalidaG3 === '' ? null : datos.temperaturaSalidaG3;
+
+            // Actualizar el parte diario
+            const query = `
+                UPDATE partes_diarios 
+                SET fecha = ?, 
+                    turno = ?, 
+                    cos_fi = ?, 
+                    protecciones_vallas = ?, 
+                    pref1_encendido_vacio = ?, 
+                    nivel_liquido_hidraulico_t1 = ?, 
+                    nivel_liquido_caja_t1 = ?, 
+                    nivel_liq_hidraulico_d1 = ?, 
+                    temperatura_liq_hid_t1 = ?, 
+                    temperatura_salida_g1 = ?, 
+                    temperatura_salida_g2 = ?, 
+                    temperatura_salida_g3 = ?,
+                    responsable = ?
+                WHERE id = ?
+            `;
+            
+            await db.query(query, [
+                datos.fecha,
+                datos.turno,
+                cosFi,
+                datos.proteccionesVallas,
+                datos.pref1EncendidoVacio,
+                datos.nivelLiquidoHidraulicoT1,
+                datos.nivelLiquidoCajaT1,
+                datos.nivelLiqHidraulicoD1,
+                temperaturaLiqHidT1,
+                temperaturaSalidaG1,
+                temperaturaSalidaG2,
+                temperaturaSalidaG3,
+                datos.responsable,
+                parteDiarioId
+            ]);
+            
+            return true;
+        } catch (error) {
+            console.error('Error al actualizar parte diario:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Elimina los grupos asociados a un parte diario
+     * @param {number} parteDiarioId - ID del parte diario
+     * @returns {Promise<boolean>} - Resultado de la operación
+     */
+    async eliminarGruposDeParteDiario(parteDiarioId) {
+        try {
+            const query = `
+                DELETE FROM partes_diarios_grupos
+                WHERE parte_diario_id = ?
+            `;
+            
+            await db.query(query, [parteDiarioId]);
+            return true;
+        } catch (error) {
+            console.error('Error al eliminar grupos del parte diario:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Elimina un parte diario y sus datos asociados
+     * @param {number} parteDiarioId - ID del parte diario
+     * @returns {Promise<boolean>} - Resultado de la operación
+     */
+    async eliminarParteDiario(parteDiarioId) {
+        try {
+            // Desasociar los bolsones antes de eliminar el parte diario
+            const bolsones = await this.obtenerBolsonesDeParteDiario(parteDiarioId);
+            
+            for (const bolson of bolsones) {
+                await db.query(`
+                    UPDATE bolsones 
+                    SET asociado_a_parte = 0, 
+                        parte_diario_id = NULL 
+                    WHERE id = ?
+                `, [bolson.id]);
+            }
+            
+            // Eliminar el parte diario (los registros relacionados se eliminarán por las restricciones ON DELETE CASCADE)
+            const query = `
+                DELETE FROM partes_diarios
+                WHERE id = ?
+            `;
+            
+            await db.query(query, [parteDiarioId]);
+            return true;
+        } catch (error) {
+            console.error('Error al eliminar parte diario:', error);
+            throw error;
+        }
     }
 }
 

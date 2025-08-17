@@ -241,30 +241,6 @@ const parteDiarioController = {
     },
     
     /**
-     * Rechazar un parte diario
-     */
-    async rechazarParteDiario(req, res) {
-        try {
-            const { id } = req.params;
-            const aprobador = req.user.username; // Obtener el usuario que rechaza
-            
-            await parteDiarioService.actualizarEstadoParteDiario(id, 'rechazado', aprobador);
-            
-            return res.status(200).json({
-                success: true,
-                message: 'Parte diario rechazado exitosamente'
-            });
-        } catch (error) {
-            console.error('Error al rechazar parte diario:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Error al rechazar parte diario',
-                error: error.message
-            });
-        }
-    },
-    
-    /**
      * Listar partes diarios por estado
      */
     async listarPartesDiariosPorEstado(req, res) {
@@ -273,7 +249,7 @@ const parteDiarioController = {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             
-            const estadosValidos = ['pendiente', 'aprobado', 'rechazado'];
+            const estadosValidos = ['pendiente', 'aprobado'];
             if (!estadosValidos.includes(estado)) {
                 return res.status(400).json({
                     success: false,
@@ -307,7 +283,7 @@ const parteDiarioController = {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             
-            const estadosValidos = ['pendiente', 'aprobado', 'rechazado'];
+            const estadosValidos = ['pendiente', 'aprobado'];
             if (!estadosValidos.includes(estado)) {
                 return res.status(400).render('error', { 
                     message: `Estado no válido. Debe ser uno de: ${estadosValidos.join(', ')}`
@@ -325,9 +301,6 @@ const parteDiarioController = {
                 case 'aprobado':
                     titulo = 'Partes Diarios Aprobados';
                     break;
-                case 'rechazado':
-                    titulo = 'Partes Diarios Rechazados';
-                    break;
             }
             
             res.render('listarPartesDiarios', { 
@@ -342,6 +315,107 @@ const parteDiarioController = {
             res.status(500).render('error', { 
                 message: 'Error al cargar la lista de partes diarios',
                 error: error
+            });
+        }
+    },
+
+    // Método para renderizar la vista de editar parte diario
+    async vistaEditarParteDiario(req, res) {
+        try {
+            const { id } = req.params;
+            const parteDiario = await parteDiarioService.obtenerParteDiarioPorId(id);
+            
+            if (!parteDiario) {
+                return res.status(404).render('error', { 
+                    message: 'Parte diario no encontrado'
+                });
+            }
+            
+            // Obtener bolsones pendientes que podrían asociarse a este parte diario
+            const bolsonesPendientes = await bolsonService.obtenerBolsonesPendientes();
+            
+            // Obtener los bolsones ya asociados a este parte diario
+            const bolsonesAsociados = await parteDiarioRepository.obtenerBolsonesDeParteDiario(id);
+            
+            res.render('parteDiarioEditar', { 
+                username: req.user.username,
+                title: `Editar Parte Diario #${id}`,
+                parteDiario: parteDiario,
+                bolsonesPendientes: bolsonesPendientes,
+                bolsonesAsociados: bolsonesAsociados
+            });
+        } catch (error) {
+            console.error('Error al renderizar vista de editar parte diario:', error);
+            res.status(500).render('error', { 
+                message: 'Error al cargar formulario de edición de parte diario',
+                error: error
+            });
+        }
+    },
+
+    /**
+     * Asociar un bolsón a un parte diario
+     */
+    async asociarBolsonAParteDiario(req, res) {
+        try {
+            const { id } = req.params;
+            const { bolsonId } = req.body;
+            
+            // Verificar si el parte diario existe
+            const parteDiarioExistente = await parteDiarioService.obtenerParteDiarioPorId(id);
+            if (!parteDiarioExistente) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Parte diario no encontrado'
+                });
+            }
+            
+            // Asociar el bolsón al parte diario
+            await parteDiarioRepository.asociarBolsonAParteDiario(id, bolsonId);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Bolsón asociado exitosamente al parte diario'
+            });
+        } catch (error) {
+            console.error('Error al asociar bolsón a parte diario:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al asociar bolsón al parte diario',
+                error: error.message
+            });
+        }
+    },
+    
+    /**
+     * Desasociar un bolsón de un parte diario
+     */
+    async desasociarBolsonDeParteDiario(req, res) {
+        try {
+            const { id, bolsonId } = req.params;
+            
+            // Verificar si el parte diario existe
+            const parteDiarioExistente = await parteDiarioService.obtenerParteDiarioPorId(id);
+            if (!parteDiarioExistente) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Parte diario no encontrado'
+                });
+            }
+            
+            // Desasociar el bolsón del parte diario
+            await parteDiarioRepository.desasociarBolsonDeParteDiario(id, bolsonId);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Bolsón desasociado exitosamente del parte diario'
+            });
+        } catch (error) {
+            console.error('Error al desasociar bolsón de parte diario:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al desasociar bolsón del parte diario',
+                error: error.message
             });
         }
     }
