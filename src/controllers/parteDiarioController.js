@@ -113,7 +113,8 @@ const parteDiarioController = {
                 username: req.user.username,
                 title: 'Partes Diarios',
                 partesDiarios: resultado.data,
-                pagination: resultado.pagination
+                pagination: resultado.pagination,
+                estadoActual: undefined // Añadir estadoActual como undefined para la vista general
             });
         } catch (error) {
             console.error('Error al renderizar vista de partes diarios:', error);
@@ -211,6 +212,136 @@ const parteDiarioController = {
                 success: false,
                 message: 'Error al eliminar parte diario',
                 error: error.message
+            });
+        }
+    },
+    
+    /**
+     * Aprobar un parte diario
+     */
+    async aprobarParteDiario(req, res) {
+        try {
+            const { id } = req.params;
+            const aprobador = req.user.username; // Obtener el usuario que aprueba
+            
+            await parteDiarioService.actualizarEstadoParteDiario(id, 'aprobado', aprobador);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Parte diario aprobado exitosamente'
+            });
+        } catch (error) {
+            console.error('Error al aprobar parte diario:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al aprobar parte diario',
+                error: error.message
+            });
+        }
+    },
+    
+    /**
+     * Rechazar un parte diario
+     */
+    async rechazarParteDiario(req, res) {
+        try {
+            const { id } = req.params;
+            const aprobador = req.user.username; // Obtener el usuario que rechaza
+            
+            await parteDiarioService.actualizarEstadoParteDiario(id, 'rechazado', aprobador);
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Parte diario rechazado exitosamente'
+            });
+        } catch (error) {
+            console.error('Error al rechazar parte diario:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al rechazar parte diario',
+                error: error.message
+            });
+        }
+    },
+    
+    /**
+     * Listar partes diarios por estado
+     */
+    async listarPartesDiariosPorEstado(req, res) {
+        try {
+            const { estado } = req.params;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            
+            const estadosValidos = ['pendiente', 'aprobado', 'rechazado'];
+            if (!estadosValidos.includes(estado)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Estado no válido. Debe ser uno de: ${estadosValidos.join(', ')}`
+                });
+            }
+            
+            const resultado = await parteDiarioService.obtenerPartesDiariosPorEstado(estado, page, limit);
+            
+            return res.status(200).json({
+                success: true,
+                data: resultado.data,
+                pagination: resultado.pagination
+            });
+        } catch (error) {
+            console.error('Error al listar partes diarios por estado:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener partes diarios por estado',
+                error: error.message
+            });
+        }
+    },
+    
+    /**
+     * Vista para listar partes diarios por estado
+     */
+    async vistaListarPartesDiariosPorEstado(req, res) {
+        try {
+            const { estado } = req.params;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            
+            const estadosValidos = ['pendiente', 'aprobado', 'rechazado'];
+            if (!estadosValidos.includes(estado)) {
+                return res.status(400).render('error', { 
+                    message: `Estado no válido. Debe ser uno de: ${estadosValidos.join(', ')}`
+                });
+            }
+            
+            const resultado = await parteDiarioService.obtenerPartesDiariosPorEstado(estado, page, limit);
+            
+            // Definir títulos según el estado
+            let titulo;
+            switch(estado) {
+                case 'pendiente':
+                    titulo = 'Partes Diarios Pendientes';
+                    break;
+                case 'aprobado':
+                    titulo = 'Partes Diarios Aprobados';
+                    break;
+                case 'rechazado':
+                    titulo = 'Partes Diarios Rechazados';
+                    break;
+            }
+            
+            res.render('listarPartesDiarios', { 
+                username: req.user.username,
+                title: titulo,
+                partesDiarios: resultado.data,
+                pagination: resultado.pagination,
+                estadoActual: estado
+            });
+        } catch (error) {
+            console.error(`Error al renderizar vista de partes diarios ${req.params.estado}:`, error);
+            res.status(500).render('error', { 
+                message: 'Error al cargar la lista de partes diarios',
+                error: error
             });
         }
     }

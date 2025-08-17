@@ -17,8 +17,8 @@ class ParteDiarioRepository {
                 pref1_encendido_vacio, nivel_liquido_hidraulico_t1, nivel_liquido_caja_t1,
                 nivel_liq_hidraulico_d1, temperatura_liq_hid_t1, 
                 temperatura_salida_g1, temperatura_salida_g2, temperatura_salida_g3,
-                fecha_creacion, responsable)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
+                fecha_creacion, responsable, estado)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, 'pendiente')
             `;
             
             const result = await db.query(query, [
@@ -68,32 +68,63 @@ class ParteDiarioRepository {
     }
     
     // Obtener partes diarios con paginación
-    async obtenerPartesDiarios(page = 1, limit = 10) {
+    async obtenerPartesDiarios(page = 1, limit = 10, filtros = {}) {
         try {
             const offset = (page - 1) * limit;
             
+            // Array para almacenar las condiciones WHERE
+            let condiciones = [];
+            let parametros = [];
+            
+            // Aplicar filtros si existen
+            if (filtros.estado) {
+                condiciones.push('pd.estado = ?');
+                parametros.push(filtros.estado);
+            }
+            
             // Consulta para obtener los partes diarios con la cantidad de bolsones y el peso total
-            const query = `
+            let query = `
                 SELECT pd.id, pd.fecha, pd.turno, pd.cos_fi, pd.protecciones_vallas, 
                        pd.pref1_encendido_vacio, pd.nivel_liquido_hidraulico_t1, 
                        pd.nivel_liquido_caja_t1, pd.nivel_liq_hidraulico_d1, 
                        pd.temperatura_liq_hid_t1, pd.temperatura_salida_g1, 
                        pd.temperatura_salida_g2, pd.temperatura_salida_g3, pd.responsable,
+                       pd.estado,
                        COUNT(DISTINCT pdb.bolson_id) AS cantidadBolsones,
                        COALESCE(SUM(b.peso), 0) AS totalPeso
                 FROM partes_diarios pd
                 LEFT JOIN parte_diario_bolsones pdb ON pd.id = pdb.parte_diario_id
                 LEFT JOIN bolsones b ON pdb.bolson_id = b.id
+            `;
+            
+            // Añadir condiciones WHERE si existen
+            if (condiciones.length > 0) {
+                query += ' WHERE ' + condiciones.join(' AND ');
+            }
+            
+            query += `
                 GROUP BY pd.id
                 ORDER BY pd.fecha DESC, pd.id DESC
                 LIMIT ? OFFSET ?
             `;
             
-            const result = await db.query(query, [limit, offset]);
+            // Agregar los parámetros de limit y offset
+            parametros.push(limit, offset);
             
-            // Consulta para contar el total
-            const countQuery = `SELECT COUNT(*) as total FROM partes_diarios`;
-            const countResult = await db.query(countQuery);
+            const result = await db.query(query, parametros);
+            
+            // Consulta para contar el total con los mismos filtros
+            let countQuery = `
+                SELECT COUNT(*) as total 
+                FROM partes_diarios pd
+            `;
+            
+            // Añadir condiciones WHERE a la consulta de conteo si existen
+            if (condiciones.length > 0) {
+                countQuery += ' WHERE ' + condiciones.join(' AND ');
+            }
+            
+            const countResult = await db.query(countQuery, parametros.slice(0, -2)); // Eliminar limit y offset
             
             return {
                 data: result,
@@ -313,6 +344,49 @@ class ParteDiarioRepository {
             console.error('Error al obtener bolsones de parte diario:', error);
             throw error;
         }
+    }
+
+    /**
+     * Actualiza el estado de un parte diario
+     * @param {number} parteDiarioId - ID del parte diario
+     * @param {string} estado - Nuevo estado (pendiente, aprobado, rechazado)
+     * @param {string} aprobador - Usuario que aprueba/rechaza el parte diario
+     * @returns {Promise<boolean>} - Resultado de la operación
+     */
+    async actualizarEstadoParteDiario(parteDiarioId, estado, aprobador) {
+        try {
+            // Verificar que el estado sea válido
+            const estadosValidos = ['pendiente', 'aprobado', 'rechazado'];
+            if (!estadosValidos.includes(estado)) {
+                throw new Error(`Estado no válido. Debe ser uno de: ${estadosValidos.join(', ')}`);
+            }
+            
+            // Actualizar el estado del parte diario
+            const query = `
+                UPDATE partes_diarios 
+                SET estado = ?, 
+                    aprobador = ?,
+                    fecha_aprobacion = ${estado === 'pendiente' ? 'NULL' : 'NOW()'}
+                WHERE id = ?
+            `;
+            
+            await db.query(query, [estado, aprobador, parteDiarioId]);
+            return true;
+        } catch (error) {
+            console.error('Error al actualizar estado del parte diario:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Obtiene los partes diarios por estado
+     * @param {string} estado - Estado de los partes diarios a obtener (pendiente, aprobado, rechazado)
+     * @param {number} page - Número de página
+     * @param {number} limit - Límite de registros por página
+     * @returns {Promise<Object>} - Resultado paginado con los partes diarios
+     */
+    async obtenerPartesDiariosPorEstado(estado, page = 1, limit = 10) {
+        return this.obtenerPartesDiarios(page, limit, { estado });
     }
 }
 

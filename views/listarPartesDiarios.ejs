@@ -55,7 +55,20 @@
                         <h4 class="menu-heading mb-0">
                             <i class="bi bi-clipboard me-2"></i><%= title %>
                         </h4>
-                        <div>
+                        <div class="d-flex gap-2">
+                            <!-- Filtro por estado -->
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Filtrar por estado
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <li><a class="dropdown-item <%= typeof estadoActual === 'undefined' ? 'active' : '' %>" href="/partes-diarios">Todos</a></li>
+                                    <li><a class="dropdown-item <%= estadoActual === 'pendiente' ? 'active' : '' %>" href="/partes-diarios/estado/pendiente">Pendientes</a></li>
+                                    <li><a class="dropdown-item <%= estadoActual === 'aprobado' ? 'active' : '' %>" href="/partes-diarios/estado/aprobado">Aprobados</a></li>
+                                    <li><a class="dropdown-item <%= estadoActual === 'rechazado' ? 'active' : '' %>" href="/partes-diarios/estado/rechazado">Rechazados</a></li>
+                                </ul>
+                            </div>
+                            
                             <a href="/partes-diarios/nuevo" class="btn btn-primary">
                                 <i class="bi bi-plus-circle me-2"></i>Nuevo Parte Diario
                             </a>
@@ -72,6 +85,7 @@
                                     <th>Bolsones</th>
                                     <th>Total Peso</th>
                                     <th>Responsable</th>
+                                    <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -86,21 +100,43 @@
                                             <td><%= parte.totalPeso || 0 %> kg</td>
                                             <td><%= parte.responsable %></td>
                                             <td>
-                                                <a href="/partes-diarios/detalle/<%= parte.id %>" class="btn btn-sm btn-info">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
-                                                <a href="/partes-diarios/<%= parte.id %>" class="btn btn-sm btn-primary">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <button class="btn btn-sm btn-danger btn-delete" data-id="<%= parte.id %>">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
+                                                <% if (parte.estado === 'pendiente') { %>
+                                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                                <% } else if (parte.estado === 'aprobado') { %>
+                                                    <span class="badge bg-success">Aprobado</span>
+                                                <% } else if (parte.estado === 'rechazado') { %>
+                                                    <span class="badge bg-danger">Rechazado</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-secondary">Desconocido</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="/partes-diarios/detalle/<%= parte.id %>" class="btn btn-sm btn-info" title="Ver detalle">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a href="/partes-diarios/<%= parte.id %>" class="btn btn-sm btn-primary" title="Editar">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <button class="btn btn-sm btn-danger btn-delete" data-id="<%= parte.id %>" title="Eliminar">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                    
+                                                    <% if (parte.estado === 'pendiente') { %>
+                                                        <button class="btn btn-sm btn-success btn-aprobar" data-id="<%= parte.id %>" title="Aprobar">
+                                                            <i class="bi bi-check-circle"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-danger btn-rechazar" data-id="<%= parte.id %>" title="Rechazar">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </button>
+                                                    <% } %>
+                                                </div>
                                             </td>
                                         </tr>
                                     <% }) %>
                                 <% } else { %>
                                     <tr>
-                                        <td colspan="7" class="text-center">No hay partes diarios registrados</td>
+                                        <td colspan="8" class="text-center">No hay partes diarios registrados</td>
                                     </tr>
                                 <% } %>
                             </tbody>
@@ -110,17 +146,17 @@
                             <nav aria-label="Navegación de partes diarios">
                                 <ul class="pagination justify-content-center">
                                     <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/partes-diarios?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %>" tabindex="-1">Anterior</a>
+                                        <a class="page-link" href="<%= typeof estadoActual !== 'undefined' ? `/partes-diarios/estado/${estadoActual}` : '/partes-diarios' %>?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %>" tabindex="-1">Anterior</a>
                                     </li>
                                     
                                     <% for(let i = 1; i <= pagination.totalPages; i++) { %>
                                         <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                                            <a class="page-link" href="/partes-diarios?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
+                                            <a class="page-link" href="<%= typeof estadoActual !== 'undefined' ? `/partes-diarios/estado/${estadoActual}` : '/partes-diarios' %>?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
                                         </li>
                                     <% } %>
                                     
                                     <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/partes-diarios?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %>">Siguiente</a>
+                                        <a class="page-link" href="<%= typeof estadoActual !== 'undefined' ? `/partes-diarios/estado/${estadoActual}` : '/partes-diarios' %>?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %>">Siguiente</a>
                                     </li>
                                 </ul>
                             </nav>
@@ -131,7 +167,7 @@
                                 Mostrando <%= partesDiarios.length %> de <%= pagination ? pagination.total : partesDiarios.length %> partes diarios
                             </div>
                             <div>
-                                <form class="d-flex" action="/partes-diarios" method="GET">
+                                <form class="d-flex" action="<%= typeof estadoActual !== 'undefined' ? `/partes-diarios/estado/${estadoActual}` : '/partes-diarios' %>" method="GET">
                                     <select class="form-select form-select-sm me-2" name="limit" onchange="this.form.submit()">
                                         <option value="10" <%= pagination && pagination.limit === 10 ? 'selected' : '' %>>10 por página</option>
                                         <option value="25" <%= pagination && pagination.limit === 25 ? 'selected' : '' %>>25 por página</option>

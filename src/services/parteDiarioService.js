@@ -134,6 +134,45 @@ class ParteDiarioService {
             throw new Error('Error al obtener el parte diario: ' + error.message);
         }
     }
+    
+    /**
+     * Actualiza el estado de un parte diario
+     * @param {number} parteDiarioId - ID del parte diario
+     * @param {string} estado - Nuevo estado (pendiente, aprobado, rechazado)
+     * @param {string} aprobador - Usuario que aprueba/rechaza el parte diario
+     * @returns {Promise<boolean>} - Resultado de la operación
+     */
+    async actualizarEstadoParteDiario(parteDiarioId, estado, aprobador) {
+        try {
+            // Verificar que el parte diario existe
+            const parteDiario = await parteDiarioRepository.obtenerParteDiarioPorId(parteDiarioId);
+            if (!parteDiario) {
+                throw new Error('Parte diario no encontrado');
+            }
+            
+            // Actualizar el estado
+            return await parteDiarioRepository.actualizarEstadoParteDiario(parteDiarioId, estado, aprobador);
+        } catch (error) {
+            console.error('Error en el servicio al actualizar estado del parte diario:', error);
+            throw new Error('Error al actualizar el estado del parte diario: ' + error.message);
+        }
+    }
+    
+    /**
+     * Obtiene los partes diarios filtrados por estado
+     * @param {string} estado - Estado de los partes diarios (pendiente, aprobado, rechazado)
+     * @param {number} page - Número de página
+     * @param {number} limit - Límite de registros por página
+     * @returns {Promise<Object>} - Resultado paginado con los partes diarios
+     */
+    async obtenerPartesDiariosPorEstado(estado, page = 1, limit = 10) {
+        try {
+            return await parteDiarioRepository.obtenerPartesDiariosPorEstado(estado, page, limit);
+        } catch (error) {
+            console.error('Error en el servicio al obtener partes diarios por estado:', error);
+            throw new Error('Error al obtener los partes diarios por estado: ' + error.message);
+        }
+    }
 }
 
 module.exports = new ParteDiarioService();

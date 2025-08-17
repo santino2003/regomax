@@ -111,6 +111,7 @@ router.get('/bolsones-despachados', [authMiddleware.verifyToken, noCacheMiddlewa
 
 // Rutas de partes diarios
 router.get('/partes-diarios', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaListarPartesDiarios);
+router.get('/partes-diarios/estado/:estado', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaListarPartesDiariosPorEstado);
 router.get('/partes-diarios/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaNuevoParteDiario);
 router.get('/partes-diarios/detalle/:id', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaDetalleParteDiario);
 router.get('/partes-diarios/:id', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaDetalleParteDiario);

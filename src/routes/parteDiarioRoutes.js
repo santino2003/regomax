@@ -19,10 +19,30 @@ router.get('/',
     parteDiarioController.listarPartesDiarios
 );
 
+// Ruta para listar partes diarios por estado
+router.get('/estado/:estado',
+    authMiddleware.verifyToken,
+    parteDiarioController.listarPartesDiariosPorEstado
+);
+
 router.get('/:id', 
     authMiddleware.verifyToken,
     historialMiddleware.parteDiario.consultar(),
     parteDiarioController.obtenerParteDiario
+);
+
+// Ruta para aprobar un parte diario
+router.post('/:id/aprobar',
+    authMiddleware.verifyToken,
+    historialMiddleware.parteDiario.editar(),
+    parteDiarioController.aprobarParteDiario
+);
+
+// Ruta para rechazar un parte diario
+router.post('/:id/rechazar',
+    authMiddleware.verifyToken,
+    historialMiddleware.parteDiario.editar(),
+    parteDiarioController.rechazarParteDiario
 );
 
 router.put('/:id', 
