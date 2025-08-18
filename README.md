@@ -9,7 +9,6 @@ crear users (puede ser para la que viene)(ver historial)
 Mailing (puede ser para la que viene)
 Crear reporte
 imprimir las cosas
-modifcar responsable parte diario y kg
 reacomodar las cosas
 DEPLOYAR4
 
