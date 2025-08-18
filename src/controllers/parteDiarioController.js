@@ -7,7 +7,7 @@ const parteDiarioController = {
         try {
             const datosParteDiario = req.body;
             datosParteDiario.responsable = req.user.username; // Agregar responsable desde la sesión
-            
+            console.log('Datos recibidos para crear parte diario:', datosParteDiario);
             const resultado = await parteDiarioService.crearParteDiario(datosParteDiario);
             
             // Si se asociaron bolsones automáticamente, mostrar información

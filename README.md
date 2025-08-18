@@ -11,6 +11,5 @@ Crear reporte
 imprimir las cosas
 modifcar responsable parte diario y kg
 reacomodar las cosas
-Agregar el filtrar a bolsones no despachados
 DEPLOYAR4
 

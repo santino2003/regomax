@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 class ParteDiarioRepository {
     // Crear un nuevo parte diario - Datos de control
-    async crearParteDiario(fecha, turno, datos) {
+    async crearParteDiario(fecha, turno, responsable, datos) {
         try {
             // Procesar valores decimales para convertir cadenas vacías en NULL
             const cosFi = datos.cosFi === '' ? null : datos.cosFi;
@@ -34,7 +34,7 @@ class ParteDiarioRepository {
                 temperaturaSalidaG1,
                 temperaturaSalidaG2,
                 temperaturaSalidaG3,
-                datos.responsable || null
+                responsable
             ]);
             
             return result.insertId;

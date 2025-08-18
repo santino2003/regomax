@@ -4,7 +4,7 @@ const bolsonRepository = require('../repositories/bolsonRepository');
 class ParteDiarioService {
     async crearParteDiario(datosCompletos) {
         try {
-            const { fecha, turno, datosControl, grupos, checkListPala } = datosCompletos;
+            const { fecha, turno, responsable, datosControl, grupos, checkListPala } = datosCompletos;
 
             if (!fecha || !turno || !datosControl) {
                 throw new Error('Datos incompletos para crear el parte diario');
@@ -22,7 +22,7 @@ class ParteDiarioService {
             };
 
             // Crear el parte diario principal (datos de control)
-            const parteDiarioId = await parteDiarioRepository.crearParteDiario(fecha, turno, datosControlFormateados);
+            const parteDiarioId = await parteDiarioRepository.crearParteDiario(fecha, turno, responsable, datosControlFormateados);
 
             // Si hay grupos definidos, agregarlos
             if (grupos && Array.isArray(grupos) && grupos.length > 0) {
