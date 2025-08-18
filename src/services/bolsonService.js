@@ -128,8 +128,8 @@ class BolsonService {
         }
     }
     // Obtener bolsones no despachados
-    async obtenerNoDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
-        return await bolsonRepository.obtenerNoDespachados(page, limit, sortBy, sortOrder);
+    async obtenerNoDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC', filtros = {}) {
+        return await bolsonRepository.obtenerNoDespachados(page, limit, sortBy, sortOrder, filtros);
     }
 
     /**
@@ -138,10 +138,11 @@ class BolsonService {
      * @param {number} limit - Cantidad de items por página
      * @param {string} sortBy - Campo por el cual ordenar
      * @param {string} sortOrder - Orden de clasificación (ASC o DESC)
+     * @param {Object} filtros - Filtros a aplicar (producto, codigo, precinto)
      * @returns {Promise<Object>} Bolsones despachados con información de paginación
      */
-    async obtenerDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
-        return await bolsonRepository.obtenerDespachados(page, limit, sortBy, sortOrder);
+    async obtenerDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC', filtros = {}) {
+        return await bolsonRepository.obtenerDespachados(page, limit, sortBy, sortOrder, filtros);
     }
 
     /**

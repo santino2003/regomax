@@ -109,12 +109,21 @@ const bolsonController = {
             // Parámetros de paginación para la vista
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
+
+            // Obtener los parámetros de filtro
+            const filtros = {
+                producto: req.query.producto || '',
+                codigo: req.query.codigo || '',
+                precinto: req.query.precinto || ''
+            };
+            
             // Solo mostrar bolsones no despachados
-            const resultado = await bolsonService.obtenerNoDespachados(page, limit, 'id', 'DESC');
+            const resultado = await bolsonService.obtenerNoDespachados(page, limit, 'id', 'DESC', filtros);
             res.render('listarBolsones', { 
                 username: req.user.username,
                 bolsones: resultado.data,
-                pagination: resultado.pagination
+                pagination: resultado.pagination,
+                filtros: filtros  // Pasar los filtros a la plantilla
             });
         } catch (error) {
             console.error('Error al renderizar vista de bolsones:', error);
@@ -231,13 +240,21 @@ const bolsonController = {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             
-            // Obtener bolsones despachados (si existe este método en el servicio)
-            const resultado = await bolsonService.obtenerDespachados(page, limit, 'id', 'DESC');
+            // Obtener los parámetros de filtro
+            const filtros = {
+                producto: req.query.producto || '',
+                codigo: req.query.codigo || '',
+                precinto: req.query.precinto || ''
+            };
+            
+            // Obtener bolsones despachados con los filtros aplicados
+            const resultado = await bolsonService.obtenerDespachados(page, limit, 'id', 'DESC', filtros);
             
             res.render('bolsonesDespachados', { 
                 username: req.user.username,
                 bolsones: resultado.data,
-                pagination: resultado.pagination
+                pagination: resultado.pagination,
+                filtros: filtros  // Pasar los filtros a la plantilla
             });
         } catch (error) {
             console.error('Error al renderizar vista de bolsones despachados:', error);
