@@ -64,33 +64,47 @@
                             </h2>
                             <div id="collapseProduccion" class="accordion-collapse collapse show" data-bs-parent="#adminAccordion">
                                 <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bolsones:view'])) { %>
                                     <div class="submenu-item">
                                         <a href="/bolsones"><i class="bi bi-box-seam me-2"></i> Bolsones</a>
                                     </div>
+                                    <% } %>
                                     
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bolsones:create'])) { %>
                                     <div class="submenu-item">
                                         <a href="/bolsones/nuevo"><i class="bi bi-plus-circle me-2"></i> Crear bolson</a>
                                     </div>
+                                    <% } %>
                                     
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['despachos:create'])) { %>
                                     <div class="submenu-item">
                                         <a href="/despachos/nuevo"><i class="bi bi-truck me-2"></i> Despachar Bolsones</a>
                                     </div>
+                                    <% } %>
                                     
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['despachos:view'])) { %>
                                     <div class="submenu-item">
                                         <a href="/bolsones-despachados"><i class="bi bi-clipboard-check me-2"></i> Bolsones Despachados</a>
                                     </div>
+                                    <% } %>
                                     
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['partes_diarios:create'])) { %>
                                     <div class="submenu-item">
                                         <a href="/partes-diarios/nuevo"><i class="bi bi-clipboard-data me-2"></i> Parte Diario</a>
                                     </div>
+                                    <% } %>
                                     
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['partes_diarios:view'])) { %>
                                     <div class="submenu-item">
                                         <a href="/partes-diarios"><i class="bi bi-calendar-check me-2"></i> Ver Partes Diarios</a>
                                     </div>
+                                    <% } %>
                                     
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['ordenes:view'])) { %>
                                     <div class="submenu-item">
                                         <a href="/ordenes"><i class="bi bi-box-seam me-2"></i> Ordenes</a>
                                     </div>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
@@ -104,12 +118,14 @@
                             </h2>
                             <div id="collapseCompras" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
                                 <div class="accordion-body">
+                                    <% if (user && user.role === 'admin') { %> <!-- Permisos temporales hasta que se configuren permisos específicos -->
                                     <div class="submenu-item">
                                         <a href="#"><i class="bi bi-file-earmark-text me-2"></i> Órdenes de Compra</a>
                                     </div>
                                     <div class="submenu-item">
                                         <a href="#"><i class="bi bi-people me-2"></i> Gestión de Proveedores</a>
                                     </div>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
@@ -123,12 +139,16 @@
                             </h2>
                             <div id="collapseVentas" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
                                 <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['ordenes:create'])) { %>
                                     <div class="submenu-item">
-                                        <a href="#"><i class="bi bi-file-earmark-plus me-2"></i> Cargar Órdenes de Venta</a>
+                                        <a href="/ordenes/nueva"><i class="bi bi-file-earmark-plus me-2"></i> Cargar Órdenes de Venta</a>
                                     </div>
+                                    <% } %>
+                                    <% if (user && user.role === 'admin') { %> <!-- Permisos temporales hasta que se configuren permisos específicos -->
                                     <div class="submenu-item">
                                         <a href="#"><i class="bi bi-truck me-2"></i> Logística</a>
                                     </div>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
@@ -142,6 +162,7 @@
                             </h2>
                             <div id="collapseAlmacenes" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
                                 <div class="accordion-body">
+                                    <% if (user && user.role === 'admin') { %> <!-- Permisos temporales hasta que se configuren permisos específicos -->
                                     <div class="submenu-item">
                                         <a href="#"><i class="bi bi-box me-2"></i> Bienes</a>
                                     </div>
@@ -160,9 +181,59 @@
                                     <div class="submenu-item">
                                         <a href="#"><i class="bi bi-diagram-3 me-2"></i> Familias</a>
                                     </div>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Administración del Sistema - Solo visible para usuarios con permisos adecuados -->
+                        <% if (user && (user.role === 'admin' || 
+                                     (user.permissions && (user.permissions['users:view'] || 
+                                                        user.permissions['configuracion:view'])))) { %>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdminSistema">
+                                    <i class="bi bi-gear-fill me-2"></i> Administración del Sistema
+                                </button>
+                            </h2>
+                            <div id="collapseAdminSistema" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                                <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || (user.permissions && user.permissions['users:view']))) { %>
+                                    <div class="submenu-item">
+                                        <a href="/users"><i class="bi bi-people me-2"></i> Gestión de Usuarios</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || (user.permissions && user.permissions['configuracion:view']))) { %>
+                                    <div class="submenu-item">
+                                        <a href="#"><i class="bi bi-sliders me-2"></i> Configuración</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user) { %> <!-- El historial es visible para todos los usuarios autenticados -->
+                                    <div class="submenu-item">
+                                        <a href="/historial"><i class="bi bi-clock-history me-2"></i> Historial de Acciones</a>
+                                    </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                        <% } %>
+
+                        <!-- Ocultar secciones de menú vacías si el usuario no tiene permisos para ninguna opción -->
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                // Obtener todas las secciones de acordeón
+                                const accordionSections = document.querySelectorAll('.accordion-item');
+                                
+                                // Para cada sección, verificar si tiene elementos de menú
+                                accordionSections.forEach(section => {
+                                    const menuItems = section.querySelectorAll('.submenu-item');
+                                    if (menuItems.length === 0) {
+                                        // Si no hay elementos de menú, ocultar la sección completa
+                                        section.style.display = 'none';
+                                    }
+                                });
+                            });
+                        </script>
                     </div>
                 </div>
             </div>

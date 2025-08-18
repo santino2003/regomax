@@ -3,6 +3,7 @@ const router = express.Router();
 const path = require('path');
 const authMiddleware = require('../middleware/auth');
 const noCacheMiddleware = require('../middleware/noCacheMiddleware');
+const permissionsMiddleware = require('../middleware/permissions');
 const bolsonController = require('../controllers/bolsonController');
 const OVController = require('../controllers/ordenDeVentaController');
 const productoController = require('../controllers/productoController');
@@ -78,45 +79,127 @@ router.get('/home', [authMiddleware.verifyToken, noCacheMiddleware], async (req,
         
         res.render('home', { 
             username: req.user.username,
+            user: req.user,  // Pasar el objeto de usuario completo para verificar permisos
             accionesRecientes: accionesFormateadas
         });
     } catch (error) {
         console.error('Error al obtener acciones recientes:', error);
         res.render('home', { 
             username: req.user.username,
+            user: req.user,  // Pasar el objeto de usuario completo para verificar permisos
             accionesRecientes: []
         });
     }
 });
 
-// Rutas de vistas para bolsones - añadiendo noCacheMiddleware
-router.get('/bolsones', [authMiddleware.verifyToken, noCacheMiddleware], bolsonController.vistaListarBolsones);
-router.get('/bolsones/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], bolsonController.vistaNuevoBolson);
-router.get('/bolsones/exportar', [authMiddleware.verifyToken, noCacheMiddleware], bolsonController.exportarBolsones);
-router.get('/bolsones/:id', [authMiddleware.verifyToken, noCacheMiddleware], bolsonController.vistaEditarBolson);
+// Rutas de vistas para bolsones - con verificación de permisos
+router.get('/bolsones', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware, 
+    permissionsMiddleware.hasPermission('bolsones:view')
+], bolsonController.vistaListarBolsones);
 
-// Rutas de órdenes - añadiendo noCacheMiddleware
-router.get('/ordenes', [authMiddleware.verifyToken, noCacheMiddleware], OVController.vistaListarOrdenes);
-router.get('/ordenes/nueva', [authMiddleware.verifyToken, noCacheMiddleware], OVController.vistaNuevaOrden);
-router.get('/ordenes/editar/:id', [authMiddleware.verifyToken, noCacheMiddleware], OVController.vistaEditarOrden);
-router.get('/ordenes/:id', [authMiddleware.verifyToken, noCacheMiddleware], OVController.vistaVisualizarOrden);
+router.get('/bolsones/nuevo', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bolsones:create')
+], bolsonController.vistaNuevoBolson);
 
-// Rutas de productos
-router.get('/productos/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], productoController.vistaNuevoProducto);
+router.get('/bolsones/exportar', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bolsones:export')
+], bolsonController.exportarBolsones);
 
-// Rutas de despachos
-router.get('/despachos/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], despachoController.vistaCrearDespacho);
-router.get('/despachos/orden/:ordenId', [authMiddleware.verifyToken, noCacheMiddleware], despachoController.vistaVerDespachos);
-router.get('/bolsones-despachados', [authMiddleware.verifyToken, noCacheMiddleware], despachoController.vistaListarBolsonesDespachados);
+router.get('/bolsones/:id', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bolsones:edit')
+], bolsonController.vistaEditarBolson);
 
-// Rutas de partes diarios
-router.get('/partes-diarios', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaListarPartesDiarios);
-router.get('/partes-diarios/estado/:estado', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaListarPartesDiariosPorEstado);
-router.get('/partes-diarios/nuevo', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaNuevoParteDiario);
-router.get('/partes-diarios/detalle/:id', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaDetalleParteDiario);
-router.get('/partes-diarios/:id', [authMiddleware.verifyToken, noCacheMiddleware], parteDiarioController.vistaEditarParteDiario);
+// Rutas de órdenes - con verificación de permisos
+router.get('/ordenes', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes:view')
+], OVController.vistaListarOrdenes);
 
-// Ruta para historial de acciones
+router.get('/ordenes/nueva', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes:create')
+], OVController.vistaNuevaOrden);
+
+router.get('/ordenes/editar/:id', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes:edit')
+], OVController.vistaEditarOrden);
+
+router.get('/ordenes/:id', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes:view')
+], OVController.vistaVisualizarOrden);
+
+// Rutas de productos - con verificación de permisos
+router.get('/productos/nuevo', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('productos:create')
+], productoController.vistaNuevoProducto);
+
+// Rutas de despachos - con verificación de permisos
+router.get('/despachos/nuevo', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('despachos:create')
+], despachoController.vistaCrearDespacho);
+
+router.get('/despachos/orden/:ordenId', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('despachos:view')
+], despachoController.vistaVerDespachos);
+
+router.get('/bolsones-despachados', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('despachos:view')
+], despachoController.vistaListarBolsonesDespachados);
+
+// Rutas de partes diarios - con verificación de permisos
+router.get('/partes-diarios', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('partes_diarios:view')
+], parteDiarioController.vistaListarPartesDiarios);
+
+router.get('/partes-diarios/estado/:estado', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('partes_diarios:view')
+], parteDiarioController.vistaListarPartesDiariosPorEstado);
+
+router.get('/partes-diarios/nuevo', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('partes_diarios:create')
+], parteDiarioController.vistaNuevoParteDiario);
+
+router.get('/partes-diarios/detalle/:id', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('partes_diarios:view')
+], parteDiarioController.vistaDetalleParteDiario);
+
+router.get('/partes-diarios/:id', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('partes_diarios:edit')
+], parteDiarioController.vistaEditarParteDiario);
+
+// Ruta para historial de acciones - visible para todos los usuarios autenticados
 router.get('/historial', [authMiddleware.verifyToken, noCacheMiddleware], historialController.mostrarHistorial);
 
 // Endpoint de logout

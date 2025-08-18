@@ -43,6 +43,10 @@ app.use('/api/despachos', despachoRoutes);
 app.use('/api/partes-diarios', parteDiarioRoutes); // Registramos las rutas del parte diario
 app.use('/api/historial', historialRoutes);
 
+// Rutas para usuarios (tanto vista como API)
+app.use('/users', authRoutes); // Para la vista de gestión de usuarios
+app.use('/api/users', authRoutes); // Rutas API para operaciones CRUD de usuarios
+
 // Rutas de vistas
 app.use('/', viewRoutes);
 
