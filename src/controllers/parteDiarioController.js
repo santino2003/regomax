@@ -38,19 +38,46 @@ const parteDiarioController = {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             
-            const resultado = await parteDiarioService.obtenerPartesDiarios(page, limit);
+            // Obtener los partes diarios
+            const resultado = await parteDiarioService.obtenerTodosPartesDiarios(page, limit);
             
-            return res.status(200).json({
-                success: true,
-                data: resultado.data,
-                pagination: resultado.pagination
+            // Agrupar los partes diarios por fecha
+            const partesDiariosPorFecha = {};
+            
+            resultado.data.forEach(parte => {
+                // Convertir la fecha a formato YYYY-MM-DD para usarla como clave
+                const fecha = new Date(parte.fecha).toISOString().split('T')[0];
+                
+                // Si no existe la fecha en el objeto, la inicializamos
+                if (!partesDiariosPorFecha[fecha]) {
+                    partesDiariosPorFecha[fecha] = {
+                        fecha: fecha,
+                        fechaFormateada: new Date(parte.fecha).toLocaleDateString(),
+                        partes: []
+                    };
+                }
+                
+                // Agregamos el parte diario al array de la fecha correspondiente
+                partesDiariosPorFecha[fecha].partes.push(parte);
+            });
+            
+            // Convertir el objeto en un array ordenado por fecha (más reciente primero)
+            const partesPorFecha = Object.values(partesDiariosPorFecha).sort((a, b) => {
+                return new Date(b.fecha) - new Date(a.fecha);
+            });
+            
+            res.render('listarPartesDiarios', {
+                username: req.user.username,
+                title: 'Partes Diarios',
+                partesPorFecha: partesPorFecha, // Eliminar variable redundante partesDiariosPorFecha
+                pagination: resultado.pagination,
+                estadoActual: 'todos' // Agregar esta variable para que la vista funcione correctamente
             });
         } catch (error) {
             console.error('Error al listar partes diarios:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Error al obtener partes diarios',
-                error: error.message
+            res.status(500).render('error', { 
+                message: 'Error al cargar la lista de partes diarios',
+                error: error
             });
         }
     },
@@ -107,17 +134,43 @@ const parteDiarioController = {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             
-            const resultado = await parteDiarioService.obtenerPartesDiarios(page, limit);
+            // Obtener los partes diarios
+            const resultado = await parteDiarioService.obtenerTodosPartesDiarios(page, limit);
             
-            res.render('listarPartesDiarios', { 
+            // Agrupar los partes diarios por fecha
+            const partesDiariosPorFecha = {};
+            
+            resultado.data.forEach(parte => {
+                // Convertir la fecha a formato YYYY-MM-DD para usarla como clave
+                const fecha = new Date(parte.fecha).toISOString().split('T')[0];
+                
+                // Si no existe la fecha en el objeto, la inicializamos
+                if (!partesDiariosPorFecha[fecha]) {
+                    partesDiariosPorFecha[fecha] = {
+                        fecha: fecha,
+                        fechaFormateada: new Date(parte.fecha).toLocaleDateString(),
+                        partes: []
+                    };
+                }
+                
+                // Agregamos el parte diario al array de la fecha correspondiente
+                partesDiariosPorFecha[fecha].partes.push(parte);
+            });
+            
+            // Convertir el objeto en un array ordenado por fecha (más reciente primero)
+            const partesPorFecha = Object.values(partesDiariosPorFecha).sort((a, b) => {
+                return new Date(b.fecha) - new Date(a.fecha);
+            });
+            
+            res.render('listarPartesDiarios', {
                 username: req.user.username,
                 title: 'Partes Diarios',
-                partesDiarios: resultado.data,
+                partesPorFecha: partesPorFecha,
                 pagination: resultado.pagination,
-                estadoActual: undefined // Añadir estadoActual como undefined para la vista general
+                estadoActual: 'todos' // Agregar esta variable para que la vista funcione correctamente
             });
         } catch (error) {
-            console.error('Error al renderizar vista de partes diarios:', error);
+            console.error('Error al listar partes diarios:', error);
             res.status(500).render('error', { 
                 message: 'Error al cargar la lista de partes diarios',
                 error: error
@@ -137,10 +190,14 @@ const parteDiarioController = {
                 });
             }
             
+            // Obtener los bolsones asociados a este parte diario
+            const bolsonesAsociados = await parteDiarioRepository.obtenerBolsonesDeParteDiario(id);
+            
             res.render('parteDiarioDetalle', { 
                 username: req.user.username,
                 title: `Parte Diario #${id}`,
-                parteDiario: parteDiario
+                parteDiario: parteDiario,
+                bolsonesAsociados: bolsonesAsociados
             });
         } catch (error) {
             console.error('Error al renderizar vista de detalle parte diario:', error);
@@ -303,10 +360,35 @@ const parteDiarioController = {
                     break;
             }
             
+            // Agrupar los partes diarios por fecha para la vista
+            const partesDiariosPorFecha = {};
+            resultado.data.forEach(parte => {
+                // Formatear la fecha como YYYY-MM-DD para usarla como clave
+                const fecha = new Date(parte.fecha);
+                const fechaKey = fecha.toISOString().split('T')[0];
+                
+                // Si no existe la fecha en el objeto, crearla
+                if (!partesDiariosPorFecha[fechaKey]) {
+                    partesDiariosPorFecha[fechaKey] = {
+                        fecha: fechaKey,
+                        fechaFormateada: fecha.toLocaleDateString(),
+                        partes: []
+                    };
+                }
+                
+                // Agregar el parte diario a la fecha correspondiente
+                partesDiariosPorFecha[fechaKey].partes.push(parte);
+            });
+            
+            // Convertir el objeto en un array ordenado por fecha (más reciente primero)
+            const partesPorFecha = Object.values(partesDiariosPorFecha).sort((a, b) => {
+                return new Date(b.fecha) - new Date(a.fecha);
+            });
+            
             res.render('listarPartesDiarios', { 
                 username: req.user.username,
                 title: titulo,
-                partesDiarios: resultado.data,
+                partesPorFecha: partesPorFecha,
                 pagination: resultado.pagination,
                 estadoActual: estado
             });

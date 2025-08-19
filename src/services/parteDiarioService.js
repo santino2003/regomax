@@ -136,6 +136,21 @@ class ParteDiarioService {
     }
     
     /**
+     * Obtiene todos los partes diarios con paginación
+     * @param {number} page - Número de página
+     * @param {number} limit - Límite de registros por página
+     * @returns {Promise<Object>} - Resultado paginado con los partes diarios
+     */
+    async obtenerTodosPartesDiarios(page = 1, limit = 10) {
+        try {
+            return await parteDiarioRepository.obtenerPartesDiarios(page, limit);
+        } catch (error) {
+            console.error('Error en el servicio al obtener todos los partes diarios:', error);
+            throw new Error('Error al obtener los partes diarios: ' + error.message);
+        }
+    }
+
+    /**
      * Actualiza el estado de un parte diario
      * @param {number} parteDiarioId - ID del parte diario
      * @param {string} estado - Nuevo estado (pendiente, aprobado)

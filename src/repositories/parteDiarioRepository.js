@@ -381,6 +381,29 @@ class ParteDiarioRepository {
     }
 
     /**
+     * Obtiene todos los bolsones asociados a un parte diario específico
+     * @param {number} parteDiarioId - ID del parte diario
+     * @returns {Array} - Array de bolsones asociados al parte diario
+     */
+    async obtenerBolsonesDeParteDiario(parteDiarioId) {
+        try {
+            const query = `
+                SELECT b.* 
+                FROM bolsones b
+                INNER JOIN parte_diario_bolsones pdb ON b.id = pdb.bolson_id
+                WHERE pdb.parte_diario_id = ?
+                ORDER BY b.id ASC
+            `;
+            
+            const result = await db.query(query, [parteDiarioId]);
+            return result;
+        } catch (error) {
+            console.error('Error al obtener bolsones del parte diario:', error);
+            throw error;
+        }
+    }
+    
+    /**
      * Actualiza el estado de un parte diario
      * @param {number} parteDiarioId - ID del parte diario
      * @param {string} estado - Nuevo estado (pendiente, aprobado)
