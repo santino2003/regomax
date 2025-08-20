@@ -370,29 +370,6 @@
                 <a href="/partes-diarios/<%= parteDiario.id %>" class="btn btn-primary">
                     <i class="bi bi-pencil me-2"></i>Editar
                 </a>
-                
-                <button type="button" class="btn btn-danger" id="btnEliminar" data-id="<%= parteDiario.id %>">
-                    <i class="bi bi-trash me-2"></i>Eliminar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Confirmación para Eliminar -->
-    <div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>¿Está seguro que desea eliminar este parte diario? Esta acción no se puede deshacer.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
-                </div>
             </div>
         </div>
     </div>
@@ -405,36 +382,5 @@
     
     <!-- Common JS (Para funcionalidades compartidas como logout) -->
     <script src="/assets/js/common.js"></script>
-    
-    <script>
-        $(document).ready(function() {
-            // Modal de confirmación para eliminar
-            let parteDiarioIdAEliminar;
-            
-            $('#btnEliminar').on('click', function() {
-                parteDiarioIdAEliminar = $(this).data('id');
-                $('#eliminarModal').modal('show');
-            });
-            
-            $('#btnConfirmarEliminar').on('click', function() {
-                // Enviar solicitud para eliminar el parte diario
-                $.ajax({
-                    url: `/api/partes-diarios/${parteDiarioIdAEliminar}`,
-                    method: 'DELETE',
-                    success: function(response) {
-                        if (response.success) {
-                            // Redireccionar a la lista de partes diarios
-                            window.location.href = '/partes-diarios';
-                        } else {
-                            alert('Error al eliminar: ' + response.message);
-                        }
-                    },
-                    error: function() {
-                        alert('Error de conexión al intentar eliminar el parte diario');
-                    }
-                });
-            });
-        });
-    </script>
 </body>
 </html>
