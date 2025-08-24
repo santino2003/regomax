@@ -1,5 +1,5 @@
 /**
- * parteDiarioExportar.js - Maneja la exportación a PDF y la impresión de los partes diarios
+ * ordenExportar.js - Maneja la exportación a PDF y la impresión de las órdenes de venta
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Opciones para html2pdf con mejor manejo de páginas
             const options = {
                 margin: [15, 15, 15, 15], // Margen superior, derecho, inferior, izquierdo
-                filename: `parte-diario-${parteFecha}-${parteId}.pdf`,
+                filename: `orden-venta-${ordenCodigo.replace(/[^\w.-]/g, '-')}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { 
                     scale: 2, 

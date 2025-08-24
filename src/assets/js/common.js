@@ -87,6 +87,37 @@ function setupLogout() {
     }
 }
 
+// Función para configurar el enlace "Ver sitio" para que apunte a la URL actual
+function setupViewSiteLink() {
+    // Buscar el enlace "Ver sitio" (más compatible con todos los navegadores)
+    const navLinks = document.querySelectorAll('.nav-item a.nav-link');
+    let viewSiteLink = null;
+    
+    // Buscar el enlace que contiene el ícono de globo
+    for (const link of navLinks) {
+        if (link.querySelector('i.bi-globe')) {
+            viewSiteLink = link;
+            break;
+        }
+    }
+    
+    if (viewSiteLink) {
+        // Obtener la URL actual completa
+        const currentUrl = window.location.href;
+        // Actualizar el href del enlace
+        viewSiteLink.setAttribute('href', currentUrl);
+        // Añadir título descriptivo
+        viewSiteLink.setAttribute('title', 'Recargar esta página');
+        
+        // Añadir manejador de evento para recargar la página sin usar la caché
+        viewSiteLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Recargar la página sin usar la caché
+            window.location.reload(true);
+        });
+    }
+}
+
 // Inicializar cuando el DOM esté cargado
 document.addEventListener('DOMContentLoaded', function() {
     // Prevenir navegación hacia atrás
@@ -94,4 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Configurar el evento de logout
     setupLogout();
+    
+    // Configurar el enlace "Ver sitio"
+    setupViewSiteLink();
 });

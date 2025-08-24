@@ -108,19 +108,6 @@
                             <i class="bi bi-clipboard me-2"></i><%= title %>
                         </h4>
                         <div class="d-flex gap-2">
-                            <!-- Botones de exportación -->
-                            <div class="dropdown">
-                                <button class="btn btn-success dropdown-toggle" type="button" id="exportarBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-file-earmark-arrow-down me-2"></i>Exportar
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="exportarBtn">
-                                    <li><a class="dropdown-item" href="#" id="btnExportarSeleccionados">Exportar seleccionados</a></li>
-                                    <li><a class="dropdown-item" href="#" id="btnExportarTodos">Exportar todos</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#" id="btnImprimirSeleccionados">Imprimir seleccionados</a></li>
-                                </ul>
-                            </div>
-                            
                             <!-- Filtro por estado -->
                             <div class="dropdown">
                                 <button class="btn btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
@@ -162,12 +149,6 @@
                                                     <strong><i class="bi bi-calendar-date me-2"></i>Fecha: <%= fechaObj.fechaFormateada || fechaObj.fecha %></strong>
                                                     <span class="badge bg-primary rounded-pill ms-2"><%= fechaObj.partes.length %> partes</span>
                                                 </div>
-                                                <div class="form-check ms-3">
-                                                    <input class="form-check-input fecha-checkbox" type="checkbox" value="<%= fechaKey %>" id="check-fecha-<%= fechaKey.replace(/-/g, '') %>">
-                                                    <label class="form-check-label" for="check-fecha-<%= fechaKey.replace(/-/g, '') %>">
-                                                        Seleccionar todos
-                                                    </label>
-                                                </div>
                                             </div>
                                         </button>
                                     </h2>
@@ -180,7 +161,6 @@
                                                 <table class="table table-striped table-hover mb-0 partes-table" data-fecha="<%= fechaKey %>">
                                                     <thead>
                                                         <tr>
-                                                            <th class="no-print"><input type="checkbox" class="check-all-fecha" data-fecha="<%= fechaKey %>"></th>
                                                             <th>ID</th>
                                                             <th>Turno</th>
                                                             <th>Bolsones</th>
@@ -193,9 +173,6 @@
                                                     <tbody>
                                                         <% fechaObj.partes.forEach(parte => { %>
                                                             <tr>
-                                                                <td class="no-print">
-                                                                    <input type="checkbox" class="parte-checkbox" value="<%= parte.id %>" data-fecha="<%= fechaKey %>" data-id="<%= parte.id %>">
-                                                                </td>
                                                                 <td><%= parte.id %></td>
                                                                 <td><%= parte.turno %></td>
                                                                 <td><%= parte.cantidadBolsones || 0 %></td>
@@ -359,9 +336,6 @@
     
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- html2pdf.js para exportación a PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <!-- Common JS (Para funcionalidades compartidas como logout) -->
     <script src="/assets/js/common.js"></script>
