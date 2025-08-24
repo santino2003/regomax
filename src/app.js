@@ -13,6 +13,7 @@ const parteDiarioRoutes = require('./routes/parteDiarioRoutes'); // Importamos l
 const historialRoutes = require('./routes/historialRoutes');
 const viewRoutes = require('./routes/viewRoutes');
 const authMiddleware = require('./middleware/auth');
+const permissionErrorHandler = require('./middleware/permissionErrorHandler');
 const productoRoutes = require('./routes/api/productoRoutes');
 
 // Crear aplicación Express
@@ -33,6 +34,9 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Servir archivos estáticos desde la carpeta src/assets
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
+
+// Middleware para manejar errores de permisos
+app.use(permissionErrorHandler);
 
 // Rutas API
 app.use('/api/auth', authRoutes);
