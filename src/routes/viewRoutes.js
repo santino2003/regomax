@@ -11,6 +11,7 @@ const despachoController = require('../controllers/despachoController');
 const parteDiarioController = require('../controllers/parteDiarioController');
 const historialController = require('../controllers/historialController');
 const historialService = require('../services/historialService');
+const reporteController = require('../controllers/reporteController');
 
 // Ruta base - redirigir a login
 router.get('/', (req, res) => {
@@ -198,6 +199,25 @@ router.get('/partes-diarios/:id', [
     noCacheMiddleware,
     permissionsMiddleware.hasPermission('partes_diarios:edit')
 ], parteDiarioController.vistaEditarParteDiario);
+
+// Rutas para el módulo de reportes - con verificación de permisos
+router.get('/reportes/planificar-mes', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reportes:edit')
+], reporteController.vistaPlanificarMes);
+
+router.get('/reportes/cargar-nfu', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reportes:edit')
+], reporteController.vistaCargarNFU);
+
+router.get('/reportes/ver', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reportes:view')
+], reporteController.vistaReporte);
 
 // Ruta para historial de acciones - visible para todos los usuarios autenticados
 router.get('/historial', [authMiddleware.verifyToken, noCacheMiddleware], historialController.mostrarHistorial);
