@@ -50,7 +50,7 @@ class UserRepository {
       const result = await db.query(
         `INSERT INTO users (username, password, email, role, permissions) 
          VALUES (?, ?, ?, ?, ?)`,
-        [userData.username, userData.password, userData.email, userData.role, permissionsJSON]
+        [userData.username, userData.password, userData.email, userData.role || 'user', permissionsJSON]
       );
 
       // Para MariaDB, necesitamos verificar el formato de la respuesta
@@ -82,6 +82,98 @@ class UserRepository {
       return await this.findById(userId);
     } catch (error) {
       console.error('Error al actualizar permisos:', error);
+      throw error;
+    }
+  }
+
+  // Obtener todos los usuarios
+  async findAll() {
+    try {
+      const result = await db.query(
+        'SELECT * FROM users ORDER BY id ASC'
+      );
+      
+      if (!result || result.length === 0) {
+        return [];
+      }
+      
+      return result.map(userData => new User(userData));
+    } catch (error) {
+      console.error('Error al obtener todos los usuarios:', error);
+      throw error;
+    }
+  }
+
+  // Actualizar un usuario
+  async update(id, userData) {
+    try {
+      const updateFields = [];
+      const updateValues = [];
+      
+      // Construir dinámicamente la consulta de actualización
+      if (userData.username) {
+        updateFields.push('username = ?');
+        updateValues.push(userData.username);
+      }
+      
+      if (userData.email) {
+        updateFields.push('email = ?');
+        updateValues.push(userData.email);
+      }
+      
+      if (userData.password) {
+        updateFields.push('password = ?');
+        updateValues.push(userData.password);
+      }
+      
+      if (userData.role) {
+        updateFields.push('role = ?');
+        updateValues.push(userData.role);
+      }
+      
+      if (userData.permissions) {
+        updateFields.push('permissions = ?');
+        updateValues.push(JSON.stringify(userData.permissions));
+      }
+      
+      // Si no hay nada que actualizar, retornar null
+      if (updateFields.length === 0) {
+        return null;
+      }
+      
+      // Añadir el ID al final del array de valores
+      updateValues.push(id);
+      
+      await db.query(
+        `UPDATE users SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        updateValues
+      );
+      
+      return await this.findById(id);
+    } catch (error) {
+      console.error('Error al actualizar usuario:', error);
+      throw error;
+    }
+  }
+
+  // Eliminar un usuario
+  async delete(id) {
+    try {
+      await db.query('DELETE FROM users WHERE id = ?', [id]);
+      return true;
+    } catch (error) {
+      console.error('Error al eliminar usuario:', error);
+      throw error;
+    }
+  }
+
+  // Contar cuántos administradores hay en el sistema
+  async countAdmins() {
+    try {
+      const result = await db.query('SELECT COUNT(*) as count FROM users WHERE role = ?', ['admin']);
+      return result[0].count;
+    } catch (error) {
+      console.error('Error al contar administradores:', error);
       throw error;
     }
   }

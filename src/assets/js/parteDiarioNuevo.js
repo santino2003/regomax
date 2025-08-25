@@ -308,6 +308,26 @@ $(document).ready(function() {
         $('#fecha').val(formattedDate);
     }
     
+    // Función para ajustar la fecha según el turno seleccionado
+    function ajustarFechaPorTurno(turno) {
+        if (turno === 'Noche') {
+            // Para turno "Noche", siempre mostrar la fecha del día anterior
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const formattedDate = yesterday.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+            $('#fecha').val(formattedDate);
+        } else {
+            // Para turnos "Mañana" o "Tarde", siempre mostrar la fecha actual
+            configurarFechaActual();
+        }
+    }
+    
+    // Evento para detectar cambios en el selector de turno
+    $('#turno').on('change', function() {
+        const turnoSeleccionado = $(this).val();
+        ajustarFechaPorTurno(turnoSeleccionado);
+    });
+    
     // Configurar fecha actual por defecto al cargar la página
     configurarFechaActual();
 })

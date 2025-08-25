@@ -4,14 +4,18 @@ dbeaver-ce &
 TO DO:
 
 agregar matafuegos
-permisos
-crear users (puede ser para la que viene)
+crear users (puede ser para la que viene)(ver historial)
 Mailing (puede ser para la que viene)
 Crear reporte
-historial (Pareciera que OK, mostrar mas lindo detalles)
 imprimir las cosas
-modifcar responsable parte diario y kg
-editar y cerrar partes diarios
 reacomodar las cosas
-Agregar el filtrar a bolsones no despachados
-DEPLOYAR
+DEPLOYAR4
+
+REPORTE
+
+Produccion del dia, prduccion acumulada Mes (infill y polvo)
+Logistica del dia, logistica acumulada del Mes (infill y polvo)
+Ingreso NFU del dia, ingreso NFU acumulado del mes
+Comparativo de Programado acumulado del mes, comparativo acumulado del mes
+Stock al dia de hoy de infill
+Stock al dia de hoy de polvo

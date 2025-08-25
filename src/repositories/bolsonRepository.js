@@ -126,14 +126,41 @@ class BolsonRepository {
             throw error;
         }
     }
-    async obtenerNoDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
+    async obtenerNoDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC', filtros = {}) {
         const offset = (page - 1) * limit;
-        const result = await db.query(
-            `SELECT * FROM bolsones WHERE despachado = 0 ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`,
-            [limit, offset]
-        );
-        const countResult = await db.query('SELECT COUNT(*) as total FROM bolsones WHERE despachado = 0');
+        
+        // Construir la consulta con filtros
+        let whereConditions = ['despachado = 0'];
+        const params = [];
+        
+        // Aplicar filtros si existen
+        if (filtros.producto) {
+            whereConditions.push('producto LIKE ?');
+            params.push(`%${filtros.producto}%`);
+        }
+        if (filtros.codigo) {
+            whereConditions.push('codigo LIKE ?');
+            params.push(`%${filtros.codigo}%`);
+        }
+        if (filtros.precinto) {
+            whereConditions.push('precinto LIKE ?');
+            params.push(`%${filtros.precinto}%`);
+        }
+        
+        // Construir la consulta WHERE con todas las condiciones
+        const whereClause = whereConditions.join(' AND ');
+        
+        // Añadir los parámetros de paginación
+        params.push(limit, offset);
+        
+        const query = `SELECT * FROM bolsones WHERE ${whereClause} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`;
+        const result = await db.query(query, params);
+        
+        // Construir la consulta de conteo
+        const countQuery = `SELECT COUNT(*) as total FROM bolsones WHERE ${whereClause}`;
+        const countResult = await db.query(countQuery, params.slice(0, -2)); // Excluir los parámetros de límite y offset
         const total = countResult[0].total;
+        
         return {
             data: result,
             pagination: {
@@ -151,16 +178,44 @@ class BolsonRepository {
      * @param {number} limit - Cantidad de items por página
      * @param {string} sortBy - Campo por el cual ordenar
      * @param {string} sortOrder - Orden de clasificación (ASC o DESC)
+     * @param {Object} filtros - Filtros a aplicar (producto, codigo, precinto)
      * @returns {Promise<Object>} Bolsones despachados con información de paginación
      */
-    async obtenerDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
+    async obtenerDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC', filtros = {}) {
         const offset = (page - 1) * limit;
-        const result = await db.query(
-            `SELECT * FROM bolsones WHERE despachado = 1 ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`,
-            [limit, offset]
-        );
-        const countResult = await db.query('SELECT COUNT(*) as total FROM bolsones WHERE despachado = 1');
+        
+        // Construir la consulta con filtros
+        let whereConditions = ['despachado = 1'];
+        const params = [];
+        
+        // Aplicar filtros si existen
+        if (filtros.producto) {
+            whereConditions.push('producto LIKE ?');
+            params.push(`%${filtros.producto}%`);
+        }
+        if (filtros.codigo) {
+            whereConditions.push('codigo LIKE ?');
+            params.push(`%${filtros.codigo}%`);
+        }
+        if (filtros.precinto) {
+            whereConditions.push('precinto LIKE ?');
+            params.push(`%${filtros.precinto}%`);
+        }
+        
+        // Construir la consulta WHERE con todas las condiciones
+        const whereClause = whereConditions.join(' AND ');
+        
+        // Añadir los parámetros de paginación
+        params.push(limit, offset);
+        
+        const query = `SELECT * FROM bolsones WHERE ${whereClause} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`;
+        const result = await db.query(query, params);
+        
+        // Construir la consulta de conteo
+        const countQuery = `SELECT COUNT(*) as total FROM bolsones WHERE ${whereClause}`;
+        const countResult = await db.query(countQuery, params.slice(0, -2)); // Excluir los parámetros de límite y offset
         const total = countResult[0].total;
+        
         return {
             data: result,
             pagination: {

@@ -13,10 +13,19 @@
     
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
+    
+    <!-- Estilos para impresión -->
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary no-print">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="/home">
                 <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
@@ -51,7 +60,7 @@
         <div class="row mb-4">
             <div class="col">
                 <div class="menu-container p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
                         <h4 class="menu-heading mb-0">
                             <i class="bi bi-receipt me-2"></i>Orden de Venta #OV-<%= orden.id %>
                         </h4>
@@ -67,9 +76,9 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="/ordenes/imprimir/<%= orden.id %>" target="_blank">
+                                        <button class="dropdown-item" id="btnImprimir">
                                             <i class="bi bi-printer me-2"></i>Imprimir
-                                        </a>
+                                        </button>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="/despachos/orden/<%= orden.id %>">
@@ -87,166 +96,167 @@
                         </div>
                     </div>
                     
-                    <!-- Estado de la orden -->
-                    <div class="mb-4">
-                        <% let badgeClass = "bg-secondary"; %>
-                        <% if (orden.estado === "abierta") { badgeClass = "bg-warning text-dark"; } %>
-                        <% if (orden.estado === "en_logistica") { badgeClass = "bg-info"; } %>
-                        <% if (orden.estado === "cerrada") { badgeClass = "bg-success"; } %>
-                        <span class="badge <%= badgeClass %> fs-6">
-                            Estado: <%= orden.estado ? orden.estado.toUpperCase().replace('_', ' ') : 'PENDIENTE' %>
-                        </span>
-                    </div>
-                    
-                    <!-- Detalles de la orden -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header bg-primary text-white">
-                                    <i class="bi bi-info-circle me-2"></i>Información General
+                    <!-- Contenido imprimible -->
+                    <div id="printableArea">
+                        <!-- Estado de la orden -->
+                        <div class="mb-4">
+                            <% let badgeClass = "bg-secondary"; %>
+                            <% if (orden.estado === "abierta") { badgeClass = "bg-warning text-dark"; } %>
+                            <% if (orden.estado === "en_logistica") { badgeClass = "bg-info"; } %>
+                            <% if (orden.estado === "cerrada") { badgeClass = "bg-success"; } %>
+                            <span class="badge <%= badgeClass %> fs-6">
+                                Estado: <%= orden.estado ? orden.estado.toUpperCase().replace('_', ' ') : 'PENDIENTE' %>
+                            </span>
+                        </div>
+                        
+                        <!-- Detalles de la orden -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <i class="bi bi-info-circle me-2"></i>Información General
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-borderless">
+                                            <tbody>
+                                                <tr>
+                                                    <th width="150">ID:</th>
+                                                    <td>OV-<%= orden.id %></td>
+                                                </tr>
+                                                <% if (orden.codigo_venta) { %>
+                                                <tr>
+                                                    <th>Código de venta:</th>
+                                                    <td><%= orden.codigo_venta %></td>
+                                                </tr>
+                                                <% } %>
+                                                <tr>
+                                                    <th>Fecha:</th>
+                                                    <td><%= new Date(orden.fecha).toLocaleDateString() %></td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Cliente:</th>
+                                                    <td><%= orden.cliente %></td>
+                                                </tr>
+                                                <% if (orden.cliente_final) { %>
+                                                <tr>
+                                                    <th>Cliente Final:</th>
+                                                    <td><%= orden.cliente_final %></td>
+                                                </tr>
+                                                <% } %>
+                                                <tr>
+                                                    <th>Responsable:</th>
+                                                    <td><%= orden.responsable %></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <table class="table table-borderless">
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <i class="bi bi-card-text me-2"></i>Observaciones
+                                    </div>
+                                    <div class="card-body">
+                                        <% if (orden.observaciones) { %>
+                                            <p class="mb-0"><%= orden.observaciones %></p>
+                                        <% } else { %>
+                                            <p class="text-muted mb-0">No hay observaciones registradas</p>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Productos de la orden -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <i class="bi bi-box-seam me-2"></i>Productos
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th width="70">#</th>
+                                                <th>Producto</th>
+                                                <th width="150">Cantidad inicial</th>
+                                                <th width="150">Cantidad restante</th>
+                                            </tr>
+                                        </thead>
                                         <tbody>
-                                            <tr>
-                                                <th width="150">ID:</th>
-                                                <td>OV-<%= orden.id %></td>
-                                            </tr>
-                                            <% if (orden.codigo_venta) { %>
-                                            <tr>
-                                                <th>Código de venta:</th>
-                                                <td><%= orden.codigo_venta %></td>
-                                            </tr>
+                                            <% if (orden.productos && orden.productos.length > 0) { %>
+                                                <% orden.productos.forEach((producto, index) => { %>
+                                                    <tr>
+                                                        <td><%= index + 1 %></td>
+                                                        <td><%= producto.producto %></td>
+                                                        <td><%= producto.cantidad_inicial %></td>
+                                                        <td><%= producto.cantidad %></td>
+                                                    </tr>
+                                                <% }) %>
+                                            <% } else { %>
+                                                <tr>
+                                                    <td colspan="4" class="text-center">No hay productos en esta orden</td>
+                                                </tr>
                                             <% } %>
-                                            <tr>
-                                                <th>Fecha:</th>
-                                                <td><%= new Date(orden.fecha).toLocaleDateString() %></td>
-                                            </tr>
-                                            <tr>
-                                                <th>Cliente:</th>
-                                                <td><%= orden.cliente %></td>
-                                            </tr>
-                                            <% if (orden.cliente_final) { %>
-                                            <tr>
-                                                <th>Cliente Final:</th>
-                                                <td><%= orden.cliente_final %></td>
-                                            </tr>
-                                            <% } %>
-                                            <tr>
-                                                <th>Responsable:</th>
-                                                <td><%= orden.responsable %></td>
-                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6 mt-3 mt-md-0">
-                            <div class="card">
-                                <div class="card-header bg-primary text-white">
-                                    <i class="bi bi-card-text me-2"></i>Observaciones
-                                </div>
-                                <div class="card-body">
-                                    <% if (orden.observaciones) { %>
-                                        <p class="mb-0"><%= orden.observaciones %></p>
-                                    <% } else { %>
-                                        <p class="text-muted mb-0">No hay observaciones registradas</p>
-                                    <% } %>
-                                </div>
+                        
+                        <!-- Bolsones despachados -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <i class="bi bi-clipboard-check me-2"></i>Bolsones Despachados
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Productos de la orden -->
-                    <div class="card mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <i class="bi bi-box-seam me-2"></i>Productos
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th width="70">#</th>
-                                            <th>Producto</th>
-                                            <th width="150">Cantidad inicial</th>
-                                            <th width="150">Cantidad restante</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% if (orden.productos && orden.productos.length > 0) { %>
-                                            <% orden.productos.forEach((producto, index) => { %>
-                                                <tr>
-                                                    <td><%= index + 1 %></td>
-                                                    <td><%= producto.producto %></td>
-                                                    <td><%= producto.cantidad_inicial %></td>
-                                                    <td><%= producto.cantidad %></td>
-                                                </tr>
-                                            <% }) %>
-                                        <% } else { %>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
                                             <tr>
-                                                <td colspan="4" class="text-center">No hay productos en esta orden</td>
+                                                <th>#</th>
+                                                <th>Código</th>
+                                                <th>Producto</th>
+                                                <th>Peso (kg)</th>
+                                                <th>Fecha despacho</th>
+                                                <th>Tipo</th>
                                             </tr>
-                                        <% } %>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Bolsones despachados -->
-                    <div class="card mb-4">
-                        <div class="card-header bg-info text-white">
-                            <i class="bi bi-clipboard-check me-2"></i>Bolsones Despachados
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Código</th>
-                                            <th>Producto</th>
-                                            <th>Peso (kg)</th>
-                                            <th>Fecha despacho</th>
-                                            <th>Tipo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% if (bolsonesDespachados && bolsonesDespachados.length > 0) { %>
-                                            <% bolsonesDespachados.forEach((bolson, idx) => { %>
+                                        </thead>
+                                        <tbody>
+                                            <% if (bolsonesDespachados && bolsonesDespachados.length > 0) { %>
+                                                <% bolsonesDespachados.forEach((bolson, idx) => { %>
+                                                    <tr>
+                                                        <td><%= idx + 1 %></td>
+                                                        <td><%= bolson.bolson_codigo %></td>
+                                                        <td><%= bolson.producto %></td>
+                                                        <td><%= parseFloat(bolson.peso).toFixed(2) %></td>
+                                                        <td><%= new Date(bolson.fecha).toLocaleString() %></td>
+                                                        <td>
+                                                            <% if (bolson.es_manual) { %>
+                                                                <span class="badge bg-warning text-dark">Manual</span>
+                                                            <% } else { %>
+                                                                <span class="badge bg-info">Escaneado</span>
+                                                            <% } %>
+                                                        </td>
+                                                    </tr>
+                                                <% }) %>
+                                            <% } else { %>
                                                 <tr>
-                                                    <td><%= idx + 1 %></td>
-                                                    <td><%= bolson.bolson_codigo %></td>
-                                                    <td><%= bolson.producto %></td>
-                                                    <td><%= parseFloat(bolson.peso).toFixed(2) %></td>
-                                                    <td><%= new Date(bolson.fecha).toLocaleString() %></td>
-                                                    <td>
-                                                        <% if (bolson.es_manual) { %>
-                                                            <span class="badge bg-warning text-dark">Manual</span>
-                                                        <% } else { %>
-                                                            <span class="badge bg-info">Escaneado</span>
-                                                        <% } %>
-                                                    </td>
+                                                    <td colspan="6" class="text-center">No hay bolsones despachados para esta orden</td>
                                                 </tr>
-                                            <% }) %>
-                                        <% } else { %>
-                                            <tr>
-                                                <td colspan="6" class="text-center">No hay bolsones despachados para esta orden</td>
-                                            </tr>
-                                        <% } %>
-                                    </tbody>
-                                </table>
+                                            <% } %>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Historial de cambios (opcionalmente se puede implementar en el futuro) -->
                 </div>
             </div>
         </div>
         
-        <div class="row">
+        <div class="row no-print">
             <div class="col">
                 <a href="/ordenes" class="btn btn-secondary">
                     <i class="bi bi-arrow-left me-2"></i>Volver a la lista

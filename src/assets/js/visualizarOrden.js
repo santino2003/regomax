@@ -10,6 +10,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variable para almacenar el ID de la orden a eliminar
     let ordenIdToDelete = null;
     
+    // Funcionalidad de impresión simple
+    const btnImprimir = document.getElementById('btnImprimir');
+    if (btnImprimir) {
+        btnImprimir.addEventListener('click', function() {
+            // Imprimir directamente usando la API del navegador
+            window.print();
+        });
+    }
+    
     // Manejar clic en botón de eliminar
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {

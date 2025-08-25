@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Regomax</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-key me-1"></i> Cambiar contraseña</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-clipboard-data me-2"></i><%= title %>
+                        </h4>
+                        <div>
+                            <a href="/partes-diarios" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Volver a la lista
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <form id="formEditarParteDiario" autocomplete="off">
+                        <!-- Información General -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-info-circle me-2"></i>Información General
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="fecha" class="form-label">Fecha</label>
+                                            <input type="date" class="form-control" id="fecha" name="fecha" value="<%= new Date(parteDiario.fecha).toISOString().split('T')[0] %>" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="turno" class="form-label">Turno</label>
+                                            <select class="form-select" id="turno" name="turno" required>
+                                                <option value="Mañana" <%= parteDiario.turno === 'Mañana' ? 'selected' : '' %>>Mañana</option>
+                                                <option value="Tarde" <%= parteDiario.turno === 'Tarde' ? 'selected' : '' %>>Tarde</option>
+                                                <option value="Noche" <%= parteDiario.turno === 'Noche' ? 'selected' : '' %>>Noche</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="responsable" class="form-label">Responsable</label>
+                                            <input type="text" class="form-control" id="responsable" name="responsable" value="<%= parteDiario.responsable || '' %>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="cosFi" class="form-label">COS (fi)</label>
+                                            <input type="number" step="0.01" class="form-control" id="cosFi" name="cosFi" value="<%= parteDiario.cos_fi || '' %>">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Control Diario -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-clipboard-check me-2"></i>Control Diario
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Protecciones y vallas</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="proteccionesVallas" id="proteccionesVallasOK" value="1" <%= parteDiario.protecciones_vallas == 1 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="proteccionesVallasOK">OK</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="proteccionesVallas" id="proteccionesVallasNO" value="0" <%= parteDiario.protecciones_vallas == 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="proteccionesVallasNO">NO OK</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">PREF1 encendido y vacío</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="pref1EncendidoVacio" id="pref1EncendidoVacioOK" value="1" <%= parteDiario.pref1_encendido_vacio == 1 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="pref1EncendidoVacioOK">OK</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="pref1EncendidoVacio" id="pref1EncendidoVacioNO" value="0" <%= parteDiario.pref1_encendido_vacio == 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="pref1EncendidoVacioNO">NO OK</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Nivel líquido hidráulico T1</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="nivelLiquidoHidraulicoT1" id="nivelLiquidoHidraulicoT1OK" value="1" <%= parteDiario.nivel_liquido_hidraulico_t1 == 1 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="nivelLiquidoHidraulicoT1OK">OK</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="nivelLiquidoHidraulicoT1" id="nivelLiquidoHidraulicoT1NO" value="0" <%= parteDiario.nivel_liquido_hidraulico_t1 == 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="nivelLiquidoHidraulicoT1NO">NO OK</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Nivel líquido caja T1</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="nivelLiquidoCajaT1" id="nivelLiquidoCajaT1OK" value="1" <%= parteDiario.nivel_liquido_caja_t1 == 1 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="nivelLiquidoCajaT1OK">OK</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="nivelLiquidoCajaT1" id="nivelLiquidoCajaT1NO" value="0" <%= parteDiario.nivel_liquido_caja_t1 == 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="nivelLiquidoCajaT1NO">NO OK</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Nivel líq. hidráulico D1</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="nivelLiqHidraulicoD1" id="nivelLiqHidraulicoD1OK" value="1" <%= parteDiario.nivel_liq_hidraulico_d1 == 1 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="nivelLiqHidraulicoD1OK">OK</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="nivelLiqHidraulicoD1" id="nivelLiqHidraulicoD1NO" value="0" <%= parteDiario.nivel_liq_hidraulico_d1 == 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="nivelLiqHidraulicoD1NO">NO OK</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="temperaturaLiqHidT1" class="form-label">Temperatura líq. hid. T1 (°C)</label>
+                                            <input type="number" step="0.1" class="form-control" id="temperaturaLiqHidT1" name="temperaturaLiqHidT1" value="<%= parteDiario.temperatura_liq_hid_t1 || '' %>">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="temperaturaSalidaG1" class="form-label">Temperatura salida G1 (°C)</label>
+                                            <input type="number" step="0.1" class="form-control" id="temperaturaSalidaG1" name="temperaturaSalidaG1" value="<%= parteDiario.temperatura_salida_g1 || '' %>">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="temperaturaSalidaG2" class="form-label">Temperatura salida G2 (°C)</label>
+                                            <input type="number" step="0.1" class="form-control" id="temperaturaSalidaG2" name="temperaturaSalidaG2" value="<%= parteDiario.temperatura_salida_g2 || '' %>">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="temperaturaSalidaG3" class="form-label">Temperatura salida G3 (°C)</label>
+                                            <input type="number" step="0.1" class="form-control" id="temperaturaSalidaG3" name="temperaturaSalidaG3" value="<%= parteDiario.temperatura_salida_g3 || '' %>">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Grupos -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-gear-wide-connected me-2"></i>Datos de Granuladores
+                                </h5>
+                                <button type="button" class="btn btn-sm btn-primary" id="btnAgregarGrupo">
+                                    <i class="bi bi-plus-circle me-1"></i> Agregar Grupo
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="gruposContainer" class="row">
+                                    <% if (parteDiario.grupos && parteDiario.grupos.length > 0) { %>
+                                        <% parteDiario.grupos.forEach((grupo, index) => { %>
+                                            <div class="col-md-6 mb-3 grupo-item">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                        <h6 class="mb-0">
+                                                            <i class="bi bi-gear me-2"></i>Grupo
+                                                            <select class="form-select form-select-sm d-inline-block w-auto" name="grupos[<%= index %>][nombre]" required>
+                                                                <option value="G1" <%= grupo.grupo === 'G1' ? 'selected' : '' %>>G1</option>
+                                                                <option value="G2" <%= grupo.grupo === 'G2' ? 'selected' : '' %>>G2</option>
+                                                                <option value="G3" <%= grupo.grupo === 'G3' ? 'selected' : '' %>>G3</option>
+                                                                <option value="G4" <%= grupo.grupo === 'G4' ? 'selected' : '' %>>G4</option>
+                                                            </select>
+                                                        </h6>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-grupo">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="mb-2">
+                                                            <label class="form-label">Kg por hora:</label>
+                                                            <input type="number" step="0.01" class="form-control" name="grupos[<%= index %>][kgPorHora]" value="<%= grupo.kg_por_hora || '' %>">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label class="form-label">Porcentaje de carga (%):</label>
+                                                            <input type="number" step="0.01" class="form-control" name="grupos[<%= index %>][porcentajeCarga]" value="<%= grupo.porcentaje_carga || '' %>">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label class="form-label">Porcentaje debajo 3350 (%):</label>
+                                                            <input type="number" step="0.01" class="form-control" name="grupos[<%= index %>][porcentajeDebajo3350]" value="<%= grupo.porcentaje_debajo_3350 || '' %>">
+                                                        </div>
+                                                        <div class="mb-0">
+                                                            <label class="form-label">Criba:</label>
+                                                            <input type="text" class="form-control" name="grupos[<%= index %>][criba]" value="<%= grupo.criba || '' %>">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <% }); %>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Checklist de Pala Mecánica -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-list-check me-2"></i>Checklist de Pala Mecánica
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="horasEquipo" class="form-label">Horas del equipo</label>
+                                            <input type="number" step="0.1" class="form-control" id="horasEquipo" name="checkListPala[horasEquipo]" value="<%= parteDiario.checklistPala ? parteDiario.checklistPala.horas_trabajadas || '' : '' %>">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 60%">Ítem</th>
+                                                <th style="width: 40%" class="text-center">Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% 
+                                            // Array de elementos a mostrar del checklist
+                                            const checklistItems = [
+                                                { id: 'nivelCombustible', name: 'Nivel de combustible', estado: parteDiario.checklistPala ? parteDiario.checklistPala.nivel_combustible : null },
+                                                { id: 'sopleteadoRadiadores', name: 'Sopleteado de radiadores', estado: parteDiario.checklistPala ? parteDiario.checklistPala.sopleteado_radiadores : null },
+                                                { id: 'nivelRefrigerante', name: 'Nivel refrigerante', estado: parteDiario.checklistPala ? parteDiario.checklistPala.nivel_refrigerante : null },
+                                                { id: 'nivelAceiteMotor', name: 'Nivel aceite motor', estado: parteDiario.checklistPala ? parteDiario.checklistPala.nivel_aceite_motor : null },
+                                                { id: 'nivelLiquidoHidraulico', name: 'Nivel líquido hidráulico', estado: parteDiario.checklistPala ? parteDiario.checklistPala.nivel_liquido_hidraulico : null },
+                                                { id: 'controlLuces', name: 'Control luces', estado: parteDiario.checklistPala ? parteDiario.checklistPala.control_luces : null },
+                                                { id: 'sistemasArt', name: 'Sistemas ART', estado: parteDiario.checklistPala ? parteDiario.checklistPala.sistemas_art : null },
+                                                { id: 'limpiezaInterior', name: 'Limpieza interior', estado: parteDiario.checklistPala ? parteDiario.checklistPala.limpieza_interior : null },
+                                                { id: 'controlAlambres', name: 'Control alambres', estado: parteDiario.checklistPala ? parteDiario.checklistPala.control_alambres : null },
+                                                { id: 'lavadoExterior', name: 'Lavado exterior', estado: parteDiario.checklistPala ? parteDiario.checklistPala.lavado_exterior : null },
+                                                { id: 'engraseGeneral', name: 'Engrase general', estado: parteDiario.checklistPala ? parteDiario.checklistPala.engrase_general : null }
+                                            ];
+                                            %>
+                                            
+                                            <% checklistItems.forEach(item => { %>
+                                                <tr>
+                                                    <td><%= item.name %></td>
+                                                    <td>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input" type="radio" name="checkListPala[<%= item.id %>]" id="<%= item.id %>_ok" value="1" <%= item.estado === 1 || item.estado === '1' ? 'checked' : '' %>>
+                                                            <label class="form-check-label" for="<%= item.id %>_ok">OK</label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input" type="radio" name="checkListPala[<%= item.id %>]" id="<%= item.id %>_no" value="0" <%= item.estado === 0 || item.estado === '0' ? 'checked' : '' %>>
+                                                            <label class="form-check-label" for="<%= item.id %>_no">NO OK</label>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <% }); %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <label for="observaciones" class="form-label"><i class="bi bi-chat-right-text me-2"></i>Observaciones Generales:</label>
+                                    <textarea class="form-control" id="observaciones" name="checkListPala[observaciones]" rows="3"><%= parteDiario.checklistPala ? parteDiario.checklistPala.observaciones || '' : '' %></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bolsones Asociados -->
+                        <% if (bolsonesAsociados && bolsonesAsociados.length > 0) { %>
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-box me-2"></i>Bolsones Asociados
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Código</th>
+                                                    <th>Producto</th>
+                                                    <th>Peso (kg)</th>
+                                                    <th>Precinto</th>
+                                                    <th>Estado</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% bolsonesAsociados.forEach(bolson => { %>
+                                                    <tr>
+                                                        <td><strong><%= bolson.codigo %></strong></td>
+                                                        <td><%= bolson.producto || 'No especificado' %></td>
+                                                        <td><%= bolson.peso %> kg</td>
+                                                        <td><%= bolson.precinto || 'N/A' %></td>
+                                                        <td>
+                                                            <% if (bolson.despachado) { %>
+                                                                <span class="badge bg-success">Despachado</span>
+                                                            <% } else { %>
+                                                                <span class="badge bg-warning">En Stock</span>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-danger btn-desasociar-bolson" data-id="<%= bolson.id %>" data-codigo="<%= bolson.codigo %>">
+                                                                <i class="bi bi-unlink"></i> Desasociar
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <td colspan="2" class="text-end"><strong>Total:</strong></td>
+                                                    <td colspan="4"><strong><%= bolsonesAsociados.reduce((sum, b) => sum + parseFloat(b.peso || 0), 0).toFixed(2) %> kg</strong></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="badge bg-primary"><%= bolsonesAsociados.length %> bolsones en total</span>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+                        
+                        <!-- Bolsones Disponibles para Asociar -->
+                        <% if (bolsonesPendientes && bolsonesPendientes.length > 0) { %>
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-plus-circle me-2"></i>Bolsones Disponibles para Asociar
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped" id="tablaBolsonesPendientes">
+                                            <thead>
+                                                <tr>
+                                                    <th>Código</th>
+                                                    <th>Producto</th>
+                                                    <th>Peso (kg)</th>
+                                                    <th>Precinto</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% bolsonesPendientes.forEach(bolson => { %>
+                                                    <tr>
+                                                        <td><strong><%= bolson.codigo %></strong></td>
+                                                        <td><%= bolson.producto || 'No especificado' %></td>
+                                                        <td><%= bolson.peso %> kg</td>
+                                                        <td><%= bolson.precinto || 'N/A' %></td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-success btn-asociar-bolson" data-id="<%= bolson.id %>" data-codigo="<%= bolson.codigo %>">
+                                                                <i class="bi bi-link"></i> Asociar
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+                        
+                        <!-- Botones -->
+                        <div class="row mt-4">
+                            <div class="col">
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='/partes-diarios'">
+                                    <i class="bi bi-arrow-left me-2"></i>Cancelar
+                                </button>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-2"></i>Guardar Cambios
+                                </button>
+                                
+                                <button type="button" class="btn btn-danger" id="btnEliminar" data-id="<%= parteDiario.id %>">
+                                    <i class="bi bi-trash me-2"></i>Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación para Eliminar -->
+    <div class="modal fade" id="eliminarModal" tabindex="-1" aria-labelledby="eliminarModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="eliminarModalLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar este parte diario? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template para nuevos grupos -->
+    <template id="grupoTemplate">
+        <div class="col-md-6 mb-3 grupo-item">
+            <div class="card h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>Grupo
+                        <select class="form-select form-select-sm d-inline-block w-auto" name="grupos[INDEX][nombre]" required>
+                            <option value="G1">G1</option>
+                            <option value="G2">G2</option>
+                            <option value="G3">G3</option>
+                            <option value="G4">G4</option>
+                        </select>
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-grupo">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label class="form-label">Kg por hora:</label>
+                        <input type="number" step="0.01" class="form-control" name="grupos[INDEX][kgPorHora]">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Porcentaje de carga (%):</label>
+                        <input type="number" step="0.01" class="form-control" name="grupos[INDEX][porcentajeCarga]">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Porcentaje debajo 3350 (%):</label>
+                        <input type="number" step="0.01" class="form-control" name="grupos[INDEX][porcentajeDebajo3350]">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Criba:</label>
+                        <input type="text" class="form-control" name="grupos[INDEX][criba]">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Common JS (Para funcionalidades compartidas como logout) -->
+    <script src="/assets/js/common.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Contador para los índices de los grupos
+            let grupoIndex = <%= parteDiario.grupos ? parteDiario.grupos.length : 0 %>;
+            
+            // Agregar grupo
+            $('#btnAgregarGrupo').on('click', function() {
+                const template = document.getElementById('grupoTemplate').innerHTML;
+                const newGrupo = template.replace(/INDEX/g, grupoIndex);
+                $('#gruposContainer').append(newGrupo);
+                grupoIndex++;
+            });
+            
+            // Eliminar grupo (delegación de eventos para elementos dinámicos)
+            $(document).on('click', '.btn-eliminar-grupo', function() {
+                $(this).closest('.grupo-item').remove();
+                reindexarGrupos();
+            });
+            
+            // Función para reindexar los grupos después de eliminar uno
+            function reindexarGrupos() {
+                $('.grupo-item').each(function(index) {
+                    const $grupo = $(this);
+                    $grupo.find('select, input').each(function() {
+                        const name = $(this).attr('name');
+                        if (name) {
+                            $(this).attr('name', name.replace(/grupos\[\d+\]/, `grupos[${index}]`));
+                        }
+                    });
+                });
+            }
+            
+            // Asociar bolsón
+            $(document).on('click', '.btn-asociar-bolson', function() {
+                const bolsonId = $(this).data('id');
+                const codigo = $(this).data('codigo');
+                
+                $.ajax({
+                    url: `/api/partes-diarios/<%= parteDiario.id %>/bolsones`,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ bolsonId }),
+                    success: function(response) {
+                        if (response.success) {
+                            alert(`Bolsón ${codigo} asociado exitosamente`);
+                            location.reload(); // Recargar para mostrar cambios
+                        } else {
+                            alert(`Error: ${response.message}`);
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error al asociar bolsón:', error);
+                        alert('Error al asociar bolsón. Por favor intente nuevamente.');
+                    }
+                });
+            });
+            
+            // Desasociar bolsón
+            $(document).on('click', '.btn-desasociar-bolson', function() {
+                const bolsonId = $(this).data('id');
+                const codigo = $(this).data('codigo');
+                
+                if (confirm(`¿Está seguro que desea desasociar el bolsón ${codigo}?`)) {
+                    $.ajax({
+                        url: `/api/partes-diarios/<%= parteDiario.id %>/bolsones/${bolsonId}`,
+                        method: 'DELETE',
+                        success: function(response) {
+                            if (response.success) {
+                                alert(`Bolsón ${codigo} desasociado exitosamente`);
+                                location.reload(); // Recargar para mostrar cambios
+                            } else {
+                                alert(`Error: ${response.message}`);
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error al desasociar bolsón:', error);
+                            alert('Error al desasociar bolsón. Por favor intente nuevamente.');
+                        }
+                    });
+                }
+            });
+            
+            // Submit del formulario
+            $('#formEditarParteDiario').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Convertir el formulario a un objeto JSON
+                const formData = $(this).serializeArray();
+                const jsonData = {};
+                
+                // Procesar campos principales
+                $.each(formData, function() {
+                    // Detectar arrays usando la notación grupos[0][nombre]
+                    if (this.name.includes('[') && this.name.includes(']')) {
+                        const matches = this.name.match(/^([^\[]+)\[(\d+)\]\[([^\]]+)\]$/);
+                        
+                        if (matches) {
+                            const arrayName = matches[1]; // 'grupos'
+                            const index = matches[2];     // '0', '1', etc.
+                            const property = matches[3];  // 'nombre', 'kgPorHora', etc.
+                            
+                            // Inicializar el array si no existe
+                            if (!jsonData[arrayName]) {
+                                jsonData[arrayName] = [];
+                            }
+                            
+                            // Inicializar el objeto en el índice si no existe
+                            if (!jsonData[arrayName][index]) {
+                                jsonData[arrayName][index] = {};
+                            }
+                            
+                            // Asignar la propiedad
+                            jsonData[arrayName][index][property] = this.value;
+                        }
+                        // Manejo para checkListPala
+                        else if (this.name.startsWith('checkListPala[')) {
+                            const matches = this.name.match(/^checkListPala\[([^\]]+)\]$/);
+                            
+                            if (matches) {
+                                const property = matches[1];
+                                
+                                // Inicializar el objeto si no existe
+                                if (!jsonData.checkListPala) {
+                                    jsonData.checkListPala = {};
+                                }
+                                
+                                // Asignar la propiedad
+                                jsonData.checkListPala[property] = this.value;
+                            }
+                        }
+                    } else {
+                        jsonData[this.name] = this.value;
+                    }
+                });
+                
+                // Limpiar arrays de grupos para mantener solo elementos válidos
+                if (jsonData.grupos) {
+                    jsonData.grupos = jsonData.grupos.filter(g => g !== null);
+                }
+                
+                // Enviar los datos al servidor
+                $.ajax({
+                    url: `/api/partes-diarios/<%= parteDiario.id %>`,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(jsonData),
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Parte diario actualizado exitosamente');
+                            window.location.href = '/partes-diarios';
+                        } else {
+                            alert(`Error: ${response.message}`);
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error al actualizar parte diario:', error);
+                        alert('Error al actualizar el parte diario. Por favor intente nuevamente.');
+                    }
+                });
+            });
+            
+            // Modal de confirmación para eliminar
+            let parteDiarioIdAEliminar;
+            
+            $('#btnEliminar').on('click', function() {
+                parteDiarioIdAEliminar = $(this).data('id');
+                $('#eliminarModal').modal('show');
+            });
+            
+            $('#btnConfirmarEliminar').on('click', function() {
+                // Enviar solicitud para eliminar el parte diario
+                $.ajax({
+                    url: `/api/partes-diarios/${parteDiarioIdAEliminar}`,
+                    method: 'DELETE',
+                    success: function(response) {
+                        if (response.success) {
+                            // Redireccionar a la lista de partes diarios
+                            window.location.href = '/partes-diarios';
+                        } else {
+                            alert('Error al eliminar: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Error de conexión al intentar eliminar el parte diario');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
