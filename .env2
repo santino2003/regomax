@@ -1,0 +1,13 @@
+# Configuración del servidor
+PORT=3000
+
+# Configuración de la base de datos
+DB_HOST=containers-us-west-188.railway.app
+DB_PORT=3306
+DB_NAME=railway
+DB_USER=root
+DB_PASSWORD=ulwuuyXLgrfQHzYfUspZxSTKyddSGZdg
+
+# Configuración de JWT
+JWT_SECRET=regomax_secret_key_cambiar_en_produccion
+JWT_EXPIRES_IN=8h
