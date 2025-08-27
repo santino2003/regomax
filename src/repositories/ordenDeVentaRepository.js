@@ -95,30 +95,50 @@ class OrdenDeVentaRepository {
     
     // Método actualizado para obtener todas las órdenes con paginación y ordenación
     async obtenerTodas(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
-        const offset = (page - 1) * limit;
+        // Validación segura de números para paginación
+        const lim = Number.isFinite(+limit) ? Math.max(1, +limit) : 10;
+        const p = Number.isFinite(+page) ? Math.max(1, +page) : 1;
+        const off = (p - 1) * lim;
         
-        // Consultar datos con paginación
-        const results = await db.query(
-            `SELECT ov.*, ovd.id as detalle_id, ovd.producto, ovd.cantidad 
-             FROM ordenes_venta ov
-             LEFT JOIN ordenes_venta_detalle ovd ON ov.id = ovd.orden_venta_id
-             ORDER BY ov.${sortBy} ${sortOrder}
-             LIMIT ? OFFSET ?`,
-            [limit, offset]
-        );
+        // Whitelist de columnas permitidas para ordenamiento
+        const allowedSortBy = new Set(['id', 'fecha', 'cliente', 'cliente_final', 'codigo_venta', 'estado']);
+        const allowedSortOrder = new Set(['ASC', 'DESC']);
         
-        // Obtener el total de registros para la paginación
-        const countResult = await db.query('SELECT COUNT(DISTINCT id) as total FROM ordenes_venta');
-        const total = countResult[0].total;
+        // Sanitizar valores de ordenamiento
+        const safeSortBy = allowedSortBy.has(sortBy) ? sortBy : 'id';
+        const safeSortOrder = allowedSortOrder.has((sortOrder || '').toUpperCase()) ? 
+                            sortOrder.toUpperCase() : 'DESC';
+        
+        // Consulta principal: insertamos los valores de limit y offset directamente 
+        // en lugar de usar placeholders para evitar errores
+        const query = `
+            SELECT ov.*, ovd.id as detalle_id, ovd.producto, ovd.cantidad 
+            FROM ordenes_venta ov
+            LEFT JOIN ordenes_venta_detalle ovd ON ov.id = ovd.orden_venta_id
+            ORDER BY ov.${safeSortBy} ${safeSortOrder}
+            LIMIT ${lim} OFFSET ${off}
+        `;
+        
+        // Log para depuración
+        console.log('[OV] SQL:', query);
+        console.log('[OV] Params:', { page: p, limit: lim, offset: off });
+        
+        // Ejecutamos la consulta sin parámetros
+        const results = await db.query(query);
+        
+        // Obtener el total de registros para la paginación (sin paginación)
+        const countQuery = 'SELECT COUNT(DISTINCT id) as total FROM ordenes_venta';
+        const countResult = await db.query(countQuery);
+        const total = countResult[0]?.total ?? 0;
         
         if (!results || results.length === 0) {
             return {
                 data: [],
                 pagination: {
                     total,
-                    page,
-                    limit,
-                    totalPages: Math.ceil(total / limit)
+                    page: p,
+                    limit: lim,
+                    totalPages: Math.ceil(total / lim)
                 }
             };
         }
@@ -158,9 +178,9 @@ class OrdenDeVentaRepository {
             data: Array.from(ordenesMap.values()),
             pagination: {
                 total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit)
+                page: p,
+                limit: lim,
+                totalPages: Math.ceil(total / lim)
             }
         };
     }

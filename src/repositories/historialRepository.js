@@ -42,7 +42,10 @@ class HistorialRepository {
      */
     async obtenerHistorial(page = 1, limit = 50, filtros = {}) {
         try {
-            const offset = (page - 1) * limit;
+            // Validación segura de números para paginación
+            const lim = Number.isFinite(+limit) ? Math.max(1, +limit) : 50;
+            const p = Number.isFinite(+page) ? Math.max(1, +page) : 1;
+            const off = (p - 1) * lim;
             
             // Construir consulta base
             let query = `
@@ -81,13 +84,18 @@ class HistorialRepository {
             }
             
             // Agregar condiciones a la consulta
+            let whereClause = '';
             if (condiciones.length > 0) {
-                query += ' AND ' + condiciones.join(' AND ');
+                whereClause = ' AND ' + condiciones.join(' AND ');
+                query += whereClause;
             }
             
-            // Agregar ordenación y paginación
-            query += ' ORDER BY fecha_hora DESC LIMIT ? OFFSET ?';
-            parametros.push(limit, offset);
+            // Agregar ordenación y paginación - NO usar placeholders para LIMIT/OFFSET
+            query += ` ORDER BY fecha_hora DESC LIMIT ${lim} OFFSET ${off}`;
+            
+            // Debug temporal
+            console.log('[HISTORIAL] SQL:', query);
+            console.log('[HISTORIAL] params(len)=', parametros.length, parametros);
             
             const result = await db.query(query, parametros);
             
@@ -97,10 +105,11 @@ class HistorialRepository {
             `;
             
             if (condiciones.length > 0) {
-                countQuery += ' AND ' + condiciones.join(' AND ');
+                countQuery += whereClause;
             }
             
-            const countResult = await db.query(countQuery, parametros.slice(0, -2)); // Eliminar limit y offset
+            const countResult = await db.query(countQuery, parametros);
+            const total = countResult[0]?.total ?? 0;
             
             return {
                 data: result.map(item => ({
@@ -108,10 +117,10 @@ class HistorialRepository {
                     detalles: item.detalles ? JSON.parse(item.detalles) : null
                 })),
                 pagination: {
-                    total: countResult[0].total,
-                    page,
-                    limit,
-                    totalPages: Math.ceil(countResult[0].total / limit)
+                    total,
+                    page: p,
+                    limit: lim,
+                    totalPages: Math.ceil(total / lim)
                 }
             };
         } catch (error) {

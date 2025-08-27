@@ -75,7 +75,10 @@ class ParteDiarioRepository {
     // Obtener partes diarios con paginación
     async obtenerPartesDiarios(page = 1, limit = 10, filtros = {}) {
         try {
-            const offset = (page - 1) * limit;
+            // Validación segura de números para paginación
+            const lim = Number.isFinite(+limit) ? Math.max(1, +limit) : 10;
+            const p = Number.isFinite(+page) ? Math.max(1, +page) : 1;
+            const off = (p - 1) * lim;
             
             // Array para almacenar las condiciones WHERE
             let condiciones = [];
@@ -87,7 +90,14 @@ class ParteDiarioRepository {
                 parametros.push(filtros.estado);
             }
             
+            // Construir la cláusula WHERE
+            let whereClause = '';
+            if (condiciones.length > 0) {
+                whereClause = ' WHERE ' + condiciones.join(' AND ');
+            }
+            
             // Consulta para obtener los partes diarios con la cantidad de bolsones y el peso total
+            // NO parametrizamos LIMIT/OFFSET para evitar errores
             let query = `
                 SELECT pd.id, pd.fecha, pd.turno, pd.cos_fi, pd.protecciones_vallas, 
                        pd.pref1_encendido_vacio, pd.nivel_liquido_hidraulico_t1, 
@@ -100,21 +110,15 @@ class ParteDiarioRepository {
                 FROM partes_diarios pd
                 LEFT JOIN parte_diario_bolsones pdb ON pd.id = pdb.parte_diario_id
                 LEFT JOIN bolsones b ON pdb.bolson_id = b.id
-            `;
-            
-            // Añadir condiciones WHERE si existen
-            if (condiciones.length > 0) {
-                query += ' WHERE ' + condiciones.join(' AND ');
-            }
-            
-            query += `
+                ${whereClause}
                 GROUP BY pd.id
                 ORDER BY pd.fecha DESC, pd.id DESC
-                LIMIT ? OFFSET ?
+                LIMIT ${lim} OFFSET ${off}
             `;
             
-            // Agregar los parámetros de limit y offset
-            parametros.push(limit, offset);
+            // Debug temporal
+            console.log('[PARTES] SQL:', query);
+            console.log('[PARTES] params(len)=', parametros.length, parametros);
             
             const result = await db.query(query, parametros);
             
@@ -122,22 +126,19 @@ class ParteDiarioRepository {
             let countQuery = `
                 SELECT COUNT(*) as total 
                 FROM partes_diarios pd
+                ${whereClause}
             `;
             
-            // Añadir condiciones WHERE a la consulta de conteo si existen
-            if (condiciones.length > 0) {
-                countQuery += ' WHERE ' + condiciones.join(' AND ');
-            }
-            
-            const countResult = await db.query(countQuery, parametros.slice(0, -2)); // Eliminar limit y offset
+            const countResult = await db.query(countQuery, parametros);
+            const total = countResult[0]?.total ?? 0;
             
             return {
                 data: result,
                 pagination: {
-                    total: countResult[0].total,
-                    page,
-                    limit,
-                    totalPages: Math.ceil(countResult[0].total / limit)
+                    total,
+                    page: p,
+                    limit: lim,
+                    totalPages: Math.ceil(total / lim)
                 }
             };
         } catch (error) {

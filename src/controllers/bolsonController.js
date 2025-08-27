@@ -137,11 +137,19 @@ const bolsonController = {
     async vistaNuevoBolson(req, res) {
         try {
             // Obtener solo productos que están en stock para el desplegable
+            console.log('Obteniendo productos en stock para el desplegable...');
             const productos = await productoService.obtenerProductosEnStock();
+            console.log(`Se obtuvieron ${productos ? productos.length : 0} productos en stock`);
+            
+            if (productos && productos.length > 0) {
+                console.log('Ejemplo del primer producto:', JSON.stringify(productos[0]));
+            } else {
+                console.log('No se encontraron productos en stock');
+            }
             
             res.render('bolsonesNuevo', { 
                 username: req.user.username,
-                productos: productos // Pasamos los productos a la vista
+                productos: productos || [] // Garantizar que sea un array incluso si es null
             });
         } catch (error) {
             console.error('Error al renderizar vista de nuevo bolson:', error);

@@ -194,84 +194,89 @@ class DespachoRepository {
     // Obtener todos los bolsones despachados with paginación
     async obtenerBolsonesDespachados(page = 1, limit = 10, filtros = {}) {
         try {
-            const offset = (page - 1) * limit;
+            // Validación segura de números
+            const lim = Number.isFinite(+limit) ? Math.max(1, +limit) : 10;
+            const p = Number.isFinite(+page) ? Math.max(1, +page) : 1;
+            const off = (p - 1) * lim;
             
             // Construir consulta base - excluir los despachos manuales
-            let query = `
+            let whereConditions = ['(dd.es_manual = 0 OR dd.es_manual IS NULL)'];
+            const filterParams = [];
+            
+            // Aplicar filtros si existen
+            if (filtros.ordenId) {
+                whereConditions.push('d.orden_venta_id = ?');
+                filterParams.push(filtros.ordenId);
+            }
+            
+            if (filtros.producto) {
+                whereConditions.push('CAST(dd.producto AS CHAR) LIKE ?');
+                filterParams.push(`%${filtros.producto}%`);
+            }
+            
+            if (filtros.codigo) {
+                whereConditions.push('dd.bolson_codigo LIKE ?');
+                filterParams.push(`%${filtros.codigo}%`);
+            }
+            
+            if (filtros.precinto) {
+                whereConditions.push('dd.precinto LIKE ?');
+                filterParams.push(`%${filtros.precinto}%`);
+            }
+            
+            if (filtros.fechaDesde) {
+                whereConditions.push('d.fecha >= ?');
+                filterParams.push(filtros.fechaDesde);
+            }
+            
+            if (filtros.fechaHasta) {
+                whereConditions.push('d.fecha <= ?');
+                filterParams.push(filtros.fechaHasta);
+            }
+            
+            // Construir la cláusula WHERE
+            const whereClause = whereConditions.join(' AND ');
+            
+            // Consulta principal: NO parametrizamos LIMIT/OFFSET
+            const selectSql = `
                 SELECT dd.id, dd.bolson_codigo, dd.producto, dd.peso, dd.precinto,
                        d.fecha, d.responsable, d.orden_venta_id
                 FROM despachos_detalle dd
                 JOIN despachos d ON dd.despacho_id = d.id
-                WHERE (dd.es_manual = 0 OR dd.es_manual IS NULL)
+                WHERE ${whereClause}
+                ORDER BY d.fecha DESC, dd.id DESC 
+                LIMIT ${lim} OFFSET ${off}
             `;
             
-            // Condiciones para filtros
-            const condiciones = [];
-            const parametros = [];
+            // Debug temporal
+            console.log('[DESPACHOS] SQL:', selectSql);
+            console.log('[DESPACHOS] params(len)=', filterParams.length, filterParams);
             
-            if (filtros.ordenId) {
-                condiciones.push('d.orden_venta_id = ?');
-                parametros.push(filtros.ordenId);
-            }
+            const result = await db.query(selectSql, filterParams);
             
-            if (filtros.producto) {
-                condiciones.push('dd.producto LIKE ?');
-                parametros.push(`%${filtros.producto}%`);
-            }
+            // Consulta para contar: mismos parámetros de filtro
+            const countSql = `
+                SELECT COUNT(*) as total 
+                FROM despachos_detalle dd 
+                JOIN despachos d ON dd.despacho_id = d.id
+                WHERE ${whereClause}
+            `;
             
-            if (filtros.codigo) {
-                condiciones.push('dd.bolson_codigo = ?');
-                parametros.push(filtros.codigo);
-            }
-            
-            if (filtros.precinto) {
-                condiciones.push('dd.precinto LIKE ?');
-                parametros.push(`%${filtros.precinto}%`);
-            }
-            
-            if (filtros.fechaDesde) {
-                condiciones.push('d.fecha >= ?');
-                parametros.push(filtros.fechaDesde);
-            }
-            
-            if (filtros.fechaHasta) {
-                condiciones.push('d.fecha <= ?');
-                parametros.push(filtros.fechaHasta);
-            }
-            
-            // Agregar condiciones a la consulta
-            if (condiciones.length > 0) {
-                query += ' AND ' + condiciones.join(' AND ');
-            }
-            
-            // Agregar ordenación y paginación
-            query += ' ORDER BY d.fecha DESC, dd.id DESC LIMIT ? OFFSET ?';
-            parametros.push(limit, offset);
-            
-            const result = await db.query(query, parametros);
-            
-            // Consulta para contar el total con los mismos filtros
-            let countQuery = `SELECT COUNT(*) as total FROM despachos_detalle dd 
-                             JOIN despachos d ON dd.despacho_id = d.id
-                             WHERE (dd.es_manual = 0 OR dd.es_manual IS NULL)`;
-            
-            if (condiciones.length > 0) {
-                countQuery += ' AND ' + condiciones.join(' AND ');
-            }
-            
-            const countResult = await db.query(countQuery, parametros.slice(0, -2)); // Eliminar limit y offset
+            const countResult = await db.query(countSql, filterParams);
+            const total = countResult[0]?.total ?? 0;
             
             return {
                 data: result,
                 pagination: {
-                    total: countResult[0].total,
-                    page,
-                    limit,
-                    totalPages: Math.ceil(countResult[0].total / limit)
+                    total,
+                    page: p,
+                    limit: lim,
+                    totalPages: Math.ceil(total / lim)
                 }
             };
         } catch (error) {
             console.error('Error al obtener bolsones despachados:', error);
+            console.error('Detalles del error:', error.message, error.stack);
             throw error;
         }
     }

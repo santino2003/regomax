@@ -54,20 +54,38 @@ class BolsonRepository {
     }
     async obtenerTodos(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC') {
         try {
-            const offset = (page - 1) * limit;
-            const query = `SELECT * FROM bolsones ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`;
-            const result = await db.query(query, [limit, offset]);
+            // Validación segura de números para paginación
+            const lim = Number.isFinite(+limit) ? Math.max(1, +limit) : 10;
+            const p = Number.isFinite(+page) ? Math.max(1, +page) : 1;
+            const off = (p - 1) * lim;
+            
+            // Whitelist de columnas permitidas para ordenamiento
+            const allowedSortBy = new Set(['id', 'codigo', 'producto', 'peso', 'precinto', 'fecha', 'hora', 'responsable', 'despachado']);
+            const allowedSortOrder = new Set(['ASC', 'DESC']);
+            
+            // Sanitizar valores de ordenamiento
+            const safeSortBy = allowedSortBy.has(sortBy) ? sortBy : 'id';
+            const safeSortOrder = allowedSortOrder.has((sortOrder || '').toUpperCase()) ? 
+                            sortOrder.toUpperCase() : 'DESC';
+            
+            // Consulta sin usar placeholders para LIMIT/OFFSET
+            const query = `SELECT * FROM bolsones ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ${lim} OFFSET ${off}`;
+            
+            // Debug temporal
+            console.log('[BOLSONES_TODOS] SQL:', query);
+            
+            const result = await db.query(query);
             
             // Obtener el número total de registros para la paginación
             const countResult = await db.query('SELECT COUNT(*) as total FROM bolsones');
-            const total = countResult[0].total;
+            const total = countResult[0]?.total ?? 0;
             
             return {
                 data: result,
                 pagination: {
                     total,
-                    page,
-                    limit,
+                    page: p,
+                    limit: lim,
                     totalPages: Math.ceil(total / limit)
                 }
             };
@@ -127,50 +145,51 @@ class BolsonRepository {
         }
     }
     async obtenerNoDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC', filtros = {}) {
-        const offset = (page - 1) * limit;
-        
-        // Construir la consulta con filtros
-        let whereConditions = ['despachado = 0'];
-        const params = [];
-        
-        // Aplicar filtros si existen
-        if (filtros.producto) {
-            whereConditions.push('producto LIKE ?');
-            params.push(`%${filtros.producto}%`);
-        }
-        if (filtros.codigo) {
-            whereConditions.push('codigo LIKE ?');
-            params.push(`%${filtros.codigo}%`);
-        }
-        if (filtros.precinto) {
-            whereConditions.push('precinto LIKE ?');
-            params.push(`%${filtros.precinto}%`);
-        }
-        
-        // Construir la consulta WHERE con todas las condiciones
-        const whereClause = whereConditions.join(' AND ');
-        
-        // Añadir los parámetros de paginación
-        params.push(limit, offset);
-        
-        const query = `SELECT * FROM bolsones WHERE ${whereClause} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`;
-        const result = await db.query(query, params);
-        
-        // Construir la consulta de conteo
-        const countQuery = `SELECT COUNT(*) as total FROM bolsones WHERE ${whereClause}`;
-        const countResult = await db.query(countQuery, params.slice(0, -2)); // Excluir los parámetros de límite y offset
-        const total = countResult[0].total;
-        
+        // Validaciones seguras
+        const lim = Number.isInteger(+limit) ? Math.max(1, +limit) : 10;
+        const off = Number.isInteger(+page) ? Math.max(0, (+page - 1) * lim) : 0;
+      
+        // Whitelist columnas y orden
+        const allowedSortBy = new Set(['id', 'codigo', 'producto', 'peso', 'precinto', 'fecha', 'hora', 'responsable', 'despachado']);
+        const allowedSortOrder = new Set(['ASC', 'DESC']);
+        const safeSortBy = allowedSortBy.has(sortBy) ? sortBy : 'id';
+        const safeSortOrder = allowedSortOrder.has((sortOrder || '').toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+      
+        // Filtros
+        const where = ['despachado = 0'];
+        const filterParams = [];
+      
+        if (filtros.producto) { where.push('producto LIKE ?'); filterParams.push(`%${filtros.producto}%`); }
+        if (filtros.codigo)   { where.push('codigo LIKE ?');   filterParams.push(`%${filtros.codigo}%`); }
+        if (filtros.precinto) { where.push('precinto LIKE ?'); filterParams.push(`%${filtros.precinto}%`); }
+      
+        const whereClause = where.join(' AND ');
+      
+        // SELECT: sin placeholders para limit/offset (evita el error del execute)
+        const selectSql = `
+          SELECT * FROM bolsones
+          WHERE ${whereClause}
+          ORDER BY ${safeSortBy} ${safeSortOrder}
+          LIMIT ${lim} OFFSET ${off}
+        `;
+        const result = await db.query(selectSql, filterParams);
+      
+        // COUNT: solo filtros
+        const countSql = `SELECT COUNT(*) AS total FROM bolsones WHERE ${whereClause}`;
+        const countRes = await db.query(countSql, filterParams);
+        const total = countRes[0]?.total ?? 0;
+      
         return {
-            data: result,
-            pagination: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit)
-            }
+          data: result,
+          pagination: {
+            total,
+            page,
+            limit: lim,
+            totalPages: Math.ceil(total / lim)
+          }
         };
-    }
+      }
+      
 
     /**
      * Obtiene los bolsones que han sido despachados
@@ -181,52 +200,63 @@ class BolsonRepository {
      * @param {Object} filtros - Filtros a aplicar (producto, codigo, precinto)
      * @returns {Promise<Object>} Bolsones despachados con información de paginación
      */
-    async obtenerDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC', filtros = {}) {
-        const offset = (page - 1) * limit;
-        
-        // Construir la consulta con filtros
-        let whereConditions = ['despachado = 1'];
-        const params = [];
-        
-        // Aplicar filtros si existen
-        if (filtros.producto) {
-            whereConditions.push('producto LIKE ?');
-            params.push(`%${filtros.producto}%`);
-        }
-        if (filtros.codigo) {
-            whereConditions.push('codigo LIKE ?');
-            params.push(`%${filtros.codigo}%`);
-        }
-        if (filtros.precinto) {
-            whereConditions.push('precinto LIKE ?');
-            params.push(`%${filtros.precinto}%`);
-        }
-        
-        // Construir la consulta WHERE con todas las condiciones
-        const whereClause = whereConditions.join(' AND ');
-        
-        // Añadir los parámetros de paginación
-        params.push(limit, offset);
-        
-        const query = `SELECT * FROM bolsones WHERE ${whereClause} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`;
-        const result = await db.query(query, params);
-        
-        // Construir la consulta de conteo
-        const countQuery = `SELECT COUNT(*) as total FROM bolsones WHERE ${whereClause}`;
-        const countResult = await db.query(countQuery, params.slice(0, -2)); // Excluir los parámetros de límite y offset
-        const total = countResult[0].total;
-        
-        return {
-            data: result,
-            pagination: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit)
-            }
-        };
-    }
-
+   // src/repositories/despachoRepository.js
+async obtenerBolsonesDespachados(page = 1, limit = 10, sortBy = 'id', sortOrder = 'DESC', filtros = {}) {
+    // números seguros
+    const lim = Number.isFinite(+limit) ? Math.max(1, +limit) : 10;
+    const p = Number.isFinite(+page) ? Math.max(1, +page) : 1;
+    const off = (p - 1) * lim;
+  
+    // whitelist columnas/orden
+    const allowedSortBy = new Set(['id','codigo','producto','peso','precinto','fecha','hora','responsable','despachado','parte_diario_id']);
+    const allowedSortOrder = new Set(['ASC','DESC']);
+    const safeSortBy = allowedSortBy.has(sortBy) ? sortBy : 'id';
+    const safeSortOrder = allowedSortOrder.has((sortOrder || '').toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+  
+    // filtros -> SOLO params de WHERE
+    const where = ['despachado = 1'];
+    const filterParams = [];
+  
+    // Si `producto` es INT en tu DB, preferí igualdad:
+    // if (filtros.producto) { where.push('producto = ?'); filterParams.push(Number(filtros.producto)); }
+    // Si querés LIKE sí o sí, castealo:
+    if (filtros.producto) { where.push('CAST(producto AS CHAR) LIKE ?'); filterParams.push(`%${filtros.producto}%`); }
+    if (filtros.codigo)   { where.push('codigo LIKE ?');   filterParams.push(`%${filtros.codigo}%`); }
+    if (filtros.precinto) { where.push('precinto LIKE ?'); filterParams.push(`%${filtros.precinto}%`); }
+  
+    const whereClause = where.join(' AND ');
+  
+    // SELECT: NO parametrizamos LIMIT/OFFSET
+    const selectSql = `
+      SELECT *
+      FROM bolsones
+      WHERE ${whereClause}
+      ORDER BY ${safeSortBy} ${safeSortOrder}
+      LIMIT ${lim} OFFSET ${off}
+    `;
+    // Debug temporal:
+    console.log('[DESPACHADOS] SQL:', selectSql);
+    console.log('[DESPACHADOS] params(len)=', filterParams.length, filterParams);
+  
+    const rows = await db.query(selectSql, filterParams);
+  
+    // COUNT: mismos params de filtros
+    const countSql = `SELECT COUNT(*) AS total FROM bolsones WHERE ${whereClause}`;
+    const countRes = await db.query(countSql, filterParams);
+    const total = countRes[0]?.total ?? 0;
+  
+    return {
+      data: rows,
+      pagination: {
+        total,
+        page: p,
+        limit: lim,
+        totalPages: Math.ceil(total / lim),
+      },
+    };
+  }
+  
+      
     /**
      * Obtiene todos los bolsones disponibles (que no han sido despachados)
      * @returns {Promise<Array>} Array de bolsones disponibles
