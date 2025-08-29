@@ -19,8 +19,16 @@ class HistorialRepository {
             
             const detallesStr = detalles ? JSON.stringify(detalles) : null;
             
-            // Formatear la fecha para MySQL (YYYY-MM-DD HH:MM:SS)
-            const fechaFormateada = fechaHora.toISOString().slice(0, 19).replace('T', ' ');
+            // Formatear la fecha para MySQL (YYYY-MM-DD HH:MM:SS) usando zona horaria local
+            const year = fechaHora.getFullYear();
+            const month = String(fechaHora.getMonth() + 1).padStart(2, '0');
+            const day = String(fechaHora.getDate()).padStart(2, '0');
+            const hours = String(fechaHora.getHours()).padStart(2, '0');
+            const minutes = String(fechaHora.getMinutes()).padStart(2, '0');
+            const seconds = String(fechaHora.getSeconds()).padStart(2, '0');
+            
+            const fechaFormateada = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            console.log('Guardando fecha en historial:', fechaFormateada);
             
             await db.query(query, [
                 usuario, 

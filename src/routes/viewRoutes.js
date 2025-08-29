@@ -136,6 +136,14 @@ router.get('/ordenes/editar/:id', [
     permissionsMiddleware.hasPermission('ordenes:edit')
 ], OVController.vistaEditarOrden);
 
+// Nueva ruta para exportar órdenes a Excel - DEBE IR ANTES DE LA RUTA CON PARÁMETRO :id
+router.get('/ordenes/exportar-excel', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes:export')
+], OVController.exportarExcel);
+
+// Esta ruta debe ir DESPUÉS de todas las rutas específicas de /ordenes/
 router.get('/ordenes/:id', [
     authMiddleware.verifyToken, 
     noCacheMiddleware,

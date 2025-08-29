@@ -1,5 +1,6 @@
 const OVService = require('../services/ordenDeVentaService');
 const ProductoService = require('../services/productoService'); // Añadida nueva importación
+const Excel = require('exceljs'); // Añadir importación de ExcelJS
 
 const OVController = {
     async crearOrdenDeVenta(req, res) {
@@ -81,6 +82,7 @@ const OVController = {
             const limit = parseInt(req.query.limit) || 10;
             const search = req.query.search || '';
             const estado = req.query.estado || '';
+            const searchType = req.query.searchType || 'all'; // Nuevo parámetro para tipo de búsqueda
             
             // Por defecto ordenamos por id descendente (del último al primero)
             const resultado = await OVService.obtenerTodasLasOrdenes(page, limit, 'id', 'DESC');
@@ -97,26 +99,48 @@ const OVController = {
                 }
             }
             
-            // Si hay un término de búsqueda, filtramos los resultados
+            // Si hay un término de búsqueda, filtramos los resultados según el tipo de búsqueda
             if (search) {
                 const searchLower = search.toLowerCase();
                 resultado.data = resultado.data.filter(orden => {
-                    // Buscar por cliente
-                    const clienteMatch = orden.cliente && 
-                                         orden.cliente.toLowerCase().includes(searchLower);
-                    
-                    // Buscar por código de venta (si existe)
-                    const codigoVentaMatch = orden.codigo_venta && 
-                                             orden.codigo_venta.toLowerCase().includes(searchLower);
-                    
-                    // Buscar por ID en formato OV-X
-                    const idFormatoOV = `OV-${orden.id}`.toLowerCase();
-                    const idMatch = idFormatoOV.includes(searchLower);
-                    
-                    // Buscar por ID numérico
-                    const idNumericoMatch = orden.id.toString() === search;
-                    
-                    return clienteMatch || codigoVentaMatch || idMatch || idNumericoMatch;
+                    // Diferentes criterios de búsqueda según el tipo seleccionado
+                    if (searchType === 'cliente') {
+                        // Buscar solo por cliente
+                        return orden.cliente && orden.cliente.toLowerCase().includes(searchLower);
+                    } 
+                    else if (searchType === 'clienteFinal') {
+                        // Buscar solo por cliente final
+                        return orden.cliente_final && orden.cliente_final.toLowerCase().includes(searchLower);
+                    } 
+                    else if (searchType === 'id') {
+                        // Buscar solo por ID (numérico o formato OV-X)
+                        const idFormatoOV = `OV-${orden.id}`.toLowerCase();
+                        const idNumericoMatch = orden.id.toString() === search;
+                        return idFormatoOV.includes(searchLower) || idNumericoMatch;
+                    } 
+                    else {
+                        // Modo "all" - buscar en todos los campos (comportamiento predeterminado)
+                        // Buscar por cliente
+                        const clienteMatch = orden.cliente && 
+                                            orden.cliente.toLowerCase().includes(searchLower);
+                        
+                        // Buscar por cliente final (nuevo)
+                        const clienteFinalMatch = orden.cliente_final && 
+                                                orden.cliente_final.toLowerCase().includes(searchLower);
+                        
+                        // Buscar por código de venta (si existe)
+                        const codigoVentaMatch = orden.codigo_venta && 
+                                                orden.codigo_venta.toLowerCase().includes(searchLower);
+                        
+                        // Buscar por ID en formato OV-X
+                        const idFormatoOV = `OV-${orden.id}`.toLowerCase();
+                        const idMatch = idFormatoOV.includes(searchLower);
+                        
+                        // Buscar por ID numérico
+                        const idNumericoMatch = orden.id.toString() === search;
+                        
+                        return clienteMatch || clienteFinalMatch || codigoVentaMatch || idMatch || idNumericoMatch;
+                    }
                 });
                 
                 // Ajustar la paginación para reflejar los resultados de búsqueda
@@ -130,7 +154,8 @@ const OVController = {
                 ordenes: resultado.data,
                 pagination: resultado.pagination,
                 currentSearch: search,
-                currentEstado: estado
+                currentEstado: estado,
+                searchType: searchType // Pasar el tipo de búsqueda a la vista
             });
         } catch (error) {
             console.error('Error al listar órdenes de venta:', error);
@@ -285,6 +310,191 @@ const OVController = {
             return res.status(500).json({
                 success: false,
                 message: 'Error al eliminar orden de venta',
+                error: error.message
+            });
+        }
+    },
+
+    // Nueva función para exportar órdenes a Excel
+    async exportarExcel(req, res) {
+        try {
+            console.log('Iniciando proceso de exportación de órdenes a Excel');
+            
+            // Obtener los parámetros de filtrado que en vistaListarOrdenes
+            const search = req.query.search || '';
+            const estado = req.query.estado || '';
+            const searchType = req.query.searchType || 'all';
+            
+            // Nuevo: Comprobar si hay IDs específicos para exportar
+            const selectedIds = req.query.ids ? req.query.ids.split(',') : [];
+            
+            // Obtener órdenes según los parámetros
+            let ordenesParaExportar = [];
+            
+            if (selectedIds.length > 0) {
+                // Si hay IDs seleccionados, obtener solo esas órdenes
+                console.log(`Exportando ${selectedIds.length} órdenes seleccionadas`);
+                
+                // Obtener cada orden seleccionada por su ID
+                ordenesParaExportar = await Promise.all(
+                    selectedIds.map(async (id) => {
+                        try {
+                            return await OVService.obtenerOrdenPorId(id);
+                        } catch (error) {
+                            console.error(`Error al obtener orden ID ${id}:`, error);
+                            return null;
+                        }
+                    })
+                );
+                
+                // Filtrar cualquier error (nulos)
+                ordenesParaExportar = ordenesParaExportar.filter(orden => orden !== null);
+            } else {
+                // Obtener todas las órdenes sin paginación para incluir todo en el Excel
+                const resultado = await OVService.obtenerTodasLasOrdenes(1, 1000, 'id', 'DESC');
+                ordenesParaExportar = resultado.data;
+                
+                // Aplicar los mismos filtros que en la vista
+                // Si hay un filtro de estado, filtramos los resultados
+                if (estado && estado !== 'todos') {
+                    ordenesParaExportar = ordenesParaExportar.filter(orden => orden.estado === estado);
+                }
+                
+                // Si hay un término de búsqueda, filtramos los resultados según el tipo de búsqueda
+                if (search) {
+                    const searchLower = search.toLowerCase();
+                    ordenesParaExportar = ordenesParaExportar.filter(orden => {
+                        // Diferentes criterios de búsqueda según el tipo seleccionado
+                        if (searchType === 'cliente') {
+                            // Buscar solo por cliente
+                            return orden.cliente && orden.cliente.toLowerCase().includes(searchLower);
+                        } 
+                        else if (searchType === 'clienteFinal') {
+                            // Buscar solo por cliente final
+                            return orden.cliente_final && orden.cliente_final.toLowerCase().includes(searchLower);
+                        } 
+                        else if (searchType === 'id') {
+                            // Buscar solo por ID (numérico o formato OV-X)
+                            const idFormatoOV = `OV-${orden.id}`.toLowerCase();
+                            const idNumericoMatch = orden.id.toString() === search;
+                            return idFormatoOV.includes(searchLower) || idNumericoMatch;
+                        } 
+                        else {
+                            // Modo "all" - buscar en todos los campos
+                            const clienteMatch = orden.cliente && 
+                                                orden.cliente.toLowerCase().includes(searchLower);
+                            const clienteFinalMatch = orden.cliente_final && 
+                                                    orden.cliente_final.toLowerCase().includes(searchLower);
+                            const codigoVentaMatch = orden.codigo_venta && 
+                                                    orden.codigo_venta.toLowerCase().includes(searchLower);
+                            const idFormatoOV = `OV-${orden.id}`.toLowerCase();
+                            const idMatch = idFormatoOV.includes(searchLower);
+                            const idNumericoMatch = orden.id.toString() === search;
+                            
+                            return clienteMatch || clienteFinalMatch || codigoVentaMatch || idMatch || idNumericoMatch;
+                        }
+                    });
+                }
+            }
+            
+            // Crear un nuevo libro de Excel
+            const workbook = new Excel.Workbook();
+            const worksheet = workbook.addWorksheet('Órdenes de Venta');
+            
+            // Añadir encabezados según lo solicitado
+            worksheet.columns = [
+                { header: 'Numero', key: 'numero', width: 15 },
+                { header: 'Fecha', key: 'fecha', width: 15 },
+                { header: 'Estado', key: 'estado', width: 15 },
+                { header: 'Productos / Cantidad restante', key: 'productos_saldos', width: 30 },
+                { header: 'Cliente', key: 'cliente', width: 20 },
+                { header: 'Cliente Final', key: 'cliente_final', width: 20 },
+                { header: 'Codigo de Venta', key: 'codigo_venta', width: 15 }
+            ];
+            
+            // Dar formato al encabezado
+            worksheet.getRow(1).font = { bold: true };
+            worksheet.getRow(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF4F81BD' }
+            };
+            worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+            
+            console.log(`Procesando ${ordenesParaExportar.length} órdenes para exportar`);
+            
+            // Procesar cada orden para el Excel
+            for (const orden of ordenesParaExportar) {
+                // Formatear productos y cantidades
+                let productosSaldos = '';
+                
+                // Si hay productos, procesarlos
+                if (orden.productos && orden.productos.length > 0) {
+                    // Para el formato "Productos / Cantidad restante" - mostrar cantidad directamente
+                    productosSaldos = orden.productos.map(p => 
+                        `${p.nombre || p.producto} - ${p.cantidad}`
+                    ).join('\n');
+                }
+                
+                // Formatear fecha para mejor visualización
+                const fecha = orden.fecha ? new Date(orden.fecha).toLocaleDateString() : 'N/A';
+                
+                // Formatear estado para mejor visualización
+                let estado = 'PENDIENTE';
+                if (orden.estado) {
+                    estado = orden.estado.toUpperCase().replace('_', ' ');
+                }
+                
+                // Añadir la fila al Excel
+                worksheet.addRow({
+                    numero: `OV-${orden.id}`,
+                    fecha: fecha,
+                    estado: estado,
+                    productos_saldos: productosSaldos,
+                    cliente: orden.cliente || 'N/A',
+                    cliente_final: orden.cliente_final || 'N/A',
+                    codigo_venta: orden.codigo_venta || 'N/A'
+                });
+            }
+            
+            // Aplicar estilos a las filas
+            worksheet.eachRow((row, rowNumber) => {
+                // Saltar la primera fila (encabezados)
+                if (rowNumber > 1) {
+                    // Alineación de celdas
+                    row.eachCell((cell) => {
+                        cell.alignment = { 
+                            vertical: 'middle', 
+                            wrapText: true 
+                        };
+                    });
+                }
+            });
+            
+            // Configurar el nombre del archivo con la fecha actual
+            const fechaActual = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+            const filtroInfo = estado && !selectedIds.length ? `_${estado}` : '';
+            const searchInfo = search && !selectedIds.length ? `_${search.replace(/[^a-z0-9]/gi, '_')}` : '';
+            const seleccionInfo = selectedIds.length > 0 ? '_seleccionadas' : '';
+            const filename = `ordenes_venta${filtroInfo}${searchInfo}${seleccionInfo}_${fechaActual}.xlsx`;
+            
+            console.log(`Generando archivo Excel: ${filename}`);
+            
+            // Configurar las cabeceras para la descarga
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+            
+            // Escribir el archivo y enviarlo como respuesta
+            await workbook.xlsx.write(res);
+            
+            console.log('Exportación completada con éxito');
+            
+            // La respuesta se envía automáticamente después de escribir el Excel
+        } catch (error) {
+            console.error('Error al exportar órdenes a Excel:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al exportar órdenes a Excel',
                 error: error.message
             });
         }

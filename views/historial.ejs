@@ -143,7 +143,18 @@
                                     <% historial.forEach(item => { %>
                                         <tr>
                                             <td><%= item.id %></td>
-                                            <td><%= new Date(item.fecha_hora).toLocaleString() %></td>
+                                            <td>
+                                                <% 
+                                                try {
+                                                    const fecha = new Date(item.fecha_hora);
+                                                    // Formatear la fecha usando métodos locales para asegurar zona horaria correcta
+                                                    const fechaFormateada = fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString();
+                                                    %><%= fechaFormateada %><%
+                                                } catch(e) { 
+                                                    %><%= item.fecha_hora %><%
+                                                } 
+                                                %>
+                                            </td>
                                             <td><%= item.usuario %></td>
                                             <td>
                                                 <% if (item.accion === 'crear') { %>

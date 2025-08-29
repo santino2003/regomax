@@ -28,8 +28,21 @@ class BolsonService {
                 await bolsonRepository.setUltimoNumero(numero);
             }
 
-
-            const hora = format(new Date(), 'HH:mm');
+            // Imprimir la hora actual para diagnóstico (10:36 según mencionado)
+            const ahora = new Date();
+            console.log('=== DIAGNÓSTICO DE HORA ===');
+            console.log('Hora actual del sistema:', ahora);
+            console.log('toString():', ahora.toString());
+            console.log('toLocaleString():', ahora.toLocaleString());
+            console.log('Hora (getHours):', ahora.getHours());
+            console.log('Minutos (getMinutes):', ahora.getMinutes());
+            console.log('=== FIN DIAGNÓSTICO ===');
+            
+            // Obtener horas y minutos para guardar
+            const horas = ahora.getHours().toString().padStart(2, '0');
+            const minutos = ahora.getMinutes().toString().padStart(2, '0');
+            const hora = `${horas}:${minutos}`;
+            console.log('Hora que se guardará en la base de datos:', hora);
 
             const codigo = barcodeGenerator.generateNumericCode(numero);
             const barcodeBase64 = await generarBarcodeBase64(codigo);
