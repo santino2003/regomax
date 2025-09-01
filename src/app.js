@@ -13,6 +13,7 @@ const parteDiarioRoutes = require('./routes/parteDiarioRoutes'); // Importamos l
 const historialRoutes = require('./routes/historialRoutes');
 const reporteRoutes = require('./routes/reporteRoutes'); // Importamos las rutas de reportes
 const viewRoutes = require('./routes/viewRoutes');
+const nfuRoutes = require('./routes/nfuRoutes'); // Importamos las rutas de NFU
 const authMiddleware = require('./middleware/auth');
 const permissionErrorHandler = require('./middleware/permissionErrorHandler');
 const productoRoutes = require('./routes/api/productoRoutes');
@@ -48,6 +49,7 @@ app.use('/api/despachos', despachoRoutes);
 app.use('/api/partes-diarios', parteDiarioRoutes); // Registramos las rutas del parte diario
 app.use('/api/historial', historialRoutes);
 app.use('/api/reportes', reporteRoutes); // Registramos las rutas de reportes
+app.use('/', nfuRoutes); // Registramos las rutas de NFU
 
 // Rutas para usuarios (tanto vista como API)
 app.use('/users', authRoutes); // Para la vista de gestión de usuarios
