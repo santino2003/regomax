@@ -11,6 +11,7 @@ const ordenDeVentaRoutes = require('./routes/ordenDeVentaRoutes');
 const despachoRoutes = require('./routes/despachoRoutes');
 const parteDiarioRoutes = require('./routes/parteDiarioRoutes'); // Importamos las rutas del parte diario
 const historialRoutes = require('./routes/historialRoutes');
+const reporteRoutes = require('./routes/reporteRoutes'); // Importamos las rutas de reportes
 const viewRoutes = require('./routes/viewRoutes');
 const authMiddleware = require('./middleware/auth');
 const permissionErrorHandler = require('./middleware/permissionErrorHandler');
@@ -46,6 +47,7 @@ app.use('/api/productos', productoRoutes);
 app.use('/api/despachos', despachoRoutes);
 app.use('/api/partes-diarios', parteDiarioRoutes); // Registramos las rutas del parte diario
 app.use('/api/historial', historialRoutes);
+app.use('/api/reportes', reporteRoutes); // Registramos las rutas de reportes
 
 // Rutas para usuarios (tanto vista como API)
 app.use('/users', authRoutes); // Para la vista de gestión de usuarios
