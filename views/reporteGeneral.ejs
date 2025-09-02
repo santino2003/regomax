@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= titulo %> - Regomax</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= usuario.username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2>Reporte General Consolidado</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="input-group mb-2">
+                <input type="date" id="fechaReporte" class="form-control">
+                <button id="btnGenerarReporte" class="btn btn-primary">
+                    <i class="bi bi-sync"></i> Generar Reporte
+                </button>
+                <button id="btnExportarExcel" class="btn btn-success ms-2">
+                    <i class="bi bi-file-excel"></i> Exportar a Excel
+                </button>
+                <button id="btnImprimir" class="btn btn-info ms-2">
+                    <i class="bi bi-print"></i> Imprimir
+                </button>
+                <!-- Se eliminó el botón "Registrar NFU" -->
+            </div>
+        </div>
+    </div>
+
+    <div id="contenedorReporte">
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info" id="loadingAlert">
+                    <i class="fas fa-spinner fa-spin"></i> Seleccione una fecha y haga clic en "Generar Reporte"
+                </div>
+            </div>
+        </div>
+
+        <div id="reporteContent" style="display: none;">
+            <!-- Cabecera del reporte -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="card-title mb-0">Reporte del día <span id="fechaReporteHeader"></span></h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Producción Total del Día</span>
+                                            <span class="info-box-number" id="produccionTotalDia">0 kg</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">NFU Ingresado Hoy</span>
+                                            <span class="info-box-number" id="nfuTotalDia">0 kg</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Despachos Totales del Día</span>
+                                            <span class="info-box-number" id="despachosTotalDia">0 kg</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 1: Producción diaria por producto -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">Producción Diaria por Producto</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered" id="tablaProduccionDiaria">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Bolsones</th>
+                                            <th>Peso Total (kg)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="fw-bold">
+                                            <td>TOTAL</td>
+                                            <td id="totalBolsonesDia">0</td>
+                                            <td id="totalPesoDia">0 kg</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="card-title mb-0">Acumulado Mensual por Producto</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered" id="tablaAcumuladoMes">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Bolsones</th>
+                                            <th>Peso Total (kg)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="fw-bold">
+                                            <td>TOTAL</td>
+                                            <td id="totalBolsonesMes">0</td>
+                                            <td id="totalPesoMes">0 kg</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 2: NFU -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">Neumáticos Fuera de Uso (NFU)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="card-title mb-0">Ingreso Diario</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <h3 id="nfuDiario">0 kg</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="card-title mb-0">Acumulado Mensual</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <h3 id="nfuMensual">0 kg</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="card-title mb-0">Acumulado Histórico</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <h3 id="nfuHistorico">0 kg</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 3: Stock y Despachos -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">Stock Total</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered" id="tablaStockTotal">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Bolsones</th>
+                                            <th>Peso (kg)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="fw-bold">
+                                            <td>TOTAL</td>
+                                            <td id="totalBolsonesStock">0</td>
+                                            <td id="totalPesoStock">0 kg</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="card-title mb-0">Despachos del Día</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered" id="tablaDespachosDia">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Bolsones</th>
+                                            <th>Peso (kg)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="fw-bold">
+                                            <td>TOTAL</td>
+                                            <td id="totalBolsonesDespachoDia">0</td>
+                                            <td id="totalPesoDespachoDia">0 kg</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="card-title mb-0">Despachos Acumulados del Mes</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered" id="tablaDespachosAcumulados">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Bolsones</th>
+                                            <th>Peso (kg)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="fw-bold">
+                                            <td>TOTAL</td>
+                                            <td id="totalBolsonesDespachosAcum">0</td>
+                                            <td id="totalPesoDespachosAcum">0 kg</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col">
+            <a href="/home" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Volver al panel
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+<script src="/assets/js/common.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer la fecha de hoy por defecto
+    document.getElementById('fechaReporte').valueAsDate = new Date();
+    
+    // Evento para generar el reporte
+    document.getElementById('btnGenerarReporte').addEventListener('click', generarReporte);
+    
+    // Evento para exportar a Excel
+    document.getElementById('btnExportarExcel').addEventListener('click', exportarExcel);
+    
+    // Evento para imprimir
+    document.getElementById('btnImprimir').addEventListener('click', imprimirReporte);
+});
+
+async function generarReporte() {
+    const fecha = document.getElementById('fechaReporte').value;
+    
+    if (!fecha) {
+        alert('Por favor seleccione una fecha para generar el reporte');
+        return;
+    }
+    
+    // Mostrar loading
+    document.getElementById('loadingAlert').innerHTML = '<i class="bi bi-spinner bi-spin"></i> Cargando datos del reporte...';
+    document.getElementById('reporteContent').style.display = 'none';
+    
+    try {
+        const response = await fetch(`/api/reportes/completo?fecha=${fecha}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            mostrarReporte(data.data);
+        } else {
+            document.getElementById('loadingAlert').innerHTML = 
+                `<i class="bi bi-exclamation-triangle"></i> Error: ${data.message || 'No se pudo cargar el reporte'}`;
+        }
+    } catch (error) {
+        console.error('Error al generar reporte:', error);
+        document.getElementById('loadingAlert').innerHTML = 
+            '<i class="bi bi-exclamation-triangle"></i> Error al conectar con el servidor';
+    }
+}
+
+function mostrarReporte(data) {
+    // Actualizar fecha en el encabezado
+    const fechaFormateada = new Date(data.fecha).toLocaleDateString();
+    document.getElementById('fechaReporteHeader').textContent = fechaFormateada;
+    
+    // 1. Producción diaria por producto
+    const tablaProduccionDiaria = document.getElementById('tablaProduccionDiaria').getElementsByTagName('tbody')[0];
+    tablaProduccionDiaria.innerHTML = '';
+    
+    let totalBolsonesDia = 0;
+    let totalPesoDia = 0;
+    
+    if (data.produccion && data.produccion.length > 0) {
+        data.produccion.forEach(prod => {
+            const row = tablaProduccionDiaria.insertRow();
+            row.insertCell(0).textContent = prod.nombre;
+            row.insertCell(1).textContent = prod.cantidadBolsones;
+            row.insertCell(2).textContent = `${formatNumber(prod.pesoTotal)} kg`;
+            
+            totalBolsonesDia += prod.cantidadBolsones;
+            totalPesoDia += prod.pesoTotal;
+        });
+    } else {
+        const row = tablaProduccionDiaria.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 3;
+        cell.textContent = "No hay datos de producción para esta fecha";
+        cell.className = "text-center";
+    }
+    
+    document.getElementById('totalBolsonesDia').textContent = totalBolsonesDia;
+    document.getElementById('totalPesoDia').textContent = `${formatNumber(totalPesoDia)} kg`;
+    document.getElementById('produccionTotalDia').textContent = `${formatNumber(totalPesoDia)} kg`;
+    
+    // 2. Acumulado mensual por producto
+    const tablaAcumuladoMes = document.getElementById('tablaAcumuladoMes').getElementsByTagName('tbody')[0];
+    tablaAcumuladoMes.innerHTML = '';
+    
+    let totalBolsonesMes = 0;
+    let totalPesoMes = 0;
+    
+    if (data.stockAcumuladoMes && data.stockAcumuladoMes.length > 0) {
+        data.stockAcumuladoMes.forEach(prod => {
+            const row = tablaAcumuladoMes.insertRow();
+            row.insertCell(0).textContent = prod.nombre;
+            row.insertCell(1).textContent = prod.cantidadBolsones;
+            row.insertCell(2).textContent = `${formatNumber(prod.pesoTotal)} kg`;
+            
+            totalBolsonesMes += prod.cantidadBolsones;
+            totalPesoMes += prod.pesoTotal;
+        });
+    } else {
+        const row = tablaAcumuladoMes.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 3;
+        cell.textContent = "No hay datos acumulados para este mes";
+        cell.className = "text-center";
+    }
+    
+    document.getElementById('totalBolsonesMes').textContent = totalBolsonesMes;
+    document.getElementById('totalPesoMes').textContent = `${formatNumber(totalPesoMes)} kg`;
+    
+    // 3. Datos NFU
+    document.getElementById('nfuDiario').textContent = `${formatNumber(data.nfu.diario.cantidadTotal)} kg`;
+    document.getElementById('nfuMensual').textContent = `${formatNumber(data.nfu.acumuladoMes.cantidadTotal)} kg`;
+    document.getElementById('nfuHistorico').textContent = `${formatNumber(data.nfu.acumuladoHistorico.cantidadTotal)} kg`;
+    document.getElementById('nfuTotalDia').textContent = `${formatNumber(data.nfu.diario.cantidadTotal)} kg`;
+    
+    // 4. Stock Total
+    const tablaStockTotal = document.getElementById('tablaStockTotal').getElementsByTagName('tbody')[0];
+    tablaStockTotal.innerHTML = '';
+    
+    let totalBolsonesStock = 0;
+    let totalPesoStock = 0;
+    
+    if (data.stockAcumuladoHistorico && data.stockAcumuladoHistorico.length > 0) {
+        data.stockAcumuladoHistorico.forEach(prod => {
+            const row = tablaStockTotal.insertRow();
+            row.insertCell(0).textContent = prod.nombre;
+            row.insertCell(1).textContent = prod.cantidadBolsones;
+            row.insertCell(2).textContent = `${formatNumber(prod.pesoTotal)} kg`;
+            
+            totalBolsonesStock += prod.cantidadBolsones;
+            totalPesoStock += prod.pesoTotal;
+        });
+    } else {
+        const row = tablaStockTotal.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 3;
+        cell.textContent = "No hay stock disponible";
+        cell.className = "text-center";
+    }
+    
+    document.getElementById('totalBolsonesStock').textContent = totalBolsonesStock;
+    document.getElementById('totalPesoStock').textContent = `${formatNumber(totalPesoStock)} kg`;
+    
+    // 5. Despachos del día
+    const tablaDespachosDia = document.getElementById('tablaDespachosDia').getElementsByTagName('tbody')[0];
+    tablaDespachosDia.innerHTML = '';
+    
+    let totalBolsonesDespachoDia = 0;
+    let totalPesoDespachoDia = 0;
+    
+    if (data.despachos && data.despachos.length > 0) {
+        data.despachos.forEach(desp => {
+            const row = tablaDespachosDia.insertRow();
+            row.insertCell(0).textContent = desp.nombre;
+            row.insertCell(1).textContent = desp.cantidadBolsones;
+            row.insertCell(2).textContent = `${formatNumber(desp.pesoTotal)} kg`;
+            
+            totalBolsonesDespachoDia += desp.cantidadBolsones;
+            totalPesoDespachoDia += desp.pesoTotal;
+        });
+    } else {
+        const row = tablaDespachosDia.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 3;
+        cell.textContent = "No hay despachos para esta fecha";
+        cell.className = "text-center";
+    }
+    
+    document.getElementById('totalBolsonesDespachoDia').textContent = totalBolsonesDespachoDia;
+    document.getElementById('totalPesoDespachoDia').textContent = `${formatNumber(totalPesoDespachoDia)} kg`;
+    document.getElementById('despachosTotalDia').textContent = `${formatNumber(totalPesoDespachoDia)} kg`;
+    
+    // 6. Despachos acumulados del mes
+    const tablaDespachosAcumulados = document.getElementById('tablaDespachosAcumulados').getElementsByTagName('tbody')[0];
+    tablaDespachosAcumulados.innerHTML = '';
+    
+    let totalBolsonesDespachosAcum = 0;
+    let totalPesoDespachosAcum = 0;
+    
+    if (data.despachosAcumuladosMes && data.despachosAcumuladosMes.length > 0) {
+        data.despachosAcumuladosMes.forEach(desp => {
+            const row = tablaDespachosAcumulados.insertRow();
+            row.insertCell(0).textContent = desp.nombre;
+            row.insertCell(1).textContent = desp.cantidadBolsones;
+            row.insertCell(2).textContent = `${formatNumber(desp.pesoTotal)} kg`;
+            
+            totalBolsonesDespachosAcum += desp.cantidadBolsones;
+            totalPesoDespachosAcum += desp.pesoTotal;
+        });
+    } else {
+        const row = tablaDespachosAcumulados.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 3;
+        cell.textContent = "No hay despachos acumulados para este mes";
+        cell.className = "text-center";
+    }
+    
+    document.getElementById('totalBolsonesDespachosAcum').textContent = totalBolsonesDespachosAcum;
+    document.getElementById('totalPesoDespachosAcum').textContent = `${formatNumber(totalPesoDespachosAcum)} kg`;
+    
+    // Mostrar el contenido del reporte y ocultar mensaje de loading
+    document.getElementById('loadingAlert').style.display = 'none';
+    document.getElementById('reporteContent').style.display = 'block';
+}
+
+function exportarExcel() {
+    if (document.getElementById('reporteContent').style.display === 'none') {
+        alert('Primero debe generar un reporte');
+        return;
+    }
+
+    const workbook = XLSX.utils.book_new();
+    
+    // Fecha del reporte
+    const fecha = document.getElementById('fechaReporteHeader').textContent;
+    
+    // Producción diaria
+    const tablaProduccion = document.getElementById('tablaProduccionDiaria');
+    const wsProduccion = XLSX.utils.table_to_sheet(tablaProduccion);
+    XLSX.utils.book_append_sheet(workbook, wsProduccion, "Producción Diaria");
+    
+    // Acumulado del mes
+    const tablaAcumulado = document.getElementById('tablaAcumuladoMes');
+    const wsAcumulado = XLSX.utils.table_to_sheet(tablaAcumulado);
+    XLSX.utils.book_append_sheet(workbook, wsAcumulado, "Acumulado Mensual");
+    
+    // NFU - Crear una tabla simple para NFU
+    const dataNFU = [
+        ["Neumáticos Fuera de Uso (NFU)"],
+        ["Ingreso Diario", document.getElementById('nfuDiario').textContent],
+        ["Acumulado Mensual", document.getElementById('nfuMensual').textContent],
+        ["Acumulado Histórico", document.getElementById('nfuHistorico').textContent]
+    ];
+    const wsNFU = XLSX.utils.aoa_to_sheet(dataNFU);
+    XLSX.utils.book_append_sheet(workbook, wsNFU, "NFU");
+    
+    // Stock Total
+    const tablaStock = document.getElementById('tablaStockTotal');
+    const wsStock = XLSX.utils.table_to_sheet(tablaStock);
+    XLSX.utils.book_append_sheet(workbook, wsStock, "Stock Total");
+    
+    // Despachos del día
+    const tablaDespachos = document.getElementById('tablaDespachosDia');
+    const wsDespachos = XLSX.utils.table_to_sheet(tablaDespachos);
+    XLSX.utils.book_append_sheet(workbook, wsDespachos, "Despachos Diarios");
+    
+    // Despachos acumulados
+    const tablaDespachosAcum = document.getElementById('tablaDespachosAcumulados');
+    const wsDespachosAcum = XLSX.utils.table_to_sheet(tablaDespachosAcum);
+    XLSX.utils.book_append_sheet(workbook, wsDespachosAcum, "Despachos Acumulados");
+    
+    // Exportar el archivo
+    XLSX.writeFile(workbook, `Reporte_General_${fecha.replace(/\//g, '-')}.xlsx`);
+}
+
+function imprimirReporte() {
+    if (document.getElementById('reporteContent').style.display === 'none') {
+        alert('Primero debe generar un reporte');
+        return;
+    }
+    
+    window.print();
+}
+
+function formatNumber(num) {
+    return Number(num).toLocaleString('es-AR');
+}
+</script>
+
+<style>
+@media print {
+    .btn, input, select, .no-print {
+        display: none !important;
+    }
+    body {
+        padding: 0;
+        margin: 0;
+    }
+    .card {
+        break-inside: avoid;
+    }
+    .container-fluid {
+        width: 100%;
+        padding: 0;
+    }
+}
+</style>
+</body>
+</html>

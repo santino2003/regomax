@@ -49,13 +49,15 @@ app.use('/api/despachos', despachoRoutes);
 app.use('/api/partes-diarios', parteDiarioRoutes); // Registramos las rutas del parte diario
 app.use('/api/historial', historialRoutes);
 app.use('/api/reportes', reporteRoutes); // Registramos las rutas de reportes
-app.use('/', nfuRoutes); // Registramos las rutas de NFU
+
+// Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
+app.use('/', nfuRoutes);
 
 // Rutas para usuarios (tanto vista como API)
 app.use('/users', authRoutes); // Para la vista de gestión de usuarios
 app.use('/api/users', authRoutes); // Rutas API para operaciones CRUD de usuarios
 
-// Rutas de vistas
+// Rutas de vistas - se montan después de las rutas API para evitar conflictos
 app.use('/', viewRoutes);
 
 // Ruta para API verify

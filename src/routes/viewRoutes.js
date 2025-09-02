@@ -210,6 +210,28 @@ router.get('/partes-diarios/:id', [
 // Ruta para historial de acciones - visible para todos los usuarios autenticados
 router.get('/historial', [authMiddleware.verifyToken, noCacheMiddleware], historialController.mostrarHistorial);
 
+// Rutas para NFU - Neumáticos Fuera de Uso
+const nfuController = require('../controllers/nfuController');
+
+// Ruta para formulario de nuevo ingreso de NFU
+router.get('/nfu/nuevo', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reportes:view')
+], nfuController.mostrarFormularioIngresoNFU);
+
+// Ruta para el reporte general consolidado
+router.get('/reporte-general', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reportes:view')
+], (req, res) => {
+    res.render('reporteGeneral', { 
+        titulo: 'Reporte General Consolidado',
+        usuario: req.user 
+    });
+});
+
 // Endpoint de logout
 router.get('/logout', (req, res) => {
     res.clearCookie('token');
