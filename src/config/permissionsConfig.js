@@ -54,6 +54,13 @@ const PERMISSIONS = {
     DELETE: 'productos:delete',
   },
   
+  // Permisos para días hábiles
+  DIAS_HABILES: {
+    VIEW: 'dias_habiles:view',
+    EDIT: 'dias_habiles:edit',
+    DELETE: 'dias_habiles:delete',
+  },
+  
   // Permisos para reportes
   REPORTES: {
     VIEW: 'reportes:view',

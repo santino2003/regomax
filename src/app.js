@@ -12,6 +12,7 @@ const despachoRoutes = require('./routes/despachoRoutes');
 const parteDiarioRoutes = require('./routes/parteDiarioRoutes'); // Importamos las rutas del parte diario
 const historialRoutes = require('./routes/historialRoutes');
 const reporteRoutes = require('./routes/reporteRoutes'); // Importamos las rutas de reportes
+const diasHabilesRoutes = require('./routes/diasHabilesRoutes'); // Importamos las rutas de días hábiles
 const viewRoutes = require('./routes/viewRoutes');
 const nfuRoutes = require('./routes/nfuRoutes'); // Importamos las rutas de NFU
 const authMiddleware = require('./middleware/auth');
@@ -52,6 +53,9 @@ app.use('/api/reportes', reporteRoutes); // Registramos las rutas de reportes
 
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);
+
+// Montar rutas de días hábiles - Se monta antes de las rutas de vistas
+app.use('/', diasHabilesRoutes);
 
 // Rutas para usuarios (tanto vista como API)
 app.use('/users', authRoutes); // Para la vista de gestión de usuarios

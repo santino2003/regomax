@@ -43,6 +43,75 @@ class DiasHabilesRepository {
     }
 
     /**
+     * Guarda días hábiles específicos para un mes y año
+     * @param {number} mes - Número del mes (1-12)
+     * @param {number} anio - Año
+     * @param {Array} diasSeleccionados - Array con los días seleccionados
+     * @returns {Promise<Object>} - Resultado de la operación
+     */
+    async guardarDiasHabilesSeleccionados(mes, anio, diasSeleccionados) {
+        try {
+            // Eliminar días existentes para este mes/año
+            await db.query(
+                'DELETE FROM dias_habiles_seleccionados WHERE mes = ? AND anio = ?',
+                [mes, anio]
+            );
+            
+            // Si no hay días seleccionados, terminamos
+            if (!diasSeleccionados || diasSeleccionados.length === 0) {
+                return {
+                    success: true,
+                    message: 'No hay días hábiles seleccionados para guardar'
+                };
+            }
+
+            // Preparar valores para inserción masiva
+            const values = diasSeleccionados.map(dia => [mes, anio, dia]);
+            
+            // Insertar todos los días seleccionados
+            const placeholders = values.map(() => '(?, ?, ?)').join(', ');
+            const flatValues = values.flat();
+            
+            await db.query(
+                `INSERT INTO dias_habiles_seleccionados (mes, anio, dia) VALUES ${placeholders}`,
+                flatValues
+            );
+            
+            // Actualizar también la cantidad en la tabla principal
+            await this.establecerDiasHabiles(mes, anio, diasSeleccionados.length);
+            
+            return {
+                success: true,
+                message: 'Días hábiles guardados correctamente',
+                cantidad: diasSeleccionados.length
+            };
+        } catch (error) {
+            console.error('Error al guardar días hábiles seleccionados:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtiene los días hábiles seleccionados para un mes y año específico
+     * @param {number} mes - Número del mes (1-12)
+     * @param {number} anio - Año
+     * @returns {Promise<Array>} - Array con los días hábiles seleccionados
+     */
+    async obtenerDiasHabilesSeleccionados(mes, anio) {
+        try {
+            const result = await db.query(
+                'SELECT dia FROM dias_habiles_seleccionados WHERE mes = ? AND anio = ? ORDER BY dia ASC',
+                [mes, anio]
+            );
+            
+            return result.map(row => row.dia);
+        } catch (error) {
+            console.error('Error al obtener días hábiles seleccionados:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Obtiene la cantidad de días hábiles para un mes y año específico
      * @param {number} mes - Número del mes (1-12)
      * @param {number} anio - Año
@@ -87,12 +156,19 @@ class DiasHabilesRepository {
      */
     async eliminarDiasHabiles(mes, anio) {
         try {
-            const result = await db.query(
+            // Eliminar de la tabla principal
+            await db.query(
                 'DELETE FROM dias_habiles WHERE mes = ? AND anio = ?',
                 [mes, anio]
             );
             
-            return result.affectedRows > 0;
+            // Eliminar los días seleccionados
+            await db.query(
+                'DELETE FROM dias_habiles_seleccionados WHERE mes = ? AND anio = ?',
+                [mes, anio]
+            );
+            
+            return true;
         } catch (error) {
             console.error('Error al eliminar días hábiles:', error);
             throw error;
