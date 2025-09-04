@@ -345,22 +345,55 @@ class BolsonRepository {
     }
   }
 
-  // *** STOCK DEL MES (producidos en el mes operativo y NO despachados)
-  async obtenerStockDelMes(fecha /* 'YYYY-MM-DD' */){
+  // *** STOCK DEL MES (producidos en el mes operativo y NO despachados HASTA LA FECHA específica)
+  async obtenerStockDelMes(fecha /* 'YYYY-MM-DD' */) {
     try {
       const { inicio, fin } = ventanaMesOperativo(fecha);
       const iniStr = formatMySQLLocal(inicio);
-      const finStr = formatMySQLLocal(fin);
-
+      
+      // Para el límite superior, usamos el final del día de la fecha solicitada (23:59:59)
+      const fechaFinDia = new Date(fecha);
+      fechaFinDia.setHours(23, 59, 59, 999);
+      const fechaFinDiaStr = formatMySQLLocal(fechaFinDia);
+      
+      console.log(`[STOCK_MES] Período: ${iniStr} -> ${fechaFinDiaStr}, fecha reporte: ${fecha}`);
+      
+      // Simplificamos la consulta para asegurar que todos los bolsones del mes se incluyan correctamente
       const result = await db.query(`
-        SELECT b.*, p.nombre AS nombreProducto
-        FROM bolsones b
-        LEFT JOIN productos p ON b.producto = p.id
-        WHERE b.despachado = 0
-          AND CONCAT(b.fecha, ' ', b.hora) >= ?
-          AND CONCAT(b.fecha, ' ', b.hora) <= ?
+        SELECT 
+          b.*,
+          p.nombre AS nombreProducto,
+          b.producto AS producto_id_real,
+          COALESCE(p.nombre, CONCAT('Producto ID ', b.producto)) AS producto_nombre_real
+        FROM 
+          bolsones b
+        LEFT JOIN 
+          productos p ON b.producto = p.id
+        WHERE 
+          /* Producidos en el mes operativo - usamos solo fecha para simplificar */
+          b.fecha >= ? AND b.fecha <= ?
+          /* No despachados o despachados después de la fecha del reporte */
+          AND (
+            b.despachado = 0 
+            OR NOT EXISTS (
+              SELECT 1 FROM despachos_detalle dd
+              JOIN despachos d ON dd.despacho_id = d.id
+              WHERE dd.bolson_codigo = b.codigo
+              AND d.fecha <= ?
+            )
+          )
         ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
-      `, [iniStr, finStr]);
+      `, [
+        inicio.toISOString().split('T')[0], // Solo la parte de la fecha 'YYYY-MM-DD'
+        fechaFinDia.toISOString().split('T')[0], // Solo la parte de la fecha 'YYYY-MM-DD'
+        fecha
+      ]);
+
+      // Registro adicional para depurar
+      console.log(`[STOCK_MES] Se encontraron ${result.length} bolsones en el stock del mes`);
+      if (result.length > 0) {
+        console.log(`[STOCK_MES] Primer bolsón: ID=${result[0].id}, Producto=${result[0].producto}, Fecha=${result[0].fecha}, Hora=${result[0].hora}`);
+      }
 
       return result;
     } catch (error) {

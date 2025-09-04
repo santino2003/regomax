@@ -149,6 +149,201 @@ class DespachoRepository {
         }
     }
     
+    // Despachos del mes HASTA una fecha específica (para el reporte mensual)
+    async obtenerDespachadosDelMesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
+        try {
+            // Importar la función de utilidad para obtener el rango del mes operativo
+            const { ventanaMesOperativo, formatMySQLLocal, parseLocalDate } = require('../utils/fecha');
+            
+            console.log(`[DEBUG] Fecha solicitada original: ${fecha}`);
+            console.log(`[DEBUG] Tipo de fecha: ${typeof fecha}`);
+            
+            // Parseamos explícitamente la fecha para asegurar el formato correcto
+            const fechaObj = parseLocalDate(fecha);
+            console.log(`[DEBUG] Fecha parseada: ${fechaObj}`);
+            
+            // Obtener el rango del mes operativo
+            const { inicio, fin } = ventanaMesOperativo(fecha);
+            console.log(`[DEBUG] Inicio mes operativo (objeto): ${inicio}`);
+            console.log(`[DEBUG] Fin mes operativo (objeto): ${fin}`);
+            
+            const inicioMesOperativo = formatMySQLLocal(inicio);
+            
+            // Para el límite superior, usamos el final del día de la fecha solicitada (23:59:59)
+            const fechaFinDia = new Date(fechaObj);
+            fechaFinDia.setHours(23, 59, 59, 999);
+            const finDiaStr = formatMySQLLocal(fechaFinDia);
+            
+            console.log(`[DESPACHOS_MES_HASTA_FECHA] Solicitud para fecha: ${fecha}`);
+            console.log(`[DESPACHOS_MES_HASTA_FECHA] Inicio mes operativo: ${inicioMesOperativo}`);
+            console.log(`[DESPACHOS_MES_HASTA_FECHA] Fin día actual: ${finDiaStr}`);
+            console.log(`[DESPACHOS_MES_HASTA_FECHA] Buscando despachos desde ${inicioMesOperativo} (inicio mes operativo) hasta ${finDiaStr} (fin del día de la fecha solicitada)`);
+            
+            // Verificar si hay despachos en este rango de fechas
+            const checkQuery = `
+                SELECT COUNT(*) AS total 
+                FROM despachos d 
+                WHERE d.fecha BETWEEN ? AND ?
+            `;
+            
+            const checkResult = await db.query(checkQuery, [inicioMesOperativo, finDiaStr]);
+            console.log(`[DESPACHOS_MES_HASTA_FECHA] Se encontraron ${checkResult[0]?.total || 0} registros de despachos entre ${inicioMesOperativo} y ${finDiaStr}`);
+            
+            // Consulta todos los despachos para depuración
+            const todosDespachos = await db.query(`
+                SELECT d.id, d.fecha, COUNT(dd.id) as total_detalles
+                FROM despachos d
+                LEFT JOIN despachos_detalle dd ON d.id = dd.despacho_id
+                GROUP BY d.id, d.fecha
+                ORDER BY d.fecha DESC
+                LIMIT 20
+            `);
+            
+            console.log('[DEBUG] Todos los despachos disponibles:');
+            for (const desp of todosDespachos) {
+                console.log(`[DEBUG] - Despacho ID: ${desp.id}, Fecha: ${desp.fecha}, Detalles: ${desp.total_detalles}`);
+            }
+            
+            // Consulta de despachos específicamente para el día de hoy
+            const despachosHoy = await db.query(`
+                SELECT d.id, d.fecha, COUNT(dd.id) as total_detalles, 
+                       GROUP_CONCAT(DISTINCT dd.producto) as productos
+                FROM despachos d
+                LEFT JOIN despachos_detalle dd ON d.id = dd.despacho_id
+                WHERE DATE(d.fecha) = DATE(?)
+                GROUP BY d.id, d.fecha
+            `, [fecha]);
+            
+            console.log(`[DEBUG] Despachos para hoy (${fecha}):`);
+            for (const desp of despachosHoy) {
+                console.log(`[DEBUG] - Despacho ID: ${desp.id}, Fecha: ${desp.fecha}, Detalles: ${desp.total_detalles}, Productos: ${desp.productos}`);
+            }
+            
+            // Ahora consulta principal para obtener los despachos por producto
+            console.log(`[DEBUG] Ejecutando consulta principal con rango: ${inicioMesOperativo} - ${finDiaStr}`);
+            const query = `
+                SELECT 
+                    dd.producto AS productoId,
+                    p.nombre AS nombreProducto,
+                    COUNT(dd.id) AS cantidadBolsones,
+                    SUM(dd.peso) AS pesoTotal,
+                    dd.producto AS producto_id_real,
+                    COALESCE(p.nombre, CONCAT('Producto ID ', dd.producto)) AS producto_nombre_real
+                FROM despachos_detalle dd
+                JOIN despachos d ON dd.despacho_id = d.id
+                LEFT JOIN productos p ON dd.producto = p.id
+                WHERE d.fecha BETWEEN ? AND ?
+                GROUP BY dd.producto, p.nombre
+                ORDER BY p.nombre ASC
+            `;
+            
+            const result = await db.query(query, [inicioMesOperativo, finDiaStr]);
+            
+            console.log(`[DESPACHOS_MES_HASTA_FECHA] Se encontraron ${result.length} productos despachados entre ${inicioMesOperativo} y ${finDiaStr}`);
+            console.log(`[DEBUG] Resultado completo: ${JSON.stringify(result)}`);
+            
+            // Mostrar detalle de cada producto encontrado
+            for (let i = 0; i < result.length; i++) {
+                const prod = result[i];
+                console.log(`[DESPACHOS_MES_HASTA_FECHA] Producto ${i+1}: ID=${prod.productoId}, Nombre=${prod.nombreProducto}, Cantidad=${prod.cantidadBolsones}, Peso=${prod.pesoTotal}`);
+            }
+            
+            // Si no se encontraron productos, hacer diagnósticos adicionales
+            if (result.length === 0) {
+                console.log(`[DESPACHOS_MES_HASTA_FECHA] ¡ADVERTENCIA! No se encontraron productos despachados en el mes hasta ${fecha}. Verificar consulta SQL y datos.`);
+                
+                // Consulta adicional para diagnóstico - verificar si hay despachos con fecha de hoy
+                const hoyQuery = `
+                    SELECT 
+                        COUNT(*) AS total,
+                        GROUP_CONCAT(DISTINCT DATE(d.fecha)) AS fechas
+                    FROM despachos_detalle dd
+                    JOIN despachos d ON dd.despacho_id = d.id
+                    WHERE DATE(d.fecha) = DATE(?)
+                `;
+                const hoyResult = await db.query(hoyQuery, [fecha]);
+                console.log(`[DESPACHOS_MES_HASTA_FECHA] Despachos con fecha de hoy (${fecha}): ${hoyResult[0]?.total || 0}, fechas: ${hoyResult[0]?.fechas || 'ninguna'}`);
+                
+                // Consulta específica para diagnosticar el problema con los despachos de hoy
+                const infoDespachos = `
+                    SELECT 
+                        d.id AS despacho_id, 
+                        d.fecha AS despacho_fecha, 
+                        d.orden_venta_id,
+                        d.responsable,
+                        dd.id AS detalle_id,
+                        dd.producto, 
+                        dd.peso,
+                        dd.bolson_codigo
+                    FROM despachos d
+                    JOIN despachos_detalle dd ON d.id = dd.despacho_id
+                    WHERE DATE(d.fecha) = DATE(?)
+                `;
+                console.log(`[DEBUG] Ejecutando consulta de diagnóstico para fecha: ${fecha}`);
+                const infoResult = await db.query(infoDespachos, [fecha]);
+                console.log(`[DEBUG] Detalles de despachos para hoy (${fecha}), cantidad: ${infoResult.length}`);
+                for (const item of infoResult) {
+                    console.log(`[DEBUG] Despacho ID=${item.despacho_id}, Fecha=${item.despacho_fecha}, Orden=${item.orden_venta_id}, Producto=${item.producto}, Peso=${item.peso}`);
+                }
+                
+                // Hacer prueba inversa: consultar por ID de producto específico
+                if (infoResult.length > 0) {
+                    const primerProducto = infoResult[0].producto;
+                    const pruebaProducto = `
+                        SELECT 
+                            COUNT(*) AS total
+                        FROM despachos_detalle dd
+                        JOIN despachos d ON dd.despacho_id = d.id
+                        WHERE dd.producto = ?
+                            AND d.fecha BETWEEN ? AND ?
+                    `;
+                    console.log(`[DEBUG] Probando búsqueda directa para producto ID: ${primerProducto}`);
+                    const pruebaResult = await db.query(pruebaProducto, [primerProducto, inicioMesOperativo, finDiaStr]);
+                    console.log(`[DEBUG] Resultado prueba producto ${primerProducto}: ${pruebaResult[0]?.total || 0} coincidencias`);
+                }
+                
+                // Consulta extra para diagnóstico - verificar si hay detalles de despacho en general
+                const diagnosticoQuery = `
+                    SELECT 
+                        COUNT(*) AS total,
+                        GROUP_CONCAT(DISTINCT DATE(d.fecha)) AS fechas_disponibles
+                    FROM despachos_detalle dd
+                    JOIN despachos d ON dd.despacho_id = d.id
+                    ORDER BY d.fecha DESC
+                    LIMIT 20
+                `;
+                const diagnostico = await db.query(diagnosticoQuery);
+                console.log(`[DESPACHOS_MES_HASTA_FECHA] Total de registros en despachos_detalle: ${diagnostico[0]?.total || 0}`);
+                console.log(`[DESPACHOS_MES_HASTA_FECHA] Fechas de despachos disponibles: ${diagnostico[0]?.fechas_disponibles || 'ninguna'}`);
+                
+                // Verificar formato de fecha en la base de datos
+                const formatoFecha = `
+                    SELECT 
+                        d.id,
+                        d.fecha,
+                        DATE_FORMAT(d.fecha, '%Y-%m-%d') AS fecha_formateada,
+                        YEAR(d.fecha) AS anio,
+                        MONTH(d.fecha) AS mes,
+                        DAY(d.fecha) AS dia
+                    FROM despachos d
+                    ORDER BY d.fecha DESC
+                    LIMIT 5
+                `;
+                const formatoResult = await db.query(formatoFecha);
+                console.log(`[DEBUG] Verificación de formato de fechas en la BD:`);
+                for (const row of formatoResult) {
+                    console.log(`[DEBUG] ID=${row.id}, Fecha Raw=${row.fecha}, Formateada=${row.fecha_formateada}, Año=${row.anio}, Mes=${row.mes}, Día=${row.dia}`);
+                }
+            }
+            
+            return result;
+        } catch (error) {
+            console.error('Error al obtener despachos del mes hasta fecha específica:', error);
+            console.error('Error stack:', error.stack);
+            throw error;
+        }
+    }
+
     // Actualizar el peso despachado en la orden de venta
     async actualizarPesoProductoOrden(ordenId, producto, pesoDespachado) {
         try {

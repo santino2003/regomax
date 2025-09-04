@@ -398,9 +398,12 @@
         }
 
         function mostrarReporte(data) {
-            // Actualizar fecha en el encabezado
-            const fechaFormateada = new Date(data.fecha).toLocaleDateString();
-            document.getElementById('fechaReporteHeader').textContent = fechaFormateada;
+            // Actualizar fecha en el encabezado - asegurándonos que se muestre correctamente
+            let fechaReporte = data.fecha; // formato YYYY-MM-DD
+            const [year, month, day] = fechaReporte.split('-');
+            // Crear una fecha específica sin depender de la zona horaria
+            const fechaFormateada = new Date(year, month-1, day);
+            document.getElementById('fechaReporteHeader').textContent = fechaFormateada.toLocaleDateString();
             
             // 1. Producción diaria por producto
             const tablaProduccionDiaria = document.getElementById('tablaProduccionDiaria').getElementsByTagName('tbody')[0];
