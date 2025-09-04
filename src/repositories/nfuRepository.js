@@ -8,7 +8,6 @@ const insertarNFU = async (fecha, cantidad, responsable) => {
   try {
     console.log('🔍 Repository: Intentando insertar NFU con datos:', { fecha, cantidad, responsable });
     const query = 'INSERT INTO nfu (fecha, cantidad, responsable) VALUES (?, ?, ?)';
-    console.log('🔧 Query SQL:', query);
     
     // Corrección del error de destructuración
     const result = await db.query(query, [fecha, cantidad, responsable]);

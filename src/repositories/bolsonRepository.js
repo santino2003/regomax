@@ -74,8 +74,6 @@ class BolsonRepository {
       
       const query = `SELECT * FROM bolsones ORDER BY ${safeSortBy} ${safeSortOrder} LIMIT ${lim} OFFSET ${off}`;
       
-      console.log('[BOLSONES_TODOS] SQL:', query);
-      
       const result = await db.query(query);
       
       const countResult = await db.query('SELECT COUNT(*) as total FROM bolsones');
@@ -218,7 +216,6 @@ class BolsonRepository {
       LIMIT ${lim} OFFSET ${off}
     `;
     console.log('[DESPACHADOS] SQL:', selectSql);
-    console.log('[DESPACHADOS] params(len)=', filterParams.length, filterParams);
   
     const rows = await db.query(selectSql, filterParams);
   

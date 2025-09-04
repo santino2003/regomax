@@ -472,10 +472,6 @@ class DespachoRepository {
                 LIMIT ${lim} OFFSET ${off}
             `;
             
-            // Debug temporal
-            console.log('[DESPACHOS] SQL:', selectSql);
-            console.log('[DESPACHOS] params(len)=', filterParams.length, filterParams);
-            
             const result = await db.query(selectSql, filterParams);
             
             // Consulta para contar: mismos parámetros de filtro

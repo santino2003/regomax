@@ -54,20 +54,9 @@ const obtenerStockAcumuladoHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
 // STOCK del MES OPERATIVO (producidos en el mes y NO despachados)
 const obtenerStockAcumuladoDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
   const { inicio, fin } = ventanaMesOperativo(fecha);
-  console.log('[RANGO MES OPERATIVO STOCK]', formatMySQLLocal(inicio), '->', formatMySQLLocal(fin));
   
   // Obtenemos los bolsones del mes utilizando la función mejorada del repositorio
   const bolsonesMes = await bolsonRepository.obtenerStockDelMes(fecha);
-  
-  // Registro detallado para depuración
-  console.log(`[STOCK_ACUMULADO_MES] Total bolsones recibidos: ${bolsonesMes.length}`);
-  
-  // Detalle de cada bolsón para diagnóstico (limitado a los primeros 10)
-  const maxLog = Math.min(10, bolsonesMes.length);
-  for (let i = 0; i < maxLog; i++) {
-    const b = bolsonesMes[i];
-    console.log(`[STOCK_ACUMULADO_MES] Bolsón ${i+1}/${bolsonesMes.length}: ID=${b.id}, Producto=${b.producto}, Nombre=${b.nombreProducto}, Fecha=${b.fecha}, Hora=${b.hora}`);
-  }
   
   // Agrupar por producto usando un enfoque más robusto
   const suma = {};
@@ -87,74 +76,19 @@ const obtenerStockAcumuladoDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
     }
     suma[key].cantidadBolsones += 1;
     suma[key].pesoTotal += Number(b.peso || 0);
-    
-    // Log para cada bolsón procesado
-    console.log(`[STOCK_ACUMULADO_MES] Agregando al producto ${key} (${productoNombre}): +${b.peso} kg, total=${suma[key].pesoTotal} kg`);
   }
-  
-  // Log final de productos agrupados
-  console.log(`[STOCK_ACUMULADO_MES] Productos agrupados: ${Object.keys(suma).length}`);
-  Object.entries(suma).forEach(([key, value]) => {
-    console.log(`[STOCK_ACUMULADO_MES] - Producto ${key}: ${value.nombre}, ${value.cantidadBolsones} bolsones, ${value.pesoTotal} kg`);
-  });
   
   return { productos: Object.values(suma) };
 };
 
 // DESPACHOS del MES OPERATIVO (despachados en el mes HASTA la fecha seleccionada)
 const obtenerDespachosAcumuladosDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
-  console.log(`[REPORTE] Obteniendo despachos acumulados hasta ${fecha}`);
-  
   try {
     // Utilizamos la nueva función que solo considera despachos hasta la fecha seleccionada
-    console.log(`[DESPACHOS_ACUMULADOS_MES] Llamando al repositorio con fecha: ${fecha}`);
     const despachosMes = await despachoRepository.obtenerDespachadosDelMesHastaFecha(fecha);
     
-    // Registro detallado para depuración
-    console.log(`[DESPACHOS_ACUMULADOS_MES] Total productos despachados recibidos del repositorio: ${despachosMes.length}`);
-    console.log(`[DESPACHOS_ACUMULADOS_MES] Datos recibidos del repositorio:`, JSON.stringify(despachosMes));
-    
-    // Detalle de cada producto despachado para diagnóstico
-    for (let i = 0; i < despachosMes.length; i++) {
-      const d = despachosMes[i];
-      console.log(`[DESPACHOS_ACUMULADOS_MES] Producto ${i+1}: ID=${d.productoId}, Nombre=${d.nombreProducto || 'Sin nombre'}, Cantidad=${d.cantidadBolsones || 0}, Peso=${d.pesoTotal || 0}`);
-    }
-    
     if (despachosMes.length === 0) {
-      console.log(`[DESPACHOS_ACUMULADOS_MES] ¡ADVERTENCIA! No se encontraron productos despachados en el mes hasta ${fecha}`);
-    }
-    
-    // Verificar si hay datos nulos o indefinidos
-    despachosMes.forEach((d, idx) => {
-      if (!d.productoId) {
-        console.log(`[DESPACHOS_ACUMULADOS_MES] ¡ADVERTENCIA! Producto ${idx+1} tiene ID nulo o indefinido`);
-      }
-      if (!d.cantidadBolsones && d.cantidadBolsones !== 0) {
-        console.log(`[DESPACHOS_ACUMULADOS_MES] ¡ADVERTENCIA! Producto ${d.productoId || idx+1} tiene cantidad nula o indefinida`);
-      }
-      if (!d.pesoTotal && d.pesoTotal !== 0) {
-        console.log(`[DESPACHOS_ACUMULADOS_MES] ¡ADVERTENCIA! Producto ${d.productoId || idx+1} tiene peso nulo o indefinido`);
-      }
-    });
-    
-    // Procesamos los resultados para el formato esperado en el reporte
-    const productos = despachosMes.map(d => ({
-      productoId: d.productoId,
-      nombre: d.nombreProducto || `Producto ID ${d.productoId}`,
-      cantidadBolsones: Number(d.cantidadBolsones || 0),
-      pesoTotal: Number(d.pesoTotal || 0)
-    }));
-    
-    console.log(`[DESPACHOS_ACUMULADOS_MES] Datos procesados final:`, JSON.stringify(productos));
-    
-    // Verificación final del resultado
-    if (productos.length > 0) {
-      console.log(`[DESPACHOS_ACUMULADOS_MES] ✓ Se encontraron ${productos.length} productos despachados para incluir en el reporte`);
-    } else {
-      console.log(`[DESPACHOS_ACUMULADOS_MES] ✗ No se encontraron productos despachados para incluir en el reporte`);
-      
       // Intentar una consulta directa para diagnóstico
-      console.log('[DESPACHOS_ACUMULADOS_MES] Intentando consulta manual de diagnóstico...');
       const db = require('../config/db');
       const { ventanaMesOperativo, formatMySQLLocal } = require('../utils/fecha');
       
@@ -164,28 +98,15 @@ const obtenerDespachosAcumuladosDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
       const fechaFinDia = new Date(fecha);
       fechaFinDia.setHours(23, 59, 59, 999);
       const finDiaStr = formatMySQLLocal(fechaFinDia);
-      
-      try {
-        const diagnosticoQuery = `
-          SELECT 
-              dd.producto AS productoId,
-              GROUP_CONCAT(DISTINCT d.id) AS despachos_ids,
-              COUNT(dd.id) AS cantidadBolsones
-          FROM despachos_detalle dd
-          JOIN despachos d ON dd.despacho_id = d.id
-          WHERE d.fecha BETWEEN ? AND ?
-          GROUP BY dd.producto
-        `;
-        
-        const resultDiag = await db.query(diagnosticoQuery, [inicioMesOperativo, finDiaStr]);
-        console.log(`[DESPACHOS_ACUMULADOS_MES] Resultado diagnóstico directo: ${resultDiag.length} productos`);
-        for (const r of resultDiag) {
-          console.log(`[DESPACHOS_ACUMULADOS_MES] - Producto ${r.productoId}, Cantidad: ${r.cantidadBolsones}, Despachos IDs: ${r.despachos_ids}`);
-        }
-      } catch (e) {
-        console.error('[DESPACHOS_ACUMULADOS_MES] Error en consulta diagnóstico:', e);
-      }
     }
+    
+    // Procesamos los resultados para el formato esperado en el reporte
+    const productos = despachosMes.map(d => ({
+      productoId: d.productoId,
+      nombre: d.nombreProducto || `Producto ID ${d.productoId}`,
+      cantidadBolsones: Number(d.cantidadBolsones || 0),
+      pesoTotal: Number(d.pesoTotal || 0)
+    }));
     
     return { productos };
   } catch (error) {
@@ -208,7 +129,6 @@ const obtenerIngresoNFUPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
 // NFU - Stock acumulado del mes operativo
 const obtenerNFUAcumuladoDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
   const { inicio, fin } = ventanaMesOperativo(fecha);
-  console.log('[RANGO MES OPERATIVO NFU]', formatMySQLLocal(inicio), '->', formatMySQLLocal(fin));
   
   const cantidadTotal = await nfuRepository.obtenerCantidadNFUEntreFechas(
     formatMySQLLocal(inicio), 
@@ -235,45 +155,45 @@ const obtenerNFUAcumuladoHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
 // (días hábiles transcurridos / kilos acumulados) * total días hábiles del mes
 const calcularProyeccion = async (fecha, datosAcumulados) => {
   try {
-    // Obtener el mes y año de la fecha
-    const fechaObj = new Date(fecha);
-    const mes = fechaObj.getMonth() + 1; // JavaScript meses son 0-11
-    const anio = fechaObj.getFullYear();
-    const diaActual = fechaObj.getDate();
+    // Parsear la fecha correctamente para evitar problemas de zona horaria
+    const fechaObj = parseLocalDate(fecha);
+    
+    // Extraer día, mes y año directamente de la cadena de fecha para evitar problemas de zona horaria
+    const [year, month, day] = fecha.split('-').map(Number);
+    const mes = month; // month ya es 1-12 al extraerlo directamente del string
+    const anio = year;
+    const diaActual = day;
     
     // Obtener los días hábiles del mes
     const diasHabilesMes = await diasHabilesRepository.obtenerDiasHabilesSeleccionados(mes, anio);
     
-    // Si no hay días hábiles definidos, no podemos calcular la proyección
+    // Si no hay días hábiles definidos, usar días calendario del mes
+    let totalDiasHabilesMes = diasHabilesMes.length;
     if (!diasHabilesMes || diasHabilesMes.length === 0) {
-      console.log(`No hay días hábiles definidos para ${mes}/${anio}`);
-      return null;
+      totalDiasHabilesMes = new Date(anio, mes, 0).getDate(); // Último día del mes
     }
     
     // Calcular días hábiles transcurridos hasta la fecha
+    // Para el día 1, siempre considerar al menos 1 día transcurrido
     const diasHabilesTranscurridos = diasHabilesMes.filter(dia => dia <= diaActual);
-    
-    // Si no hay días hábiles transcurridos, no podemos calcular la proyección
-    if (diasHabilesTranscurridos.length === 0) {
-      console.log(`No hay días hábiles transcurridos hasta ${fecha}`);
-      return null;
-    }
-    
-    // Total de días hábiles del mes
-    const totalDiasHabilesMes = diasHabilesMes.length;
+    const diasTranscurridos = Math.max(diasHabilesTranscurridos.length, 1); // Mínimo 1 día
     
     // Calcular proyección para cada elemento en datosAcumulados
     const proyeccion = {};
     
     for (const [key, valor] of Object.entries(datosAcumulados)) {
-      // La fórmula: (valor / días transcurridos) * total días
-      const valorDiario = valor / diasHabilesTranscurridos.length;
-      proyeccion[key] = valorDiario * totalDiasHabilesMes;
+      if (valor > 0) {
+        // La fórmula: (valor / días transcurridos) * total días
+        const valorDiario = valor / diasTranscurridos;
+        proyeccion[key] = Math.round(valorDiario * totalDiasHabilesMes);
+      } else {
+        proyeccion[key] = 0;
+      }
     }
     
     return {
       diasHabilesTotal: totalDiasHabilesMes,
-      diasHabilesTranscurridos: diasHabilesTranscurridos.length,
+      diasHabilesTranscurridos: diasTranscurridos,
       proyeccion
     };
   } catch (error) {

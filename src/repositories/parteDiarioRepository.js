@@ -117,7 +117,6 @@ class ParteDiarioRepository {
             `;
             
             // Debug temporal
-            console.log('[PARTES] SQL:', query);
             console.log('[PARTES] params(len)=', parametros.length, parametros);
             
             const result = await db.query(query, parametros);
