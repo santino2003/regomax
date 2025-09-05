@@ -235,12 +235,28 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
   });
   const proyeccionProduccion = await calcularProyeccion(fecha, datosProduccion);
   
+  // 3. Proyección para cada producto en despachos mensuales
+  const datosDespachos = {};
+  despAcMes.productos.forEach(desp => {
+    datosDespachos[desp.productoId] = desp.pesoTotal;
+  });
+  const proyeccionDespachos = await calcularProyeccion(fecha, datosDespachos);
+  
   // Añadir proyección a cada producto
   const stockAcumuladoMesConProyeccion = stockAcMes.productos.map(prod => {
     return {
       ...prod,
       proyeccion: proyeccionProduccion && proyeccionProduccion.proyeccion ? 
                   proyeccionProduccion.proyeccion[prod.productoId] || 0 : 0
+    };
+  });
+  
+  // Añadir proyección a cada despacho
+  const despachosAcumuladosMesConProyeccion = despAcMes.productos.map(desp => {
+    return {
+      ...desp,
+      proyeccion: proyeccionDespachos && proyeccionDespachos.proyeccion ?
+                  proyeccionDespachos.proyeccion[desp.productoId] || 0 : 0
     };
   });
 
@@ -250,7 +266,7 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
     produccion,
     despachos,
     stockAcumuladoMes: stockAcumuladoMesConProyeccion,
-    despachosAcumuladosMes: despAcMes.productos,
+    despachosAcumuladosMes: despachosAcumuladosMesConProyeccion,
     stockAcumuladoHistorico: stockHist.productos,
     nfu: {
       diario: nfuDiario,
@@ -262,7 +278,8 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
     },
     proyeccionInfo: {
       nfu: proyeccionNFU,
-      produccion: proyeccionProduccion
+      produccion: proyeccionProduccion,
+      despachos: proyeccionDespachos
     }
   };
 };
