@@ -2,6 +2,8 @@ const bolsonRepository = require('../repositories/bolsonRepository');
 const despachoRepository = require('../repositories/despachoRepository');
 const nfuRepository = require('../repositories/nfuRepository');
 const diasHabilesRepository = require('../repositories/diasHabilesRepository');
+const planificacionRepository = require('../repositories/planificacionRepository');
+const productoRepository = require('../repositories/productoRepository');
 const { ventanaMesOperativo, formatMySQLLocal, parseLocalDate } = require('../utils/fecha');
 
 // PRODUCCIÓN diaria (sumatoria por producto)
@@ -151,6 +153,52 @@ const obtenerNFUAcumuladoHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
   };
 };
 
+// Obtener planificación diaria
+const obtenerPlanificacionPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
+  try {
+    // Extraer día, mes y año de la fecha
+    const [year, month, day] = fecha.split('-').map(Number);
+    
+    // Obtener la planificación para este día
+    const planificacion = await planificacionRepository.obtenerPlanificacion(year, month, day);
+    
+    // Si no hay planificación, retornar objeto vacío
+    if (!planificacion) {
+      return { productos: {} };
+    }
+    
+    // Necesitamos obtener los productos reales para mapear los IDs
+    const productos = await productoRepository.obtenerTodos();
+    
+    // Crear un mapeo de ID numérico a nombre de producto
+    const idToProductMap = {};
+    productos.forEach(prod => {
+      idToProductMap[prod.id] = prod.nombre;
+    });
+    
+    // Transformar el objeto de productos para usar nombres como keys
+    const productosTransformados = {};
+    for (const [productoId, kilos] of Object.entries(planificacion.productos)) {
+      // Si encontramos el producto por ID numérico, usamos su nombre como key
+      const nombre = idToProductMap[productoId];
+      if (nombre) {
+        productosTransformados[nombre] = kilos;
+      } else {
+        // Si no lo encontramos, mantenemos el ID original
+        productosTransformados[productoId] = kilos;
+      }
+    }
+    
+    return { 
+      fecha,
+      productos: productosTransformados
+    };
+  } catch (error) {
+    console.error('Error al obtener planificación diaria:', error);
+    return { productos: {} };
+  }
+};
+
 // Función para calcular proyecciones según la fórmula:
 // (días hábiles transcurridos / kilos acumulados) * total días hábiles del mes
 const calcularProyeccion = async (fecha, datosAcumulados) => {
@@ -209,7 +257,7 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
   const [year, month, day] = fecha.split('-').map(Number);
   
   // Obtener todos los datos básicos del reporte
-  const [produccion, despachos, stockAcMes, despAcMes, stockHist, nfuDiario, nfuAcumuladoMes, nfuAcumuladoHist] = await Promise.all([
+  const [produccion, despachos, stockAcMes, despAcMes, stockHist, nfuDiario, nfuAcumuladoMes, nfuAcumuladoHist, planificacionDiaria] = await Promise.all([
     obtenerSumatoriaPorProducto(fecha),
     obtenerDespachosPorProducto(fecha),
     obtenerStockAcumuladoDelMes(fecha),
@@ -217,7 +265,8 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
     obtenerStockAcumuladoHastaFecha(fecha),
     obtenerIngresoNFUPorFecha(fecha),
     obtenerNFUAcumuladoDelMes(fecha),
-    obtenerNFUAcumuladoHastaFecha(fecha)
+    obtenerNFUAcumuladoHastaFecha(fecha),
+    obtenerPlanificacionPorFecha(fecha) // Añadir la obtención de planificación diaria
   ]);
 
   // Calcular proyecciones
@@ -242,32 +291,70 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
   });
   const proyeccionDespachos = await calcularProyeccion(fecha, datosDespachos);
   
-  // Añadir proyección a cada producto
-  const stockAcumuladoMesConProyeccion = stockAcMes.productos.map(prod => {
+  // Añadir proyección y planificación a cada producto en producción diaria
+  const produccionConPlanificacion = produccion.map(prod => {
+    // Obtener el valor de planificación para este producto (si existe)
+    // Primero intenta buscar por ID, luego por nombre
+    const planificacionProducto = planificacionDiaria.productos[prod.productoId] || 
+                                  planificacionDiaria.productos[prod.nombre] || 0;
+    
     return {
       ...prod,
-      proyeccion: proyeccionProduccion && proyeccionProduccion.proyeccion ? 
-                  proyeccionProduccion.proyeccion[prod.productoId] || 0 : 0
+      planificacion: Number(planificacionProducto)
     };
   });
   
-  // Añadir proyección a cada despacho
+  // Añadir proyección y planificación a cada producto en stock acumulado del mes
+  const stockAcumuladoMesConProyeccion = stockAcMes.productos.map(prod => {
+    // Obtener el valor de planificación para este producto (si existe)
+    // Primero intenta buscar por ID, luego por nombre
+    const planificacionProducto = planificacionDiaria.productos[prod.productoId] || 
+                                  planificacionDiaria.productos[prod.nombre] || 0;
+    
+    return {
+      ...prod,
+      proyeccion: proyeccionProduccion && proyeccionProduccion.proyeccion ? 
+                  proyeccionProduccion.proyeccion[prod.productoId] || 0 : 0,
+      planificacion: Number(planificacionProducto)
+    };
+  });
+  
+  // Añadir proyección y planificación a cada despacho
   const despachosAcumuladosMesConProyeccion = despAcMes.productos.map(desp => {
+    // Obtener el valor de planificación para este producto (si existe)
+    // Primero intenta buscar por ID, luego por nombre
+    const planificacionProducto = planificacionDiaria.productos[desp.productoId] || 
+                                  planificacionDiaria.productos[desp.nombre] || 0;
+    
     return {
       ...desp,
       proyeccion: proyeccionDespachos && proyeccionDespachos.proyeccion ?
-                  proyeccionDespachos.proyeccion[desp.productoId] || 0 : 0
+                  proyeccionDespachos.proyeccion[desp.productoId] || 0 : 0,
+      planificacion: Number(planificacionProducto)
+    };
+  });
+  
+  // Añadir planificación a productos en stock histórico
+  const stockHistoricoConPlanificacion = stockHist.productos.map(prod => {
+    // Obtener el valor de planificación para este producto (si existe)
+    // Primero intenta buscar por ID, luego por nombre
+    const planificacionProducto = planificacionDiaria.productos[prod.productoId] || 
+                                  planificacionDiaria.productos[prod.nombre] || 0;
+    
+    return {
+      ...prod,
+      planificacion: Number(planificacionProducto)
     };
   });
 
   return {
     // Devolver exactamente la fecha solicitada para evitar problemas de zona horaria
     fecha: `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`,
-    produccion,
+    produccion: produccionConPlanificacion,
     despachos,
     stockAcumuladoMes: stockAcumuladoMesConProyeccion,
     despachosAcumuladosMes: despachosAcumuladosMesConProyeccion,
-    stockAcumuladoHistorico: stockHist.productos,
+    stockAcumuladoHistorico: stockHistoricoConPlanificacion,
     nfu: {
       diario: nfuDiario,
       acumuladoMes: {
@@ -276,6 +363,7 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
       },
       acumuladoHistorico: nfuAcumuladoHist
     },
+    planificacionDiaria, // Incluir la planificación diaria completa
     proyeccionInfo: {
       nfu: proyeccionNFU,
       produccion: proyeccionProduccion,
@@ -295,4 +383,6 @@ module.exports = {
   obtenerIngresoNFUPorFecha,
   obtenerNFUAcumuladoDelMes,
   obtenerNFUAcumuladoHastaFecha,
+  // Nueva función para planificación
+  obtenerPlanificacionPorFecha,
 };

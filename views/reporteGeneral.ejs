@@ -137,6 +137,7 @@
                                                             <th>Producido Hoy (kg)</th>
                                                             <th>Acumulado del Mes (kg)</th>
                                                             <th>Proyección (kg)</th>
+                                                            <th>Planificado Hoy (kg)</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -149,6 +150,7 @@
                                                             <td id="totalProducidoHoy">0 kg</td>
                                                             <td id="totalAcumuladoMes">0 kg</td>
                                                             <td id="totalProyeccionMes">0 kg</td>
+                                                            <td id="totalPlanificadoHoy">0 kg</td>
                                                         </tr>
                                                     </tfoot>
                                                 </table>
@@ -365,7 +367,8 @@
                     produccionDiariaPorProducto[prod.productoId] = {
                         nombre: prod.nombre,
                         pesoTotal: prod.pesoTotal,
-                        cantidadBolsones: prod.cantidadBolsones
+                        cantidadBolsones: prod.cantidadBolsones,
+                        planificacion: prod.planificacion || 0
                     };
                 });
             }
@@ -389,19 +392,25 @@
             let totalAcumuladoMes = 0;
             let totalProyeccionMes = 0;
             let totalProducidoHoy = totalPesoDia; // Ya calculado arriba
+            let totalPlanificadoHoy = 0; // Para sumar la planificación total
             
             if (data.stockAcumuladoMes && data.stockAcumuladoMes.length > 0) {
                 data.stockAcumuladoMes.forEach(prod => {
                     const row = tablaProduccionGeneral.insertRow();
                     
                     // Buscar si hay producción del día para este producto
-                    const produccionHoy = produccionDiariaPorProducto[prod.productoId] || { pesoTotal: 0 };
+                    const produccionHoy = produccionDiariaPorProducto[prod.productoId] || { pesoTotal: 0, planificacion: 0 };
+                    
+                    // Obtener planificación para este producto
+                    const planificacionProducto = prod.planificacion || 0;
+                    totalPlanificadoHoy += planificacionProducto;
                     
                     row.insertCell(0).textContent = prod.nombre;
                     row.insertCell(1).textContent = fechaFormateadaStr;
                     row.insertCell(2).textContent = `${formatNumber(produccionHoy.pesoTotal)} kg`;
                     row.insertCell(3).textContent = `${formatNumber(prod.pesoTotal)} kg`;
                     row.insertCell(4).textContent = `${formatNumber(prod.proyeccion)} kg`;
+                    row.insertCell(5).textContent = `${formatNumber(planificacionProducto)} kg`;
                     
                     totalAcumuladoMes += prod.pesoTotal;
                     totalProyeccionMes += prod.proyeccion;
@@ -409,13 +418,14 @@
             } else {
                 const row = tablaProduccionGeneral.insertRow();
                 const cell = row.insertCell(0);
-                cell.colSpan = 5;
+                cell.colSpan = 6;
                 cell.textContent = "No hay datos acumulados para este mes";
                 cell.className = "text-center";
             }
             
             document.getElementById('fechaActual').textContent = fechaFormateadaStr;
             document.getElementById('totalProducidoHoy').textContent = `${formatNumber(totalProducidoHoy)} kg`;
+            document.getElementById('totalPlanificadoHoy').textContent = `${formatNumber(totalPlanificadoHoy)} kg`;
             document.getElementById('totalAcumuladoMes').textContent = `${formatNumber(totalAcumuladoMes)} kg`;
             document.getElementById('totalProyeccionMes').textContent = `${formatNumber(totalProyeccionMes)} kg`;
             
@@ -478,6 +488,7 @@
             if (data.stockAcumuladoHistorico && data.stockAcumuladoHistorico.length > 0) {
                 data.stockAcumuladoHistorico.forEach(prod => {
                     const row = tablaStockTotal.insertRow();
+                    
                     row.insertCell(0).textContent = prod.nombre;
                     row.insertCell(1).textContent = prod.cantidadBolsones;
                     row.insertCell(2).textContent = `${formatNumber(prod.pesoTotal)} kg`;
