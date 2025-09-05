@@ -8,4 +8,7 @@ router.post('/nuevo', authMiddleware.verifyToken, productoController.crearProduc
 // Ruta para obtener todos los productos
 router.get('/', authMiddleware.verifyToken, productoController.obtenerProductosAPI);
 
+// Ruta para obtener solo productos con stock para planificación
+router.get('/planificacion', authMiddleware.verifyToken, productoController.listarProductosParaPlanificacion);
+
 module.exports = router;

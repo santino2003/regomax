@@ -78,6 +78,25 @@ const ProductoController = {
                 error: error.message
             });
         }
+    },
+
+    // Nuevo endpoint para listar productos para planificación (solo los que tienen enStock=true)
+    async listarProductosParaPlanificacion(req, res) {
+        try {
+            const productos = await productoRepository.obtenerProductosEnStock();
+            
+            return res.status(200).json({
+                success: true,
+                data: productos
+            });
+        } catch (error) {
+            console.error('Error al listar productos para planificación:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener productos para planificación',
+                error: error.message
+            });
+        }
     }
 };
 

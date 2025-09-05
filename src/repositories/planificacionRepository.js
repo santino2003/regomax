@@ -25,10 +25,12 @@ class PlanificacionRepository {
             }
             
             // Obtener los detalles de la planificación (productos y kilos)
+            // Modificado para solo incluir productos con en_stock = 1
             const detallesQuery = `
                 SELECT pd.producto_id, pd.kilos
                 FROM planificacion_produccion_detalle pd
-                WHERE pd.planificacion_id = ?
+                JOIN productos p ON pd.producto_id = p.id
+                WHERE pd.planificacion_id = ? AND p.en_stock = 1
             `;
             
             const detalles = await db.query(detallesQuery, [planificacion[0].id]);
@@ -97,21 +99,45 @@ class PlanificacionRepository {
             
             // Insertar los detalles de productos
             if (Object.keys(productos).length > 0) {
-                const detallesValues = [];
-                const detallesParams = [];
+                // Solo insertar productos con en_stock = 1
+                const productosConStock = {};
+                const productosIdsStr = Object.keys(productos).join(',');
                 
-                Object.entries(productos).forEach(([productoId, kilos]) => {
-                    detallesValues.push('(?, ?, ?)');
-                    detallesParams.push(planificacionId, productoId, kilos);
-                });
+                if (productosIdsStr.length > 0) {
+                    const enStockQuery = `
+                        SELECT id FROM productos 
+                        WHERE id IN (${productosIdsStr}) AND en_stock = 1
+                    `;
+                    
+                    const productosConStockResult = await db.query(enStockQuery);
+                    const idsConStock = productosConStockResult.map(p => p.id);
+                    
+                    // Filtrar solo productos con stock
+                    for (const [productoId, kilos] of Object.entries(productos)) {
+                        if (idsConStock.includes(parseInt(productoId))) {
+                            productosConStock[productoId] = kilos;
+                        }
+                    }
+                }
                 
-                const insertDetallesQuery = `
-                    INSERT INTO planificacion_produccion_detalle 
-                    (planificacion_id, producto_id, kilos)
-                    VALUES ${detallesValues.join(', ')}
-                `;
-                
-                await db.query(insertDetallesQuery, detallesParams);
+                // Si hay productos con stock, insertarlos
+                if (Object.keys(productosConStock).length > 0) {
+                    const detallesValues = [];
+                    const detallesParams = [];
+                    
+                    Object.entries(productosConStock).forEach(([productoId, kilos]) => {
+                        detallesValues.push('(?, ?, ?)');
+                        detallesParams.push(planificacionId, productoId, kilos);
+                    });
+                    
+                    const insertDetallesQuery = `
+                        INSERT INTO planificacion_produccion_detalle 
+                        (planificacion_id, producto_id, kilos)
+                        VALUES ${detallesValues.join(', ')}
+                    `;
+                    
+                    await db.query(insertDetallesQuery, detallesParams);
+                }
             }
             
             // Devolver la planificación guardada

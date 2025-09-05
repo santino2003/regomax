@@ -449,7 +449,7 @@
             // Función para cargar los productos disponibles
             async function cargarProductos() {
                 try {
-                    const response = await fetch('/api/productos');
+                    const response = await fetch('/api/productos/planificacion');
                     if (!response.ok) throw new Error('Error al cargar productos');
                     
                     const data = await response.json();
@@ -852,3 +852,4 @@
     </script>
 </body>
 </html>
+``` 
