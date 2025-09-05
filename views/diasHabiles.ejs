@@ -17,7 +17,7 @@
     <!-- Estilos específicos para el calendario -->
     <style>
         .calendar {
-            max-width: 900px;
+            max-width: 600px;
             margin: 0 auto;
         }
         .calendar-header {
@@ -35,6 +35,7 @@
             text-align: center;
             font-weight: bold;
             padding: 5px;
+            font-size: 0.9rem;
         }
         .calendar-day {
             aspect-ratio: 1;
@@ -44,6 +45,7 @@
             cursor: pointer;
             border-radius: 5px;
             transition: all 0.2s;
+            font-size: 0.9rem;
         }
         .calendar-day:hover {
             background-color: #f8f9fa;
@@ -68,6 +70,7 @@
             gap: 15px;
             margin-top: 10px;
             justify-content: center;
+            font-size: 0.8rem;
         }
         .legend-item {
             display: flex;
@@ -75,9 +78,29 @@
             gap: 5px;
         }
         .legend-color {
-            width: 20px;
-            height: 20px;
+            width: 15px;
+            height: 15px;
             border-radius: 3px;
+        }
+        .planificacion-container {
+            margin-top: 2rem;
+            border-top: 1px solid #dee2e6;
+            padding-top: 1rem;
+        }
+        .plan-date-pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+        .plan-date-pill.active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
         }
     </style>
 </head>
@@ -157,8 +180,6 @@
                                                     <option value="<%= i %>" <%= i === anioActual ? 'selected' : '' %>><%= i %></option>
                                                 <% } %>
                                             </select>
-                                            
-                                            <button class="btn btn-outline-primary" id="irBtn">Ir</button>
                                         </div>
                                         <div class="text-end">
                                             <span class="badge bg-primary" id="diasSeleccionadosCount">0 días seleccionados</span>
@@ -261,6 +282,74 @@
             </div>
         </div>
         
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <!-- Planificación de Producción -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-calendar-plus me-2"></i>Planificación de Producción
+                        </h4>
+                    </div>
+                    
+                    <p class="text-muted mb-4">
+                        Define la producción esperada para cada día hábil seleccionando un día y 
+                        especificando la cantidad de kilos por producto.
+                    </p>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Planificación: <%= nombreMes %> <%= anioActual %></h5>
+                            <div>
+                                <button class="btn btn-sm btn-success" id="guardarPlanBtn">
+                                    <i class="bi bi-save me-1"></i> Guardar Planificación
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Selección de día -->
+                            <div id="daysContainer" class="mb-4">
+                                <label class="form-label">Selecciona un día para planificar:</label>
+                                <div id="diasDisponibles" class="d-flex flex-wrap">
+                                    <!-- Los días hábiles se cargarán dinámicamente aquí -->
+                                </div>
+                            </div>
+                            
+                            <!-- Formulario de planificación -->
+                            <div id="planForm" style="display: none;">
+                                <h6 class="border-bottom pb-2 mb-3">Planificación para el <span id="selectedDayText" class="fw-bold"></span></h6>
+                                
+                                <div class="alert alert-info small" role="alert">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Ingresa la cantidad en kilos para cada producto que planeas producir en este día.
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover" id="productosTable">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60%">Producto</th>
+                                                <th style="width: 40%">Kilos planificados</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="productosList">
+                                            <!-- Los productos se cargarán dinámicamente aquí -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Mensaje cuando no hay días hábiles -->
+                            <div id="noDiasMessage" class="alert alert-warning" style="display: none;">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                No hay días hábiles seleccionados para este mes. Por favor, selecciona los días hábiles en el calendario.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="row">
             <div class="col">
                 <a href="/home" class="btn btn-secondary">
@@ -320,12 +409,14 @@
             let mesActual = <%= mesActual %>;
             let anioActual = <%= anioActual %>;
             let diasSeleccionados = [];
+            let diaSeleccionadoParaPlanificar = null;
+            let productos = [];
+            let planificacionActual = {};
             
             // Referencias a elementos del DOM
             const calendarDays = document.getElementById('calendarDays');
             const mesSelector = document.getElementById('mesSelector');
             const anioSelector = document.getElementById('anioSelector');
-            const irBtn = document.getElementById('irBtn');
             const guardarBtn = document.getElementById('guardarBtn');
             const diasSeleccionadosCount = document.getElementById('diasSeleccionadosCount');
             const notificationToast = new bootstrap.Toast(document.getElementById('notificationToast'));
@@ -333,6 +424,14 @@
             const confirmarEliminarModal = new bootstrap.Modal(document.getElementById('confirmarEliminarModal'));
             const confirmarEliminarBtn = document.getElementById('confirmarEliminarBtn');
             const confirmarMesAnio = document.getElementById('confirmarMesAnio');
+            
+            // Referencias a elementos de planificación
+            const diasDisponibles = document.getElementById('diasDisponibles');
+            const planForm = document.getElementById('planForm');
+            const noDiasMessage = document.getElementById('noDiasMessage');
+            const selectedDayText = document.getElementById('selectedDayText');
+            const productosList = document.getElementById('productosList');
+            const guardarPlanBtn = document.getElementById('guardarPlanBtn');
             
             // Función para mostrar notificación
             function showNotification(message, success = true) {
@@ -344,6 +443,179 @@
             // Función para actualizar el contador de días seleccionados
             function actualizarContador() {
                 diasSeleccionadosCount.textContent = `${diasSeleccionados.length} días seleccionados`;
+                actualizarDiasParaPlanificacion();
+            }
+            
+            // Función para cargar los productos disponibles
+            async function cargarProductos() {
+                try {
+                    const response = await fetch('/api/productos');
+                    if (!response.ok) throw new Error('Error al cargar productos');
+                    
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.message || 'Error al obtener productos');
+                    
+                    productos = data.data;
+                    return productos;
+                } catch (error) {
+                    console.error('Error al cargar productos:', error);
+                    return [];
+                }
+            }
+            
+            // Función para actualizar la lista de días disponibles para planificación
+            function actualizarDiasParaPlanificacion() {
+                diasDisponibles.innerHTML = '';
+                
+                if (diasSeleccionados.length === 0) {
+                    noDiasMessage.style.display = 'block';
+                    planForm.style.display = 'none';
+                    return;
+                }
+                
+                noDiasMessage.style.display = 'none';
+                
+                // Ordenar días seleccionados
+                const diasOrdenados = [...diasSeleccionados].sort((a, b) => a - b);
+                
+                // Crear elementos para cada día
+                diasOrdenados.forEach(dia => {
+                    const fechaCompleta = new Date(anioActual, mesActual - 1, dia);
+                    const opciones = { weekday: 'short', day: 'numeric' };
+                    const fechaFormateada = fechaCompleta.toLocaleDateString('es-ES', opciones);
+                    
+                    const dayPill = document.createElement('div');
+                    dayPill.className = 'plan-date-pill';
+                    dayPill.textContent = fechaFormateada;
+                    dayPill.dataset.dia = dia;
+                    
+                    dayPill.addEventListener('click', function() {
+                        // Desmarcar todos
+                        document.querySelectorAll('.plan-date-pill').forEach(pill => {
+                            pill.classList.remove('active');
+                        });
+                        
+                        // Marcar este
+                        this.classList.add('active');
+                        
+                        // Actualizar día seleccionado
+                        diaSeleccionadoParaPlanificar = parseInt(this.dataset.dia);
+                        
+                        // Actualizar texto
+                        const fechaSeleccionada = new Date(anioActual, mesActual - 1, diaSeleccionadoParaPlanificar);
+                        const opcionesCompletas = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                        selectedDayText.textContent = fechaSeleccionada.toLocaleDateString('es-ES', opcionesCompletas);
+                        
+                        // Mostrar formulario y cargar datos
+                        planForm.style.display = 'block';
+                        cargarPlanificacionDia(diaSeleccionadoParaPlanificar);
+                    });
+                    
+                    diasDisponibles.appendChild(dayPill);
+                });
+            }
+            
+            // Función para cargar planificación de un día específico
+            async function cargarPlanificacionDia(dia) {
+                try {
+                    // Limpiar lista de productos
+                    productosList.innerHTML = '';
+                    
+                    // Obtener datos de planificación si existen
+                    const response = await fetch(`/api/planificacion-produccion/${anioActual}/${mesActual}/${dia}`);
+                    const data = await response.json();
+                    
+                    let planificacionDia = {};
+                    if (response.ok && data.success && data.data) {
+                        planificacionDia = data.data.productos || {};
+                    }
+                    
+                    planificacionActual = planificacionDia;
+                    
+                    // Cargar productos
+                    if (!productos || productos.length === 0) {
+                        productos = await cargarProductos();
+                    }
+                    
+                    // Generar filas de productos
+                    productos.forEach(producto => {
+                        const tr = document.createElement('tr');
+                        
+                        const tdProducto = document.createElement('td');
+                        tdProducto.textContent = producto.nombre;
+                        
+                        const tdCantidad = document.createElement('td');
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.className = 'form-control form-control-sm';
+                        input.min = '0';
+                        input.placeholder = 'Kilos';
+                        input.dataset.producto = producto.id;
+                        
+                        // Si hay planificación previa para este producto, mostrarla
+                        if (planificacionDia[producto.id]) {
+                            input.value = planificacionDia[producto.id];
+                        }
+                        
+                        tdCantidad.appendChild(input);
+                        
+                        tr.appendChild(tdProducto);
+                        tr.appendChild(tdCantidad);
+                        productosList.appendChild(tr);
+                    });
+                    
+                } catch (error) {
+                    console.error('Error al cargar planificación:', error);
+                    showNotification('Error al cargar la planificación: ' + error.message, false);
+                }
+            }
+            
+            // Función para guardar la planificación
+            async function guardarPlanificacion() {
+                try {
+                    if (!diaSeleccionadoParaPlanificar) {
+                        showNotification('Por favor, selecciona un día para planificar', false);
+                        return;
+                    }
+                    
+                    // Recopilar datos del formulario
+                    const productosData = {};
+                    const inputs = document.querySelectorAll('#productosList input[type="number"]');
+                    
+                    inputs.forEach(input => {
+                        const productoId = input.dataset.producto;
+                        const cantidad = input.value ? parseInt(input.value) : 0;
+                        
+                        if (cantidad > 0) {
+                            productosData[productoId] = cantidad;
+                        }
+                    });
+                    
+                    // Enviar datos al servidor
+                    const response = await fetch('/api/planificacion-produccion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            anio: anioActual,
+                            mes: mesActual,
+                            dia: diaSeleccionadoParaPlanificar,
+                            productos: productosData
+                        })
+                    });
+                    
+                    if (!response.ok) throw new Error('Error al guardar planificación');
+                    
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.message || 'Error al guardar planificación');
+                    
+                    showNotification('Planificación guardada correctamente', true);
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    showNotification('Error al guardar planificación: ' + error.message, false);
+                }
             }
             
             // Función para cargar el calendario para un mes y año específicos
@@ -362,23 +634,33 @@
                     const calendario = data.data;
                     diasSeleccionados = calendario.diasHabiles || [];
                     
-                    // Actualizar contador
+                    // Actualizar contador y días para planificación
                     actualizarContador();
                     
+                    // Calcular correctamente el primer día de la semana
+                    // JavaScript: 0=Domingo, 1=Lunes, ..., 6=Sábado
+                    const primerDiaDelMes = new Date(anio, mes - 1, 1);
+                    const primerDiaSemana = primerDiaDelMes.getDay(); // Día de la semana (0-6)
+                    
                     // Agregar espacios en blanco para los días antes del primer día del mes
-                    for (let i = 0; i < calendario.primerDia; i++) {
+                    // Si primerDiaSemana es 0 (domingo), no añadir espacios
+                    // Si es 1 (lunes), añadir 1 espacio, etc.
+                    for (let i = 0; i < primerDiaSemana; i++) {
                         const emptyDay = document.createElement('div');
                         emptyDay.className = 'calendar-day day-empty';
                         calendarDays.appendChild(emptyDay);
                     }
                     
+                    // Calcular el número de días en el mes seleccionado
+                    const diasEnMes = new Date(anio, mes, 0).getDate();
+                    
                     // Agregar los días del mes
-                    for (let i = 1; i <= calendario.diasEnMes; i++) {
+                    for (let i = 1; i <= diasEnMes; i++) {
                         const dayElement = document.createElement('div');
                         dayElement.className = 'calendar-day';
                         dayElement.textContent = i;
                         
-                        // Verificar si es fin de semana
+                        // Verificar si es fin de semana - cálculo correcto del día de la semana
                         const fecha = new Date(anio, mes - 1, i);
                         const diaSemana = fecha.getDay(); // 0 = Domingo, 6 = Sábado
                         const esFinDeSemana = diaSemana === 0 || diaSemana === 6;
@@ -410,12 +692,19 @@
                             // Ordenar array para mejor visualización
                             diasSeleccionados.sort((a, b) => a - b);
                             
-                            // Actualizar contador
+                            // Actualizar contador y días para planificación
                             actualizarContador();
                         });
                         
                         calendarDays.appendChild(dayElement);
                     }
+                    
+                    // Limpiar planificación
+                    diaSeleccionadoParaPlanificar = null;
+                    planForm.style.display = 'none';
+                    
+                    // Actualizar lista de días para planificación
+                    actualizarDiasParaPlanificacion();
                 } catch (error) {
                     console.error('Error:', error);
                     showNotification('Error al cargar el calendario: ' + error.message, false);
@@ -480,12 +769,21 @@
                 }
             }
             
-            // Inicializar calendario
+            // Inicializar calendario y productos
             cargarCalendario(mesActual, anioActual);
+            cargarProductos();
             
             // Evento para cambiar mes/año
-            irBtn.addEventListener('click', function() {
+            mesSelector.addEventListener('change', function() {
                 mesActual = parseInt(mesSelector.value);
+                cargarCalendario(mesActual, anioActual);
+                
+                // Actualizar URL sin recargar la página
+                const newUrl = `?mes=${mesActual}&anio=${anioActual}`;
+                window.history.pushState({}, '', newUrl);
+            });
+
+            anioSelector.addEventListener('change', function() {
                 anioActual = parseInt(anioSelector.value);
                 cargarCalendario(mesActual, anioActual);
                 
@@ -496,6 +794,9 @@
             
             // Evento para guardar días hábiles
             guardarBtn.addEventListener('click', guardarDiasHabiles);
+            
+            // Evento para guardar planificación
+            guardarPlanBtn.addEventListener('click', guardarPlanificacion);
             
             // Eventos para los botones de ver en el historial
             document.querySelectorAll('.btn-ver').forEach(button => {

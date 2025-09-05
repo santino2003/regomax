@@ -1,4 +1,5 @@
 const ProductoService = require('../services/productoService');
+const productoRepository = require('../repositories/productoRepository');
 
 const ProductoController = {
     async crearProducto(req, res) {
@@ -56,6 +57,25 @@ const ProductoController = {
             return res.status(500).render('error', {
                 message: 'Error al cargar la vista de nuevo producto',
                 error: error
+            });
+        }
+    },
+
+    // Nuevo endpoint para la API de productos
+    async obtenerProductosAPI(req, res) {
+        try {
+            const productos = await productoRepository.obtenerTodos();
+            
+            return res.status(200).json({
+                success: true,
+                data: productos
+            });
+        } catch (error) {
+            console.error('Error al obtener productos API:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener productos',
+                error: error.message
             });
         }
     }
