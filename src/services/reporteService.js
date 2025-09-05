@@ -153,6 +153,16 @@ const obtenerNFUAcumuladoHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
   };
 };
 
+// Obtener planificación acumulada hasta una fecha
+const obtenerPlanificacionAcumuladaHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
+  try {
+    return await planificacionRepository.obtenerPlanificacionAcumuladaHastaFecha(fecha);
+  } catch (error) {
+    console.error('Error al obtener planificación acumulada:', error);
+    return { productos: [] };
+  }
+};
+
 // Obtener planificación diaria
 const obtenerPlanificacionPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
   try {
@@ -257,7 +267,8 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
   const [year, month, day] = fecha.split('-').map(Number);
   
   // Obtener todos los datos básicos del reporte
-  const [produccion, despachos, stockAcMes, despAcMes, stockHist, nfuDiario, nfuAcumuladoMes, nfuAcumuladoHist, planificacionDiaria] = await Promise.all([
+  const [produccion, despachos, stockAcMes, despAcMes, stockHist, nfuDiario, nfuAcumuladoMes, 
+    nfuAcumuladoHist, planificacionDiaria, planificacionAcumulada] = await Promise.all([
     obtenerSumatoriaPorProducto(fecha),
     obtenerDespachosPorProducto(fecha),
     obtenerStockAcumuladoDelMes(fecha),
@@ -266,7 +277,8 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
     obtenerIngresoNFUPorFecha(fecha),
     obtenerNFUAcumuladoDelMes(fecha),
     obtenerNFUAcumuladoHastaFecha(fecha),
-    obtenerPlanificacionPorFecha(fecha) // Añadir la obtención de planificación diaria
+    obtenerPlanificacionPorFecha(fecha), 
+    obtenerPlanificacionAcumuladaHastaFecha(fecha) // Añadimos la planificación acumulada
   ]);
 
   // Calcular proyecciones
@@ -291,6 +303,14 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
   });
   const proyeccionDespachos = await calcularProyeccion(fecha, datosDespachos);
   
+  // Crear mapa de planificación acumulada para facilitar el acceso
+  const planificacionAcumuladaMap = {};
+  if (planificacionAcumulada && planificacionAcumulada.productos) {
+    planificacionAcumulada.productos.forEach(p => {
+      planificacionAcumuladaMap[p.productoId] = p.kilosAcumulados;
+    });
+  }
+  
   // Añadir proyección y planificación a cada producto en producción diaria
   const produccionConPlanificacion = produccion.map(prod => {
     // Obtener el valor de planificación para este producto (si existe)
@@ -298,9 +318,13 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
     const planificacionProducto = planificacionDiaria.productos[prod.productoId] || 
                                   planificacionDiaria.productos[prod.nombre] || 0;
     
+    // Obtener planificación acumulada para este producto
+    const planificacionAcumuladaProducto = planificacionAcumuladaMap[prod.productoId] || 0;
+    
     return {
       ...prod,
-      planificacion: Number(planificacionProducto)
+      planificacion: Number(planificacionProducto),
+      planificacionAcumulada: Number(planificacionAcumuladaProducto)
     };
   });
   
@@ -311,11 +335,15 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
     const planificacionProducto = planificacionDiaria.productos[prod.productoId] || 
                                   planificacionDiaria.productos[prod.nombre] || 0;
     
+    // Obtener planificación acumulada para este producto
+    const planificacionAcumuladaProducto = planificacionAcumuladaMap[prod.productoId] || 0;
+    
     return {
       ...prod,
       proyeccion: proyeccionProduccion && proyeccionProduccion.proyeccion ? 
                   proyeccionProduccion.proyeccion[prod.productoId] || 0 : 0,
-      planificacion: Number(planificacionProducto)
+      planificacion: Number(planificacionProducto),
+      planificacionAcumulada: Number(planificacionAcumuladaProducto)
     };
   });
   
@@ -364,6 +392,7 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
       acumuladoHistorico: nfuAcumuladoHist
     },
     planificacionDiaria, // Incluir la planificación diaria completa
+    planificacionAcumulada, // Incluir la planificación acumulada
     proyeccionInfo: {
       nfu: proyeccionNFU,
       produccion: proyeccionProduccion,
@@ -385,4 +414,5 @@ module.exports = {
   obtenerNFUAcumuladoHastaFecha,
   // Nueva función para planificación
   obtenerPlanificacionPorFecha,
+  obtenerPlanificacionAcumuladaHastaFecha
 };

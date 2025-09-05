@@ -170,6 +170,57 @@ class PlanificacionRepository {
             throw error;
         }
     }
+
+    /**
+     * Obtiene la planificación acumulada del mes hasta una fecha específica
+     * @param {string} fecha - Fecha hasta la cual acumular en formato 'YYYY-MM-DD'
+     * @returns {Promise<Object>} - Objeto con la planificación acumulada por producto
+     */
+    async obtenerPlanificacionAcumuladaHastaFecha(fecha) {
+        try {
+            // Extraer año, mes y día de la fecha
+            const [anio, mes, dia] = fecha.split('-').map(Number);
+            
+            // Consulta para obtener todas las planificaciones del mes hasta el día indicado
+            const query = `
+                SELECT pp.id, pp.anio, pp.mes, pp.dia, 
+                       ppd.producto_id, ppd.kilos,
+                       p.nombre as nombre_producto
+                FROM planificacion_produccion pp
+                JOIN planificacion_produccion_detalle ppd ON pp.id = ppd.planificacion_id
+                JOIN productos p ON ppd.producto_id = p.id
+                WHERE pp.anio = ? AND pp.mes = ? AND pp.dia <= ? AND p.en_stock = 1
+                ORDER BY pp.dia ASC
+            `;
+            
+            const planificaciones = await db.query(query, [anio, mes, dia]);
+            
+            // Acumular la planificación por producto
+            const acumuladoPorProducto = {};
+            
+            planificaciones.forEach(plan => {
+                const productoId = plan.producto_id;
+                
+                if (!acumuladoPorProducto[productoId]) {
+                    acumuladoPorProducto[productoId] = {
+                        productoId,
+                        nombre: plan.nombre_producto,
+                        kilosAcumulados: 0
+                    };
+                }
+                
+                acumuladoPorProducto[productoId].kilosAcumulados += Number(plan.kilos || 0);
+            });
+            
+            return {
+                fecha,
+                productos: Object.values(acumuladoPorProducto)
+            };
+        } catch (error) {
+            console.error('Error al obtener planificación acumulada:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new PlanificacionRepository();
