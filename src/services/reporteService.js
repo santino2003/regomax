@@ -13,7 +13,7 @@ const obtenerSumatoriaPorProducto = async (fecha /* 'YYYY-MM-DD' */) => {
     if (!suma[productoId]){
       suma[productoId] = {
         productoId,
-        nombre: b.nombreProducto || `Producto ID ${productoId}`,
+        nombre: b.nombreProducto || `${productoId}`,
         cantidadBolsones: 0,
         pesoTotal: 0
       };
@@ -29,7 +29,7 @@ const obtenerDespachosPorProducto = async (fecha /* 'YYYY-MM-DD' */) => {
   const filas = await despachoRepository.obtenerDespachosPorProducto(fecha);
   return filas.map(r => ({
     productoId: r.productoId,
-    nombre: r.nombreProducto || `Producto ID ${r.productoId}`,
+    nombre: r.nombreProducto || `${r.productoId}`,
     cantidadBolsones: Number(r.cantidadBolsones || 0),
     pesoTotal: Number(r.pesoTotal || 0)
   }));
@@ -43,7 +43,7 @@ const obtenerStockAcumuladoHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
     if (Number(b.despachado) === 1) continue; // sólo no despachados
     const productoId = b.producto;
     if (!suma[productoId]){
-      suma[productoId] = { productoId, nombre: b.nombreProducto || `Producto ID ${productoId}`, cantidadBolsones: 0, pesoTotal: 0 };
+      suma[productoId] = { productoId, nombre: b.nombreProducto || `${productoId}`, cantidadBolsones: 0, pesoTotal: 0 };
     }
     suma[productoId].cantidadBolsones += 1;
     suma[productoId].pesoTotal += Number(b.peso || 0);
@@ -62,7 +62,7 @@ const obtenerStockAcumuladoDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
   const suma = {};
   for (const b of bolsonesMes) {
     const productoId = b.producto;
-    const productoNombre = b.nombreProducto || `Producto ID ${productoId}`;
+    const productoNombre = b.nombreProducto || `${productoId}`;
     
     const key = productoId; // Usamos directamente el ID del producto como clave
     
@@ -103,7 +103,7 @@ const obtenerDespachosAcumuladosDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
     // Procesamos los resultados para el formato esperado en el reporte
     const productos = despachosMes.map(d => ({
       productoId: d.productoId,
-      nombre: d.nombreProducto || `Producto ID ${d.productoId}`,
+      nombre: d.nombreProducto || `${d.productoId}`,
       cantidadBolsones: Number(d.cantidadBolsones || 0),
       pesoTotal: Number(d.pesoTotal || 0)
     }));
