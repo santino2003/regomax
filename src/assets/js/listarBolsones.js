@@ -20,8 +20,26 @@ $(document).ready(function() {
         $button.prop('disabled', true)
                .html('<i class="bi bi-hourglass-split me-2"></i>Exportando...');
         
-        // Redirigir a la ruta de exportación
-        window.location.href = '/bolsones/exportar';
+        // Obtener los valores actuales de los filtros
+        const producto = document.getElementById('producto').value;
+        const codigo = document.getElementById('codigo').value;
+        const precinto = document.getElementById('precinto').value;
+        
+        // Construir URL con los filtros actuales
+        let exportUrl = '/bolsones/exportar';
+        const params = new URLSearchParams();
+        
+        if (producto) params.append('producto', producto);
+        if (codigo) params.append('codigo', codigo);
+        if (precinto) params.append('precinto', precinto);
+        
+        // Añadir los parámetros a la URL si hay algún filtro
+        if (params.toString()) {
+            exportUrl += '?' + params.toString();
+        }
+        
+        // Redirigir a la ruta de exportación con los filtros
+        window.location.href = exportUrl;
         
         // Restaurar el botón después de un tiempo
         setTimeout(function() {

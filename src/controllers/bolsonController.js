@@ -297,6 +297,15 @@ const bolsonController = {
         try {
             console.log('Iniciando proceso de exportación de bolsones no despachados');
             
+            // Obtener los parámetros de filtro de la consulta
+            const filtros = {
+                producto: req.query.producto || '',
+                codigo: req.query.codigo || '',
+                precinto: req.query.precinto || ''
+            };
+            
+            console.log('Filtros aplicados para exportación:', filtros);
+            
             // Crear un nuevo libro de Excel
             const workbook = new Excel.Workbook();
             const worksheet = workbook.addWorksheet('Bolsones No Despachados');
@@ -321,20 +330,43 @@ const bolsonController = {
             };
             worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
             
-            console.log('Obteniendo datos de bolsones no despachados para exportar');
+            console.log('Obteniendo datos de bolsones no despachados con filtros aplicados');
             
-            // Obtener solo los bolsones no despachados
-            const resultado = await db.query('SELECT * FROM bolsones WHERE despachado = 0 ORDER BY id DESC');
+            // Construir la consulta SQL con filtros
+            let query = 'SELECT * FROM bolsones WHERE despachado = 0';
+            const queryParams = [];
+            
+            // Aplicar filtros si existen
+            if (filtros.producto) {
+                query += ' AND producto LIKE ?';
+                queryParams.push(`%${filtros.producto}%`);
+            }
+            
+            if (filtros.codigo) {
+                query += ' AND codigo LIKE ?';
+                queryParams.push(`%${filtros.codigo}%`);
+            }
+            
+            if (filtros.precinto) {
+                query += ' AND precinto LIKE ?';
+                queryParams.push(`%${filtros.precinto}%`);
+            }
+            
+            // Ordenar por ID descendente
+            query += ' ORDER BY id DESC';
+            
+            // Ejecutar la consulta con los filtros
+            const resultado = await db.query(query, queryParams);
             
             if (!resultado || resultado.length === 0) {
-                console.log('No se encontraron bolsones no despachados para exportar');
+                console.log('No se encontraron bolsones que coincidan con los criterios de búsqueda');
                 return res.status(404).render('error', {
-                    message: 'No hay bolsones no despachados para exportar',
-                    error: { status: 404, stack: 'No se encontraron bolsones no despachados en la base de datos' }
+                    message: 'No hay bolsones que coincidan con los criterios de búsqueda para exportar',
+                    error: { status: 404, stack: 'No se encontraron bolsones con los filtros especificados' }
                 });
             }
             
-            console.log(`Se encontraron ${resultado.length} bolsones no despachados para exportar`);
+            console.log(`Se encontraron ${resultado.length} bolsones para exportar según los filtros aplicados`);
             
             // Añadir los datos
             resultado.forEach(bolson => {
@@ -349,9 +381,24 @@ const bolsonController = {
                 });
             });
             
-            // Configurar el nombre del archivo con la fecha actual
+            // Configurar el nombre del archivo con la fecha actual y los filtros aplicados
             const fecha = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
-            const filename = `bolsones_no_despachados_${fecha}.xlsx`;
+            let filename = `bolsones_filtrados_${fecha}.xlsx`;
+            
+            // Añadir información de filtros al nombre del archivo si hay filtros aplicados
+            if (filtros.codigo || filtros.producto || filtros.precinto) {
+                let filtroStr = '';
+                if (filtros.codigo) filtroStr += `_codigo-${filtros.codigo}`;
+                if (filtros.producto) filtroStr += `_producto-${filtros.producto}`;
+                if (filtros.precinto) filtroStr += `_precinto-${filtros.precinto}`;
+                
+                // Limitar la longitud para evitar nombres de archivo demasiado largos
+                if (filtroStr.length > 30) {
+                    filtroStr = filtroStr.substring(0, 30) + '...';
+                }
+                
+                filename = `bolsones${filtroStr}_${fecha}.xlsx`;
+            }
             
             console.log(`Generando archivo Excel: ${filename}`);
             
