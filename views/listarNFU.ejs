@@ -1,0 +1,311 @@
+<%- include('partials/header') %>
+
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2>Listado de Ingresos NFU</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="/nfu/nuevo" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Ingreso NFU
+            </a>
+            <button id="btnExportar" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Exportar a Excel
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Filtros</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="fechaInicio">Desde:</label>
+                        <input type="date" class="form-control" id="fechaInicio">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="fechaFin">Hasta:</label>
+                        <input type="date" class="form-control" id="fechaFin">
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-primary" id="btnFiltrar">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mt-3">
+        <div class="card-header bg-primary text-white">
+            <div class="row">
+                <div class="col">
+                    <h5 class="mb-0">Ingresos Registrados</h5>
+                </div>
+                <div class="col text-end">
+                    <span class="badge bg-light text-dark" id="totalKg">Total: 0 Kg</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="tablaNFU">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Cantidad (Kg)</th>
+                            <th>Responsable</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (ingresos && ingresos.length > 0) { %>
+                            <% ingresos.forEach(function(ingreso) { %>
+                                <tr>
+                                    <td><%= new Date(ingreso.fecha).toLocaleDateString() %></td>
+                                    <td><%= ingreso.cantidad %></td>
+                                    <td><%= ingreso.responsable %></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" onclick="verDetalles('<%= ingreso.id %>')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="4" class="text-center">No hay registros de ingresos NFU</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen / Estadísticas -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">NFU del mes actual</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="text-center" id="nfuMesActual">Cargando...</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">NFU histórico total</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="text-center" id="nfuHistorico">Cargando...</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Promedio diario</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="text-center" id="promedioDiario">Cargando...</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle -->
+<div class="modal fade" id="detalleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Detalle de Ingreso NFU</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detalleModalBody">
+                <p><strong>ID:</strong> <span id="detalle-id"></span></p>
+                <p><strong>Fecha:</strong> <span id="detalle-fecha"></span></p>
+                <p><strong>Cantidad:</strong> <span id="detalle-cantidad"></span> Kg</p>
+                <p><strong>Responsable:</strong> <span id="detalle-responsable"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer fechas por defecto (mes actual)
+    const hoy = new Date();
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    
+    document.getElementById('fechaInicio').valueAsDate = primerDia;
+    document.getElementById('fechaFin').valueAsDate = ultimoDia;
+    
+    // Cargar estadísticas iniciales
+    cargarEstadisticas();
+    
+    // Filtrar por fecha
+    document.getElementById('btnFiltrar').addEventListener('click', filtrarPorFecha);
+    
+    // Exportar a Excel
+    document.getElementById('btnExportar').addEventListener('click', exportarExcel);
+    
+    // Calcular total de KG en la tabla actual
+    calcularTotal();
+});
+
+function calcularTotal() {
+    const tabla = document.getElementById('tablaNFU');
+    const filas = tabla.querySelectorAll('tbody tr');
+    let total = 0;
+    
+    filas.forEach(fila => {
+        const celdas = fila.querySelectorAll('td');
+        if (celdas.length > 1) {
+            const cantidad = parseFloat(celdas[1].textContent) || 0;
+            total += cantidad;
+        }
+    });
+    
+    document.getElementById('totalKg').textContent = `Total: ${total.toLocaleString()} Kg`;
+}
+
+async function filtrarPorFecha() {
+    const fechaInicio = document.getElementById('fechaInicio').value;
+    const fechaFin = document.getElementById('fechaFin').value;
+    
+    if (!fechaInicio || !fechaFin) {
+        alert('Debe seleccionar ambas fechas');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/nfu/listar?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            actualizarTabla(data.data);
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al filtrar los datos');
+    }
+}
+
+function actualizarTabla(ingresos) {
+    const tbody = document.querySelector('#tablaNFU tbody');
+    tbody.innerHTML = '';
+    
+    if (ingresos.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="4" class="text-center">No hay registros que coincidan con el filtro</td>';
+        tbody.appendChild(tr);
+    } else {
+        ingresos.forEach(ingreso => {
+            const fecha = new Date(ingreso.fecha).toLocaleDateString();
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${fecha}</td>
+                <td>${ingreso.cantidad}</td>
+                <td>${ingreso.responsable}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="verDetalles('${ingreso.id}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    
+    calcularTotal();
+}
+
+async function cargarEstadisticas() {
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    try {
+        // NFU del mes actual
+        const resMes = await fetch(`/api/nfu/stock-mes?fecha=${hoy}`);
+        const dataMes = await resMes.json();
+        
+        // NFU histórico total
+        const resHistorico = await fetch(`/api/nfu/stock-hasta-fecha?fecha=${hoy}`);
+        const dataHistorico = await resHistorico.json();
+        
+        // Actualizar elementos UI
+        if (dataMes.success) {
+            document.getElementById('nfuMesActual').textContent = `${dataMes.data.cantidadTotal.toLocaleString()} Kg`;
+        }
+        
+        if (dataHistorico.success) {
+            document.getElementById('nfuHistorico').textContent = `${dataHistorico.data.cantidadTotal.toLocaleString()} Kg`;
+            
+            // Calcular promedio diario (histórico / días desde el primer registro)
+            const diasOperacion = 30; // Por defecto un mes
+            const promedio = dataHistorico.data.cantidadTotal / diasOperacion;
+            document.getElementById('promedioDiario').textContent = `${promedio.toLocaleString(undefined, {maximumFractionDigits: 2})} Kg`;
+        }
+    } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+        document.getElementById('nfuMesActual').textContent = 'Error al cargar';
+        document.getElementById('nfuHistorico').textContent = 'Error al cargar';
+        document.getElementById('promedioDiario').textContent = 'Error al cargar';
+    }
+}
+
+function verDetalles(id) {
+    // Implementar carga de detalles del ingreso NFU por ID
+    fetch(`/api/nfu/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('detalle-id').textContent = data.data.id;
+                document.getElementById('detalle-fecha').textContent = new Date(data.data.fecha).toLocaleDateString();
+                document.getElementById('detalle-cantidad').textContent = data.data.cantidad;
+                document.getElementById('detalle-responsable').textContent = data.data.responsable;
+                
+                // Mostrar modal
+                const modal = new bootstrap.Modal(document.getElementById('detalleModal'));
+                modal.show();
+            } else {
+                alert('Error al cargar los detalles');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al cargar los detalles');
+        });
+}
+
+function exportarExcel() {
+    // Obtener tabla y crear workbook
+    const tabla = document.getElementById('tablaNFU');
+    const wb = XLSX.utils.table_to_book(tabla, {sheet: "NFU"});
+    
+    // Nombre del archivo con fecha actual
+    const fechaStr = new Date().toISOString().split('T')[0];
+    const filename = `NFU_Listado_${fechaStr}.xlsx`;
+    
+    // Exportar a Excel
+    XLSX.writeFile(wb, filename);
+}
+</script>
+
+<%- include('partials/footer') %>

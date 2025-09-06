@@ -102,7 +102,7 @@ class HistorialRepository {
             query += ` ORDER BY fecha_hora DESC LIMIT ${lim} OFFSET ${off}`;
             
             // Debug temporal
-            console.log('[HISTORIAL] SQL:', query);
+            // console.log('[HISTORIAL] SQL:', query);
             console.log('[HISTORIAL] params(len)=', parametros.length, parametros);
             
             const result = await db.query(query, parametros);

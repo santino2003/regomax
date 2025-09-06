@@ -1,0 +1,367 @@
+<%- include('partials/header') %>
+
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h2>Reportes NFU</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="/nfu" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver a Listado
+            </a>
+            <button id="btnExportarReporte" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Exportar a Excel
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Parámetros del Reporte</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="form-group mb-3">
+                        <label for="reporteFecha">Fecha de Referencia:</label>
+                        <input type="date" class="form-control" id="reporteFecha">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label for="tipoReporte">Tipo de Reporte:</label>
+                        <select class="form-control" id="tipoReporte">
+                            <option value="diario">Ingreso Diario</option>
+                            <option value="mensual">Acumulado Mensual</option>
+                            <option value="historico">Acumulado Histórico</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary" id="btnGenerarReporte">
+                        <i class="fas fa-chart-bar"></i> Generar Reporte
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualización del Reporte -->
+    <div class="card shadow mt-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0" id="tituloReporte">Reporte NFU</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div id="reporteResumen" class="alert alert-info">
+                        Seleccione los parámetros y genere un reporte.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="chart-container" style="position: relative; height:40vh; width:100%">
+                        <canvas id="graficoNFU"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de datos -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered" id="tablaReporte">
+                            <thead class="table-dark">
+                                <tr id="encabezadoTabla">
+                                    <th>Fecha</th>
+                                    <th>Cantidad (Kg)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTabla">
+                                <tr>
+                                    <td colspan="2" class="text-center">No hay datos para mostrar</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+
+<script>
+let graficoNFU;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer fecha actual por defecto
+    document.getElementById('reporteFecha').valueAsDate = new Date();
+    
+    // Evento para generar el reporte
+    document.getElementById('btnGenerarReporte').addEventListener('click', generarReporte);
+    
+    // Evento para exportar a Excel
+    document.getElementById('btnExportarReporte').addEventListener('click', exportarReporteExcel);
+    
+    // Inicializar gráfico vacío
+    inicializarGrafico();
+});
+
+function inicializarGrafico() {
+    const ctx = document.getElementById('graficoNFU').getContext('2d');
+    graficoNFU = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'NFU (Kg)',
+                data: [],
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Cantidad (Kg)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Fecha'
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function generarReporte() {
+    const fecha = document.getElementById('reporteFecha').value;
+    const tipoReporte = document.getElementById('tipoReporte').value;
+    
+    if (!fecha) {
+        alert('Por favor seleccione una fecha');
+        return;
+    }
+    
+    try {
+        let url, titulo, datos, resumenTexto;
+        
+        switch(tipoReporte) {
+            case 'diario':
+                url = `/api/nfu/kg-por-dia?fecha=${fecha}`;
+                titulo = `Ingreso NFU - ${formatearFecha(fecha)}`;
+                break;
+                
+            case 'mensual':
+                url = `/api/nfu/stock-mes?fecha=${fecha}`;
+                titulo = `NFU Acumulado Mensual - ${obtenerNombreMes(fecha)}`;
+                break;
+                
+            case 'historico':
+                url = `/api/nfu/stock-hasta-fecha?fecha=${fecha}`;
+                titulo = `NFU Acumulado Histórico hasta ${formatearFecha(fecha)}`;
+                break;
+                
+            default:
+                alert('Tipo de reporte no válido');
+                return;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Actualizar título
+            document.getElementById('tituloReporte').textContent = titulo;
+            
+            // Generar resumen
+            if (tipoReporte === 'diario') {
+                resumenTexto = `Cantidad de NFU ingresados el día ${formatearFecha(fecha)}: <strong>${data.data.cantidadTotal.toLocaleString()} Kg</strong>`;
+                datos = [{ fecha: formatearFecha(fecha), cantidad: data.data.cantidadTotal }];
+                
+            } else if (tipoReporte === 'mensual') {
+                resumenTexto = `Total de NFU acumulados en ${obtenerNombreMes(fecha)} (${data.data.fechaInicio} al ${data.data.fechaFin}): <strong>${data.data.cantidadTotal.toLocaleString()} Kg</strong>`;
+                
+                // Obtener detalle diario del mes para el gráfico
+                const detalleMes = await obtenerDetalleMes(data.data.fechaInicio, data.data.fechaFin);
+                datos = detalleMes;
+                
+            } else { // histórico
+                resumenTexto = `Total histórico de NFU acumulados hasta ${formatearFecha(fecha)}: <strong>${data.data.cantidadTotal.toLocaleString()} Kg</strong>`;
+                
+                // Obtener detalle mensual para el gráfico
+                const detalleMensual = await obtenerDetalleMensual(fecha);
+                datos = detalleMensual;
+            }
+            
+            // Actualizar resumen
+            document.getElementById('reporteResumen').innerHTML = resumenTexto;
+            
+            // Actualizar gráfico
+            actualizarGrafico(datos, tipoReporte);
+            
+            // Actualizar tabla
+            actualizarTablaReporte(datos, tipoReporte);
+            
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al generar el reporte');
+    }
+}
+
+async function obtenerDetalleMes(fechaInicio, fechaFin) {
+    // Simulación de obtención de datos diarios
+    // En un entorno real, esto debería hacer una llamada a la API para obtener los datos día a día
+    try {
+        const response = await fetch(`/api/nfu/listar?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Agrupar por fecha
+            const agrupado = {};
+            data.data.forEach(ingreso => {
+                const fecha = ingreso.fecha.split('T')[0];
+                if (!agrupado[fecha]) {
+                    agrupado[fecha] = 0;
+                }
+                agrupado[fecha] += ingreso.cantidad;
+            });
+            
+            // Convertir a array
+            return Object.keys(agrupado).map(fecha => ({
+                fecha: formatearFecha(fecha),
+                cantidad: agrupado[fecha]
+            })).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        }
+        
+        return [];
+    } catch (error) {
+        console.error('Error al obtener detalle del mes:', error);
+        return [];
+    }
+}
+
+async function obtenerDetalleMensual(fechaLimite) {
+    // Simulación de obtención de datos mensuales
+    // En un entorno real, esto debería hacer una llamada a la API
+    try {
+        // Obtener fecha actual y calcular 6 meses atrás
+        const fechaActual = new Date(fechaLimite);
+        let datos = [];
+        
+        for (let i = 5; i >= 0; i--) {
+            const fecha = new Date(fechaActual);
+            fecha.setMonth(fechaActual.getMonth() - i);
+            const fechaStr = fecha.toISOString().split('T')[0];
+            
+            const response = await fetch(`/api/nfu/stock-mes?fecha=${fechaStr}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                datos.push({
+                    fecha: obtenerNombreMes(fechaStr),
+                    cantidad: data.data.cantidadTotal
+                });
+            }
+        }
+        
+        return datos;
+    } catch (error) {
+        console.error('Error al obtener detalle mensual:', error);
+        return [];
+    }
+}
+
+function actualizarGrafico(datos, tipoReporte) {
+    // Actualizar datos del gráfico
+    graficoNFU.data.labels = datos.map(d => d.fecha);
+    graficoNFU.data.datasets[0].data = datos.map(d => d.cantidad);
+    
+    // Actualizar tipo de gráfico según reporte
+    if (tipoReporte === 'diario') {
+        graficoNFU.config.type = 'bar';
+    } else if (tipoReporte === 'mensual') {
+        graficoNFU.config.type = 'line';
+    } else { // histórico
+        graficoNFU.config.type = 'bar';
+    }
+    
+    // Actualizar título eje X
+    graficoNFU.options.scales.x.title.text = tipoReporte === 'historico' ? 'Mes' : 'Fecha';
+    
+    // Actualizar gráfico
+    graficoNFU.update();
+}
+
+function actualizarTablaReporte(datos, tipoReporte) {
+    const tbody = document.getElementById('cuerpoTabla');
+    tbody.innerHTML = '';
+    
+    if (datos.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="2" class="text-center">No hay datos para mostrar</td>';
+        tbody.appendChild(tr);
+    } else {
+        datos.forEach(dato => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${dato.fecha}</td>
+                <td>${dato.cantidad.toLocaleString()} Kg</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+}
+
+function exportarReporteExcel() {
+    // Obtener tabla y crear workbook
+    const tabla = document.getElementById('tablaReporte');
+    const titulo = document.getElementById('tituloReporte').textContent;
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.table_to_sheet(tabla);
+    
+    // Añadir título al principio
+    XLSX.utils.sheet_add_aoa(ws, [[titulo]], { origin: "A1" });
+    
+    // Agregar hoja al libro
+    XLSX.utils.book_append_sheet(wb, ws, "Reporte NFU");
+    
+    // Nombre del archivo con fecha actual
+    const fechaStr = new Date().toISOString().split('T')[0];
+    const filename = `Reporte_NFU_${fechaStr}.xlsx`;
+    
+    // Exportar a Excel
+    XLSX.writeFile(wb, filename);
+}
+
+function formatearFecha(fechaStr) {
+    const fecha = new Date(fechaStr);
+    return fecha.toLocaleDateString();
+}
+
+function obtenerNombreMes(fechaStr) {
+    const fecha = new Date(fechaStr);
+    const nombresMes = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return `${nombresMes[fecha.getMonth()]} ${fecha.getFullYear()}`;
+}
+</script>
+
+<%- include('partials/footer') %>

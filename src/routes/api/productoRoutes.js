@@ -4,6 +4,11 @@ const productoController = require('../../controllers/productoController');
 const authMiddleware = require('../../middleware/auth');
 
 router.post('/nuevo', authMiddleware.verifyToken, productoController.crearProducto);
-router.get('/', productoController.listarProductos);
+
+// Ruta para obtener todos los productos
+router.get('/', authMiddleware.verifyToken, productoController.obtenerProductosAPI);
+
+// Ruta para obtener solo productos con stock para planificación
+router.get('/planificacion', authMiddleware.verifyToken, productoController.listarProductosParaPlanificacion);
 
 module.exports = router;

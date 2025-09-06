@@ -119,10 +119,6 @@ class OrdenDeVentaRepository {
             LIMIT ${lim} OFFSET ${off}
         `;
         
-        // Log para depuración
-        console.log('[OV] SQL:', query);
-        console.log('[OV] Params:', { page: p, limit: lim, offset: off });
-        
         // Ejecutamos la consulta sin parámetros
         const results = await db.query(query);
         

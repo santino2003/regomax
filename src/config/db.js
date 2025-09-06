@@ -102,7 +102,7 @@ module.exports = {
       const placeCount = countPlaceholders(text);
 
       // Logs de depuración (podés comentar luego)
-      console.log('[DB] SQL:', text);
+      // console.log('[DB] SQL:', text);
       console.log('[DB] has?=', hasQ, 'placeCount=', placeCount, 'paramsType=', Array.isArray(params) ? `array(${params.length})` : typeof params, 'params=', params);
 
       if (!hasQ) {

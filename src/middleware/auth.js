@@ -10,24 +10,26 @@ const authMiddleware = {
       const token = req.cookies && req.cookies.token;
       if (!token) {
         if (req.originalUrl.startsWith('/api/')) {
-          return res.status(401).json({ success: false, message: 'No autorizado' });
+          return res.status(401).json({ success: false, message: 'No autorizado - Token no encontrado' });
         } else {
           return res.redirect('/login');
         }
       }
+
       const decoded = hashUtils.verifyToken(token);
       if (!decoded || !decoded.username) {
         if (req.originalUrl.startsWith('/api/')) {
-          return res.status(401).json({ success: false, message: 'Token inválido' });
+          return res.status(401).json({ success: false, message: 'Token inválido o expirado' });
         } else {
           return res.redirect('/login');
         }
       }
+
       req.user = decoded;
       next();
     } catch (error) {
       if (req.originalUrl.startsWith('/api/')) {
-        return res.status(401).json({ success: false, message: 'Token inválido' });
+        return res.status(401).json({ success: false, message: 'Error de autenticación: ' + error.message });
       } else {
         return res.redirect('/login');
       }

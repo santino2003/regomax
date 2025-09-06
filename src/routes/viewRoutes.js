@@ -176,6 +176,12 @@ router.get('/bolsones-despachados', [
     permissionsMiddleware.hasPermission('despachos:view')
 ], despachoController.vistaListarBolsonesDespachados);
 
+router.get('/bolsones-despachados/exportar', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('despachos:export')
+], despachoController.exportarBolsonesDespachados);
+
 // Rutas de partes diarios - con verificación de permisos
 router.get('/partes-diarios', [
     authMiddleware.verifyToken, 
@@ -209,6 +215,39 @@ router.get('/partes-diarios/:id', [
 
 // Ruta para historial de acciones - visible para todos los usuarios autenticados
 router.get('/historial', [authMiddleware.verifyToken, noCacheMiddleware], historialController.mostrarHistorial);
+
+// Rutas para NFU - Neumáticos Fuera de Uso
+const nfuController = require('../controllers/nfuController');
+
+// Ruta para listar ingresos de NFU
+router.get('/nfu', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reportes:view')
+], nfuController.listarNFU);
+
+// Ruta para formulario de nuevo ingreso de NFU
+router.get('/nfu/nuevo', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reportes:view')
+], nfuController.mostrarFormularioIngresoNFU);
+
+// Ruta para la planificación (antes días hábiles)
+const diasHabilesController = require('../controllers/diasHabilesController');
+router.get('/dias-habiles', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('dias_habiles:view')
+], diasHabilesController.mostrarCalendario);
+
+// Ruta para el reporte productivo (antes reporte general consolidado)
+const reporteController = require('../controllers/reporteController');
+router.get('/reporte-general', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reportes:view')
+], reporteController.mostrarReporteGeneral);
 
 // Endpoint de logout
 router.get('/logout', (req, res) => {
