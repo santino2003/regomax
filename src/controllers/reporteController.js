@@ -46,7 +46,7 @@ const mostrarReporteGeneral = async (req, res) => {
                                  `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`;
         
         res.render('reporteGeneral', { 
-            title: 'Reporte Productivo',
+            titulo: 'Reporte Productivo',
             username: req.user.username,
             user: req.user,
             fechaSeleccionada: fechaSeleccionada
