@@ -61,9 +61,6 @@
                                 <button id="btnGenerarReporte" class="btn btn-primary">
                                     <i class="bi bi-sync me-1"></i> Generar
                                 </button>
-                                <button id="btnExportarExcel" class="btn btn-success ms-2">
-                                    <i class="bi bi-file-excel me-1"></i> Exportar
-                                </button>
                                 <button id="btnImprimir" class="btn btn-info ms-2">
                                     <i class="bi bi-print me-1"></i> Imprimir
                                 </button>
@@ -124,7 +121,7 @@
                             <div class="row mb-3">
                                 <div class="col-12">
                                     <div class="card">
-                                        <div class="card-header bg-success text-white">
+                                        <div class="card-header" style="background-color: #4FC3F7; color: white;">
                                             <h5 class="card-title mb-0">Producción por Producto</h5>
                                         </div>
                                         <div class="card-body">
@@ -164,7 +161,7 @@
                             <div class="row mb-3">
                                 <div class="col-12">
                                     <div class="card">
-                                        <div class="card-header bg-danger text-white">
+                                        <div class="card-header" style="background-color: #29B6F6; color: white;">
                                             <h5 class="card-title mb-0">Productos Despachados</h5>
                                         </div>
                                         <div class="card-body">
@@ -202,7 +199,7 @@
                             <div class="row mb-3">
                                 <div class="col-12">
                                     <div class="card">
-                                        <div class="card-header bg-info text-white">
+                                        <div class="card-header" style="background-color: #03A9F4; color: white;">
                                             <h5 class="card-title mb-0">Neumáticos Fuera de Uso (NFU)</h5>
                                         </div>
                                         <div class="card-body">
@@ -237,7 +234,7 @@
                             <div class="row mb-3">
                                 <div class="col-12">
                                     <div class="card">
-                                        <div class="card-header bg-warning text-dark">
+                                        <div class="card-header" style="background-color: #039BE5; color: white;">
                                             <h5 class="card-title mb-0">Comparativo: Producción Acumulada vs Planificación Acumulada</h5>
                                         </div>
                                         <div class="card-body">
@@ -253,7 +250,7 @@
                             <div class="row mb-3">
                                 <div class="col-12">
                                     <div class="card">
-                                        <div class="card-header bg-primary text-white">
+                                        <div class="card-header" style="background-color: #0288D1; color: white;">
                                             <h5 class="card-title mb-0">Stock Total</h5>
                                         </div>
                                         <div class="card-body">
@@ -309,9 +306,6 @@
             
             // Evento para generar el reporte
             document.getElementById('btnGenerarReporte').addEventListener('click', generarReporte);
-            
-            // Evento para exportar a Excel
-            document.getElementById('btnExportarExcel').addEventListener('click', exportarExcel);
             
             // Evento para imprimir
             document.getElementById('btnImprimir').addEventListener('click', imprimirReporte);
@@ -646,41 +640,6 @@
             console.error('Error al generar gráfico comparativo:', error);
             document.getElementById('chartProdVsPlan').innerHTML = `<div class="alert alert-danger">Error al generar el gráfico: ${error.message}</div>`;
           }
-        }
-
-        function exportarExcel() {
-            if (document.getElementById('reporteContent').style.display === 'none') {
-                alert('Primero debe generar un reporte');
-                return;
-            }
-
-            const workbook = XLSX.utils.book_new();
-            
-            // Fecha del reporte
-            const fecha = document.getElementById('fechaReporteHeader').textContent;
-            
-            // 1. Producción General (productos, fecha, acumulado, proyección)
-            const tablaProduccion = document.getElementById('tablaProduccionGeneral');
-            const wsProduccion = XLSX.utils.table_to_sheet(tablaProduccion);
-            XLSX.utils.book_append_sheet(workbook, wsProduccion, "Producción General");
-            
-            // 2. Despachos (productos, fecha, acumulado, proyección)
-            const tablaDespachos = document.getElementById('tablaDespachosGeneral');
-            const wsDespachos = XLSX.utils.table_to_sheet(tablaDespachos);
-            XLSX.utils.book_append_sheet(workbook, wsDespachos, "Despachos");
-            
-            // 3. NFU
-            const tablaNFU = document.getElementById('tablaNFU');
-            const wsNFU = XLSX.utils.table_to_sheet(tablaNFU);
-            XLSX.utils.book_append_sheet(workbook, wsNFU, "NFU");
-            
-            // 4. Stock Total
-            const tablaStock = document.getElementById('tablaStockTotal');
-            const wsStock = XLSX.utils.table_to_sheet(tablaStock);
-            XLSX.utils.book_append_sheet(workbook, wsStock, "Stock Total");
-            
-            // Exportar el archivo
-            XLSX.writeFile(workbook, `Reporte_General_${fecha.replace(/\//g, '-')}.xlsx`);
         }
 
         function imprimirReporte() {

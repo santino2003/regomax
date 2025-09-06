@@ -130,16 +130,22 @@ const obtenerIngresoNFUPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
 
 // NFU - Stock acumulado del mes operativo
 const obtenerNFUAcumuladoDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
-  const { inicio, fin } = ventanaMesOperativo(fecha);
+  const { inicio } = ventanaMesOperativo(fecha);
+  
+  // Modificación: En lugar de usar la fecha fin del mes operativo, usar la fecha solicitada
+  // para tener un snapshot exacto hasta ese día
+  const fechaFinDia = new Date(fecha);
+  fechaFinDia.setHours(23, 59, 59, 999); // Fin del día solicitado
+  const finDiaStr = formatMySQLLocal(fechaFinDia);
   
   const cantidadTotal = await nfuRepository.obtenerCantidadNFUEntreFechas(
     formatMySQLLocal(inicio), 
-    formatMySQLLocal(fin)
+    finDiaStr // Usamos la fecha del reporte como límite, no el fin del mes operativo
   );
   
   return {
     fechaInicio: formatMySQLLocal(inicio),
-    fechaFin: formatMySQLLocal(fin),
+    fechaFin: finDiaStr,
     cantidadTotal: Number(cantidadTotal || 0)
   };
 };
