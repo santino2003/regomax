@@ -59,7 +59,7 @@ $(document).ready(function() {
                     // Mostrar detalles de la orden
                     let detallesHTML = `
                         <div class="mb-2">
-                            <strong>Cliente:</strong> ${ordenSeleccionada.cliente}
+                            <strong>Cliente Final:</strong> ${ordenSeleccionada.cliente_final}
                         </div>
                         <div class="mb-2">
                             <strong>Fecha:</strong> ${new Date(ordenSeleccionada.fecha).toLocaleDateString()}

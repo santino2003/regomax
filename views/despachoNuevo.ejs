@@ -89,8 +89,8 @@
                                             <option value="" selected disabled>Seleccione una orden...</option>
                                             <% if (ordenes && ordenes.length > 0) { %>
                                                 <% ordenes.forEach(orden => { %>
-                                                    <option value="<%= orden.id %>" data-cliente="<%= orden.cliente %>">
-                                                        #OV-<%= orden.id %> - <%= orden.cliente %> (<%= new Date(orden.fecha).toLocaleDateString() %>)
+                                                    <option value="<%= orden.id %>" data-cliente="<%= orden.cliente_final %>">
+                                                        #OV-<%= orden.id %> - <%= orden.cliente_final %> (<%= new Date(orden.fecha).toLocaleDateString() %>)
                                                     </option>
                                                 <% }); %>
                                             <% } else { %>
