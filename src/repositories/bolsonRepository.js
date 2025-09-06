@@ -445,6 +445,27 @@ class BolsonRepository {
       throw error;
     }
   }
+
+  // Obtener bolsones producidos entre dos fechas específicas para calcular acumulados históricos
+  async obtenerBolsonesEntreFechas(fechaInicio, fechaFin) {
+    try {
+      console.log(`[BOLSONES_ENTRE_FECHAS] Consultando bolsones entre ${fechaInicio} y ${fechaFin}`);
+      
+      const result = await db.query(`
+        SELECT b.*, p.nombre AS nombreProducto
+        FROM bolsones b
+        LEFT JOIN productos p ON b.producto = p.id
+        WHERE CONCAT(b.fecha, ' ', b.hora) BETWEEN ? AND ?
+        ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
+      `, [fechaInicio, fechaFin]);
+      
+      console.log(`[BOLSONES_ENTRE_FECHAS] Se encontraron ${result.length} bolsones`);
+      return result;
+    } catch (error) {
+      console.error('Error al obtener bolsones entre fechas:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new BolsonRepository();

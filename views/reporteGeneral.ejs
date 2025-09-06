@@ -564,56 +564,20 @@
             // Generar días del mes para el eje X (del 1 al día actual)
             const diasDelMes = Array.from({length: dia}, (_, i) => i + 1);
             
-            // Para este ejemplo, crearemos datos simulados de evolución diaria
-            // En una implementación real, estos datos vendrían del backend
+            // Usar los datos reales históricos acumulados enviados desde el backend para producción (LÍNEA AZUL)
+            const produccionAcumulada = data.datosHistoricosProduccion || [];
             
-            // Simular datos de producción acumulada diaria (creciente hasta el día actual)
-            const produccionAcumulada = [];
-            let acumuladoActual = 0;
+            // Usar los datos reales históricos acumulados enviados desde el backend para planificación (LÍNEA NARANJA)
+            const planificacionAcumulada = data.datosHistoricosPlanificacion || [];
             
-            // Obtener la producción total acumulada hasta la fecha actual
-            let produccionTotalAcumulada = 0;
-            if (data.stockAcumuladoMes && Array.isArray(data.stockAcumuladoMes)) {
-              produccionTotalAcumulada = data.stockAcumuladoMes.reduce((total, prod) => total + (Number(prod.pesoTotal) || 0), 0);
-            }
-            
-            // Distribuir la producción a lo largo de los días (con incremento progresivo)
-            diasDelMes.forEach((_, index) => {
-              // Factor de incremento progresivo (día 1 produce menos que día 30)
-              const factorIncremento = (index + 1) / diasDelMes.length;
-              // Simulamos un incremento diario proporcional al día del mes
-              const incrementoDiario = produccionTotalAcumulada * (factorIncremento * 0.5) / diasDelMes.length;
-              acumuladoActual += incrementoDiario;
-              produccionAcumulada.push(Math.round(acumuladoActual));
-            });
-            
-            // Ajustamos el último valor para que coincida con el total acumulado real
-            if (produccionAcumulada.length > 0) {
-              produccionAcumulada[produccionAcumulada.length - 1] = produccionTotalAcumulada;
-            }
-            
-            // Simular datos de planificación acumulada diaria
-            const planificacionAcumulada = [];
-            let planAcumulado = 0;
-            
-            // Obtener la planificación total acumulada hasta la fecha actual
-            let planificacionTotalAcumulada = 0;
-            if (data.planificacionAcumulada && Array.isArray(data.planificacionAcumulada.productos)) {
-              planificacionTotalAcumulada = data.planificacionAcumulada.productos.reduce(
-                (total, prod) => total + (Number(prod.kilosAcumulados) || 0), 0
-              );
-            }
-            
-            // Distribuir la planificación de manera uniforme a lo largo de los días
-            const planDiario = planificacionTotalAcumulada / diasDelMes.length;
-            diasDelMes.forEach(() => {
-              planAcumulado += planDiario;
-              planificacionAcumulada.push(Math.round(planAcumulado));
-            });
-            
-            // Ajustamos el último valor para que coincida con el total acumulado real
-            if (planificacionAcumulada.length > 0) {
-              planificacionAcumulada[planificacionAcumulada.length - 1] = planificacionTotalAcumulada;
+            // Si no hay datos históricos disponibles, mostrar un mensaje
+            if ((!produccionAcumulada || produccionAcumulada.length === 0) && 
+                (!planificacionAcumulada || planificacionAcumulada.length === 0)) {
+              ctx.font = '16px Arial';
+              ctx.fillStyle = '#666';
+              ctx.textAlign = 'center';
+              ctx.fillText('No hay datos históricos disponibles', canvas.width / 2, canvas.height / 2);
+              return;
             }
             
             // Preparar etiquetas para el eje X (días del mes)
@@ -637,8 +601,8 @@
                   {
                     label: 'Planificación Acumulada (kg)',
                     data: planificacionAcumulada,
-                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                    borderColor: 'rgba(255, 206, 86, 1)',
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
                     borderWidth: 2,
                     tension: 0.1,
                     fill: true
@@ -649,29 +613,26 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
+                  y: {
+                    beginAtZero: true,
+                    title: {
+                      display: true,
+                      text: 'Kilogramos'
+                    }
+                  },
                   x: {
                     title: {
                       display: true,
-                      text: `Días del mes (${mes}/${anio})`
+                      text: 'Día'
                     }
-                  },
-                  y: { 
-                    beginAtZero: true, 
-                    title: { 
-                      display: true, 
-                      text: 'Kilos Acumulados (kg)' 
-                    } 
                   }
                 },
                 plugins: {
-                  title: {
-                    display: true,
-                    text: `Evolución: Producción vs Planificación Acumulada - ${mes}/${anio}`,
-                    font: { size: 16 }
-                  },
                   tooltip: {
                     callbacks: {
-                      label: (ctx) => `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('es-AR')} kg`
+                      label: function(context) {
+                        return context.dataset.label + ': ' + formatNumber(context.raw) + ' kg';
+                      }
                     }
                   },
                   legend: {
@@ -680,21 +641,10 @@
                 }
               }
             });
-            
+            console.log('Gráfico comparativo generado correctamente');
           } catch (error) {
-            console.error('Error al crear gráfico:', error);
-            
-            // Mostrar mensaje de error en el canvas
-            try {
-              const canvas = document.getElementById('chartProdVsPlan');
-              const ctx = canvas.getContext('2d');
-              ctx.font = '16px Arial';
-              ctx.fillStyle = '#dc3545';
-              ctx.textAlign = 'center';
-              ctx.fillText('Error al crear el gráfico: ' + error.message, canvas.width / 2, canvas.height / 2);
-            } catch(e) {
-              console.error('Error al mostrar mensaje de error en canvas:', e);
-            }
+            console.error('Error al generar gráfico comparativo:', error);
+            document.getElementById('chartProdVsPlan').innerHTML = `<div class="alert alert-danger">Error al generar el gráfico: ${error.message}</div>`;
           }
         }
 

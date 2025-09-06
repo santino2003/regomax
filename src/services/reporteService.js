@@ -260,6 +260,85 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
   }
 };
 
+// Función para obtener datos históricos reales de producción acumulada por día
+const obtenerProduccionAcumuladaPorDia = async (fecha /* 'YYYY-MM-DD' */) => {
+  try {
+    // Extraer año, mes y día de la fecha
+    const [year, month, day] = fecha.split('-').map(Number);
+    
+    // Crear un array para almacenar los totales acumulados para cada día
+    const acumuladosPorDia = [];
+    
+    // Para cada día hasta el día de la fecha, obtener la producción acumulada
+    for (let dia = 1; dia <= day; dia++) {
+      // Formar la fecha para el día actual del bucle
+      const fechaDia = `${year}-${month.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+      
+      // Obtener la ventana del mes operativo
+      const { inicio } = ventanaMesOperativo(fechaDia);
+      const inicioMesFormateado = formatMySQLLocal(inicio);
+      
+      // Crear fecha de fin del día con hora 23:59:59
+      const fechaFinDia = new Date(year, month-1, dia);
+      fechaFinDia.setHours(23, 59, 59, 999);
+      const finDiaFormateado = formatMySQLLocal(fechaFinDia);
+      
+      // Obtener todos los bolsones producidos desde el inicio del mes hasta el día actual
+      const bolsones = await bolsonRepository.obtenerBolsonesEntreFechas(inicioMesFormateado, finDiaFormateado);
+      
+      // Calcular el total acumulado para este día
+      let totalAcumulado = 0;
+      bolsones.forEach(bolson => {
+        totalAcumulado += Number(bolson.peso || 0);
+      });
+      
+      // Agregar al array de acumulados
+      acumuladosPorDia.push(totalAcumulado);
+    }
+    
+    return acumuladosPorDia;
+  } catch (error) {
+    console.error('Error al obtener producción acumulada por día:', error);
+    return [];
+  }
+};
+
+// Función para obtener datos históricos reales de planificación acumulada por día
+const obtenerPlanificacionAcumuladaPorDia = async (fecha /* 'YYYY-MM-DD' */) => {
+  try {
+    // Extraer año, mes y día de la fecha
+    const [year, month, day] = fecha.split('-').map(Number);
+    
+    // Crear un array para almacenar los totales acumulados para cada día
+    const acumuladosPorDia = [];
+    
+    // Para cada día hasta el día de la fecha, obtener la planificación acumulada
+    for (let dia = 1; dia <= day; dia++) {
+      // Formar la fecha para el día actual del bucle
+      const fechaDia = `${year}-${month.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+      
+      // Obtener la planificación acumulada hasta este día
+      const planificacionAcumulada = await planificacionRepository.obtenerPlanificacionAcumuladaHastaFecha(fechaDia);
+      
+      // Calcular el total acumulado para este día
+      let totalAcumulado = 0;
+      if (planificacionAcumulada && planificacionAcumulada.productos) {
+        planificacionAcumulada.productos.forEach(prod => {
+          totalAcumulado += Number(prod.kilosAcumulados || 0);
+        });
+      }
+      
+      // Agregar al array de acumulados
+      acumuladosPorDia.push(totalAcumulado);
+    }
+    
+    return acumuladosPorDia;
+  } catch (error) {
+    console.error('Error al obtener planificación acumulada por día:', error);
+    return [];
+  }
+};
+
 // REPORTE COMPLETO DIARIO (producción, despachos, stock del mes y despachos del mes)
 const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
   // Asegurarnos de que la fecha se procese correctamente para evitar problemas de zona horaria
@@ -268,7 +347,8 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
   
   // Obtener todos los datos básicos del reporte
   const [produccion, despachos, stockAcMes, despAcMes, stockHist, nfuDiario, nfuAcumuladoMes, 
-    nfuAcumuladoHist, planificacionDiaria, planificacionAcumulada] = await Promise.all([
+    nfuAcumuladoHist, planificacionDiaria, planificacionAcumulada, produccionAcumuladaPorDia, 
+    planificacionAcumuladaPorDia] = await Promise.all([
     obtenerSumatoriaPorProducto(fecha),
     obtenerDespachosPorProducto(fecha),
     obtenerStockAcumuladoDelMes(fecha),
@@ -278,7 +358,9 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
     obtenerNFUAcumuladoDelMes(fecha),
     obtenerNFUAcumuladoHastaFecha(fecha),
     obtenerPlanificacionPorFecha(fecha), 
-    obtenerPlanificacionAcumuladaHastaFecha(fecha) // Añadimos la planificación acumulada
+    obtenerPlanificacionAcumuladaHastaFecha(fecha),
+    obtenerProduccionAcumuladaPorDia(fecha), // Datos históricos de producción acumulada
+    obtenerPlanificacionAcumuladaPorDia(fecha) // Nueva llamada para obtener datos históricos de planificación
   ]);
 
   // Calcular proyecciones
@@ -393,6 +475,8 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
     },
     planificacionDiaria, // Incluir la planificación diaria completa
     planificacionAcumulada, // Incluir la planificación acumulada
+    datosHistoricosProduccion: produccionAcumuladaPorDia, // Incluir los datos históricos de producción acumulada
+    datosHistoricosPlanificacion: planificacionAcumuladaPorDia, // Incluir los datos históricos de planificación acumulada
     proyeccionInfo: {
       nfu: proyeccionNFU,
       produccion: proyeccionProduccion,
@@ -414,5 +498,9 @@ module.exports = {
   obtenerNFUAcumuladoHastaFecha,
   // Nueva función para planificación
   obtenerPlanificacionPorFecha,
-  obtenerPlanificacionAcumuladaHastaFecha
+  obtenerPlanificacionAcumuladaHastaFecha,
+  // Nueva función para producción acumulada
+  obtenerProduccionAcumuladaPorDia,
+  // Nueva función para planificación acumulada por día
+  obtenerPlanificacionAcumuladaPorDia
 };
