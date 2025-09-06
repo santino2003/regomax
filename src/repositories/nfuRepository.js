@@ -93,6 +93,77 @@ const obtenerCantidadNFUHastaFecha = async (fecha) => {
   return result[0]?.cantidadTotal || 0;
 };
 
+/**
+ * Obtiene registros NFU con paginación y filtros
+ * @param {number} page - Número de página
+ * @param {number} limit - Límite de registros por página
+ * @param {Object} filtros - Filtros a aplicar (fechaDesde, fechaHasta)
+ * @returns {Promise<Object>} - Registros y metadatos de paginación
+ */
+const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
+  try {
+    // Validación segura de números para paginación
+    const lim = Number.isFinite(+limit) ? Math.max(1, +limit) : 10;
+    const p = Number.isFinite(+page) ? Math.max(1, +page) : 1;
+    const off = (p - 1) * lim;
+    
+    // Construir consulta base
+    let query = 'SELECT id, fecha, cantidad, responsable FROM nfu WHERE 1=1';
+    const queryParams = [];
+    
+    // Aplicar filtros
+    if (filtros.fechaDesde && filtros.fechaDesde.trim() !== '') {
+      query += ' AND fecha >= ?';
+      queryParams.push(filtros.fechaDesde);
+    }
+    
+    if (filtros.fechaHasta && filtros.fechaHasta.trim() !== '') {
+      query += ' AND fecha <= ?';
+      queryParams.push(filtros.fechaHasta);
+    }
+    
+    // Ordenar por fecha descendente
+    query += ' ORDER BY fecha DESC';
+    
+    // Agregar paginación directamente en la consulta (sin usar marcadores de posición)
+    // En MySQL, no se puede usar marcadores de posición para LIMIT y OFFSET
+    query += ` LIMIT ${lim} OFFSET ${off}`;
+    
+    // Ejecutar la consulta
+    const registros = await db.query(query, queryParams);
+    
+    // Consulta para contar total de registros con los mismos filtros
+    let countQuery = 'SELECT COUNT(*) as total FROM nfu WHERE 1=1';
+    const countParams = [];
+    
+    if (filtros.fechaDesde && filtros.fechaDesde.trim() !== '') {
+      countQuery += ' AND fecha >= ?';
+      countParams.push(filtros.fechaDesde);
+    }
+    
+    if (filtros.fechaHasta && filtros.fechaHasta.trim() !== '') {
+      countQuery += ' AND fecha <= ?';
+      countParams.push(filtros.fechaHasta);
+    }
+    
+    const countResult = await db.query(countQuery, countParams);
+    const total = countResult[0]?.total ?? 0;
+    
+    return {
+      data: registros,
+      pagination: {
+        total,
+        page: p,
+        limit: lim,
+        totalPages: Math.ceil(total / lim)
+      }
+    };
+  } catch (error) {
+    console.error('Error al obtener registros NFU paginados:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   insertarNFU,
   obtenerTodosNFU,
@@ -101,5 +172,6 @@ module.exports = {
   obtenerNFUEntreFechas,
   obtenerCantidadNFUEntreFechas,
   obtenerNFUHastaFecha,
-  obtenerCantidadNFUHastaFecha
+  obtenerCantidadNFUHastaFecha,
+  obtenerRegistrosNFU
 };
