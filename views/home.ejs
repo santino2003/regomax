@@ -73,7 +73,6 @@
                                     </div>
                                     <% } %>
                                     
-                                    
                                     <% if (user && (user.role === 'admin' || user.permissions && user.permissions['despachos:view'])) { %>
                                     <div class="submenu-item">
                                         <a href="/bolsones-despachados"><i class="bi bi-clipboard-check me-2"></i> Bolsones Despachados</a>
@@ -92,11 +91,51 @@
                                     </div>
                                     <% } %>
                                     
+                                    <!-- Submenú de Reporte como título -->
+                                    <% if (user && (user.role === 'admin' || user.permissions && (user.permissions['reportes:view'] || user.permissions['dias_habiles:view']))) { %>
+                                    <div class="submenu-item">
+                                        <span class="submenu-title"><i class="bi bi-graph-up me-2"></i> Reporte</span>
+                                    </div>
+                                    
+                                    <!-- Opciones de Reporte indentadas -->
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['reportes:view'])) { %>
+                                    <div class="submenu-item ms-4">
+                                        <a href="/reporte-general"><i class="bi bi-clipboard-data me-2"></i> Reporte Productivo</a>
+                                    </div>
+                                    <% } %>
+                                    
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['dias_habiles:view'])) { %>
+                                    <div class="submenu-item ms-4">
+                                        <a href="/dias-habiles"><i class="bi bi-calendar-check me-2"></i> Planificación</a>
+                                    </div>
+                                    <% } %>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
                         
-            
+                        <!-- Nuevo desplegable para Ingreso NFU -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNFU">
+                                    <i class="bi bi-recycle me-2"></i> Ingreso de NFU
+                                </button>
+                            </h2>
+                            <div id="collapseNFU" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                                <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['reportes:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/nfu"><i class="bi bi-list-check me-2"></i> Lista NFU</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['reportes:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/nfu/nuevo"><i class="bi bi-plus-circle me-2"></i> Registrar Ingreso NFU</a>
+                                    </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Ventas y Logística -->
                         <div class="accordion-item">
@@ -123,39 +162,6 @@
                                         </div>
                                         <% } 
                                     %>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Reportes - Nuevo menú desplegable -->
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReportes">
-                                    <i class="bi bi-file-earmark-bar-graph me-2"></i> Reportes
-                                </button>
-                            </h2>
-                            <div id="collapseReportes" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
-                                <div class="accordion-body">
-                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['reportes:view'])) { %>
-                                    <div class="submenu-item">
-                                        <a href="/reporte-general"><i class="bi bi-clipboard-data me-2"></i> Reporte General Consolidado</a>
-                                    </div>
-                                    <% } %>
-                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['dias_habiles:view'])) { %>
-                                    <div class="submenu-item">
-                                        <a href="/dias-habiles"><i class="bi bi-calendar-check me-2"></i> Días Hábiles</a>
-                                    </div>
-                                    <% } %>
-                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['reportes:view'])) { %>
-                                    <div class="submenu-item">
-                                        <a href="/nfu"><i class="bi bi-recycle me-2"></i> Neumáticos Fuera de Uso (NFU)</a>
-                                    </div>
-                                    <% } %>
-                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['reportes:view'])) { %>
-                                    <div class="submenu-item">
-                                        <a href="/nfu/nuevo"><i class="bi bi-recycle me-2"></i> Registrar Ingreso NFU</a>
-                                    </div>
-                                    <% } %>
                                 </div>
                             </div>
                         </div>

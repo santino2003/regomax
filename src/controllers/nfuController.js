@@ -155,10 +155,51 @@ const mostrarFormularioIngresoNFU = (req, res) => {
   });
 };
 
+// Mostrar listado de ingresos de NFU
+const listarNFU = async (req, res) => {
+  try {
+    // Parámetros de paginación
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // Filtros
+    const filtros = {
+      fechaDesde: req.query.fechaDesde || '',
+      fechaHasta: req.query.fechaHasta || ''
+    };
+    
+    // Obtener registros de NFU
+    const registros = await nfuRepository.obtenerRegistrosNFU(page, limit, filtros);
+    
+    // Calcular total acumulado
+    let totalKg = 0;
+    if (registros && registros.data) {
+      totalKg = registros.data.reduce((sum, item) => sum + parseFloat(item.cantidad), 0);
+    }
+    
+    res.render('listarNFU', {
+      title: 'Listado de Ingresos NFU',
+      username: req.user.username,
+      user: req.user,
+      registros: registros.data || [],
+      pagination: registros.pagination || {},
+      filtros: filtros,
+      totalKg: totalKg.toFixed(2)
+    });
+  } catch (error) {
+    console.error('Error al listar registros NFU:', error);
+    res.status(500).render('error', {
+      message: 'Error al cargar el listado de ingresos NFU',
+      error: { status: 500, stack: error.stack }
+    });
+  }
+};
+
 module.exports = {
   obtenerKgPorDia,
   obtenerStockAcumuladoDelMes,
   obtenerStockAcumuladoHastaFecha,
   registrarIngresoNFU,
-  mostrarFormularioIngresoNFU
+  mostrarFormularioIngresoNFU,
+  listarNFU
 };

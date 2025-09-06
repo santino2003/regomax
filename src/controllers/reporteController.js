@@ -33,6 +33,34 @@ const generarReporteCompleto = async (req, res) => {
     }
 };
 
+/**
+ * Renderiza la vista del reporte productivo (antes reporte general consolidado)
+ * @param {Object} req - Request HTTP
+ * @param {Object} res - Response HTTP
+ */
+const mostrarReporteGeneral = async (req, res) => {
+    try {
+        // Obtener fecha actual o la seleccionada por el usuario
+        const fechaActual = new Date();
+        const fechaSeleccionada = req.query.fecha || 
+                                 `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`;
+        
+        res.render('reporteGeneral', { 
+            title: 'Reporte Productivo',
+            username: req.user.username,
+            user: req.user,
+            fechaSeleccionada: fechaSeleccionada
+        });
+    } catch (error) {
+        console.error('Error al mostrar el reporte productivo:', error);
+        res.status(500).render('error', {
+            message: 'Error al cargar el reporte productivo',
+            error: { status: 500, stack: error.stack }
+        });
+    }
+};
+
 module.exports = {
-    generarReporteCompleto
+    generarReporteCompleto,
+    mostrarReporteGeneral
 };
