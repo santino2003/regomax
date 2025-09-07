@@ -82,27 +82,20 @@ const OVController = {
             const limit = parseInt(req.query.limit) || 10;
             const search = req.query.search || '';
             const estado = req.query.estado || '';
-            const searchType = req.query.searchType || 'all'; // Nuevo parámetro para tipo de búsqueda
+            const searchType = req.query.searchType || 'all';
             
-            // Por defecto ordenamos por id descendente (del último al primero)
-            const resultado = await OVService.obtenerTodasLasOrdenes(page, limit, 'id', 'DESC');
+            // Obtener TODAS las órdenes sin paginación para aplicar filtros al conjunto completo
+            const resultadoCompleto = await OVService.obtenerTodasLasOrdenes(1, 100000, 'id', 'DESC');
+            let ordenesFiltradas = resultadoCompleto.data;
             
-            // Si hay un filtro de estado, filtramos los resultados
+            // Aplicar filtros al conjunto completo de datos
             if (estado && estado !== 'todos') {
-                resultado.data = resultado.data.filter(orden => orden.estado === estado);
-                
-                // Ajustar la paginación para reflejar los resultados filtrados
-                resultado.pagination.total = resultado.data.length;
-                resultado.pagination.totalPages = Math.ceil(resultado.data.length / limit);
-                if (resultado.pagination.page > resultado.pagination.totalPages) {
-                    resultado.pagination.page = 1;
-                }
+                ordenesFiltradas = ordenesFiltradas.filter(orden => orden.estado === estado);
             }
             
-            // Si hay un término de búsqueda, filtramos los resultados según el tipo de búsqueda
             if (search) {
                 const searchLower = search.toLowerCase();
-                resultado.data = resultado.data.filter(orden => {
+                ordenesFiltradas = ordenesFiltradas.filter(orden => {
                     // Diferentes criterios de búsqueda según el tipo seleccionado
                     if (searchType === 'cliente') {
                         // Buscar solo por cliente
@@ -119,34 +112,44 @@ const OVController = {
                         return idFormatoOV.includes(searchLower) || idNumericoMatch;
                     } 
                     else {
-                        // Modo "all" - buscar en todos los campos (comportamiento predeterminado)
-                        // Buscar por cliente
+                        // Modo "all" - buscar en todos los campos
                         const clienteMatch = orden.cliente && 
                                             orden.cliente.toLowerCase().includes(searchLower);
-                        
-                        // Buscar por cliente final (nuevo)
                         const clienteFinalMatch = orden.cliente_final && 
                                                 orden.cliente_final.toLowerCase().includes(searchLower);
-                        
-                        // Buscar por código de venta (si existe)
                         const codigoVentaMatch = orden.codigo_venta && 
                                                 orden.codigo_venta.toLowerCase().includes(searchLower);
-                        
-                        // Buscar por ID en formato OV-X
                         const idFormatoOV = `OV-${orden.id}`.toLowerCase();
                         const idMatch = idFormatoOV.includes(searchLower);
-                        
-                        // Buscar por ID numérico
                         const idNumericoMatch = orden.id.toString() === search;
                         
                         return clienteMatch || clienteFinalMatch || codigoVentaMatch || idMatch || idNumericoMatch;
                     }
                 });
-                
-                // Ajustar la paginación para reflejar los resultados de búsqueda
-                resultado.pagination.total = resultado.data.length;
-                resultado.pagination.totalPages = Math.ceil(resultado.data.length / limit);
             }
+            
+            // Calcular el total de resultados después de filtrar
+            const totalItems = ordenesFiltradas.length;
+            const totalPages = Math.ceil(totalItems / limit);
+            
+            // Asegurarnos de que la página actual es válida después del filtrado
+            const currentPage = page > totalPages && totalPages > 0 ? 1 : page;
+            
+            // Aplicar paginación manualmente a los datos filtrados
+            const startIndex = (currentPage - 1) * limit;
+            const endIndex = startIndex + limit;
+            const ordenesPaginadas = ordenesFiltradas.slice(startIndex, endIndex);
+            
+            // Construir objeto de respuesta con la estructura esperada por la vista
+            const resultado = {
+                data: ordenesPaginadas,
+                pagination: {
+                    total: totalItems,
+                    page: currentPage,
+                    limit: limit,
+                    totalPages: totalPages
+                }
+            };
             
             return res.render('listarOrdenes', {
                 title: 'Listado de Órdenes de Venta',
@@ -155,7 +158,7 @@ const OVController = {
                 pagination: resultado.pagination,
                 currentSearch: search,
                 currentEstado: estado,
-                searchType: searchType // Pasar el tipo de búsqueda a la vista
+                searchType: searchType
             });
         } catch (error) {
             console.error('Error al listar órdenes de venta:', error);
