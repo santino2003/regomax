@@ -103,7 +103,7 @@ module.exports = {
 
       // Logs de depuración (podés comentar luego)
       // console.log('[DB] SQL:', text);
-      console.log('[DB] has?=', hasQ, 'placeCount=', placeCount, 'paramsType=', Array.isArray(params) ? `array(${params.length})` : typeof params, 'params=', params);
+      // console.log('[DB] has?=', hasQ, 'placeCount=', placeCount, 'paramsType=', Array.isArray(params) ? `array(${params.length})` : typeof params, 'params=', params);
 
       if (!hasQ) {
         // SQL sin ?, NO pasar params
