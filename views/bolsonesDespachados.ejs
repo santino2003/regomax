@@ -148,7 +148,7 @@
                                                             <span class="text-muted">-</span>
                                                         <% } %>
                                                     </td>
-                                                    <td><%= new Date(bolson.fecha).toLocaleString() %></td>
+                                                    <td><%= fechaUtils.formatearFechaHoraLocal(bolson.fecha) %></td>
                                                     <td><%= bolson.responsable %></td>
                                                     <td>
                                                         <% if (bolson.orden_venta_id) { %>

@@ -4,6 +4,9 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
+// Configurar zona horaria para Argentina/Buenos Aires
+process.env.TZ = process.env.TZ || 'America/Argentina/Buenos_Aires';
+
 // Importar rutas y middleware
 const authRoutes = require('./routes/authRoutes');
 const bolsonRoutes = require('./routes/bolsonRoutes');

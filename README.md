@@ -1,7 +1,7 @@
 Cliente (Postman) → Rutas → Controladores(req res) → Servicios (logca de negocio)→ Repositorios → Base de Datos
 dbeaver-ce &
 
-TO DO:
+TO DO
 
 agregar matafuegos
 crear users (puede ser para la que viene)(ver historial)

@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { formatMySQLLocal, fechaActual } = require('../utils/fecha');
 
 class DespachoRepository {
     // Iniciar una transacción
@@ -19,12 +20,12 @@ class DespachoRepository {
     // Crear un nuevo despacho
     async crearDespacho(ordenVentaId, responsable, observaciones) {
         try {
-            const fechaActual = new Date().toISOString().slice(0, 19).replace('T', ' '); // formato YYYY-MM-DD HH:MM:SS
+            const fechaActualStr = formatMySQLLocal(fechaActual()); // Usar utilidad de fecha
             const query = `
                 INSERT INTO despachos (fecha, orden_venta_id, responsable, observaciones)
                 VALUES (?, ?, ?, ?)
             `;
-            const result = await db.query(query, [fechaActual, ordenVentaId, responsable, observaciones]);
+            const result = await db.query(query, [fechaActualStr, ordenVentaId, responsable, observaciones]);
             return result.insertId;
         } catch (error) {
             console.error('Error al crear despacho:', error);
@@ -35,7 +36,7 @@ class DespachoRepository {
     // Agregar detalle de bolsón a un despacho (ahora incluye fecha_despacho)
     async agregarDetalleBolson(despachoId, bolsonCodigo, producto, peso, precinto) {
         try {
-            const fechaDespacho = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            const fechaDespacho = formatMySQLLocal(fechaActual()); // Usar utilidad de fecha
             const query = `
                 INSERT INTO despachos_detalle (despacho_id, bolson_codigo, producto, peso, precinto, fecha_despacho)
                 VALUES (?, ?, ?, ?, ?, ?)
@@ -504,7 +505,7 @@ class DespachoRepository {
     // Agregar detalle de producto manual a un despacho (para productos sin códigos)
     async agregarDetalleManual(despachoId, codigoManual, producto, peso) {
         try {
-            const fechaDespacho = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            const fechaDespacho = formatMySQLLocal(fechaActual()); // Usar utilidad de fecha
             await db.query(
                 `INSERT INTO despachos_detalle (despacho_id, bolson_codigo, producto, peso, es_manual, fecha_despacho) 
                  VALUES (?, ?, ?, ?, 1, ?)`,

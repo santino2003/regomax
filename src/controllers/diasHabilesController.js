@@ -1,15 +1,16 @@
 const diasHabilesService = require('../services/diasHabilesService');
+const { fechaActual } = require('../utils/fecha');
 
-class DiasHabilesController {
+const diasHabilesController = {
     /**
      * Muestra la vista del calendario para seleccionar días hábiles
      */
     async mostrarCalendario(req, res) {
         try {
             // Obtener fecha actual o la proporcionada en la consulta
-            const fechaActual = new Date();
-            const mesActual = parseInt(req.query.mes) || fechaActual.getMonth() + 1;
-            const anioActual = parseInt(req.query.anio) || fechaActual.getFullYear();
+            const fechaObj = fechaActual();
+            const mesActual = parseInt(req.query.mes) || fechaObj.getMonth() + 1;
+            const anioActual = parseInt(req.query.anio) || fechaObj.getFullYear();
             
             // Obtener datos del calendario
             const calendario = await diasHabilesService.obtenerCalendarioMensual(mesActual, anioActual);
@@ -42,7 +43,7 @@ class DiasHabilesController {
                 error: { status: 500, stack: error.stack }
             });
         }
-    }
+    },
     
     /**
      * Guarda los días hábiles seleccionados por el usuario
@@ -74,7 +75,7 @@ class DiasHabilesController {
                 error: error.message
             });
         }
-    }
+    },
     
     /**
      * Obtiene los días hábiles seleccionados para un mes y año específico
@@ -101,7 +102,7 @@ class DiasHabilesController {
                 error: error.message
             });
         }
-    }
+    },
     
     /**
      * Elimina los días hábiles para un mes y año específico
@@ -126,6 +127,6 @@ class DiasHabilesController {
             });
         }
     }
-}
+};
 
-module.exports = new DiasHabilesController();
+module.exports = diasHabilesController;

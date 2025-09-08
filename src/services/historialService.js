@@ -1,11 +1,12 @@
 const historialRepository = require('../repositories/historialRepository');
+const { fechaActual } = require('../utils/fecha');
 
 class HistorialService {
     /**
      * Registra una acción en el historial
      */
     async registrarAccion(usuario, accion, entidad, detalles = null) {
-        const fechaHora = new Date(); // Obtener la fecha y hora actual
+        const fechaHora = fechaActual(); // Usar utilidad de fecha en lugar de new Date()
         return await historialRepository.registrarAccion(
             usuario, accion, entidad, detalles, fechaHora
         );

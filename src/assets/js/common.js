@@ -71,7 +71,7 @@ function setupLogout() {
             .then(response => {
                 if (response.ok) {
                     // Limpiar el caché antes de redireccionar
-                    window.location.replace('/login?nocache=' + new Date().getTime());
+                    window.location.replace('/login?nocache=' + Date.now()); // Usamos Date.now() que es más eficiente que new Date().getTime()
                 } else {
                     throw new Error('Error al cerrar sesión');
                 }

@@ -1,11 +1,13 @@
 const { format } = require('date-fns');
+const { fechaActual } = require('./fecha');
 
 function generateNumericCode(numero) {
-    const año = format(new Date(), 'yy');
-    const mes = format(new Date(), 'MM');
-    const dia = format(new Date(), 'dd');
-    const hora = format(new Date(), 'HH');
-    const minutos = format(new Date(), 'mm');
+    const date = fechaActual(); // Usar utilidad de fecha que tiene en cuenta la zona horaria
+    const año = format(date, 'yy');
+    const mes = format(date, 'MM');
+    const dia = format(date, 'dd');
+    const hora = format(date, 'HH');
+    const minutos = format(date, 'mm');
     
     // Asegurar que el número siempre tenga al menos 2 dígitos
     const numeroPadded = numero.toString().padStart(2, '0');

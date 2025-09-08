@@ -114,8 +114,15 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Establecer fecha actual por defecto
-        document.getElementById('fecha').valueAsDate = new Date();
+        // Establecer fecha actual por defecto con la zona horaria de Buenos Aires
+        function setFechaActualBA() {
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
+            const today = new Date();
+            const fechaBA = today.toLocaleDateString('es-AR', options).split('/').reverse().join('-');
+            document.getElementById('fecha').value = fechaBA;
+        }
+        
+        setFechaActualBA();
         
         console.log('Formulario NFU inicializado');
         

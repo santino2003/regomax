@@ -1,7 +1,8 @@
 const bolsonRepository = require('../repositories/bolsonRepository');
-const { format } = require('date-fns');
 const barcodeGenerator = require('../utils/barcodeGenerator');
 const generarBarcodeBase64 = require('../utils/imageBarcode');
+const { format } = require('date-fns');
+const { fechaActual, formatMySQLLocal } = require('../utils/fecha');
 // const imagenBarcodeGenerator = require('../utils/imagenBarcodeGenerator');
 
 class BolsonService {
@@ -181,6 +182,33 @@ class BolsonService {
         } catch (error) {
             console.error('Error en servicio al obtener bolsones pendientes:', error);
             throw error;
+        }
+    }
+
+    async generarCodigoUnico() {
+        try {
+            let ultimaFecha = await bolsonRepository.getUltimaFecha();
+            let numero = (await bolsonRepository.getUltimoNumero()) + 1;
+            const hoy = formatMySQLLocal(fechaActual()).split(' ')[0]; // Usar utilidad de fecha
+            const fechaComparable = ultimaFecha ? formatMySQLLocal(new Date(ultimaFecha)).split(' ')[0] : null;
+            
+            // Si la fecha es diferente a la última fecha registrada, reiniciar el número
+            if (fechaComparable !== hoy) {
+                numero = 1;
+            }
+            
+            // Imprimir la hora actual para diagnóstico (10:36 según mencionado)
+            const ahora = fechaActual(); // Usar utilidad de fecha
+            console.log('=== DIAGNÓSTICO DE HORA ===');
+            console.log('Hora actual del sistema:', ahora);
+            console.log('toString():', ahora.toString());
+            console.log('toLocaleString():', ahora.toLocaleString());
+            console.log('Hora (getHours):', ahora.getHours());
+            console.log('Minutos (getMinutes):', ahora.getMinutes());
+            console.log('=== FIN DIAGNÓSTICO ===');
+        } catch (error) {
+            console.error('Error al generar código único:', error);
+            throw new Error('Error al generar código único: ' + error.message);
         }
     }
 }

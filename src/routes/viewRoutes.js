@@ -11,6 +11,14 @@ const despachoController = require('../controllers/despachoController');
 const parteDiarioController = require('../controllers/parteDiarioController');
 const historialController = require('../controllers/historialController');
 const historialService = require('../services/historialService');
+// Importar utilidades de fecha para compartir en todas las vistas
+const fechaUtils = require('../utils/fecha');
+
+// Middleware para hacer disponibles las utilidades de fecha en todas las vistas
+router.use((req, res, next) => {
+    res.locals.fechaUtils = fechaUtils;
+    next();
+});
 
 // Ruta base - redirigir a login
 router.get('/', (req, res) => {

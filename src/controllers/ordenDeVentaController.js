@@ -1,6 +1,8 @@
 const OVService = require('../services/ordenDeVentaService');
-const ProductoService = require('../services/productoService'); // Añadida nueva importación
-const Excel = require('exceljs'); // Añadir importación de ExcelJS
+const ProductoService = require('../services/productoService'); 
+const Excel = require('exceljs');
+// Importar utilidades de fecha
+const { formatearFechaLocal, fechaActual, formatMySQLLocal } = require('../utils/fecha');
 
 const OVController = {
     async crearOrdenDeVenta(req, res) {
@@ -440,7 +442,7 @@ const OVController = {
                 }
                 
                 // Formatear fecha para mejor visualización
-                const fecha = orden.fecha ? new Date(orden.fecha).toLocaleDateString() : 'N/A';
+                const fecha = orden.fecha ? formatearFechaLocal(orden.fecha) : 'N/A';
                 
                 // Formatear estado para mejor visualización
                 let estado = 'PENDIENTE';
@@ -475,11 +477,11 @@ const OVController = {
             });
             
             // Configurar el nombre del archivo con la fecha actual
-            const fechaActual = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+            const fechaArchivo = formatMySQLLocal(fechaActual()).replace(/[:\s]/g, '-');
             const filtroInfo = estado && !selectedIds.length ? `_${estado}` : '';
             const searchInfo = search && !selectedIds.length ? `_${search.replace(/[^a-z0-9]/gi, '_')}` : '';
             const seleccionInfo = selectedIds.length > 0 ? '_seleccionadas' : '';
-            const filename = `ordenes_venta${filtroInfo}${searchInfo}${seleccionInfo}_${fechaActual}.xlsx`;
+            const filename = `ordenes_venta${filtroInfo}${searchInfo}${seleccionInfo}_${fechaArchivo}.xlsx`;
             
             console.log(`Generando archivo Excel: ${filename}`);
             

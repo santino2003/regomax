@@ -62,7 +62,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="fecha" class="form-label">Fecha</label>
-                                <input type="date" class="form-control" id="fecha" name="fecha" value="<%= orden.fecha ? new Date(orden.fecha).toISOString().slice(0,10) : '' %>" required>
+                                <input type="date" class="form-control" id="fecha" name="fecha" value="<%= orden.fecha ? formatearFecha(orden.fecha) : '' %>" required>
                             </div>
                             <div class="col-md-4">
                                 <label for="estado" class="form-label">Estado</label>
@@ -184,5 +184,14 @@
     
     <!-- Custom JS for this page -->
     <script src="/assets/js/ordenesEditar.js"></script>
+
+    <%
+    // Función para formatear fechas con zona horaria de Buenos Aires
+    function formatearFecha(fechaStr) {
+        const fecha = new Date(fechaStr);
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
+        return fecha.toLocaleDateString('es-AR', options).split('/').reverse().join('-');
+    }
+    %>
 </body>
 </html>

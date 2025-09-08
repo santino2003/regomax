@@ -1,6 +1,11 @@
 $(document).ready(function() {
-    // Establecer fecha actual por defecto
-    const today = new Date().toISOString().split('T')[0];
+    // Establecer fecha actual por defecto usando la zona horaria de Buenos Aires
+    function getFormattedDate() {
+        // Usamos toLocaleDateString con opciones para garantizar la zona horaria correcta
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
+        return new Date().toLocaleDateString('es-AR', options).split('/').reverse().join('-');
+    }
+    const today = getFormattedDate();
     $('#fecha').val(today);
     
     // Array para almacenar productos de la orden

@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { formatMySQLLocal, fechaActual } = require('../utils/fecha');
 
 class ParteDiarioRepository {
     // Crear un nuevo parte diario - Datos de control
@@ -181,7 +182,7 @@ class ParteDiarioRepository {
             // Los datos ya están en el formato correcto, solo agregamos los campos base
             const datosInsert = {
                 parte_diario_id: parteDiarioId,
-                fecha_creacion: new Date(),
+                fecha_creacion: formatMySQLLocal(fechaActual()), // Usar utilidad de fecha en lugar de new Date()
                 ...checklistData  // Ahora podemos extender directamente ya que los nombres coinciden
             };
             

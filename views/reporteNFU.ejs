@@ -100,8 +100,15 @@
 let graficoNFU;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Establecer fecha actual por defecto
-    document.getElementById('reporteFecha').valueAsDate = new Date();
+    // Establecer fecha actual por defecto con la zona horaria de Buenos Aires
+    function setFechaActualBA() {
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
+        const today = new Date();
+        const fechaBA = today.toLocaleDateString('es-AR', options).split('/').reverse().join('-');
+        document.getElementById('reporteFecha').value = fechaBA;
+    }
+    
+    setFechaActualBA();
     
     // Evento para generar el reporte
     document.getElementById('btnGenerarReporte').addEventListener('click', generarReporte);
@@ -344,8 +351,10 @@ function exportarReporteExcel() {
     // Agregar hoja al libro
     XLSX.utils.book_append_sheet(wb, ws, "Reporte NFU");
     
-    // Nombre del archivo con fecha actual
-    const fechaStr = new Date().toISOString().split('T')[0];
+    // Nombre del archivo con fecha actual en zona horaria Buenos Aires
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
+    const today = new Date();
+    const fechaStr = today.toLocaleDateString('es-AR', options).split('/').reverse().join('-');
     const filename = `Reporte_NFU_${fechaStr}.xlsx`;
     
     // Exportar a Excel

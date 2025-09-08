@@ -1,6 +1,6 @@
 const reporteService = require('../services/reporteService');
 const nfuRepository = require('../repositories/nfuRepository');
-const { formatMySQLLocal } = require('../utils/fecha');
+const { formatMySQLLocal, formatearFechaLocal, formatearFechaHoraLocal, fechaActual } = require('../utils/fecha');
 
 // Obtener la cantidad de kg de NFU que entró en un día determinado
 const obtenerKgPorDia = async (req, res) => {
@@ -175,6 +175,13 @@ const listarNFU = async (req, res) => {
     let totalKg = 0;
     if (registros && registros.data) {
       totalKg = registros.data.reduce((sum, item) => sum + parseFloat(item.cantidad), 0);
+      
+      // Formatear las fechas usando las utilidades
+      registros.data = registros.data.map(item => ({
+        ...item,
+        fechaFormateada: formatearFechaLocal(item.fecha),
+        fechaHoraRegistro: formatearFechaHoraLocal(item.created_at)
+      }));
     }
     
     res.render('listarNFU', {
@@ -184,7 +191,8 @@ const listarNFU = async (req, res) => {
       registros: registros.data || [],
       pagination: registros.pagination || {},
       filtros: filtros,
-      totalKg: totalKg.toFixed(2)
+      totalKg: totalKg.toFixed(2),
+      fechaActual: formatearFechaLocal(fechaActual())
     });
   } catch (error) {
     console.error('Error al listar registros NFU:', error);

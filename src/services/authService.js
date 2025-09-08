@@ -8,15 +8,20 @@ class AuthService {
       // Buscar usuario por nombre de usuario
       const user = await userRepository.findByUsername(username);
       
-      // Si no existe el usuario
+      // Si no existe el usuario o la contraseña es inválida
       if (!user) {
+        console.log('no user');
         throw new Error('Credenciales inválidas');
+        
       }
 
       // Verificar contraseña
       const isPasswordValid = await hashUtils.comparePassword(password, user.password);
+      console.log("password",password, user.password, isPasswordValid);
       if (!isPasswordValid) {
+        console.log('invalid password');
         throw new Error('Credenciales inválidas');
+        
       }
 
       // Generar token JWT incluyendo permisos
