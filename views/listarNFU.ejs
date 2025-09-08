@@ -61,7 +61,18 @@
                             <% if (registros && registros.length > 0) { %>
                                 <% registros.forEach(function(ingreso) { %>
                                     <tr>
-                                        <td><%= new Date(ingreso.fecha).toLocaleDateString() %></td>
+                                        <td>
+                                            <% 
+                                            const fecha = new Date(ingreso.fecha);
+                                            const options = { 
+                                                year: 'numeric', 
+                                                month: '2-digit', 
+                                                day: '2-digit', 
+                                                timeZone: 'America/Argentina/Buenos_Aires' 
+                                            };
+                                            %>
+                                            <%= fecha.toLocaleDateString('es-AR', options) %>
+                                        </td>
                                         <td><%= ingreso.cantidad %></td>
                                         <td><%= ingreso.responsable %></td>
                                     </tr>
@@ -133,20 +144,28 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Establecer fechas por defecto (mes actual) si no hay filtros aplicados
-    const hoy = new Date();
-    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
-    
-    const fechaDesde = document.getElementById('fechaDesde');
-    const fechaHasta = document.getElementById('fechaHasta');
-    
-    if (!fechaDesde.value) {
-        fechaDesde.valueAsDate = primerDia;
+    function setFechasConZonaHorariaBuenosAires() {
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
+        const hoy = new Date();
+        
+        // Primer día del mes actual en Buenos Aires
+        const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        const primerDiaFormatoBA = primerDia.toLocaleDateString('es-AR', options).split('/').reverse().join('-');
+        
+        // Fecha actual en Buenos Aires
+        const hoyFormatoBA = hoy.toLocaleDateString('es-AR', options).split('/').reverse().join('-');
+        
+        // Establecer fechas en los campos si no tienen valores
+        if (!document.getElementById('fechaDesde').value) {
+            document.getElementById('fechaDesde').value = primerDiaFormatoBA;
+        }
+        
+        if (!document.getElementById('fechaHasta').value) {
+            document.getElementById('fechaHasta').value = hoyFormatoBA;
+        }
     }
     
-    if (!fechaHasta.value) {
-        fechaHasta.valueAsDate = ultimoDia;
-    }
+    setFechasConZonaHorariaBuenosAires();
 });
 </script>
 

@@ -1,4 +1,5 @@
 const historialService = require('../services/historialService');
+const { formatearFechaHoraLocal, fechaActual, formatMySQLLocal } = require('../utils/fecha');
 
 class HistorialController {
     /**
@@ -68,8 +69,8 @@ class HistorialController {
             
             // Agregar filas
             resultado.data.forEach(item => {
-                // Formatear fecha
-                const fecha = new Date(item.fecha_hora).toLocaleString();
+                // Formatear fecha usando utilidades
+                const fecha = formatearFechaHoraLocal(item.fecha_hora);
                 
                 // Convertir detalles a string, escapando comillas
                 let detallesStr = '';
@@ -83,7 +84,7 @@ class HistorialController {
             
             // Configurar headers para descarga
             res.setHeader('Content-Type', 'text/csv');
-            res.setHeader('Content-Disposition', `attachment; filename=historial-${new Date().toISOString().split('T')[0]}.csv`);
+            res.setHeader('Content-Disposition', `attachment; filename=historial-${formatMySQLLocal(fechaActual()).split(' ')[0]}.csv`);
             
             // Enviar CSV
             res.send(csv);

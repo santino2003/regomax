@@ -131,7 +131,7 @@
                                                 <% } %>
                                                 <tr>
                                                     <th>Fecha:</th>
-                                                    <td><%= new Date(orden.fecha).toLocaleDateString() %></td>
+                                                    <td><%= fechaUtils.formatearFechaLocal(orden.fecha) %></td>
                                                 </tr>
                                                 <tr>
                                                     <th>Cliente:</th>
@@ -231,7 +231,7 @@
                                                         <td><%= bolson.bolson_codigo %></td>
                                                         <td><%= bolson.producto %></td>
                                                         <td><%= parseFloat(bolson.peso).toFixed(2) %></td>
-                                                        <td><%= new Date(bolson.fecha).toLocaleString() %></td>
+                                                        <td><%= fechaUtils.formatearFechaHoraLocal(bolson.fecha) %></td>
                                                         <td>
                                                             <% if (bolson.es_manual) { %>
                                                                 <span class="badge bg-warning text-dark">Manual</span>

@@ -7,10 +7,16 @@ const { formatMySQLLocal } = require('../utils/fecha');
 const insertarNFU = async (fecha, cantidad, responsable) => {
   try {
     console.log('🔍 Repository: Intentando insertar NFU con datos:', { fecha, cantidad, responsable });
+    
+    // Formatear la fecha con la zona horaria de Buenos Aires
+    const fechaFormateada = formatMySQLLocal(new Date(fecha));
+    console.log('📅 Fecha formateada con zona horaria Buenos Aires:', fechaFormateada);
+    
     const query = 'INSERT INTO nfu (fecha, cantidad, responsable) VALUES (?, ?, ?)';
     
-    // Corrección del error de destructuración
-    const result = await db.query(query, [fecha, cantidad, responsable]);
+    // Usar la fecha formateada en lugar de la fecha directa
+    const result = await db.query(query, [fechaFormateada, cantidad, responsable]);
+    
     // En algunos drivers de MySQL, el resultado puede tener diferentes estructuras
     // Adaptamos el código para manejar diferentes formatos de respuesta
     let insertId;

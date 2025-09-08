@@ -3,6 +3,8 @@ const bolsonService = require('../services/bolsonService');
 const ordenDeVentaService = require('../services/ordenDeVentaService');
 const Excel = require('exceljs');
 const db = require('../config/db'); // Importar la conexión a la base de datos
+// Importar utilidades de fecha
+const { formatearFechaLocal, fechaActual, formatMySQLLocal } = require('../utils/fecha');
 
 const despachoController = {
     async nuevoDespacho(req, res) {
@@ -317,14 +319,14 @@ const despachoController = {
                     producto: bolson.producto || 'N/A',
                     peso: bolson.peso ? parseFloat(bolson.peso).toFixed(2) : 'N/A',
                     precinto: bolson.precinto || 'N/A',
-                    fecha: bolson.fecha ? new Date(bolson.fecha).toLocaleDateString() : 'N/A',
+                    fecha: bolson.fecha ? formatearFechaLocal(bolson.fecha) : 'N/A',
                     responsable: bolson.responsable || 'N/A',
                     orden_venta: bolson.orden_venta_id ? `OV-${bolson.orden_venta_id}` : 'N/A'
                 });
             });
             
             // Configurar el nombre del archivo con la fecha actual
-            const fecha = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+            const fecha = formatMySQLLocal(fechaActual()).replace(/[:\s]/g, '-');
             const filename = `bolsones_despachados_${fecha}.xlsx`;
             
             console.log(`Generando archivo Excel: ${filename}`);

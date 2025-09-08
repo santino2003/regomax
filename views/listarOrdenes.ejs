@@ -120,7 +120,7 @@
                                             <td>OV-<%= orden.id %></td>
                                             <td><%= orden.cliente %></td>
                                             <td><%= orden.cliente_final || '-' %></td>
-                                            <td><%= new Date(orden.fecha).toLocaleDateString() %></td>
+                                            <td><%= fechaUtils.formatearFechaLocal(orden.fecha) %></td>
                                             <td>
                                                 <% let badgeClass = "bg-secondary"; %>
                                                 <% if (orden.estado === "abierta") { badgeClass = "bg-warning text-dark"; } %>

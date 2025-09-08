@@ -301,11 +301,44 @@ $(document).ready(function() {
     
     // Función para configurar la fecha actual
     function configurarFechaActual() {
+        // Crear fecha con zona horaria de Buenos Aires
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
         const today = new Date();
+        
         // Asegurar que la zona horaria local sea utilizada para la fecha
-        const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const formattedDate = localDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-        $('#fecha').val(formattedDate);
+        const formattedDate = today.toLocaleDateString('es-AR', options)
+            .split('/')
+            .reverse()
+            .join('-');
+        
+        // Setear la fecha en el campo
+        document.getElementById('fecha').value = formattedDate;
+        
+        // Configurar el turno basado en la hora actual
+        const currentHour = today.getHours();
+        let turno;
+        
+        if (currentHour >= 6 && currentHour < 14) {
+            turno = 'Mañana';
+        } else if (currentHour >= 14 && currentHour < 22) {
+            turno = 'Tarde';
+        } else {
+            turno = 'Noche';
+            
+            // Para turno "Noche", siempre mostrar la fecha del día anterior
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            const formattedYesterday = yesterday.toLocaleDateString('es-AR', options)
+                .split('/')
+                .reverse()
+                .join('-');
+            
+            document.getElementById('fecha').value = formattedYesterday;
+        }
+        
+        // Setear el turno en el select
+        document.getElementById('turno').value = turno;
     }
     
     // Función para ajustar la fecha según el turno seleccionado

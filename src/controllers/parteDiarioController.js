@@ -1,6 +1,8 @@
 const parteDiarioService = require('../services/parteDiarioService');
 const parteDiarioRepository = require('../repositories/parteDiarioRepository');
 const bolsonService = require('../services/bolsonService'); // Añadir este servicio
+// Importar utilidades de fecha
+const { formatearFechaLocal, formatMySQLLocal } = require('../utils/fecha');
 
 const parteDiarioController = {
     async crearParteDiario(req, res) {
@@ -52,7 +54,7 @@ const parteDiarioController = {
                 if (!partesDiariosPorFecha[fecha]) {
                     partesDiariosPorFecha[fecha] = {
                         fecha: fecha,
-                        fechaFormateada: new Date(parte.fecha).toLocaleDateString(),
+                        fechaFormateada: formatearFechaLocal(parte.fecha),
                         partes: []
                     };
                 }
@@ -148,7 +150,7 @@ const parteDiarioController = {
                 if (!partesDiariosPorFecha[fecha]) {
                     partesDiariosPorFecha[fecha] = {
                         fecha: fecha,
-                        fechaFormateada: new Date(parte.fecha).toLocaleDateString(),
+                        fechaFormateada: formatearFechaLocal(parte.fecha),
                         partes: []
                     };
                 }
@@ -371,7 +373,7 @@ const parteDiarioController = {
                 if (!partesDiariosPorFecha[fechaKey]) {
                     partesDiariosPorFecha[fechaKey] = {
                         fecha: fechaKey,
-                        fechaFormateada: fecha.toLocaleDateString(),
+                        fechaFormateada: formatearFechaLocal(parte.fecha),
                         partes: []
                     };
                 }

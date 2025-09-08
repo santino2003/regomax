@@ -1,4 +1,5 @@
 const historialService = require('../services/historialService');
+const { formatMySQLLocal, fechaActual } = require('../utils/fecha');
 
 /**
  * Middleware para registrar acciones en el historial
@@ -293,7 +294,7 @@ const ordenDetalles = {
     eliminar: (req, res, body) => {
         return {
             id: req.params.id,
-            timestamp: new Date().toISOString()
+            timestamp: formatMySQLLocal(fechaActual())
         };
     }
 };

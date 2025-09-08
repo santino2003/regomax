@@ -1,4 +1,5 @@
 const reporteService = require('../services/reporteService');
+const { fechaActual, formatMySQLLocal } = require('../utils/fecha');
 
 /**
  * Genera un reporte completo de producción y despacho para una fecha específica
@@ -41,9 +42,8 @@ const generarReporteCompleto = async (req, res) => {
 const mostrarReporteGeneral = async (req, res) => {
     try {
         // Obtener fecha actual o la seleccionada por el usuario
-        const fechaActual = new Date();
-        const fechaSeleccionada = req.query.fecha || 
-                                 `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`;
+        const fechaObj = fechaActual();
+        const fechaSeleccionada = req.query.fecha || formatMySQLLocal(fechaObj).split(' ')[0];
         
         res.render('reporteGeneral', { 
             titulo: 'Reporte Productivo',

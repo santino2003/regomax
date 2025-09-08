@@ -147,8 +147,19 @@
                                                 <% 
                                                 try {
                                                     const fecha = new Date(item.fecha_hora);
-                                                    // Formatear la fecha usando métodos locales para asegurar zona horaria correcta
-                                                    const fechaFormateada = fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString();
+                                                    // Formatear la fecha usando la zona horaria de Buenos Aires
+                                                    const options = { 
+                                                        year: 'numeric', 
+                                                        month: '2-digit', 
+                                                        day: '2-digit',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        second: '2-digit',
+                                                        timeZone: 'America/Argentina/Buenos_Aires',
+                                                        hour12: false
+                                                    };
+                                                    const fechaFormateada = fecha.toLocaleDateString('es-AR', options) + ' ' + 
+                                                        fecha.toLocaleTimeString('es-AR', options);
                                                     %><%= fechaFormateada %><%
                                                 } catch(e) { 
                                                     %><%= item.fecha_hora %><%

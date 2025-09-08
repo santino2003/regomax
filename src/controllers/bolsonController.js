@@ -3,6 +3,7 @@ const productoService = require('../services/productoService');
 const generarBarcodeBase64 = require('../utils/imageBarcode');
 const Excel = require('exceljs');
 const db = require('../config/db'); // Importar la conexión a la base de datos
+const { formatearFechaLocal, formatearFechaHoraLocal, fechaActual, formatMySQLLocal } = require('../utils/fecha');
 
 const bolsonController = {
     async nuevoBolson(req, res) {
@@ -375,14 +376,14 @@ const bolsonController = {
                     producto: bolson.producto || 'N/A',
                     peso: bolson.peso || 'N/A',
                     precinto: bolson.precinto || 'N/A',
-                    fecha: bolson.fecha ? new Date(bolson.fecha).toLocaleDateString() : 'N/A',
+                    fecha: bolson.fecha ? formatearFechaLocal(bolson.fecha) : 'N/A',
                     hora: bolson.hora || 'N/A',
                     responsable: bolson.responsable || 'N/A'
                 });
             });
             
             // Configurar el nombre del archivo con la fecha actual y los filtros aplicados
-            const fecha = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+            const fecha = formatMySQLLocal(fechaActual()).replace(/[:\s]/g, '-');
             let filename = `bolsones_filtrados_${fecha}.xlsx`;
             
             // Añadir información de filtros al nombre del archivo si hay filtros aplicados
