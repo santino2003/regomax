@@ -47,9 +47,8 @@ router.get('/home', [authMiddleware.verifyToken, noCacheMiddleware], async (req,
             // Convertir nombre de entidades a formato más legible
             const entidadFormato = accion.entidad.replace(/_/g, ' ');
             
-            // Formatear fecha para mostrarla más amigable
-            const fecha = new Date(accion.fecha_hora);
-            const fechaFormateada = `${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}`;
+            // Formatear fecha utilizando la utilidad de fechaUtils para zona horaria Argentina
+            const fechaFormateada = fechaUtils.formatearFechaHoraLocal(accion.fecha_hora);
             
             // Crear descripción amigable según el tipo de acción
             let descripcion = '';

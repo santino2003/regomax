@@ -460,7 +460,7 @@
     <script>
         // Pass necessary variables to the external JS file
         const parteId = '<%= parteDiario.id %>';
-        const parteFecha = '<%= parteDiario.fecha.split("T")[0] %>';
+        const parteFecha = '<%= fechaUtils.formatMySQLLocal(parteDiario.fecha).split(" ")[0] %>';
     </script>
     <script src="/assets/js/parteDiarioExportar.js"></script>
 </body>
