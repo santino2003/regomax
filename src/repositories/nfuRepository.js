@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { formatMySQLLocal } = require('../utils/fecha');
+const { formatMySQLLocal, parseLocalDate } = require('../utils/fecha');
 
 /**
  * Inserta un nuevo registro de NFU en la base de datos
@@ -8,8 +8,19 @@ const insertarNFU = async (fecha, cantidad, responsable) => {
   try {
     console.log('🔍 Repository: Intentando insertar NFU con datos:', { fecha, cantidad, responsable });
     
-    // Formatear la fecha con la zona horaria de Buenos Aires
-    const fechaFormateada = formatMySQLLocal(new Date(fecha));
+    // Usar parseLocalDate para interpretar la fecha correctamente en zona horaria de Buenos Aires
+    // y luego formatMySQLLocal para formatearla para MySQL
+    let fechaFormateada;
+    if (fecha.includes('T')) {
+      // Si es formato ISO con hora (YYYY-MM-DDTHH:MM:SS)
+      fechaFormateada = formatMySQLLocal(new Date(fecha));
+    } else {
+      // Si es solo fecha (YYYY-MM-DD)
+      // parseLocalDate asegura que la fecha se interprete en zona horaria de Buenos Aires
+      const fechaParsed = parseLocalDate(fecha);
+      fechaFormateada = fecha + ' 00:00:00'; // Solo añadimos la hora 00:00:00
+    }
+    
     console.log('📅 Fecha formateada con zona horaria Buenos Aires:', fechaFormateada);
     
     const query = 'INSERT INTO nfu (fecha, cantidad, responsable) VALUES (?, ?, ?)';
