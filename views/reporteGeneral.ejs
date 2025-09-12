@@ -134,7 +134,7 @@
                                                             <th>Producido Hoy (kg)</th>
                                                             <th>Acumulado del Mes (kg)</th>
                                                             <th>Proyección (kg)</th>
-                                                            <th>Planificado Hoy (kg)</th>
+                                                            <th>Planificado Acumulado (kg)</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -147,7 +147,7 @@
                                                             <td id="totalProducidoHoy">0 kg</td>
                                                             <td id="totalAcumuladoMes">0 kg</td>
                                                             <td id="totalProyeccionMes">0 kg</td>
-                                                            <td id="totalPlanificadoHoy">0 kg</td>
+                                                            <td id="totalPlanificadoAcumulado">0 kg</td>
                                                         </tr>
                                                     </tfoot>
                                                 </table>
@@ -419,16 +419,16 @@
                     // Buscar si hay producción del día para este producto
                     const produccionHoy = produccionDiariaPorProducto[prod.productoId] || { pesoTotal: 0, planificacion: 0 };
                     
-                    // Obtener planificación para este producto
-                    const planificacionProducto = prod.planificacion || 0;
-                    totalPlanificadoHoy += planificacionProducto;
+                    // Obtener planificación acumulada para este producto
+                    const planificacionAcumuladaProducto = prod.planificacionAcumulada || 0;
+                    totalPlanificadoHoy += planificacionAcumuladaProducto;
                     
                     row.insertCell(0).textContent = prod.nombre;
                     row.insertCell(1).textContent = fechaFormateadaStr;
                     row.insertCell(2).textContent = `${formatNumber(produccionHoy.pesoTotal)} kg`;
                     row.insertCell(3).textContent = `${formatNumber(prod.pesoTotal)} kg`;
                     row.insertCell(4).textContent = `${formatNumber(prod.proyeccion)} kg`;
-                    row.insertCell(5).textContent = `${formatNumber(planificacionProducto)} kg`;
+                    row.insertCell(5).textContent = `${formatNumber(planificacionAcumuladaProducto)} kg`;
                     
                     totalAcumuladoMes += prod.pesoTotal;
                     totalProyeccionMes += prod.proyeccion;
@@ -443,7 +443,7 @@
             
             document.getElementById('fechaActual').textContent = fechaFormateadaStr;
             document.getElementById('totalProducidoHoy').textContent = `${formatNumber(totalProducidoHoy)} kg`;
-            document.getElementById('totalPlanificadoHoy').textContent = `${formatNumber(totalPlanificadoHoy)} kg`;
+            document.getElementById('totalPlanificadoAcumulado').textContent = `${formatNumber(totalPlanificadoHoy)} kg`;
             document.getElementById('totalAcumuladoMes').textContent = `${formatNumber(totalAcumuladoMes)} kg`;
             document.getElementById('totalProyeccionMes').textContent = `${formatNumber(totalProyeccionMes)} kg`;
             
@@ -702,3 +702,4 @@
     </style>
 </body>
 </html>
+``` 
