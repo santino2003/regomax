@@ -13,6 +13,122 @@
     
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
+    
+    <!-- Estilos para impresión -->
+    <style>
+        /* Ocultar áreas imprimibles por defecto en pantalla */
+        .despacho-printable {
+            display: none;
+        }
+        
+        /* Estilos para impresión */
+        @media print {
+            /* Reset de márgenes y padding para eliminar espacios en blanco */
+            * {
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            /* Ocultar todo lo que no debe imprimirse */
+            body * {
+                visibility: hidden;
+            }
+            
+            /* Mostrar solo el contenido del despacho a imprimir */
+            .printing-despacho,
+            .printing-despacho * {
+                visibility: visible !important;
+            }
+            
+            /* Posicionar contenido correctamente - AJUSTADO PARA ELIMINAR MARGEN SUPERIOR */
+            .printing-despacho {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: white !important;
+            }
+            
+            .printing-despacho > div {
+                padding: 1mm !important;
+            }
+            
+            /* Tamaño de fuente aún más pequeño para imprimir */
+            .printing-despacho {
+                font-size: 8pt !important;
+            }
+            
+            .printing-despacho h5 {
+                font-size: 10pt !important;
+                margin-bottom: 1mm !important;
+                padding-bottom: 1mm !important;
+                display: block !important;
+            }
+            
+            /* Asegurar que las tablas se vean bien y sean compactas */
+            .printing-despacho table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin-top: 0 !important;
+            }
+            
+            .printing-despacho th,
+            .printing-despacho td {
+                padding: 0.5mm 1mm !important;
+                text-align: left !important;
+                border: 0.5pt solid #999 !important;
+                font-size: 8pt !important;
+                vertical-align: middle !important;
+                line-height: 1.1 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                max-width: 40mm !important;
+            }
+            
+            /* Producto puede ocupar menos espacio */
+            .printing-despacho th.col-producto,
+            .printing-despacho td.col-producto {
+                max-width: 30mm !important;
+            }
+            
+            /* Número y peso pueden ser más estrechos */
+            .printing-despacho th.col-num,
+            .printing-despacho td.col-num {
+                width: 5mm !important;
+                text-align: center !important;
+            }
+            
+            .printing-despacho th.col-peso,
+            .printing-despacho td.col-peso {
+                width: 12mm !important;
+                text-align: right !important;
+            }
+            
+            /* Código necesita ser el más visible */
+            .printing-despacho th.col-codigo,
+            .printing-despacho td.col-codigo {
+                font-size: 8pt !important;
+            }
+            
+            .printing-despacho th {
+                background-color: #f0f0f0 !important;
+                font-weight: bold !important;
+            }
+            
+            /* Eliminar margen de página y hacer más compacto */
+            @page {
+                margin: 0 !important;
+                size: portrait !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -139,10 +255,13 @@
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <h6 class="mb-0">Despacho #<%= despacho.id %></h6>
                                                 <div>
-                                                    <span class="badge bg-light text-dark">
+                                                    <span class="badge bg-light text-dark me-2">
                                                         <i class="bi bi-calendar-event me-1"></i>
                                                         <%= new Date(despacho.fecha).toLocaleString() %>
                                                     </span>
+                                                    <button class="btn btn-sm btn-outline-<%= index === 0 ? 'light' : 'primary' %> print-despacho-btn" data-despacho-id="<%= despacho.id %>">
+                                                        <i class="bi bi-printer"></i>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -210,6 +329,53 @@
         </div>
     </div>
 
+    <!-- Áreas imprimibles para despachos (fuera del flujo normal del documento) -->
+    <% if (despachos && despachos.length > 0) { %>
+        <% despachos.forEach((despacho, index) => { %>
+            <div class="despacho-printable" id="printable-despacho-<%= despacho.id %>">
+                <div>
+                    <!-- Encabezado con línea negra completa -->
+                    <div style="border-bottom: 1px solid #000; padding-bottom: 1mm !important; margin-bottom: 1mm !important;">
+                        <h5 style="margin: 0 !important; padding: 0 !important; font-weight: bold !important; font-size: 9pt !important;">REGOMAX - Despacho #<%= despacho.id %> | <%= orden.cliente %> | <%= new Date(despacho.fecha).toLocaleDateString() %></h5>
+                    </div>
+                    
+                    <table class="table table-sm" style="margin-top: 0 !important;">
+                        <thead>
+                            <tr>
+                                <th class="col-num">#</th>
+                                <th class="col-codigo">Código</th>
+                                <th class="col-producto">Producto</th>
+                                <th class="col-peso">Peso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (despacho.bolsones && despacho.bolsones.length > 0) { %>
+                                <% let totalPeso = 0; %>
+                                <% despacho.bolsones.forEach((bolson, i) => { %>
+                                    <% totalPeso += parseFloat(bolson.peso || 0); %>
+                                    <tr>
+                                        <td class="col-num"><%= i + 1 %></td>
+                                        <td class="col-codigo"><strong><%= bolson.codigo %></strong></td>
+                                        <td class="col-producto"><%= bolson.producto %></td>
+                                        <td class="col-peso"><%= parseFloat(bolson.peso).toFixed(2) %></td>
+                                    </tr>
+                                <% }); %>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                    <td class="col-peso"><strong><%= totalPeso.toFixed(2) %></strong></td>
+                                </tr>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="text-center">No hay bolsones en este despacho</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <% }); %>
+    <% } %>
+
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -218,5 +384,214 @@
     
     <!-- Common JS -->
     <script src="/assets/js/common.js"></script>
+    
+    <!-- Script para impresión de despachos individuales -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Agregar evento click a todos los botones de impresión de despacho
+            document.querySelectorAll('.print-despacho-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const despachoId = this.getAttribute('data-despacho-id');
+                    printDespacho(despachoId);
+                });
+            });
+            
+            // Función para imprimir un despacho específico usando un iframe oculto
+            function printDespacho(despachoId) {
+                console.log('Imprimiendo despacho #' + despachoId);
+                
+                // Obtener el área imprimible del despacho
+                const printableArea = document.getElementById(`printable-despacho-${despachoId}`);
+                
+                if (!printableArea) {
+                    alert('Error: No se encontró el contenido para imprimir');
+                    return;
+                }
+                
+                // Obtener la fecha del despacho (buscando el elemento con la fecha en la página principal)
+                const despachoHeader = document.querySelector(`.card[data-despacho-id="${despachoId}"] .badge .bi-calendar-event`);
+                const fechaDespacho = despachoHeader ? 
+                    despachoHeader.closest('.badge').textContent.trim() : 
+                    new Date().toLocaleDateString();
+                
+                // Crear un iframe temporal para la impresión
+                let iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.top = '-9999px';
+                iframe.style.left = '-9999px';
+                iframe.style.height = '0';
+                iframe.style.width = '0';
+                document.body.appendChild(iframe);
+                
+                // Generar el HTML para la impresión
+                const printContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Despacho #${despachoId} - Imprimir</title>
+                        <style>
+                            @page {
+                                size: 210mm 297mm;
+                                margin: 5mm;
+                            }
+                            
+                            body {
+                                font-family: 'Arial', sans-serif;
+                                margin: 0;
+                                padding: 0;
+                                background-color: #ffffff;
+                            }
+                            
+                            .container {
+                                border: 1px solid #000;
+                                border-radius: 3mm;
+                                padding: 5mm;
+                                margin: 0;
+                                box-shadow: 0 0 3mm rgba(0,0,0,0.1);
+                            }
+                            
+                            .header {
+                                border-bottom: 1.5px solid #000;
+                                padding-bottom: 2mm;
+                                margin-bottom: 3mm;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                            }
+                            
+                            .header-left {
+                                font-weight: bold;
+                            }
+                            
+                            .header-right {
+                                font-size: 8pt;
+                                text-align: right;
+                            }
+                            
+                            h5 {
+                                margin: 0;
+                                padding: 0;
+                                font-weight: bold;
+                                font-size: 12pt;
+                            }
+                            
+                            .subtitle {
+                                font-size: 9pt;
+                                margin-top: 1mm;
+                                color: #555;
+                            }
+                            
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-top: 3mm;
+                            }
+                            
+                            th {
+                                background-color: #f0f0f0;
+                                border: 1px solid #bbb;
+                                padding: 2mm;
+                                text-align: left;
+                                font-size: 9pt;
+                                font-weight: bold;
+                            }
+                            
+                            td {
+                                border: 1px solid #bbb;
+                                padding: 1.5mm 2mm;
+                                text-align: left;
+                                font-size: 9pt;
+                            }
+                            
+                            .col-num {
+                                width: 5mm;
+                                text-align: center;
+                            }
+                            
+                            .col-codigo {
+                                font-weight: bold;
+                            }
+                            
+                            .col-peso {
+                                width: 15mm;
+                                text-align: right;
+                            }
+                            
+                            tr:nth-child(even) {
+                                background-color: #f9f9f9;
+                            }
+                            
+                            .footer {
+                                margin-top: 5mm;
+                                padding-top: 2mm;
+                                border-top: 1px solid #bbb;
+                                font-size: 8pt;
+                                text-align: center;
+                                color: #777;
+                            }
+                            
+                            .total-row {
+                                font-weight: bold;
+                                background-color: #f0f0f0 !important;
+                            }
+                            
+                            .text-end {
+                                text-align: right;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <div class="header-left">
+                                    <h5>REGOMAX S.A. - Despacho #${despachoId}</h5>
+                                    <div class="subtitle">${printableArea.querySelector('h5').innerText.split('|').slice(1).join('|').trim()}</div>
+                                </div>
+                                <div class="header-right">
+                                    <div>Fecha: ${new Date().toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                            
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="col-num">#</th>
+                                        <th>Código</th>
+                                        <th>Producto</th>
+                                        <th class="col-peso">Peso (kg)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${printableArea.querySelector('tbody').innerHTML}
+                                </tbody>
+                            </table>
+                            
+                            <div class="footer">
+                                Documento generado el ${new Date().toLocaleString()} - REGOMAX S.A.
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                // Escribir en el iframe y lanzar la impresión
+                iframe.contentDocument.open();
+                iframe.contentDocument.write(printContent);
+                iframe.contentDocument.close();
+                
+                iframe.onload = function() {
+                    setTimeout(function() {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                        
+                        // Eliminar el iframe después de imprimir (o después de un tiempo)
+                        setTimeout(function() {
+                            iframe.remove();
+                        }, 1000);
+                    }, 200);
+                };
+            }
+        });
+    </script>
 </body>
 </html>
