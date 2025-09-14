@@ -17,7 +17,7 @@
     <!-- Estilos para impresión -->
     <style>
         @media print {
-            .no-print {
+            .no-print, .no-print-detail {
                 display: none !important;
             }
         }
@@ -204,7 +204,10 @@
                                 </div>
                             </div>
                         </div>
-                        
+                    </div><!-- Fin del área imprimible -->
+                    
+                    <!-- Contenido no imprimible -->
+                    <div class="no-print-detail">
                         <!-- Bolsones despachados -->
                         <div class="card mb-4">
                             <div class="card-header bg-info text-white">

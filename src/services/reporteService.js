@@ -162,10 +162,22 @@ const obtenerNFUAcumuladoHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
 // Obtener planificación acumulada hasta una fecha
 const obtenerPlanificacionAcumuladaHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
   try {
-    return await planificacionRepository.obtenerPlanificacionAcumuladaHastaFecha(fecha);
+    const data = await planificacionRepository.obtenerPlanificacionAcumuladaHastaFecha(fecha);
+    
+    // Crear un mapa secundario que use el nombre del producto como clave para facilitar la búsqueda
+    if (data && data.productos && data.productos.length > 0) {
+      data.productosMap = {};
+      data.productos.forEach(p => {
+        if (p.nombre) {
+          data.productosMap[p.nombre] = p.kilosAcumulados;
+        }
+      });
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error al obtener planificación acumulada:', error);
-    return { productos: [] };
+    return { productos: [], productosMap: {} };
   }
 };
 
@@ -424,7 +436,13 @@ const obtenerReporteCompleto = async (fecha /* 'YYYY-MM-DD' */) => {
                                   planificacionDiaria.productos[prod.nombre] || 0;
     
     // Obtener planificación acumulada para este producto
-    const planificacionAcumuladaProducto = planificacionAcumuladaMap[prod.productoId] || 0;
+    // Intentar primero por ID en el mapa de planificaciones acumuladas
+    let planificacionAcumuladaProducto = planificacionAcumuladaMap[prod.productoId] || 0;
+    
+    // Si no se encuentra por ID, buscar por nombre en el mapa creado
+    if (planificacionAcumuladaProducto === 0 && planificacionAcumulada.productosMap && prod.nombre) {
+      planificacionAcumuladaProducto = planificacionAcumulada.productosMap[prod.nombre] || 0;
+    }
     
     return {
       ...prod,
