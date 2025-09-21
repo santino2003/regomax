@@ -248,6 +248,7 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
     const anio = fechaObj.getUTCFullYear();
     const mes = fechaObj.getUTCMonth() + 1; // getUTCMonth() arranca en 0
     const diaActual = fechaObj.getUTCDate();
+    console.log(`Calcular proyección para ${fecha} (BA) - Año: ${anio}, Mes: ${mes}, Día: ${diaActual}`);
 
     // Obtener los días hábiles definidos para el mes
     const diasHabilesMes = await diasHabilesRepository.obtenerDiasHabilesSeleccionados(mes, anio);
@@ -256,12 +257,13 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
     let totalDiasHabilesMes = diasHabilesMes?.length || 0;
     if (!totalDiasHabilesMes) {
       totalDiasHabilesMes = new Date(anio, mes, 0).getDate(); // último día del mes
+      console.log(`No hay días hábiles definidos para ${mes}/${anio}, usando total días del mes: ${totalDiasHabilesMes}`);
     }
 
     // Días hábiles transcurridos hasta la fecha actual
     const diasHabilesTranscurridos = (diasHabilesMes || []).filter(dia => dia <= diaActual);
     const diasTranscurridos = Math.max(diasHabilesTranscurridos.length, 1);
-
+    console.log(`Días hábiles transcurridos hasta el ${fecha}: ${diasTranscurridos} de ${totalDiasHabilesMes}`);
     // Calcular proyección
     const proyeccion = {};
     for (const [key, valor] of Object.entries(datosAcumulados)) {
@@ -272,7 +274,7 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
         proyeccion[key] = 0;
       }
     }
-
+    console.log(`Proyección calculada:`, proyeccion);
     return {
       diasHabilesTotal: totalDiasHabilesMes,
       diasHabilesTranscurridos: diasTranscurridos,
