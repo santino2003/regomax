@@ -33,7 +33,8 @@ const obtenerDespachosPorProducto = async (fecha /* 'YYYY-MM-DD' */) => {
     productoId: r.productoId,
     nombre: r.nombreProducto || `${r.productoId}`,
     cantidadBolsones: Number(r.cantidadBolsones || 0),
-    pesoTotal: Number(r.pesoTotal || 0)
+    pesoTotal: Number(r.pesoTotal || 0),
+    enStock: r.enStock
   }));
 };
 

@@ -131,16 +131,17 @@ class DespachoRepository {
             const fechaFin = `${fecha} 23:59:59`;
             
             const query = `
-                SELECT 
+                 SELECT 
                     dd.producto AS productoId,
                     p.nombre AS nombreProducto,
+                    p.en_stock AS enStock, 
                     COUNT(dd.id) AS cantidadBolsones,
                     SUM(dd.peso) AS pesoTotal
                 FROM despachos_detalle dd
                 JOIN despachos d ON dd.despacho_id = d.id
-                LEFT JOIN productos p ON dd.producto = p.id
+                LEFT JOIN productos p ON dd.producto = p.nombre
                 WHERE d.fecha BETWEEN ? AND ?
-                GROUP BY dd.producto, p.nombre
+                GROUP BY dd.producto, p.nombre, p.en_stock
                 ORDER BY p.nombre ASC
             `;
             
@@ -152,21 +153,18 @@ class DespachoRepository {
         }
     }
     
+    
     // Despachos del mes HASTA una fecha específica (para el reporte mensual)
     async obtenerDespachadosDelMesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
         try {
             // Importar la función de utilidad para obtener el rango del mes operativo
             const { ventanaMesOperativo, formatMySQLLocal, parseLocalDate } = require('../utils/fecha');
             
-          
-            
             // Parseamos explícitamente la fecha para asegurar el formato correcto
             const fechaObj = parseLocalDate(fecha);
-      
             
             // Obtener el rango del mes operativo
             const { inicio, fin } = ventanaMesOperativo(fecha);
-        
             
             const inicioMesOperativo = formatMySQLLocal(inicio);
             
@@ -175,39 +173,7 @@ class DespachoRepository {
             fechaFinDia.setHours(23, 59, 59, 999);
             const finDiaStr = formatMySQLLocal(fechaFinDia);
             
-
-            // Verificar si hay despachos en este rango de fechas
-            const checkQuery = `
-                SELECT COUNT(*) AS total 
-                FROM despachos d 
-                WHERE d.fecha BETWEEN ? AND ?
-            `;
-            
-            const checkResult = await db.query(checkQuery, [inicioMesOperativo, finDiaStr]);
-            
-            // Consulta todos los despachos para depuración
-            const todosDespachos = await db.query(`
-                SELECT d.id, d.fecha, COUNT(dd.id) as total_detalles
-                FROM despachos d
-                LEFT JOIN despachos_detalle dd ON d.id = dd.despacho_id
-                GROUP BY d.id, d.fecha
-                ORDER BY d.fecha DESC
-                LIMIT 20
-            `);
-
-            
-            // Consulta de despachos específicamente para el día de hoy
-            const despachosHoy = await db.query(`
-                SELECT d.id, d.fecha, COUNT(dd.id) as total_detalles, 
-                       GROUP_CONCAT(DISTINCT dd.producto) as productos
-                FROM despachos d
-                LEFT JOIN despachos_detalle dd ON d.id = dd.despacho_id
-                WHERE DATE(d.fecha) = DATE(?)
-                GROUP BY d.id, d.fecha
-            `, [fecha]);
-            
-
-       
+            // Consulta principal para obtener los datos necesarios
             const query = `
                 SELECT 
                     dd.producto AS productoId,
@@ -215,98 +181,17 @@ class DespachoRepository {
                     COUNT(dd.id) AS cantidadBolsones,
                     SUM(dd.peso) AS pesoTotal,
                     dd.producto AS producto_id_real,
-                    COALESCE(p.nombre, CONCAT('Producto ID ', dd.producto)) AS producto_nombre_real
+                    COALESCE(p.nombre, CONCAT('Producto ID ', dd.producto)) AS producto_nombre_real,
+                    p.en_stock
                 FROM despachos_detalle dd
                 JOIN despachos d ON dd.despacho_id = d.id
                 LEFT JOIN productos p ON dd.producto = p.id
                 WHERE d.fecha BETWEEN ? AND ?
-                GROUP BY dd.producto, p.nombre
+                GROUP BY dd.producto, p.nombre, p.en_stock
                 ORDER BY p.nombre ASC
             `;
             
             const result = await db.query(query, [inicioMesOperativo, finDiaStr]);
-            
-       
-            // Mostrar detalle de cada producto encontrado
-            for (let i = 0; i < result.length; i++) {
-                const prod = result[i];
-            }
-            
-            // Si no se encontraron productos, hacer diagnósticos adicionales
-            if (result.length === 0) {
-                
-                // Consulta adicional para diagnóstico - verificar si hay despachos con fecha de hoy
-                const hoyQuery = `
-                    SELECT 
-                        COUNT(*) AS total,
-                        GROUP_CONCAT(DISTINCT DATE(d.fecha)) AS fechas
-                    FROM despachos_detalle dd
-                    JOIN despachos d ON dd.despacho_id = d.id
-                    WHERE DATE(d.fecha) = DATE(?)
-                `;
-                const hoyResult = await db.query(hoyQuery, [fecha]);
-                
-                // Consulta específica para diagnosticar el problema con los despachos de hoy
-                const infoDespachos = `
-                    SELECT 
-                        d.id AS despacho_id, 
-                        d.fecha AS despacho_fecha, 
-                        d.orden_venta_id,
-                        d.responsable,
-                        dd.id AS detalle_id,
-                        dd.producto, 
-                        dd.peso,
-                        dd.bolson_codigo
-                    FROM despachos d
-                    JOIN despachos_detalle dd ON d.id = dd.despacho_id
-                    WHERE DATE(d.fecha) = DATE(?)
-                `;
-               
-                const infoResult = await db.query(infoDespachos, [fecha]);
-               
-                
-                // Hacer prueba inversa: consultar por ID de producto específico
-                if (infoResult.length > 0) {
-                    const primerProducto = infoResult[0].producto;
-                    const pruebaProducto = `
-                        SELECT 
-                            COUNT(*) AS total
-                        FROM despachos_detalle dd
-                        JOIN despachos d ON dd.despacho_id = d.id
-                        WHERE dd.producto = ?
-                            AND d.fecha BETWEEN ? AND ?
-                    `;
-                    const pruebaResult = await db.query(pruebaProducto, [primerProducto, inicioMesOperativo, finDiaStr]);
-                }
-                
-                // Consulta extra para diagnóstico - verificar si hay detalles de despacho en general
-                const diagnosticoQuery = `
-                    SELECT 
-                        COUNT(*) AS total,
-                        GROUP_CONCAT(DISTINCT DATE(d.fecha)) AS fechas_disponibles
-                    FROM despachos_detalle dd
-                    JOIN despachos d ON dd.despacho_id = d.id
-                    ORDER BY d.fecha DESC
-                    LIMIT 20
-                `;
-                const diagnostico = await db.query(diagnosticoQuery);
-
-                // Verificar formato de fecha en la base de datos
-                const formatoFecha = `
-                    SELECT 
-                        d.id,
-                        d.fecha,
-                        DATE_FORMAT(d.fecha, '%Y-%m-%d') AS fecha_formateada,
-                        YEAR(d.fecha) AS anio,
-                        MONTH(d.fecha) AS mes,
-                        DAY(d.fecha) AS dia
-                    FROM despachos d
-                    ORDER BY d.fecha DESC
-                    LIMIT 5
-                `;
-                const formatoResult = await db.query(formatoFecha);
-
-            }
             
             return result;
         } catch (error) {

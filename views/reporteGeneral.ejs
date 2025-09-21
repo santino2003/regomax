@@ -179,15 +179,6 @@
                                                     <tbody>
                                                         <!-- Se llenará dinámicamente -->
                                                     </tbody>
-                                                    <tfoot>
-                                                        <tr class="fw-bold">
-                                                            <td>TOTAL</td>
-                                                            <td id="fechaActualDespachos"></td>
-                                                            <td id="totalDespachosDia">0 kg</td>
-                                                            <td id="totalDespachosAcum">0 kg</td>
-                                                            <td id="totalProyeccionDespachos">0 kg</td>
-                                                        </tr>
-                                                    </tfoot>
                                                 </table>
                                             </div>
                                         </div>
@@ -373,7 +364,10 @@
             let totalPesoDespachoDia = 0;
             if (data.despachos && data.despachos.length > 0) {
                 data.despachos.forEach(desp => {
-                    totalPesoDespachoDia += desp.pesoTotal;
+                    if (desp.enStock !== 0){
+                        totalPesoDespachoDia += desp.pesoTotal;
+                    }; // Solo sumar si en_stock es distinto de 0
+
                 });
             }
             document.getElementById('despachosTotalDia').textContent = `${formatNumber(totalPesoDespachoDia)} kg`;
@@ -451,10 +445,6 @@
             const tablaDespachosGeneral = document.getElementById('tablaDespachosGeneral').getElementsByTagName('tbody')[0];
             tablaDespachosGeneral.innerHTML = '';
             
-            let totalDespachosAcum = 0;
-            let totalProyeccionDespachos = 0;
-            let totalDespachosDia = totalPesoDespachoDia; // Ya calculado arriba
-            
             if (data.despachosAcumuladosMes && data.despachosAcumuladosMes.length > 0) {
                 data.despachosAcumuladosMes.forEach(desp => {
                     const row = tablaDespachosGeneral.insertRow();
@@ -468,8 +458,7 @@
                     row.insertCell(3).textContent = `${formatNumber(desp.pesoTotal)} kg`;
                     row.insertCell(4).textContent = `${formatNumber(desp.proyeccion)} kg`;
                     
-                    totalDespachosAcum += desp.pesoTotal;
-                    totalProyeccionDespachos += desp.proyeccion;
+                    // Ya no necesitamos acumular los totales
                 });
             } else {
                 const row = tablaDespachosGeneral.insertRow();
@@ -478,11 +467,6 @@
                 cell.textContent = "No hay despachos acumulados para este mes";
                 cell.className = "text-center";
             }
-            
-            document.getElementById('fechaActualDespachos').textContent = fechaFormateadaStr;
-            document.getElementById('totalDespachosDia').textContent = `${formatNumber(totalDespachosDia)} kg`;
-            document.getElementById('totalDespachosAcum').textContent = `${formatNumber(totalDespachosAcum)} kg`;
-            document.getElementById('totalProyeccionDespachos').textContent = `${formatNumber(totalProyeccionDespachos)} kg`;
             
             // 3. NUEVA TABLA - NFU
             document.getElementById('fechaActualNFU').textContent = fechaFormateadaStr;
@@ -702,4 +686,3 @@
     </style>
 </body>
 </html>
-``` 
