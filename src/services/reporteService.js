@@ -4,7 +4,7 @@ const nfuRepository = require('../repositories/nfuRepository');
 const diasHabilesRepository = require('../repositories/diasHabilesRepository');
 const planificacionRepository = require('../repositories/planificacionRepository');
 const productoRepository = require('../repositories/productoRepository');
-const { ventanaMesOperativo, formatMySQLLocal, parseLocalDate } = require('../utils/fecha');
+const { ventanaMesOperativo, formatMySQLLocal, parseLocalDate, ventanaTurnoDiario } = require('../utils/fecha');
 
 // PRODUCCIÓN diaria (sumatoria por producto)
 const obtenerSumatoriaPorProducto = async (fecha /* 'YYYY-MM-DD' */) => {
@@ -304,10 +304,10 @@ const obtenerProduccionAcumuladaPorDia = async (fecha /* 'YYYY-MM-DD' */) => {
       const { inicio } = ventanaMesOperativo(fechaDia);
       const inicioMesFormateado = formatMySQLLocal(inicio);
       
-      // Crear fecha de fin del día con hora 23:59:59
-      const fechaFinDia = new Date(year, month-1, dia);
-      fechaFinDia.setHours(23, 59, 59, 999);
-      const finDiaFormateado = formatMySQLLocal(fechaFinDia);
+
+      const {fin} = ventanaTurnoDiario(fechaDia);
+
+      const finDiaFormateado = formatMySQLLocal(fin);
       
       // Obtener todos los bolsones producidos desde el inicio del mes hasta el día actual
       const bolsones = await bolsonRepository.obtenerBolsonesEntreFechas(inicioMesFormateado, finDiaFormateado);

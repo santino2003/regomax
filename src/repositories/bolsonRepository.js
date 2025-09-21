@@ -300,7 +300,6 @@ class BolsonRepository {
       const iniStr = formatMySQLLocal(inicio);
       const finStr = formatMySQLLocal(fin);
 
-      console.log(`[BOLSONES FECHA] ${iniStr} -> ${finStr}`);
 
       const result = await db.query(`
         SELECT b.*, p.nombre AS nombreProducto
@@ -324,7 +323,6 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
     const { fin } = ventanaTurnoDiario(fecha);
     const finStr = formatMySQLLocal(fin);
 
-    console.log(`[BOLSONES HASTA FECHA] -> ${finStr}`);
 
     const result = await db.query(`
       SELECT b.*, p.nombre AS nombreProducto
@@ -334,7 +332,6 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
       ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
     `, [finStr]);
 
-    console.log(`[BOLSONES FECHA] Se encontraron ${result.length} bolsones hasta fecha ${fecha}`);
     return result;
   } catch (err) {
     console.error("[ERROR obtenerBolsonesHastaFecha]", err);
@@ -354,7 +351,7 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
         throw new Error('Fechas de inicio o fin inválidas para consulta de stock del mes');
       }
   
-      console.log(`[STOCK_MES] Período: ${iniStr} -> ${finStr}, fecha reporte: ${fecha}`);
+   
   
       const result = await db.query(`
         SELECT 
@@ -371,10 +368,7 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
         ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
       `, [iniStr, finStr]);
   
-      console.log(`[STOCK_MES] Se encontraron ${result.length} bolsones en el stock del mes`);
-      if (result.length > 0) {
-        console.log(`[STOCK_MES] Primer bolsón: ID=${result[0].id}, Producto=${result[0].producto}, Fecha=${result[0].fecha}, Hora=${result[0].hora}`);
-      }
+      
   
       return result;
     } catch (error) {
@@ -433,7 +427,7 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
   // Obtener bolsones producidos entre dos fechas específicas para calcular acumulados históricos
   async obtenerBolsonesEntreFechas(fechaInicio, fechaFin) {
     try {
-      console.log(`[BOLSONES_ENTRE_FECHAS] Consultando bolsones entre ${fechaInicio} y ${fechaFin}`);
+      
       
       const result = await db.query(`
         SELECT b.*, p.nombre AS nombreProducto
@@ -443,7 +437,7 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
         ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
       `, [fechaInicio, fechaFin]);
       
-      console.log(`[BOLSONES_ENTRE_FECHAS] Se encontraron ${result.length} bolsones`);
+     
       return result;
     } catch (error) {
       console.error('Error al obtener bolsones entre fechas:', error);
