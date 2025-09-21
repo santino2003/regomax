@@ -63,8 +63,13 @@ function ventanaMesOperativo(ymd){
   const f = parseLocalDate(ymd);
   const anio = f.getUTCFullYear();
   const mes = f.getUTCMonth();
-  const inicio = new Date(Date.UTC(anio, mes, 1, 9, 0, 0, 0));   // 06 BA
-  const fin = new Date(Date.UTC(anio, mes+1, 1, 8, 59, 59, 999)); // 05:59 BA
+
+  // Inicio: primer día del mes a las 06:00 (hora BA = 09:00 UTC)
+  const inicio = new Date(Date.UTC(anio, mes, 1, 9, 0, 0, 0));
+
+  // Fin: primer día del mes siguiente a las 05:59:59.999 (hora BA = 08:59 UTC)
+  const fin = new Date(Date.UTC(anio, mes + 1, 1, 8, 59, 59, 999));
+
   return { inicio, fin };
 }
 

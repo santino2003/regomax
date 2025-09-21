@@ -4,7 +4,7 @@ const nfuRepository = require('../repositories/nfuRepository');
 const diasHabilesRepository = require('../repositories/diasHabilesRepository');
 const planificacionRepository = require('../repositories/planificacionRepository');
 const productoRepository = require('../repositories/productoRepository');
-const { ventanaMesOperativo, formatMySQLLocal, parseLocalDate } = require('../utils/fecha');
+const { ventanaMesOperativo, formatMySQLLocal, parseLocalDate, ventanaTurnoDiario } = require('../utils/fecha');
 
 // PRODUCCIÓN diaria (sumatoria por producto)
 const obtenerSumatoriaPorProducto = async (fecha /* 'YYYY-MM-DD' */) => {
@@ -33,7 +33,8 @@ const obtenerDespachosPorProducto = async (fecha /* 'YYYY-MM-DD' */) => {
     productoId: r.productoId,
     nombre: r.nombreProducto || `${r.productoId}`,
     cantidadBolsones: Number(r.cantidadBolsones || 0),
-    pesoTotal: Number(r.pesoTotal || 0)
+    pesoTotal: Number(r.pesoTotal || 0),
+    enStock: r.enStock
   }));
 };
 
@@ -41,17 +42,24 @@ const obtenerDespachosPorProducto = async (fecha /* 'YYYY-MM-DD' */) => {
 const obtenerStockAcumuladoHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
   const bolsones = await bolsonRepository.obtenerBolsonesHastaFecha(fecha);
   const suma = {};
-  for (const b of bolsones){
-    if (Number(b.despachado) === 1) continue; // sólo no despachados
+
+  for (const b of bolsones) {
     const productoId = b.producto;
-    if (!suma[productoId]){
-      suma[productoId] = { productoId, nombre: b.nombreProducto || `${productoId}`, cantidadBolsones: 0, pesoTotal: 0 };
+    if (!suma[productoId]) {
+      suma[productoId] = {
+        productoId,
+        nombre: b.nombreProducto || `${productoId}`,
+        cantidadBolsones: 0,
+        pesoTotal: 0
+      };
     }
     suma[productoId].cantidadBolsones += 1;
     suma[productoId].pesoTotal += Number(b.peso || 0);
   }
+
   return { productos: Object.values(suma) };
 };
+
 
 // STOCK del MES OPERATIVO (producidos en el mes y NO despachados)
 const obtenerStockAcumuladoDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
@@ -242,7 +250,6 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
     
     // Obtener los días hábiles del mes
     const diasHabilesMes = await diasHabilesRepository.obtenerDiasHabilesSeleccionados(mes, anio);
-    
     // Si no hay días hábiles definidos, usar días calendario del mes
     let totalDiasHabilesMes = diasHabilesMes.length;
     if (!diasHabilesMes || diasHabilesMes.length === 0) {
@@ -253,7 +260,6 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
     // Para el día 1, siempre considerar al menos 1 día transcurrido
     const diasHabilesTranscurridos = diasHabilesMes.filter(dia => dia <= diaActual);
     const diasTranscurridos = Math.max(diasHabilesTranscurridos.length, 1); // Mínimo 1 día
-    
     // Calcular proyección para cada elemento en datosAcumulados
     const proyeccion = {};
     
@@ -266,6 +272,7 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
         proyeccion[key] = 0;
       }
     }
+
     
     return {
       diasHabilesTotal: totalDiasHabilesMes,
@@ -296,10 +303,10 @@ const obtenerProduccionAcumuladaPorDia = async (fecha /* 'YYYY-MM-DD' */) => {
       const { inicio } = ventanaMesOperativo(fechaDia);
       const inicioMesFormateado = formatMySQLLocal(inicio);
       
-      // Crear fecha de fin del día con hora 23:59:59
-      const fechaFinDia = new Date(year, month-1, dia);
-      fechaFinDia.setHours(23, 59, 59, 999);
-      const finDiaFormateado = formatMySQLLocal(fechaFinDia);
+
+      const {fin} = ventanaTurnoDiario(fechaDia);
+
+      const finDiaFormateado = formatMySQLLocal(fin);
       
       // Obtener todos los bolsones producidos desde el inicio del mes hasta el día actual
       const bolsones = await bolsonRepository.obtenerBolsonesEntreFechas(inicioMesFormateado, finDiaFormateado);

@@ -115,6 +115,7 @@ $(document).ready(function() {
         
         // Recopilar datos básicos
         formData.cliente = $('#cliente').val();
+        formData.cliente_final = $('#cliente_final').val();
         formData.fecha = $('#fecha').val();
         formData.estado = $('#estado').val();
         formData.observaciones = $('#observaciones').val();

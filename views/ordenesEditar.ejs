@@ -56,15 +56,19 @@
                             <i class="bi bi-pencil-square me-2"></i>Editar Orden de Venta #OV-<%= orden.id %>
                         </h4>
                         <div class="row mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="cliente" class="form-label">Cliente</label>
                                 <input type="text" class="form-control" id="cliente" name="cliente" value="<%= orden.cliente %>" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <label for="cliente_final" class="form-label">Cliente Final</label>
+                                <input type="text" class="form-control" id="cliente_final" name="cliente_final" value="<%= orden.cliente_final || '' %>">
+                            </div>
+                            <div class="col-md-3">
                                 <label for="fecha" class="form-label">Fecha</label>
                                 <input type="date" class="form-control" id="fecha" name="fecha" value="<%= orden.fecha ? formatearFecha(orden.fecha) : '' %>" required>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="estado" class="form-label">Estado</label>
                                 <select class="form-select" id="estado" name="estado">
                                     <option value="abierta" <%= orden.estado === 'abierta' ? 'selected' : '' %>>Abierta</option>
@@ -75,7 +79,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="observaciones" class="form-label">Observaciones</label>
-                            <textarea class="form-control" id="observaciones" name="observaciones" rows="2"><%= orden.observaciones || '' %></textarea>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="4" style="white-space: pre-wrap;"><%= orden.observaciones || '' %></textarea>
                         </div>
                         <div class="mb-4">
                             <h5>Productos de la Orden</h5>

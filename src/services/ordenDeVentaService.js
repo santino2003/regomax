@@ -93,7 +93,7 @@ class OrdenDeVentaService {
                 await OVRepository.actualizarDatosOrden(id, {
                     fecha: ordenData.fecha || ordenExistente.fecha,
                     cliente: ordenData.cliente || ordenExistente.cliente,
-                    cliente_final: ordenData.clienteFinal || ordenExistente.cliente_final,
+                    cliente_final: ordenData.cliente_final || ordenExistente.cliente_final,
                     codigo_venta: ordenData.codigoVenta || ordenExistente.codigo_venta,
                     observaciones: ordenData.observaciones !== undefined ? ordenData.observaciones : ordenExistente.observaciones,
                     estado: ordenData.estado || ordenExistente.estado
