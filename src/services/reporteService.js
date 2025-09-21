@@ -237,35 +237,35 @@ const obtenerPlanificacionPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
 
 // Función para calcular proyecciones según la fórmula:
 // (días hábiles transcurridos / kilos acumulados) * total días hábiles del mes
+
+
 const calcularProyeccion = async (fecha, datosAcumulados) => {
   try {
-    // Parsear la fecha correctamente para evitar problemas de zona horaria
+    // Crear objeto Date a partir de la fecha (en horario BA)
     const fechaObj = parseLocalDate(fecha);
-    
-    // Extraer día, mes y año directamente de la cadena de fecha para evitar problemas de zona horaria
-    const [year, month, day] = fecha.split('-').map(Number);
-    const mes = month; // month ya es 1-12 al extraerlo directamente del string
-    const anio = year;
-    const diaActual = day;
-    
-    // Obtener los días hábiles del mes
+
+    // Extraer año, mes y día de la fecha en BA
+    const anio = fechaObj.getUTCFullYear();
+    const mes = fechaObj.getUTCMonth() + 1; // getUTCMonth() arranca en 0
+    const diaActual = fechaObj.getUTCDate();
+
+    // Obtener los días hábiles definidos para el mes
     const diasHabilesMes = await diasHabilesRepository.obtenerDiasHabilesSeleccionados(mes, anio);
-    // Si no hay días hábiles definidos, usar días calendario del mes
-    let totalDiasHabilesMes = diasHabilesMes.length;
-    if (!diasHabilesMes || diasHabilesMes.length === 0) {
-      totalDiasHabilesMes = new Date(anio, mes, 0).getDate(); // Último día del mes
+
+    // Total de días hábiles del mes (si no hay definidos, usar calendario completo)
+    let totalDiasHabilesMes = diasHabilesMes?.length || 0;
+    if (!totalDiasHabilesMes) {
+      totalDiasHabilesMes = new Date(anio, mes, 0).getDate(); // último día del mes
     }
-    
-    // Calcular días hábiles transcurridos hasta la fecha
-    // Para el día 1, siempre considerar al menos 1 día transcurrido
-    const diasHabilesTranscurridos = diasHabilesMes.filter(dia => dia <= diaActual);
-    const diasTranscurridos = Math.max(diasHabilesTranscurridos.length, 1); // Mínimo 1 día
-    // Calcular proyección para cada elemento en datosAcumulados
+
+    // Días hábiles transcurridos hasta la fecha actual
+    const diasHabilesTranscurridos = (diasHabilesMes || []).filter(dia => dia <= diaActual);
+    const diasTranscurridos = Math.max(diasHabilesTranscurridos.length, 1);
+
+    // Calcular proyección
     const proyeccion = {};
-    
     for (const [key, valor] of Object.entries(datosAcumulados)) {
       if (valor > 0) {
-        // La fórmula: (valor / días transcurridos) * total días
         const valorDiario = valor / diasTranscurridos;
         proyeccion[key] = Math.round(valorDiario * totalDiasHabilesMes);
       } else {
@@ -273,7 +273,6 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
       }
     }
 
-    
     return {
       diasHabilesTotal: totalDiasHabilesMes,
       diasHabilesTranscurridos: diasTranscurridos,
@@ -284,6 +283,7 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
     return null;
   }
 };
+
 
 // Función para obtener datos históricos reales de producción acumulada por día
 const obtenerProduccionAcumuladaPorDia = async (fecha /* 'YYYY-MM-DD' */) => {
