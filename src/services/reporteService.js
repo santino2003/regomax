@@ -250,7 +250,6 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
     
     // Obtener los días hábiles del mes
     const diasHabilesMes = await diasHabilesRepository.obtenerDiasHabilesSeleccionados(mes, anio);
-    
     // Si no hay días hábiles definidos, usar días calendario del mes
     let totalDiasHabilesMes = diasHabilesMes.length;
     if (!diasHabilesMes || diasHabilesMes.length === 0) {
@@ -261,7 +260,6 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
     // Para el día 1, siempre considerar al menos 1 día transcurrido
     const diasHabilesTranscurridos = diasHabilesMes.filter(dia => dia <= diaActual);
     const diasTranscurridos = Math.max(diasHabilesTranscurridos.length, 1); // Mínimo 1 día
-    
     // Calcular proyección para cada elemento en datosAcumulados
     const proyeccion = {};
     
@@ -274,6 +272,7 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
         proyeccion[key] = 0;
       }
     }
+
     
     return {
       diasHabilesTotal: totalDiasHabilesMes,
