@@ -155,30 +155,6 @@ class ParteDiarioRepository {
      */
     async agregarChecklistPala(parteDiarioId, checklistData) {
         try {
-            // Asegurarse de que existe la tabla con la estructura correcta
-            await db.query(`
-                CREATE TABLE IF NOT EXISTS parte_diario_checklist_pala (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    parte_diario_id INT NOT NULL,
-                    nivel_combustible VARCHAR(10) DEFAULT NULL,
-                    sopleteado_radiadores VARCHAR(10) DEFAULT NULL,
-                    nivel_refrigerante VARCHAR(10) DEFAULT NULL,
-                    nivel_aceite_motor VARCHAR(10) DEFAULT NULL,
-                    nivel_liquido_hidraulico VARCHAR(10) DEFAULT NULL,
-                    control_luces VARCHAR(10) DEFAULT NULL,
-                    sistemas_art VARCHAR(10) DEFAULT NULL,
-                    limpieza_interior VARCHAR(10) DEFAULT NULL,
-                    control_alambres VARCHAR(10) DEFAULT NULL,
-                    lavado_exterior VARCHAR(10) DEFAULT NULL,
-                    engrase_general VARCHAR(10) DEFAULT NULL,
-                    horas_trabajadas DECIMAL(10,2) DEFAULT NULL,
-                    observaciones TEXT DEFAULT NULL,
-                    fecha_creacion DATETIME DEFAULT NULL,
-                    UNIQUE KEY unique_parte_diario (parte_diario_id),
-                    FOREIGN KEY (parte_diario_id) REFERENCES partes_diarios(id) ON DELETE CASCADE
-                )
-            `);
-            
             // Los datos ya están en el formato correcto, solo agregamos los campos base
             const datosInsert = {
                 parte_diario_id: parteDiarioId,
@@ -299,19 +275,6 @@ class ParteDiarioRepository {
      */
     async asociarBolsonAParteDiario(parteDiarioId, bolsonId) {
         try {
-            // Verificar si ya existe la tabla de asociación. Si no, la creamos.
-            await db.query(`
-                CREATE TABLE IF NOT EXISTS parte_diario_bolsones (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    parte_diario_id INT NOT NULL,
-                    bolson_id INT NOT NULL,
-                    fecha_asociacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE KEY unique_asociacion (parte_diario_id, bolson_id),
-                    FOREIGN KEY (parte_diario_id) REFERENCES partes_diarios(id) ON DELETE CASCADE,
-                    FOREIGN KEY (bolson_id) REFERENCES bolsones(id) ON DELETE CASCADE
-                )
-            `);
-            
             // Insertar la asociación
             await db.query(`
                 INSERT INTO parte_diario_bolsones (parte_diario_id, bolson_id)
@@ -366,25 +329,6 @@ class ParteDiarioRepository {
      * Obtiene los bolsones asociados a un parte diario específico
      * @param {number} parteDiarioId - ID del parte diario
      * @returns {Promise<Array>} Lista de bolsones asociados
-     */
-    async obtenerBolsonesDeParteDiario(parteDiarioId) {
-        try {
-            return await db.query(`
-                SELECT b.* 
-                FROM bolsones b
-                INNER JOIN parte_diario_bolsones pdb ON b.id = pdb.bolson_id
-                WHERE pdb.parte_diario_id = ?
-            `, [parteDiarioId]);
-        } catch (error) {
-            console.error('Error al obtener bolsones de parte diario:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Obtiene todos los bolsones asociados a un parte diario específico
-     * @param {number} parteDiarioId - ID del parte diario
-     * @returns {Array} - Array de bolsones asociados al parte diario
      */
     async obtenerBolsonesDeParteDiario(parteDiarioId) {
         try {
