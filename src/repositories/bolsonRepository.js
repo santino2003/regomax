@@ -319,18 +319,19 @@ class BolsonRepository {
  // *** HISTÓRICO HASTA FECHA (exclusive a partir de 06:00 del día siguiente)
 async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
   try {
-    // Usar helpers para calcular ventana de turno
     const { fin } = ventanaTurnoDiario(fecha);
     const finStr = formatMySQLLocal(fin);
-
 
     const result = await db.query(`
       SELECT b.*, p.nombre AS nombreProducto
       FROM bolsones b
       LEFT JOIN productos p ON b.producto = p.id
+      LEFT JOIN despachos_detalle dd ON dd.bolson_codigo = b.codigo
+      LEFT JOIN despachos d ON d.id = dd.despacho_id
       WHERE CONCAT(b.fecha, ' ', b.hora) <= ?
+        AND (b.despachado = 0 OR d.fecha > ? OR d.id IS NULL)
       ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
-    `, [finStr]);
+    `, [finStr, fecha]);
 
     return result;
   } catch (err) {
