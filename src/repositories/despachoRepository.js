@@ -64,6 +64,30 @@ class DespachoRepository {
             throw error;
         }
     }
+
+    // Verificar si un bolsón fue despachado después de una fecha específica
+    async fueDespachadoDespuesDe(bolsonCodigo, fechaConsulta) {
+        try {
+            // Consultar la tabla despachos_detalle para verificar si este bolsón tiene un registro
+            // y si su fecha_despacho es posterior a la fecha de consulta
+            const query = `
+                SELECT 1 
+                FROM despachos_detalle dd
+                JOIN despachos d ON dd.despacho_id = d.id
+                WHERE dd.bolson_codigo = ?
+                AND d.fecha > ?
+                LIMIT 1
+            `;
+            
+            const result = await db.query(query, [bolsonCodigo, fechaConsulta]);
+            // Si hay resultados, el bolsón fue despachado después de la fecha de consulta
+            return result.length > 0;
+        } catch (error) {
+            console.error('Error al verificar fecha de despacho del bolsón:', error);
+            // En caso de error, asumimos que el bolsón no fue despachado después
+            return false;
+        }
+    }
     
     // Obtener todos los despachos de una orden
     async obtenerDespachosPorOrden(ordenVentaId) {

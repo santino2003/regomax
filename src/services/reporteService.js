@@ -41,15 +41,23 @@ const obtenerDespachosPorProducto = async (fecha /* 'YYYY-MM-DD' */) => {
 const obtenerStockAcumuladoHastaFecha = async (fecha /* 'YYYY-MM-DD' */) => {
   const bolsones = await bolsonRepository.obtenerBolsonesHastaFecha(fecha);
   const suma = {};
-  for (const b of bolsones){
-    if (Number(b.despachado) === 1) continue; // sólo no despachados
-    const productoId = b.producto;
-    if (!suma[productoId]){
-      suma[productoId] = { productoId, nombre: b.nombreProducto || `${productoId}`, cantidadBolsones: 0, pesoTotal: 0 };
+  
+  // Para cada bolsón, verificar si no estaba despachado a la fecha de consulta
+  for (const b of bolsones) {
+    // Si el bolsón no está marcado como despachado, incluirlo en el stock
+    // O si está despachado, verificar si el despacho fue POSTERIOR a la fecha de consulta
+    const estabaEnStock = Number(b.despachado) === 0 || await despachoRepository.fueDespachadoDespuesDe(b.codigo, fecha);
+    
+    if (estabaEnStock) {
+      const productoId = b.producto;
+      if (!suma[productoId]){
+        suma[productoId] = { productoId, nombre: b.nombreProducto || `${productoId}`, cantidadBolsones: 0, pesoTotal: 0 };
+      }
+      suma[productoId].cantidadBolsones += 1;
+      suma[productoId].pesoTotal += Number(b.peso || 0);
     }
-    suma[productoId].cantidadBolsones += 1;
-    suma[productoId].pesoTotal += Number(b.peso || 0);
   }
+  
   return { productos: Object.values(suma) };
 };
 
