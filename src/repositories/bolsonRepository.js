@@ -317,45 +317,45 @@ class BolsonRepository {
     }
   }
 
-  // *** HISTÓRICO HASTA FECHA (exclusive a partir de 06:00 del día siguiente)
-  async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */){
-    try {
-      // límite = 1 día después 05:59:59.999
-      const base = parseLocalDate(fecha);
-      const limite = new Date(base);
-      limite.setDate(limite.getDate()+1);
-      limite.setHours(5,59,59,999);
-      const limStr = formatMySQLLocal(limite);
+ // *** HISTÓRICO HASTA FECHA (exclusive a partir de 06:00 del día siguiente)
+async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
+  try {
+    // Usar helpers para calcular ventana de turno
+    const { fin } = ventanaTurnoDiario(fecha);
+    const finStr = formatMySQLLocal(fin);
 
-      const result = await db.query(`
-        SELECT b.*, p.nombre AS nombreProducto
-        FROM bolsones b
-        LEFT JOIN productos p ON b.producto = p.id
-        WHERE CONCAT(b.fecha, ' ', b.hora) <= ?
-        ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
-      `, [limStr]);
+    console.log(`[BOLSONES HASTA FECHA] -> ${finStr}`);
 
-      return result;
-    } catch (error) {
-      console.error('Error al obtener bolsones históricos hasta fecha:', error);
-      throw error;
-    }
+    const result = await db.query(`
+      SELECT b.*, p.nombre AS nombreProducto
+      FROM bolsones b
+      LEFT JOIN productos p ON b.producto = p.id
+      WHERE CONCAT(b.fecha, ' ', b.hora) <= ?
+      ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
+    `, [finStr]);
+
+    console.log(`[BOLSONES FECHA] Se encontraron ${result.length} bolsones hasta fecha ${fecha}`);
+    return result;
+  } catch (err) {
+    console.error("[ERROR obtenerBolsonesHastaFecha]", err);
+    throw err;
   }
+}
 
-  // *** STOCK DEL MES (producidos en el mes operativo y NO despachados HASTA LA FECHA específica)
+  // *** STOCK DEL MES (producidos en el mes operativo)
   async obtenerStockDelMes(fecha /* 'YYYY-MM-DD' */) {
     try {
-      const { inicio, fin } = ventanaMesOperativo(fecha);
+      const { inicio, _ } = ventanaMesOperativo(fecha);   // inicio del mes operativo
+      const { inicioDia, fin } = ventanaTurnoDiario(fecha); // fin del día de la fecha solicitada
+  
       const iniStr = formatMySQLLocal(inicio);
-      
-      // Para el límite superior, usamos el final del día de la fecha solicitada (23:59:59)
-      const fechaFinDia = new Date(fecha);
-      fechaFinDia.setHours(23, 59, 59, 999);
-      const fechaFinDiaStr = formatMySQLLocal(fechaFinDia);
-      
-      console.log(`[STOCK_MES] Período: ${iniStr} -> ${fechaFinDiaStr}, fecha reporte: ${fecha}`);
-      
-      // Simplificamos la consulta para asegurar que todos los bolsones del mes se incluyan correctamente
+      const finStr = formatMySQLLocal(fin);
+      if (!iniStr || !finStr) {
+        throw new Error('Fechas de inicio o fin inválidas para consulta de stock del mes');
+      }
+  
+      console.log(`[STOCK_MES] Período: ${iniStr} -> ${finStr}, fecha reporte: ${fecha}`);
+  
       const result = await db.query(`
         SELECT 
           b.*,
@@ -367,38 +367,22 @@ class BolsonRepository {
         LEFT JOIN 
           productos p ON b.producto = p.id
         WHERE 
-          /* Producidos en el mes operativo - usamos solo fecha para simplificar */
-          b.fecha >= ? AND b.fecha <= ?
-          /* No despachados o despachados después de la fecha del reporte */
-          AND (
-            b.despachado = 0 
-            OR NOT EXISTS (
-              SELECT 1 FROM despachos_detalle dd
-              JOIN despachos d ON dd.despacho_id = d.id
-              WHERE dd.bolson_codigo = b.codigo
-              AND d.fecha <= ?
-            )
-          )
+          CONCAT(b.fecha, ' ', b.hora) BETWEEN ? AND ?
         ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
-      `, [
-        inicio.toISOString().split('T')[0], // Solo la parte de la fecha 'YYYY-MM-DD'
-        fechaFinDia.toISOString().split('T')[0], // Solo la parte de la fecha 'YYYY-MM-DD'
-        fecha
-      ]);
-
-      // Registro adicional para depurar
+      `, [iniStr, finStr]);
+  
       console.log(`[STOCK_MES] Se encontraron ${result.length} bolsones en el stock del mes`);
       if (result.length > 0) {
         console.log(`[STOCK_MES] Primer bolsón: ID=${result[0].id}, Producto=${result[0].producto}, Fecha=${result[0].fecha}, Hora=${result[0].hora}`);
       }
-
+  
       return result;
     } catch (error) {
       console.error('Error al obtener stock del mes (operativo):', error);
       throw error;
     }
   }
-
+    
   // *** DESPACHADOS DEL MES (en el mes operativo, con despachado=1)
   async obtenerDespachadosDelMes(fecha /* 'YYYY-MM-DD' */){
     try {
