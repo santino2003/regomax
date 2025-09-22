@@ -322,6 +322,7 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
     const { fin } = ventanaTurnoDiario(fecha);
     const finStr = formatMySQLLocal(fin);
 
+    console.log(`Obteniendo bolsones hasta fecha (exclusive) ${fecha}, ventana hasta ${finStr}`);
     const result = await db.query(`
       SELECT b.*, p.nombre AS nombreProducto
       FROM bolsones b
