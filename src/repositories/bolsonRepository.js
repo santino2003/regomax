@@ -322,7 +322,6 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
     const { fin } = ventanaTurnoDiario(fecha);
     const finStr = formatMySQLLocal(fin);
 
-    console.log(`Obteniendo bolsones hasta fecha (exclusive) ${fecha}, ventana hasta ${finStr}`);
     const result = await db.query(`
       SELECT b.*, p.nombre AS nombreProducto
       FROM bolsones b
@@ -332,7 +331,7 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
       WHERE CONCAT(b.fecha, ' ', b.hora) <= ?
         AND (b.despachado = 0 OR d.fecha > ? OR d.id IS NULL)
       ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
-    `, [finStr, fecha]);
+    `, [finStr, finStr]);
 
     return result;
   } catch (err) {
