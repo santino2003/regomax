@@ -22,7 +22,7 @@ const authMiddleware = require('./middleware/auth');
 const permissionErrorHandler = require('./middleware/permissionErrorHandler');
 const productoRoutes = require('./routes/api/productoRoutes');
 const planificacionRoutes = require('./routes/api/planificacionRoutes'); // Importamos las rutas de planificación
-
+const proveedorRoutes = require('./routes/proveedorRoutes');
 // Crear aplicación Express
 const app = express();
 
@@ -55,7 +55,7 @@ app.use('/api/partes-diarios', parteDiarioRoutes); // Registramos las rutas del 
 app.use('/api/historial', historialRoutes);
 app.use('/api/reportes', reporteRoutes); // Registramos las rutas de reportes
 app.use('/api/planificacion-produccion', planificacionRoutes); // Registramos las rutas de planificación
-
+app.use('/api/proveedores', proveedorRoutes); // Rutas para gestión de proveedores
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);
 

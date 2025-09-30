@@ -256,6 +256,21 @@ router.get('/reporte-general', [
     permissionsMiddleware.hasPermission('reportes:view')
 ], reporteController.mostrarReporteGeneral);
 
+// Vista: Listar proveedores
+const proveedorController = require('../controllers/proveedorController');
+router.get('/proveedores', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:view')
+], proveedorController.vistaListarProveedores);
+
+// Vista: Nuevo proveedor
+router.get('/proveedores/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:create')
+], proveedorController.vistaNuevoProveedor);
+
 // Endpoint de logout
 router.get('/logout', (req, res) => {
     res.clearCookie('token');

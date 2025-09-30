@@ -166,6 +166,25 @@
                             </div>
                         </div>
                         
+                        <!-- Compras -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCompras">
+                                    <i class="bi bi-cart4 me-2"></i> Compras
+                                </button>
+                            </h2>
+                            <div id="collapseCompras" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                                <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['proveedor:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/proveedores"><i class="bi bi-person-lines-fill me-2"></i> Proveedores</a>
+                                    </div>
+                                    <% } %>
+                                    <!-- Puedes agregar más opciones de compras aquí -->
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- Almacenes -->
                        <!-- Next sprint -->
                         
