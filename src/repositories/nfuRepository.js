@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { formatMySQLLocal, parseLocalDate } = require('../utils/fecha');
+const { formatMySQLLocal, parseLocalDate, fechaActual } = require('../utils/fecha');
 
 /**
  * Inserta un nuevo registro de NFU en la base de datos
@@ -23,10 +23,16 @@ const insertarNFU = async (fecha, cantidad, responsable) => {
     
     console.log('📅 Fecha formateada con zona horaria Buenos Aires:', fechaFormateada);
     
-    const query = 'INSERT INTO nfu (fecha, cantidad, responsable) VALUES (?, ?, ?)';
+    // Obtener la hora actual en Buenos Aires
+    const horaActual = fechaActual();
+    const horaString = `${horaActual.getHours()}:${horaActual.getMinutes()}:${horaActual.getSeconds()}`;
+    
+    console.log('⏰ Hora actual en Buenos Aires:', horaString);
+    
+    const query = 'INSERT INTO nfu (fecha, cantidad, responsable, hora) VALUES (?, ?, ?, ?)';
     
     // Usar la fecha formateada en lugar de la fecha directa
-    const result = await db.query(query, [fechaFormateada, cantidad, responsable]);
+    const result = await db.query(query, [fechaFormateada, cantidad, responsable, horaString]);
     
     // En algunos drivers de MySQL, el resultado puede tener diferentes estructuras
     // Adaptamos el código para manejar diferentes formatos de respuesta
@@ -59,13 +65,7 @@ const obtenerTodosNFU = async () => {
   return await db.query(query);
 };
 
-/**
- * Obtiene el ingreso de NFU para una fecha específica
- */
-const obtenerNFUPorFecha = async (fecha) => {
-  const query = 'SELECT id, fecha, cantidad, responsable FROM nfu WHERE fecha = ? ORDER BY id ASC';
-  return await db.query(query, [fecha]);
-};
+
 
 /**
  * Obtiene la cantidad total de NFU ingresados en una fecha específica
@@ -76,13 +76,7 @@ const obtenerCantidadNFUPorFecha = async (fecha) => {
   return result[0]?.cantidadTotal || 0;
 };
 
-/**
- * Obtiene los NFU ingresados entre dos fechas (inclusive)
- */
-const obtenerNFUEntreFechas = async (fechaInicio, fechaFin) => {
-  const query = 'SELECT id, fecha, cantidad, responsable FROM nfu WHERE fecha BETWEEN ? AND ? ORDER BY fecha ASC';
-  return await db.query(query, [fechaInicio, fechaFin]);
-};
+
 
 /**
  * Obtiene la cantidad total de NFU ingresados entre dos fechas (inclusive)
@@ -90,15 +84,8 @@ const obtenerNFUEntreFechas = async (fechaInicio, fechaFin) => {
 const obtenerCantidadNFUEntreFechas = async (fechaInicio, fechaFin) => {
   const query = 'SELECT SUM(cantidad) as cantidadTotal FROM nfu WHERE fecha BETWEEN ? AND ?';
   const result = await db.query(query, [fechaInicio, fechaFin]);
+  console.log(`\x1b[31mCantidad NFU acumulada entre ${fechaInicio} y ${fechaFin}:\x1b[0m`, result[0]?.cantidadTotal);
   return result[0]?.cantidadTotal || 0;
-};
-
-/**
- * Obtiene todos los NFU ingresados hasta una fecha específica (inclusive)
- */
-const obtenerNFUHastaFecha = async (fecha) => {
-  const query = 'SELECT id, fecha, cantidad, responsable FROM nfu WHERE fecha <= ? ORDER BY fecha ASC';
-  return await db.query(query, [fecha]);
 };
 
 /**
@@ -184,11 +171,8 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
 module.exports = {
   insertarNFU,
   obtenerTodosNFU,
-  obtenerNFUPorFecha,
   obtenerCantidadNFUPorFecha,
-  obtenerNFUEntreFechas,
   obtenerCantidadNFUEntreFechas,
-  obtenerNFUHastaFecha,
   obtenerCantidadNFUHastaFecha,
   obtenerRegistrosNFU
 };
