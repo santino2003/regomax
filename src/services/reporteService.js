@@ -130,6 +130,7 @@ const obtenerDespachosAcumuladosDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
 // NFU - Cantidad ingresada en una fecha específica
 const obtenerIngresoNFUPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
   const cantidadTotal = await nfuRepository.obtenerCantidadNFUPorFecha(fecha);
+  console.log(`\x1b[31mCantidad NFU ingresada el ${fecha}:\x1b[0m`, cantidadTotal);
   return {
     fecha,
     cantidadTotal: Number(cantidadTotal || 0)
@@ -138,23 +139,29 @@ const obtenerIngresoNFUPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
 
 // NFU - Stock acumulado del mes operativo
 const obtenerNFUAcumuladoDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
+  // Usar las funciones existentes para obtener las fechas según la lógica del negocio
+  // El mes operativo comienza el primer día del mes a las 06:00 hora Buenos Aires
   const { inicio } = ventanaMesOperativo(fecha);
+  const { fin } = ventanaTurnoDiario(fecha);
   
-  // Modificación: En lugar de usar la fecha fin del mes operativo, usar la fecha solicitada
-  // para tener un snapshot exacto hasta ese día
-  const fechaFinDia = new Date(fecha);
-  fechaFinDia.setHours(23, 59, 59, 999); // Fin del día solicitado
-  const finDiaStr = formatMySQLLocal(fechaFinDia);
-  
-  const cantidadTotal = await nfuRepository.obtenerCantidadNFUEntreFechas(
-    formatMySQLLocal(inicio), 
-    finDiaStr // Usamos la fecha del reporte como límite, no el fin del mes operativo
+  // Extraer solo la parte de la fecha para buscar entre fechas
+  // Ya que la tabla nfu usa una columna 'fecha' de tipo DATE
+  const fechaInicioSoloFecha = formatMySQLLocal(inicio).split(' ')[0];
+  const fechaFinSoloFecha = formatMySQLLocal(fin).split(' ')[0];
+
+
+  const cantidadResto = await nfuRepository.obtenerCantidadNFUEntreFechas(
+    fechaInicioSoloFecha, 
+    fechaFinSoloFecha
   );
   
+  // La cantidad total será la suma 
+  const cantidadTotal = Number(cantidadResto || 0);
+    
   return {
     fechaInicio: formatMySQLLocal(inicio),
-    fechaFin: finDiaStr,
-    cantidadTotal: Number(cantidadTotal || 0)
+    fechaFin: formatMySQLLocal(fin),
+    cantidadTotal: cantidadTotal
   };
 };
 
