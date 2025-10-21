@@ -67,6 +67,11 @@ const PERMISSIONS = {
     EXPORT: 'reportes:export',
   },
   
+  // Permisos para reportes AR
+  REPORTES_AR: {
+    VIEW: 'reporteAR:view',
+  },
+  
   // Permisos para configuración del sistema
   CONFIGURACION: {
     VIEW: 'configuracion:view',

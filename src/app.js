@@ -15,6 +15,7 @@ const despachoRoutes = require('./routes/despachoRoutes');
 const parteDiarioRoutes = require('./routes/parteDiarioRoutes'); // Importamos las rutas del parte diario
 const historialRoutes = require('./routes/historialRoutes');
 const reporteRoutes = require('./routes/reporteRoutes'); // Importamos las rutas de reportes
+const reporteARRoutes = require('./routes/reporteARRoutes'); // Importamos las rutas del reporte AR
 const diasHabilesRoutes = require('./routes/diasHabilesRoutes'); // Importamos las rutas de días hábiles
 const viewRoutes = require('./routes/viewRoutes');
 const nfuRoutes = require('./routes/nfuRoutes'); // Importamos las rutas de NFU
@@ -54,6 +55,7 @@ app.use('/api/despachos', despachoRoutes);
 app.use('/api/partes-diarios', parteDiarioRoutes); // Registramos las rutas del parte diario
 app.use('/api/historial', historialRoutes);
 app.use('/api/reportes', reporteRoutes); // Registramos las rutas de reportes
+app.use('/api/reportear', reporteARRoutes); // Registramos las rutas del reporte AR
 app.use('/api/planificacion-produccion', planificacionRoutes); // Registramos las rutas de planificación
 
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
