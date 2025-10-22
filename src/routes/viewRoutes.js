@@ -256,6 +256,14 @@ router.get('/reporte-general', [
     permissionsMiddleware.hasPermission('reportes:view')
 ], reporteController.mostrarReporteGeneral);
 
+// Ruta para el reporte AR
+const reporteARController = require('../controllers/reporteARController');
+router.get('/reporte-ar', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reporteAR:view')
+], reporteARController.mostrarReporteAR);
+
 // Endpoint de logout
 router.get('/logout', (req, res) => {
     res.clearCookie('token');

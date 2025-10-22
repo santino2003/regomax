@@ -1,6 +1,9 @@
 const reporteARService = require('../services/reporteARService');
 const { fechaActual, formatMySQLLocal } = require('../utils/fecha');
 
+/**
+ * Genera el reporte AR en formato JSON para la API
+ */
 const generarReporteAR = async (req, res) => {
     try {
         const { fecha } = req.query;
@@ -30,6 +33,32 @@ const generarReporteAR = async (req, res) => {
     }
 }
 
+/**
+ * Muestra la vista del reporte AR
+ */
+const mostrarReporteAR = async (req, res) => {
+    try {
+        // Obtener fecha actual o la seleccionada por el usuario
+        const fechaObj = fechaActual();
+        const fechaSeleccionada = req.query.fecha || formatMySQLLocal(fechaObj).split(' ')[0];
+        
+        res.render('reporteAR', { 
+            titulo: 'Reporte A.R',
+            username: req.user.username,
+            user: req.user,
+            fechaSeleccionada: fechaSeleccionada
+        });
+    } catch (error) {
+        console.error('Error al mostrar el reporte AR:', error);
+        res.status(500).render('error', {
+            message: 'Error al cargar el reporte AR',
+            error: { status: 500, stack: error.stack },
+            user: req.user
+        });
+    }
+}
+
 module.exports = {
-    generarReporteAR
+    generarReporteAR,
+    mostrarReporteAR
 };

@@ -6,9 +6,9 @@ class ReporteARRepository {
     
     async obtenerStockTotal(fecha) {
         try {
-            const { fin } = ventanaTurnoDiario(fecha); // fin del día de la fecha solicitada
+            const { fin } = ventanaTurnoDiario(fecha);
+            fin.setDate(fin.getDate() - 1);
             const finStr = formatMySQLLocal(fin);
-            
             // Consulta para obtener la sumatoria total de bolsones por producto en stock
             // Solo incluye bolsones no despachados o despachados después de la fecha consultada
             const result = await db.query(`
