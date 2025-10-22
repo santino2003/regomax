@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= titulo %> - Regomax</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= user.username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-key me-1"></i> Cambiar contraseña</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-graph-up me-2"></i>Reporte A.R
+                        </h4>
+                        <div>
+                            <div class="input-group">
+                                <input type="date" id="fechaReporte" class="form-control">
+                                <button id="btnGenerarReporte" class="btn btn-primary">
+                                    <i class="bi bi-sync me-1"></i> Reporte A.R
+                                </button>
+                                <button id="btnImprimir" class="btn btn-info ms-2">
+                                    <i class="bi bi-print me-1"></i> Imprimir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="contenedorReporte">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info" id="loadingAlert">
+                                    <i class="bi bi-info-circle me-2"></i> Seleccione una fecha y haga clic en "Generar" para visualizar el reporte
+                                </div>
+                            </div>
+                        </div>
+                
+                        <div id="reporteContent" style="display: none;">
+                            <!-- Reporte completo en un único cuadro -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header bg-primary text-white">
+                                            <h5 class="card-title mb-0">Reporte A.R del día <span id="fechaReporteHeader"></span></h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <!-- Tabla unificada con resumen y detalle -->
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered" id="tablaUnificada">
+                                                    <thead class="table-dark">
+                                                        <tr>
+                                                            <th>Fecha</th>
+                                                            <th>Detalle</th>
+                                                            <th>Ingreso</th>
+                                                            <th>Egreso</th>
+                                                            <th>Saldo</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td id="fechaAnterior">Fecha anterior a la de consulta</td>
+                                                            <td>Stock</td>
+                                                            <td></td>
+                                                            <td></td>
+                                                            <td id="kilosTotales">0 kg</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td id="fechaProduccion">Fecha consulta</td>
+                                                            <td>Producción</td>
+                                                            <td id="kilosProduccion">0 kg</td>
+                                                            <td></td>
+                                                            <td id="totalKilosProduccion">0 kg</td>
+                                                        </tr>
+                                                        <!-- Aquí se insertarán dinámicamente las filas de detalle -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col">
+                <a href="/home" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al panel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/common.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Establecer la fecha de hoy por defecto usando la zona horaria de Buenos Aires
+            function setFechaActualBA() {
+                const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' };
+                const today = new Date();
+                const fechaBA = today.toLocaleDateString('es-AR', options).split('/').reverse().join('-');
+                document.getElementById('fechaReporte').value = fechaBA;
+            }
+            
+            // Obtener fecha de la URL (si existe)
+            function obtenerFechaURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get('fecha');
+            }
+            
+            // Configurar la fecha seleccionada (de URL o actual)
+            const fechaURL = obtenerFechaURL();
+            if (fechaURL) {
+                document.getElementById('fechaReporte').value = fechaURL;
+                // Generar el reporte automáticamente si hay fecha en la URL
+                setTimeout(() => generarReporte(), 100);
+            } else {
+                setFechaActualBA();
+            }
+            
+            // Evento para generar el reporte
+            document.getElementById('btnGenerarReporte').addEventListener('click', generarReporte);
+            
+            // Evento para imprimir
+            document.getElementById('btnImprimir').addEventListener('click', imprimirReporte);
+        });
+
+        async function generarReporte() {
+            const fecha = document.getElementById('fechaReporte').value;
+            
+            if (!fecha) {
+                alert('Por favor seleccione una fecha para generar el reporte');
+                return;
+            }
+            
+            // Mostrar loading
+            document.getElementById('loadingAlert').innerHTML = '<i class="bi bi-spinner bi-spin"></i> Cargando datos del reporte...';
+            document.getElementById('reporteContent').style.display = 'none';
+            
+            try {
+                const response = await fetch(`/api/reportear?fecha=${fecha}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    mostrarReporte(data);
+                } else {
+                    document.getElementById('loadingAlert').innerHTML = 
+                        `<i class="bi bi-exclamation-triangle"></i> Error: ${data.message || 'No se pudo cargar el reporte'}`;
+                }
+            } catch (error) {
+                console.error('Error al generar reporte:', error);
+                document.getElementById('loadingAlert').innerHTML = 
+                    '<i class="bi bi-exclamation-triangle"></i> Error al conectar con el servidor';
+            }
+        }
+
+        function mostrarReporte(data) {
+            // Actualizar fecha en el encabezado
+            let fechaReporte = data.fechaConsulta; // formato YYYY-MM-DD
+            const [year, month, day] = fechaReporte.split('-');
+            // Crear una fecha específica sin depender de la zona horaria
+            const fechaFormateada = new Date(year, month-1, day);
+            const fechaFormateadaStr = fechaFormateada.toLocaleDateString();
+            document.getElementById('fechaReporteHeader').textContent = fechaFormateadaStr;
+            
+            // Calcular y mostrar la fecha anterior (día anterior)
+            const fechaAnterior = new Date(year, month-1, day);
+            fechaAnterior.setDate(fechaAnterior.getDate() - 1);
+            const fechaAnteriorStr = fechaAnterior.toLocaleDateString();
+            document.getElementById('fechaAnterior').textContent = fechaAnteriorStr;
+            
+            // Actualizar fecha en la fila de producción
+            document.getElementById('fechaProduccion').textContent = fechaFormateadaStr;
+            
+            // Actualizar datos de la tabla unificada
+            document.getElementById('kilosTotales').textContent = `${formatNumber(data.data.kilosTotales)} kg`;
+            document.getElementById('kilosProduccion').textContent = `${formatNumber(data.data.kilosProduccion)} kg`;
+            
+            // Calcular el saldo progresivo
+            let saldoActual = data.data.kilosTotales;
+            
+            // Actualizar saldo después de la producción
+            saldoActual += data.data.kilosProduccion;
+            document.getElementById('totalKilosProduccion').textContent = `${formatNumber(saldoActual)} kg`;
+            
+            // Obtener la tabla y el cuerpo
+            const tablaBody = document.getElementById('tablaUnificada').getElementsByTagName('tbody')[0];
+            
+            // Añadir filas de detalle después de las filas principales
+            if (data.data.logisticasDetalle && data.data.logisticasDetalle.length > 0) {
+                data.data.logisticasDetalle.forEach(item => {
+                    const row = tablaBody.insertRow();
+                    
+                    // Usar estilo diferente para las filas de detalle
+                    row.className = 'table-light';
+                    
+                    // Restar el egreso del saldo actual
+                    saldoActual -= parseFloat(item.pesoTotal);
+                    
+                    row.insertCell(0).textContent = fechaFormateadaStr; // Fecha de consulta formateada
+                    row.insertCell(1).textContent = item.cliente;     // Detalle (nombre del cliente)
+                    row.insertCell(2).textContent = '';               // Ingreso (vacío)
+                    row.insertCell(3).textContent = `${formatNumber(parseFloat(item.pesoTotal))} kg`;  // Egreso
+                    row.insertCell(4).textContent = `${formatNumber(saldoActual)} kg`;  // Saldo actualizado
+                });
+                
+                // Agregar fila final en negrita con el saldo final
+                const rowFinal = tablaBody.insertRow();
+                rowFinal.className = 'fw-bold';
+                rowFinal.insertCell(0).textContent = '';
+                rowFinal.insertCell(1).textContent = '';
+                rowFinal.insertCell(2).textContent = '';
+                rowFinal.insertCell(3).textContent = '';
+                rowFinal.insertCell(4).textContent = `${formatNumber(saldoActual)} kg`;
+            } else {
+                const row = tablaBody.insertRow();
+                row.className = 'table-light';
+                const cell = row.insertCell(0);
+                cell.colSpan = 5;
+                cell.textContent = "No hay datos de logística para esta fecha";
+                cell.className = "text-center";
+            }
+            
+            // Mostrar el contenido del reporte y ocultar mensaje de loading
+            document.getElementById('loadingAlert').style.display = 'none';
+            document.getElementById('reporteContent').style.display = 'block';
+        }
+
+        function imprimirReporte() {
+            if (document.getElementById('reporteContent').style.display === 'none') {
+                alert('Primero debe generar un reporte');
+                return;
+            }
+            
+            window.print();
+        }
+
+        function formatNumber(num) {
+            return Number(num).toLocaleString('es-AR');
+        }
+    </script>
+
+    <style>
+        @media print {
+            .btn, input, select, .no-print {
+                display: none !important;
+            }
+            body {
+                padding: 0;
+                margin: 0;
+            }
+            .card {
+                break-inside: avoid;
+            }
+            .container {
+                width: 100%;
+                padding: 0;
+                max-width: none;
+            }
+        }
+        .info-box {
+            border-radius: 0.25rem;
+            padding: 1rem;
+            text-align: center;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        .info-box-text {
+            display: block;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .info-box-number {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+    </style>
+</body>
+</html>
