@@ -233,6 +233,11 @@
             // Obtener la tabla y el cuerpo
             const tablaBody = document.getElementById('tablaUnificada').getElementsByTagName('tbody')[0];
             
+            // Limpiar filas dinámicas anteriores (mantener solo las 2 primeras filas fijas)
+            while (tablaBody.rows.length > 2) {
+                tablaBody.deleteRow(2);
+            }
+            
             // Añadir filas de detalle después de las filas principales
             if (data.data.logisticasDetalle && data.data.logisticasDetalle.length > 0) {
                 data.data.logisticasDetalle.forEach(item => {
