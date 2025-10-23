@@ -189,6 +189,13 @@ router.get('/bolsones-despachados/exportar', [
     permissionsMiddleware.hasPermission('despachos:export')
 ], despachoController.exportarBolsonesDespachados);
 
+// Ruta adicional para exportar despachos sin el prefijo /api/
+router.get('/despachos/exportar-despachados', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('despachos:export')
+], despachoController.exportarBolsonesDespachados);
+
 // Rutas de partes diarios - con verificación de permisos
 router.get('/partes-diarios', [
     authMiddleware.verifyToken, 
@@ -253,7 +260,7 @@ const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [
     authMiddleware.verifyToken, 
     noCacheMiddleware,
-    permissionsMiddleware.hasPermission('reportes:view')
+    permissionsMiddleware.hasAnyPermission(['reportes:view', 'reportes:view_ar'])
 ], reporteController.mostrarReporteGeneral);
 
 // Ruta para el reporte AR
@@ -261,7 +268,7 @@ const reporteARController = require('../controllers/reporteARController');
 router.get('/reporte-ar', [
     authMiddleware.verifyToken, 
     noCacheMiddleware,
-    permissionsMiddleware.hasPermission('reporteAR:view')
+    permissionsMiddleware.hasPermission('reportes:view_ar')
 ], reporteARController.mostrarReporteAR);
 
 // Endpoint de logout

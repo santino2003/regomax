@@ -140,6 +140,13 @@ const authController = {
       // Obtener permisos agrupados por categoría
       const permissionCategories = await getAllPermissionsByCategory();
       
+      // Filtrar específicamente el permiso despachos:delete si existe
+      if (permissionCategories.DESPACHOS) {
+        permissionCategories.DESPACHOS = permissionCategories.DESPACHOS.filter(
+          permission => permission !== 'despachos:delete'
+        );
+      }
+      
       // Renderizar la vista
       res.render('users', { 
         username: req.user.username,

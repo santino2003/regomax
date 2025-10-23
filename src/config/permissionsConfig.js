@@ -26,7 +26,7 @@ const PERMISSIONS = {
     VIEW: 'despachos:view',
     CREATE: 'despachos:create',
     EDIT: 'despachos:edit',
-    DELETE: 'despachos:delete',
+    EXPORT: 'despachos:export',
   },
   
   // Permisos para partes diarios
@@ -44,11 +44,11 @@ const PERMISSIONS = {
     CREATE: 'ordenes:create',
     EDIT: 'ordenes:edit',
     DELETE: 'ordenes:delete',
+    EXPORT: 'ordenes:export',
   },
   
   // Permisos para productos
   PRODUCTOS: {
-    VIEW: 'productos:view',
     CREATE: 'productos:create',
     EDIT: 'productos:edit',
     DELETE: 'productos:delete',
@@ -65,11 +65,7 @@ const PERMISSIONS = {
   REPORTES: {
     VIEW: 'reportes:view',
     EXPORT: 'reportes:export',
-  },
-  
-  // Permisos para reportes AR
-  REPORTES_AR: {
-    VIEW: 'reporteAR:view',
+    VIEW_AR: 'reportes:view_ar', // Cambiado de 'reporteAR:view' a 'reportes:view_ar' para mejor visualización
   },
   
   // Permisos para configuración del sistema
