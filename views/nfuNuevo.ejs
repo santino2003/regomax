@@ -67,9 +67,9 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="cliente_id" class="form-label">Cliente NFU</label>
-                                            <select class="form-select" id="cliente_id" name="cliente_id">
-                                                <option value="">Seleccionar cliente (opcional)</option>
+                                            <label for="cliente_id" class="form-label">Cliente NFU <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="cliente_id" name="cliente_id" required>
+                                                <option value="">Seleccionar cliente</option>
                                                 <% if (clientes && clientes.length > 0) { %>
                                                     <% clientes.forEach(cliente => { %>
                                                         <option value="<%= cliente.id %>">
@@ -88,13 +88,13 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="fecha" class="form-label">Fecha de ingreso</label>
+                                            <label for="fecha" class="form-label">Fecha de ingreso <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" id="fecha" name="fecha" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="cantidad" class="form-label">Cantidad (kg)</label>
+                                            <label for="cantidad" class="form-label">Cantidad (kg) <span class="text-danger">*</span></label>
                                             <input type="number" class="form-control" id="cantidad" name="cantidad" step="0.01" min="0.01" required>
                                         </div>
                                     </div>
@@ -148,8 +148,8 @@
         // Inicializar Select2 en el selector de clientes
         $('#cliente_id').select2({
             theme: 'bootstrap-5',
-            placeholder: 'Seleccionar cliente (opcional)',
-            allowClear: true,
+            placeholder: 'Seleccionar cliente',
+            allowClear: false,
             language: {
                 noResults: function() {
                     return "No se encontraron resultados";
@@ -184,7 +184,7 @@
             
             console.log('Datos del formulario:', { fecha, cantidad, cliente_id });
             
-            if (!fecha || !cantidad) {
+            if (!fecha || !cantidad || !cliente_id) {
                 alert('Por favor complete todos los campos obligatorios');
                 return;
             }
@@ -194,13 +194,9 @@
                 
                 const requestBody = {
                     fecha,
-                    cantidad: Number(cantidad)
+                    cantidad: Number(cantidad),
+                    cliente_id: Number(cliente_id)
                 };
-                
-                // Solo agregar cliente_id si se seleccionó uno
-                if (cliente_id) {
-                    requestBody.cliente_id = Number(cliente_id);
-                }
                 
                 const response = await fetch('/api/nfu', {
                     method: 'POST',
