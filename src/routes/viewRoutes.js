@@ -255,6 +255,47 @@ router.get('/dias-habiles', [
     permissionsMiddleware.hasPermission('dias_habiles:view')
 ], diasHabilesController.mostrarCalendario);
 
+// Vista: Listar proveedores
+const proveedorController = require('../controllers/proveedorController');
+router.get('/proveedores', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:view')
+], proveedorController.vistaListarProveedores);
+
+// Vista: Nuevo proveedor
+router.get('/proveedores/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:create')
+], proveedorController.vistaNuevoProveedor);
+
+// Vistas de Clientes NFU
+const clienteNFUController = require('../controllers/clienteNFUController');
+router.get('/clientes-nfu', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:view')
+], clienteNFUController.vistaListarClientes);
+
+router.get('/clientes-nfu/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:create')
+], clienteNFUController.vistaNuevoCliente);
+
+router.get('/clientes-nfu/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:edit')
+], clienteNFUController.vistaEditarCliente);
+
+router.get('/clientes-nfu/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:view')
+], clienteNFUController.vistaVerCliente);
+
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [
