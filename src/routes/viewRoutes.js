@@ -255,6 +255,21 @@ router.get('/dias-habiles', [
     permissionsMiddleware.hasPermission('dias_habiles:view')
 ], diasHabilesController.mostrarCalendario);
 
+// Vista: Listar proveedores
+const proveedorController = require('../controllers/proveedorController');
+router.get('/proveedores', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:view')
+], proveedorController.vistaListarProveedores);
+
+// Vista: Nuevo proveedor
+router.get('/proveedores/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:create')
+], proveedorController.vistaNuevoProveedor);
+
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [

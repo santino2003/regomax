@@ -503,6 +503,33 @@ const despachoDetalles = {
 };
 
 /**
+ * Funciones específicas para extraer detalles de proveedores
+ */
+const proveedorDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            contacto: req.body?.contacto,
+            telefono: req.body?.telefono,
+            email: req.body?.email,
+            direccion: req.body?.direccion,
+            web: req.body?.web,
+            rubro: req.body?.rubro,
+            responsable: req.user?.username
+        };
+    }
+    // Puedes agregar más acciones si lo necesitas (consultar, editar, eliminar)
+};
+
+/**
+ * Funciones para registrar acciones de proveedores
+ */
+const proveedor = {
+    crear: () => registrarHistorial('crear', 'proveedor', proveedorDetalles.crear),
+    // Puedes agregar más acciones si lo necesitas
+};
+
+ /**
  * Funciones para registrar acciones de bolsones
  */
 const bolson = {
@@ -548,5 +575,6 @@ module.exports = {
     bolson,
     orden,
     parteDiario,
-    despacho
+    despacho,
+    proveedor
 };
