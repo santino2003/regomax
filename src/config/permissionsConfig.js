@@ -54,6 +54,22 @@ const PERMISSIONS = {
     DELETE: 'productos:delete',
   },
   
+  // Permisos para proveedores
+  PROVEEDORES: {
+    VIEW: 'proveedor:view',
+    CREATE: 'proveedor:create',
+    EDIT: 'proveedor:edit',
+    DELETE: 'proveedor:delete',
+  },
+  
+  // Permisos para clientes NFU
+  CLIENTES_NFU: {
+    VIEW: 'clientes_nfu:view',
+    CREATE: 'clientes_nfu:create',
+    EDIT: 'clientes_nfu:edit',
+    DELETE: 'clientes_nfu:delete',
+  },
+  
   // Permisos para días hábiles
   DIAS_HABILES: {
     VIEW: 'dias_habiles:view',
