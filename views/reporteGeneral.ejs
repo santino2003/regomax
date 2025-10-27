@@ -61,6 +61,9 @@
                                 <button id="btnGenerarReporte" class="btn btn-primary">
                                     <i class="bi bi-sync me-1"></i> Generar
                                 </button>
+                                <button id="btnReporteAR" class="btn btn-success ms-2">
+                                    <i class="bi bi-bar-chart-line me-1"></i> Reporte A.R
+                                </button>
                                 <button id="btnImprimir" class="btn btn-info ms-2">
                                     <i class="bi bi-print me-1"></i> Imprimir
                                 </button>
@@ -304,6 +307,9 @@
             
             // Evento para generar el reporte
             document.getElementById('btnGenerarReporte').addEventListener('click', generarReporte);
+            
+            // Evento para el reporte AR
+            document.getElementById('btnReporteAR').addEventListener('click', generarReporteAR);
             
             // Evento para imprimir
             document.getElementById('btnImprimir').addEventListener('click', imprimirReporte);
@@ -640,6 +646,18 @@
             }
             
             window.print();
+        }
+        
+        function generarReporteAR() {
+            const fecha = document.getElementById('fechaReporte').value;
+            
+            if (!fecha) {
+                alert('Por favor seleccione una fecha para generar el reporte A.R');
+                return;
+            }
+            
+            // Redirigir a la página del reporte AR con la fecha seleccionada
+            window.location.href = `/reporte-ar?fecha=${fecha}`;
         }
 
         function formatNumber(num) {

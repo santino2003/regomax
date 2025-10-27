@@ -24,8 +24,9 @@ document.addEventListener('DOMContentLoaded', function() {
             exportarBtn.disabled = true;
             exportarBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Exportando...';
             
-            // Redirigir a la ruta de exportación
-            window.location.href = '/api/despachos/exportar-despachados';
+            // Redirigir directamente a la ruta de exportación sin el prefijo /api/
+            // El middleware de permisos se encargará de verificar y mostrar errores si es necesario
+            window.location.href = '/despachos/exportar-despachados';
             
             // Restaurar el botón después de un tiempo
             setTimeout(function() {

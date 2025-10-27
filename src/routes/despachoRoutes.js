@@ -39,10 +39,4 @@ router.get('/bolsones-despachados',
     despachoController.listarBolsonesDespachados
 );
 
-router.get('/exportar-despachados', 
-    auth.verifyToken,
-    permissionsMiddleware.hasPermission('despachos:export'),
-    despachoController.exportarBolsonesDespachados
-);
-
 module.exports = router;

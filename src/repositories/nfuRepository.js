@@ -1,12 +1,12 @@
 const db = require('../config/db');
-const { formatMySQLLocal, parseLocalDate } = require('../utils/fecha');
+const { formatMySQLLocal, parseLocalDate, fechaActual } = require('../utils/fecha');
 
 /**
  * Inserta un nuevo registro de NFU en la base de datos
  */
-const insertarNFU = async (fecha, cantidad, responsable) => {
+const insertarNFU = async (fecha, cantidad, responsable, cliente_id = null) => {
   try {
-    console.log('🔍 Repository: Intentando insertar NFU con datos:', { fecha, cantidad, responsable });
+    console.log('🔍 Repository: Intentando insertar NFU con datos:', { fecha, cantidad, responsable, cliente_id });
     
     // Usar parseLocalDate para interpretar la fecha correctamente en zona horaria de Buenos Aires
     // y luego formatMySQLLocal para formatearla para MySQL
@@ -23,10 +23,16 @@ const insertarNFU = async (fecha, cantidad, responsable) => {
     
     console.log('📅 Fecha formateada con zona horaria Buenos Aires:', fechaFormateada);
     
-    const query = 'INSERT INTO nfu (fecha, cantidad, responsable) VALUES (?, ?, ?)';
+    // Obtener la hora actual en Buenos Aires
+    const horaActual = fechaActual();
+    const horaString = `${horaActual.getHours()}:${horaActual.getMinutes()}:${horaActual.getSeconds()}`;
+    
+    console.log('⏰ Hora actual en Buenos Aires:', horaString);
+    
+    const query = 'INSERT INTO nfu (fecha, cantidad, responsable, hora, cliente_id) VALUES (?, ?, ?, ?, ?)';
     
     // Usar la fecha formateada en lugar de la fecha directa
-    const result = await db.query(query, [fechaFormateada, cantidad, responsable]);
+    const result = await db.query(query, [fechaFormateada, cantidad, responsable, horaString, cliente_id]);
     
     // En algunos drivers de MySQL, el resultado puede tener diferentes estructuras
     // Adaptamos el código para manejar diferentes formatos de respuesta
@@ -59,13 +65,7 @@ const obtenerTodosNFU = async () => {
   return await db.query(query);
 };
 
-/**
- * Obtiene el ingreso de NFU para una fecha específica
- */
-const obtenerNFUPorFecha = async (fecha) => {
-  const query = 'SELECT id, fecha, cantidad, responsable FROM nfu WHERE fecha = ? ORDER BY id ASC';
-  return await db.query(query, [fecha]);
-};
+
 
 /**
  * Obtiene la cantidad total de NFU ingresados en una fecha específica
@@ -76,13 +76,7 @@ const obtenerCantidadNFUPorFecha = async (fecha) => {
   return result[0]?.cantidadTotal || 0;
 };
 
-/**
- * Obtiene los NFU ingresados entre dos fechas (inclusive)
- */
-const obtenerNFUEntreFechas = async (fechaInicio, fechaFin) => {
-  const query = 'SELECT id, fecha, cantidad, responsable FROM nfu WHERE fecha BETWEEN ? AND ? ORDER BY fecha ASC';
-  return await db.query(query, [fechaInicio, fechaFin]);
-};
+
 
 /**
  * Obtiene la cantidad total de NFU ingresados entre dos fechas (inclusive)
@@ -90,15 +84,8 @@ const obtenerNFUEntreFechas = async (fechaInicio, fechaFin) => {
 const obtenerCantidadNFUEntreFechas = async (fechaInicio, fechaFin) => {
   const query = 'SELECT SUM(cantidad) as cantidadTotal FROM nfu WHERE fecha BETWEEN ? AND ?';
   const result = await db.query(query, [fechaInicio, fechaFin]);
+  console.log(`\x1b[31mCantidad NFU acumulada entre ${fechaInicio} y ${fechaFin}:\x1b[0m`, result[0]?.cantidadTotal);
   return result[0]?.cantidadTotal || 0;
-};
-
-/**
- * Obtiene todos los NFU ingresados hasta una fecha específica (inclusive)
- */
-const obtenerNFUHastaFecha = async (fecha) => {
-  const query = 'SELECT id, fecha, cantidad, responsable FROM nfu WHERE fecha <= ? ORDER BY fecha ASC';
-  return await db.query(query, [fecha]);
 };
 
 /**
@@ -124,23 +111,35 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
     const p = Number.isFinite(+page) ? Math.max(1, +page) : 1;
     const off = (p - 1) * lim;
     
-    // Construir consulta base
-    let query = 'SELECT id, fecha, cantidad, responsable FROM nfu WHERE 1=1';
+    // Construir consulta base con JOIN para traer el cliente
+    let query = `
+      SELECT 
+        nfu.id, 
+        nfu.fecha, 
+        nfu.cantidad, 
+        nfu.responsable,
+        nfu.cliente_id,
+        cn.empresa AS cliente_empresa,
+        cn.cuit AS cliente_cuit
+      FROM nfu 
+      LEFT JOIN clientes_nfu cn ON nfu.cliente_id = cn.id
+      WHERE 1=1
+    `;
     const queryParams = [];
     
     // Aplicar filtros
     if (filtros.fechaDesde && filtros.fechaDesde.trim() !== '') {
-      query += ' AND fecha >= ?';
+      query += ' AND nfu.fecha >= ?';
       queryParams.push(filtros.fechaDesde);
     }
     
     if (filtros.fechaHasta && filtros.fechaHasta.trim() !== '') {
-      query += ' AND fecha <= ?';
+      query += ' AND nfu.fecha <= ?';
       queryParams.push(filtros.fechaHasta);
     }
     
     // Ordenar por fecha descendente
-    query += ' ORDER BY fecha DESC';
+    query += ' ORDER BY nfu.fecha DESC';
     
     // Agregar paginación directamente en la consulta (sin usar marcadores de posición)
     // En MySQL, no se puede usar marcadores de posición para LIMIT y OFFSET
@@ -148,6 +147,11 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
     
     // Ejecutar la consulta
     const registros = await db.query(query, queryParams);
+    
+    // Debug: verificar los primeros registros
+    if (registros.length > 0) {
+      console.log('🔍 Debug NFU - Primer registro:', JSON.stringify(registros[0], null, 2));
+    }
     
     // Consulta para contar total de registros con los mismos filtros
     let countQuery = 'SELECT COUNT(*) as total FROM nfu WHERE 1=1';
@@ -181,14 +185,59 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
   }
 };
 
+/**
+ * Obtiene registros NFU con filtros (sin paginación, para exportar)
+ * @param {Object} filtros - Filtros a aplicar (fechaDesde, fechaHasta)
+ * @returns {Promise<Array>} - Registros
+ */
+const obtenerConFiltros = async (filtros = {}) => {
+  try {
+    // Construir consulta base con JOIN para traer el cliente
+    let query = `
+      SELECT 
+        nfu.id, 
+        nfu.fecha, 
+        nfu.cantidad, 
+        nfu.responsable,
+        nfu.cliente_id,
+        cn.empresa AS cliente_empresa,
+        cn.cuit AS cliente_cuit
+      FROM nfu 
+      LEFT JOIN clientes_nfu cn ON nfu.cliente_id = cn.id
+      WHERE 1=1
+    `;
+    const queryParams = [];
+    
+    // Aplicar filtros
+    if (filtros.fechaDesde && filtros.fechaDesde.trim() !== '') {
+      query += ' AND nfu.fecha >= ?';
+      queryParams.push(filtros.fechaDesde);
+    }
+    
+    if (filtros.fechaHasta && filtros.fechaHasta.trim() !== '') {
+      query += ' AND nfu.fecha <= ?';
+      queryParams.push(filtros.fechaHasta);
+    }
+    
+    // Ordenar por fecha descendente
+    query += ' ORDER BY nfu.fecha DESC';
+    
+    // Ejecutar la consulta sin paginación
+    const registros = await db.query(query, queryParams);
+    
+    return registros;
+  } catch (error) {
+    console.error('Error al obtener registros NFU con filtros:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   insertarNFU,
   obtenerTodosNFU,
-  obtenerNFUPorFecha,
   obtenerCantidadNFUPorFecha,
-  obtenerNFUEntreFechas,
   obtenerCantidadNFUEntreFechas,
-  obtenerNFUHastaFecha,
   obtenerCantidadNFUHastaFecha,
-  obtenerRegistrosNFU
+  obtenerRegistrosNFU,
+  obtenerConFiltros
 };

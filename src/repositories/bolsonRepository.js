@@ -331,7 +331,7 @@ async obtenerBolsonesHastaFecha(fecha /* 'YYYY-MM-DD' */) {
       WHERE CONCAT(b.fecha, ' ', b.hora) <= ?
         AND (b.despachado = 0 OR d.fecha > ? OR d.id IS NULL)
       ORDER BY b.fecha ASC, b.hora ASC, b.id ASC
-    `, [finStr, fecha]);
+    `, [finStr, finStr]);
 
     return result;
   } catch (err) {

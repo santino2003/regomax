@@ -22,19 +22,19 @@ router.post('/nueva',
 
 router.get('/cliente/:clienteId', 
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenes:view'),
+    permissionsMiddleware.hasAnyPermission(['ordenes:view', 'despachos:create']),
     ordenDeVentaController.buscarOrdenesPorCliente
 );
 
 router.get('/:id', 
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenes:view'),
+    permissionsMiddleware.hasAnyPermission(['ordenes:view', 'despachos:create']),
     ordenDeVentaController.obtenerOrden
 );
 
 router.get('/', 
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenes:view'),
+    permissionsMiddleware.hasAnyPermission(['ordenes:view', 'despachos:create']),
     ordenDeVentaController.listarOrdenes
 );
 

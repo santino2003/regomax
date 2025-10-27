@@ -3,13 +3,8 @@ dbeaver-ce &
 
 TO DO
 
-agregar matafuegos
-crear users (puede ser para la que viene)(ver historial)
 Mailing (puede ser para la que viene)
-Crear reporte
-imprimir las cosas
-reacomodar las cosas
-DEPLOYAR4
+
 
 REPORTE
 
@@ -19,3 +14,7 @@ Ingreso NFU del dia, ingreso NFU acumulado del mes
 Comparativo de Programado acumulado del mes, comparativo acumulado del mes
 Stock al dia de hoy de infill
 Stock al dia de hoy de polvo
+
+errores:
+despacho:create (varios enpoint)
+Agregar opcion de eliminar bolson

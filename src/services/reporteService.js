@@ -130,6 +130,7 @@ const obtenerDespachosAcumuladosDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
 // NFU - Cantidad ingresada en una fecha específica
 const obtenerIngresoNFUPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
   const cantidadTotal = await nfuRepository.obtenerCantidadNFUPorFecha(fecha);
+  console.log(`\x1b[31mCantidad NFU ingresada el ${fecha}:\x1b[0m`, cantidadTotal);
   return {
     fecha,
     cantidadTotal: Number(cantidadTotal || 0)
@@ -138,23 +139,29 @@ const obtenerIngresoNFUPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
 
 // NFU - Stock acumulado del mes operativo
 const obtenerNFUAcumuladoDelMes = async (fecha /* 'YYYY-MM-DD' */) => {
+  // Usar las funciones existentes para obtener las fechas según la lógica del negocio
+  // El mes operativo comienza el primer día del mes a las 06:00 hora Buenos Aires
   const { inicio } = ventanaMesOperativo(fecha);
+  const { fin } = ventanaTurnoDiario(fecha);
   
-  // Modificación: En lugar de usar la fecha fin del mes operativo, usar la fecha solicitada
-  // para tener un snapshot exacto hasta ese día
-  const fechaFinDia = new Date(fecha);
-  fechaFinDia.setHours(23, 59, 59, 999); // Fin del día solicitado
-  const finDiaStr = formatMySQLLocal(fechaFinDia);
-  
-  const cantidadTotal = await nfuRepository.obtenerCantidadNFUEntreFechas(
-    formatMySQLLocal(inicio), 
-    finDiaStr // Usamos la fecha del reporte como límite, no el fin del mes operativo
+  // Extraer solo la parte de la fecha para buscar entre fechas
+  // Ya que la tabla nfu usa una columna 'fecha' de tipo DATE
+  const fechaInicioSoloFecha = formatMySQLLocal(inicio).split(' ')[0];
+  const fechaFinSoloFecha = formatMySQLLocal(fin).split(' ')[0];
+
+
+  const cantidadResto = await nfuRepository.obtenerCantidadNFUEntreFechas(
+    fechaInicioSoloFecha, 
+    fechaFinSoloFecha
   );
   
+  // La cantidad total será la suma 
+  const cantidadTotal = Number(cantidadResto || 0);
+    
   return {
     fechaInicio: formatMySQLLocal(inicio),
-    fechaFin: finDiaStr,
-    cantidadTotal: Number(cantidadTotal || 0)
+    fechaFin: formatMySQLLocal(fin),
+    cantidadTotal: cantidadTotal
   };
 };
 
@@ -237,43 +244,44 @@ const obtenerPlanificacionPorFecha = async (fecha /* 'YYYY-MM-DD' */) => {
 
 // Función para calcular proyecciones según la fórmula:
 // (días hábiles transcurridos / kilos acumulados) * total días hábiles del mes
+
+
 const calcularProyeccion = async (fecha, datosAcumulados) => {
   try {
-    // Parsear la fecha correctamente para evitar problemas de zona horaria
+    // Crear objeto Date a partir de la fecha (en horario BA)
     const fechaObj = parseLocalDate(fecha);
-    
-    // Extraer día, mes y año directamente de la cadena de fecha para evitar problemas de zona horaria
-    const [year, month, day] = fecha.split('-').map(Number);
-    const mes = month; // month ya es 1-12 al extraerlo directamente del string
-    const anio = year;
-    const diaActual = day;
-    
-    // Obtener los días hábiles del mes
+
+    // Extraer año, mes y día de la fecha en BA
+    const anio = fechaObj.getUTCFullYear();
+    const mes = fechaObj.getUTCMonth() + 1; // getUTCMonth() arranca en 0
+    const diaActual = fechaObj.getUTCDate();
+    console.log(`Calcular proyección para ${fecha} (BA) - Año: ${anio}, Mes: ${mes}, Día: ${diaActual}`);
+
+    // Obtener los días hábiles definidos para el mes
     const diasHabilesMes = await diasHabilesRepository.obtenerDiasHabilesSeleccionados(mes, anio);
-    // Si no hay días hábiles definidos, usar días calendario del mes
-    let totalDiasHabilesMes = diasHabilesMes.length;
-    if (!diasHabilesMes || diasHabilesMes.length === 0) {
-      totalDiasHabilesMes = new Date(anio, mes, 0).getDate(); // Último día del mes
+
+    // Total de días hábiles del mes (si no hay definidos, usar calendario completo)
+    let totalDiasHabilesMes = diasHabilesMes?.length || 0;
+    if (!totalDiasHabilesMes) {
+      totalDiasHabilesMes = new Date(anio, mes, 0).getDate(); // último día del mes
+      console.log(`No hay días hábiles definidos para ${mes}/${anio}, usando total días del mes: ${totalDiasHabilesMes}`);
     }
-    
-    // Calcular días hábiles transcurridos hasta la fecha
-    // Para el día 1, siempre considerar al menos 1 día transcurrido
-    const diasHabilesTranscurridos = diasHabilesMes.filter(dia => dia <= diaActual);
-    const diasTranscurridos = Math.max(diasHabilesTranscurridos.length, 1); // Mínimo 1 día
-    // Calcular proyección para cada elemento en datosAcumulados
+
+    // Días hábiles transcurridos hasta la fecha actual
+    const diasHabilesTranscurridos = (diasHabilesMes || []).filter(dia => dia <= diaActual);
+    const diasTranscurridos = Math.max(diasHabilesTranscurridos.length, 1);
+    console.log(`Días hábiles transcurridos hasta el ${fecha}: ${diasTranscurridos} de ${totalDiasHabilesMes}`);
+    // Calcular proyección
     const proyeccion = {};
-    
     for (const [key, valor] of Object.entries(datosAcumulados)) {
       if (valor > 0) {
-        // La fórmula: (valor / días transcurridos) * total días
         const valorDiario = valor / diasTranscurridos;
         proyeccion[key] = Math.round(valorDiario * totalDiasHabilesMes);
       } else {
         proyeccion[key] = 0;
       }
     }
-
-    
+    console.log(`Proyección calculada:`, proyeccion);
     return {
       diasHabilesTotal: totalDiasHabilesMes,
       diasHabilesTranscurridos: diasTranscurridos,
@@ -284,6 +292,7 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
     return null;
   }
 };
+
 
 // Función para obtener datos históricos reales de producción acumulada por día
 const obtenerProduccionAcumuladaPorDia = async (fecha /* 'YYYY-MM-DD' */) => {

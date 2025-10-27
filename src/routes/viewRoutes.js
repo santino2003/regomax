@@ -189,6 +189,13 @@ router.get('/bolsones-despachados/exportar', [
     permissionsMiddleware.hasPermission('despachos:export')
 ], despachoController.exportarBolsonesDespachados);
 
+// Ruta adicional para exportar despachos sin el prefijo /api/
+router.get('/despachos/exportar-despachados', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('despachos:export')
+], despachoController.exportarBolsonesDespachados);
+
 // Rutas de partes diarios - con verificación de permisos
 router.get('/partes-diarios', [
     authMiddleware.verifyToken, 
@@ -248,13 +255,62 @@ router.get('/dias-habiles', [
     permissionsMiddleware.hasPermission('dias_habiles:view')
 ], diasHabilesController.mostrarCalendario);
 
+// Vista: Listar proveedores
+const proveedorController = require('../controllers/proveedorController');
+router.get('/proveedores', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:view')
+], proveedorController.vistaListarProveedores);
+
+// Vista: Nuevo proveedor
+router.get('/proveedores/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:create')
+], proveedorController.vistaNuevoProveedor);
+
+// Vistas de Clientes NFU
+const clienteNFUController = require('../controllers/clienteNFUController');
+router.get('/clientes-nfu', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:view')
+], clienteNFUController.vistaListarClientes);
+
+router.get('/clientes-nfu/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:create')
+], clienteNFUController.vistaNuevoCliente);
+
+router.get('/clientes-nfu/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:edit')
+], clienteNFUController.vistaEditarCliente);
+
+router.get('/clientes-nfu/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:view')
+], clienteNFUController.vistaVerCliente);
+
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [
     authMiddleware.verifyToken, 
     noCacheMiddleware,
-    permissionsMiddleware.hasPermission('reportes:view')
+    permissionsMiddleware.hasAnyPermission(['reportes:view', 'reportes:view_ar'])
 ], reporteController.mostrarReporteGeneral);
+
+// Ruta para el reporte AR
+const reporteARController = require('../controllers/reporteARController');
+router.get('/reporte-ar', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('reportes:view_ar')
+], reporteARController.mostrarReporteAR);
 
 // Endpoint de logout
 router.get('/logout', (req, res) => {

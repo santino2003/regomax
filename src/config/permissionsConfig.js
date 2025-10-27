@@ -26,7 +26,7 @@ const PERMISSIONS = {
     VIEW: 'despachos:view',
     CREATE: 'despachos:create',
     EDIT: 'despachos:edit',
-    DELETE: 'despachos:delete',
+    EXPORT: 'despachos:export',
   },
   
   // Permisos para partes diarios
@@ -44,14 +44,30 @@ const PERMISSIONS = {
     CREATE: 'ordenes:create',
     EDIT: 'ordenes:edit',
     DELETE: 'ordenes:delete',
+    EXPORT: 'ordenes:export',
   },
   
   // Permisos para productos
   PRODUCTOS: {
-    VIEW: 'productos:view',
     CREATE: 'productos:create',
     EDIT: 'productos:edit',
     DELETE: 'productos:delete',
+  },
+  
+  // Permisos para proveedores
+  PROVEEDORES: {
+    VIEW: 'proveedor:view',
+    CREATE: 'proveedor:create',
+    EDIT: 'proveedor:edit',
+    DELETE: 'proveedor:delete',
+  },
+  
+  // Permisos para clientes NFU
+  CLIENTES_NFU: {
+    VIEW: 'clientes_nfu:view',
+    CREATE: 'clientes_nfu:create',
+    EDIT: 'clientes_nfu:edit',
+    DELETE: 'clientes_nfu:delete',
   },
   
   // Permisos para días hábiles
@@ -65,6 +81,7 @@ const PERMISSIONS = {
   REPORTES: {
     VIEW: 'reportes:view',
     EXPORT: 'reportes:export',
+    VIEW_AR: 'reportes:view_ar', // Cambiado de 'reporteAR:view' a 'reportes:view_ar' para mejor visualización
   },
   
   // Permisos para configuración del sistema
