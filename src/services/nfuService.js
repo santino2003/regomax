@@ -10,6 +10,10 @@ const registrarIngresoNFU = async (fecha, cantidad, responsable, cliente_id = nu
       throw new Error('Fecha y cantidad son obligatorios');
     }
 
+    if (!cliente_id) {
+      throw new Error('El cliente es obligatorio');
+    }
+
     const cantidadNum = parseFloat(cantidad);
     if (isNaN(cantidadNum) || cantidadNum <= 0) {
       throw new Error('La cantidad debe ser un número positivo');
