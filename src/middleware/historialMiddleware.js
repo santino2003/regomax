@@ -529,6 +529,47 @@ const proveedor = {
     // Puedes agregar más acciones si lo necesitas
 };
 
+/**
+ * Funciones específicas para extraer detalles de clientes NFU
+ */
+const clienteNFUDetalles = {
+    crear: (req, res, body) => {
+        return {
+            empresa: req.body?.empresa,
+            cuit: req.body?.cuit,
+            correo: req.body?.correo,
+            telefono: req.body?.telefono,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        const clienteId = req.params?.id;
+        return {
+            cliente_id: clienteId,
+            empresa: req.body?.empresa,
+            cuit: req.body?.cuit,
+            correo: req.body?.correo,
+            telefono: req.body?.telefono,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            cliente_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de clientes NFU
+ */
+const clienteNFU = {
+    crear: () => registrarHistorial('crear', 'cliente_nfu', clienteNFUDetalles.crear),
+    editar: () => registrarHistorial('editar', 'cliente_nfu', clienteNFUDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'cliente_nfu', clienteNFUDetalles.eliminar)
+};
+
  /**
  * Funciones para registrar acciones de bolsones
  */
@@ -576,5 +617,6 @@ module.exports = {
     orden,
     parteDiario,
     despacho,
-    proveedor
+    proveedor,
+    clienteNFU
 };

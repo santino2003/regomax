@@ -9,6 +9,9 @@
                         <i class="bi bi-recycle me-2"></i>Listado de Ingresos NFU
                     </h4>
                     <div>
+                        <button id="btnExportarCSV" class="btn btn-success me-2">
+                            <i class="bi bi-file-earmark-spreadsheet me-2"></i>Exportar a CSV
+                        </button>
                         <a href="/nfu/nuevo" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-2"></i>Nuevo Ingreso NFU
                         </a>
@@ -53,8 +56,9 @@
                         <thead>
                             <tr>
                                 <th>Fecha</th>
-                                <th>Cantidad (Kg)</th>
                                 <th>Responsable</th>
+                                <th>Cliente</th>
+                                <th>Cantidad (Kg)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -73,13 +77,21 @@
                                             %>
                                             <%= fecha.toLocaleDateString('es-AR', options) %>
                                         </td>
-                                        <td><%= ingreso.cantidad %></td>
                                         <td><%= ingreso.responsable %></td>
+                                        <td>
+                                            <% if (ingreso.cliente_empresa) { %>
+                                                <%= ingreso.cliente_empresa %>
+                                                <small class="text-muted d-block"><%= ingreso.cliente_cuit %></small>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= ingreso.cantidad %></td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="3" class="text-center">No hay registros de ingresos NFU</td>
+                                    <td colspan="4" class="text-center">No hay registros de ingresos NFU</td>
                                 </tr>
                             <% } %>
                         </tbody>
@@ -166,6 +178,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     setFechasConZonaHorariaBuenosAires();
+    
+    // Exportar a CSV
+    const btnExportar = document.getElementById('btnExportarCSV');
+    
+    if (btnExportar) {
+        btnExportar.addEventListener('click', function() {
+            console.log('Click en exportar NFU a CSV');
+            
+            // Obtener los filtros actuales
+            const fechaDesde = document.getElementById('fechaDesde').value || '';
+            const fechaHasta = document.getElementById('fechaHasta').value || '';
+            
+            console.log('Filtros:', { fechaDesde, fechaHasta });
+            
+            // Construir URL con los filtros
+            let url = '/api/nfu/exportar-csv?';
+            const params = [];
+            
+            if (fechaDesde) params.push(`fechaDesde=${encodeURIComponent(fechaDesde)}`);
+            if (fechaHasta) params.push(`fechaHasta=${encodeURIComponent(fechaHasta)}`);
+            
+            url += params.join('&');
+            
+            console.log('URL de descarga:', url);
+            
+            // Descargar el archivo
+            window.location.href = url;
+        });
+    }
 });
 </script>
 

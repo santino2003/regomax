@@ -270,6 +270,32 @@ router.get('/proveedores/nuevo', [
     permissionsMiddleware.hasPermission('proveedor:create')
 ], proveedorController.vistaNuevoProveedor);
 
+// Vistas de Clientes NFU
+const clienteNFUController = require('../controllers/clienteNFUController');
+router.get('/clientes-nfu', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:view')
+], clienteNFUController.vistaListarClientes);
+
+router.get('/clientes-nfu/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:create')
+], clienteNFUController.vistaNuevoCliente);
+
+router.get('/clientes-nfu/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:edit')
+], clienteNFUController.vistaEditarCliente);
+
+router.get('/clientes-nfu/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('clientes_nfu:view')
+], clienteNFUController.vistaVerCliente);
+
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [

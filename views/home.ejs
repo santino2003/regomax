@@ -133,6 +133,16 @@
                                         <a href="/nfu/nuevo"><i class="bi bi-plus-circle me-2"></i> Registrar Ingreso NFU</a>
                                     </div>
                                     <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['clientes_nfu:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/clientes-nfu"><i class="bi bi-people me-2"></i> Clientes NFU</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['clientes_nfu:create'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/clientes-nfu/nuevo"><i class="bi bi-person-plus-fill me-2"></i> Nuevo Cliente NFU</a>
+                                    </div>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>

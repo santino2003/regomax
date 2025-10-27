@@ -1,5 +1,6 @@
 const reporteService = require('../services/reporteService');
-const nfuRepository = require('../repositories/nfuRepository');
+const nfuService = require('../services/nfuService');
+const clienteNFUService = require('../services/clienteNFUService');
 const { formatMySQLLocal, formatearFechaLocal, formatearFechaHoraLocal, fechaActual } = require('../utils/fecha');
 
 // Obtener la cantidad de kg de NFU que entró en un día determinado
@@ -87,72 +88,52 @@ const obtenerStockAcumuladoHastaFecha = async (req, res) => {
 const registrarIngresoNFU = async (req, res) => {
   try {
     console.log('📝 Iniciando registro de NFU...');
-    const { fecha, cantidad } = req.body;
+    const { fecha, cantidad, cliente_id } = req.body;
     const responsable = req.user.username;
     
-    console.log('📄 Datos recibidos:', { fecha, cantidad, responsable });
+    console.log('📄 Datos recibidos:', { fecha, cantidad, cliente_id, responsable });
     
-    if (!fecha || !cantidad) {
-      console.log('❌ Error: Faltan datos obligatorios');
-      return res.status(400).json({
-        success: false,
-        mensaje: 'Se deben proporcionar fecha y cantidad'
-      });
-    }
+    const resultado = await nfuService.registrarIngresoNFU(fecha, cantidad, responsable, cliente_id);
+    console.log('✅ NFU registrado con éxito:', resultado);
     
-    const cantidadNum = parseFloat(cantidad);
-    if (isNaN(cantidadNum) || cantidadNum <= 0) {
-      console.log('❌ Error: Cantidad inválida');
-      return res.status(400).json({
-        success: false,
-        mensaje: 'La cantidad debe ser un número positivo'
-      });
-    }
-    
-    // Registrar en la base de datos
-    console.log('💾 Intentando insertar en la base de datos...');
-    try {
-      const id = await nfuRepository.insertarNFU(fecha, cantidadNum, responsable);
-      console.log('✅ NFU registrado con éxito, ID:', id);
-      
-      // Ya no intentamos registrar en historial porque quitamos el middleware
-      /* 
-      if (req.registrarHistorial) {
-        console.log('📝 Registrando en historial...');
-        req.registrarHistorial('crear', 'nfu', id, `Ingreso de ${cantidadNum} kg de NFU`);
-        console.log('✅ Historial registrado');
-      }
-      */
-      
-      res.status(201).json({
-        success: true,
-        mensaje: 'Ingreso de NFU registrado correctamente',
-        data: {
-          id,
-          fecha,
-          cantidad: cantidadNum,
-          responsable
-        }
-      });
-    } catch (dbError) {
-      console.error('❌ Error en la base de datos:', dbError);
-      throw dbError; // Relanzamos el error para que lo maneje el catch exterior
-    }
+    res.status(201).json({
+      success: true,
+      mensaje: 'Ingreso de NFU registrado correctamente',
+      data: resultado
+    });
   } catch (error) {
     console.error('❌ Error al registrar ingreso NFU:', error);
     res.status(500).json({
       success: false,
-      mensaje: 'Error al registrar el ingreso de NFU: ' + error.message
+      mensaje: error.message || 'Error al registrar el ingreso de NFU'
     });
   }
 };
 
 // Renderizar vista para registrar nuevo ingreso de NFU
-const mostrarFormularioIngresoNFU = (req, res) => {
-  res.render('nfuNuevo', {
-    titulo: 'Registrar Ingreso de NFU',
-    usuario: req.user
-  });
+const mostrarFormularioIngresoNFU = async (req, res) => {
+  try {
+    // Obtener todos los clientes NFU para el selector
+    let clientes = [];
+    try {
+      clientes = await clienteNFUService.obtenerTodos();
+    } catch (error) {
+      console.error('Error al obtener clientes NFU:', error);
+      // Si falla, continuar con array vacío
+    }
+    
+    res.render('nfuNuevo', {
+      titulo: 'Registrar Ingreso de NFU',
+      usuario: req.user,
+      clientes: clientes || []
+    });
+  } catch (error) {
+    console.error('Error al cargar formulario de ingreso NFU:', error);
+    res.status(500).render('error', {
+      message: 'Error al cargar el formulario de ingreso NFU',
+      error: { status: 500, stack: error.stack }
+    });
+  }
 };
 
 // Mostrar listado de ingresos de NFU
@@ -169,7 +150,7 @@ const listarNFU = async (req, res) => {
     };
     
     // Obtener registros de NFU
-    const registros = await nfuRepository.obtenerRegistrosNFU(page, limit, filtros);
+    const registros = await nfuService.obtenerRegistrosNFU(page, limit, filtros);
     
     // Calcular total acumulado
     let totalKg = 0;
@@ -203,11 +184,54 @@ const listarNFU = async (req, res) => {
   }
 };
 
+// Exportar registros NFU a CSV
+const exportarCSV = async (req, res) => {
+  try {
+    const filtros = {
+      fechaDesde: req.query.fechaDesde || '',
+      fechaHasta: req.query.fechaHasta || ''
+    };
+
+    // Obtener registros con los filtros aplicados
+    const registros = await nfuService.obtenerConFiltros(filtros);
+
+    // Construir el CSV
+    let csv = 'Fecha,Responsable,Cliente,CUIT Cliente,Cantidad (Kg)\n';
+    
+    registros.forEach(registro => {
+      const fecha = new Date(registro.fecha).toLocaleDateString('es-AR');
+      const responsable = (registro.responsable || '').replace(/,/g, ';');
+      const cliente = (registro.cliente_empresa || '-').replace(/,/g, ';');
+      const cuit = (registro.cliente_cuit || '-').replace(/,/g, ';');
+      const cantidad = registro.cantidad || 0;
+      
+      csv += `"${fecha}","${responsable}","${cliente}","${cuit}","${cantidad}"\n`;
+    });
+
+    // Configurar headers para descarga
+    const filename = `ingresos_nfu_${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    // Agregar BOM para UTF-8 (para que Excel lo reconozca)
+    res.write('\uFEFF');
+    res.end(csv);
+  } catch (error) {
+    console.error('Error al exportar CSV:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al exportar CSV',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   obtenerKgPorDia,
   obtenerStockAcumuladoDelMes,
   obtenerStockAcumuladoHastaFecha,
   registrarIngresoNFU,
   mostrarFormularioIngresoNFU,
-  listarNFU
+  listarNFU,
+  exportarCSV
 };
