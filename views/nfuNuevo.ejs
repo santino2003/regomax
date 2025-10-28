@@ -83,6 +83,37 @@
                                             </small>
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="categoria" class="form-label">CNUFU/NFU <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="categoria" name="categoria" required>
+                                                <option value="">Seleccionar una opcion</option>
+                                                <option value="NFU">NFU</option>
+                                                <option value="CNFU">CNFU</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="tipo" class="form-label">Tipo <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="tipo" name="tipo" required>
+                                                <option value="">Seleccionar tipo</option>
+                                                <option value="Auto">Auto</option>
+                                                <option value="Camion">Camión</option>
+                                                <option value="Mix">Mix</option>
+                                                <option value="Otros">Otros</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="cantidad" class="form-label">Cantidad (kg) <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="cantidad" name="cantidad" step="0.01" min="0.01" required>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="row">
@@ -90,12 +121,6 @@
                                         <div class="mb-3">
                                             <label for="fecha" class="form-label">Fecha de ingreso <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" id="fecha" name="fecha" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="cantidad" class="form-label">Cantidad (kg) <span class="text-danger">*</span></label>
-                                            <input type="number" class="form-control" id="cantidad" name="cantidad" step="0.01" min="0.01" required>
                                         </div>
                                     </div>
                                 </div>
@@ -181,10 +206,12 @@
             const fecha = document.getElementById('fecha').value;
             const cantidad = document.getElementById('cantidad').value;
             const cliente_id = document.getElementById('cliente_id').value;
+            const categoria = document.getElementById('categoria').value;
+            const tipo = document.getElementById('tipo').value;
             
-            console.log('Datos del formulario:', { fecha, cantidad, cliente_id });
+            console.log('Datos del formulario:', { fecha, cantidad, cliente_id, categoria, tipo });
             
-            if (!fecha || !cantidad || !cliente_id) {
+            if (!fecha || !cantidad || !cliente_id || !categoria || !tipo) {
                 alert('Por favor complete todos los campos obligatorios');
                 return;
             }
@@ -195,7 +222,9 @@
                 const requestBody = {
                     fecha,
                     cantidad: Number(cantidad),
-                    cliente_id: Number(cliente_id)
+                    cliente_id: Number(cliente_id),
+                    categoria,
+                    tipo
                 };
                 
                 const response = await fetch('/api/nfu', {
