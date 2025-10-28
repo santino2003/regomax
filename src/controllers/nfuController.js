@@ -88,12 +88,12 @@ const obtenerStockAcumuladoHastaFecha = async (req, res) => {
 const registrarIngresoNFU = async (req, res) => {
   try {
     console.log('📝 Iniciando registro de NFU...');
-    const { fecha, cantidad, cliente_id } = req.body;
+    const { fecha, cantidad, cliente_id, categoria, tipo } = req.body;
     const responsable = req.user.username;
     
-    console.log('📄 Datos recibidos:', { fecha, cantidad, cliente_id, responsable });
+    console.log('📄 Datos recibidos:', { fecha, cantidad, cliente_id, categoria, tipo, responsable });
     
-    const resultado = await nfuService.registrarIngresoNFU(fecha, cantidad, responsable, cliente_id);
+    const resultado = await nfuService.registrarIngresoNFU(fecha, cantidad, responsable, cliente_id, categoria, tipo);
     console.log('✅ NFU registrado con éxito:', resultado);
     
     res.status(201).json({
@@ -196,16 +196,18 @@ const exportarCSV = async (req, res) => {
     const registros = await nfuService.obtenerConFiltros(filtros);
 
     // Construir el CSV
-    let csv = 'Fecha,Responsable,Cliente,CUIT Cliente,Cantidad (Kg)\n';
+    let csv = 'Fecha,Responsable,Cliente,CUIT Cliente,Categoría,Tipo,Cantidad (Kg)\n';
     
     registros.forEach(registro => {
       const fecha = new Date(registro.fecha).toLocaleDateString('es-AR');
       const responsable = (registro.responsable || '').replace(/,/g, ';');
       const cliente = (registro.cliente_empresa || '-').replace(/,/g, ';');
       const cuit = (registro.cliente_cuit || '-').replace(/,/g, ';');
+      const categoria = registro.categoria || '-';
+      const tipo = registro.tipo || '-';
       const cantidad = registro.cantidad || 0;
       
-      csv += `"${fecha}","${responsable}","${cliente}","${cuit}","${cantidad}"\n`;
+      csv += `"${fecha}","${responsable}","${cliente}","${cuit}","${categoria}","${tipo}","${cantidad}"\n`;
     });
 
     // Configurar headers para descarga

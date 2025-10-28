@@ -58,6 +58,8 @@
                                 <th>Fecha</th>
                                 <th>Responsable</th>
                                 <th>Cliente</th>
+                                <th>Categoría</th>
+                                <th>Tipo</th>
                                 <th>Cantidad (Kg)</th>
                             </tr>
                         </thead>
@@ -86,12 +88,22 @@
                                                 <span class="text-muted">-</span>
                                             <% } %>
                                         </td>
+                                        <td>
+                                            <% if (ingreso.categoria) { %>
+                                                <span class="badge bg-<%= ingreso.categoria === 'NFU' ? 'primary' : 'success' %>">
+                                                    <%= ingreso.categoria %>
+                                                </span>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= ingreso.tipo || '-' %></td>
                                         <td><%= ingreso.cantidad %></td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="4" class="text-center">No hay registros de ingresos NFU</td>
+                                    <td colspan="6" class="text-center">No hay registros de ingresos NFU</td>
                                 </tr>
                             <% } %>
                         </tbody>

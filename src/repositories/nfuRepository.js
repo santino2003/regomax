@@ -4,9 +4,9 @@ const { formatMySQLLocal, parseLocalDate, fechaActual } = require('../utils/fech
 /**
  * Inserta un nuevo registro de NFU en la base de datos
  */
-const insertarNFU = async (fecha, cantidad, responsable, cliente_id = null) => {
+const insertarNFU = async (fecha, cantidad, responsable, cliente_id = null, categoria = null, tipo = null) => {
   try {
-    console.log('🔍 Repository: Intentando insertar NFU con datos:', { fecha, cantidad, responsable, cliente_id });
+    console.log('🔍 Repository: Intentando insertar NFU con datos:', { fecha, cantidad, responsable, cliente_id, categoria, tipo });
     
     // Usar parseLocalDate para interpretar la fecha correctamente en zona horaria de Buenos Aires
     // y luego formatMySQLLocal para formatearla para MySQL
@@ -29,10 +29,10 @@ const insertarNFU = async (fecha, cantidad, responsable, cliente_id = null) => {
     
     console.log('⏰ Hora actual en Buenos Aires:', horaString);
     
-    const query = 'INSERT INTO nfu (fecha, cantidad, responsable, hora, cliente_id) VALUES (?, ?, ?, ?, ?)';
+    const query = 'INSERT INTO nfu (fecha, cantidad, responsable, hora, cliente_id, categoria, tipo) VALUES (?, ?, ?, ?, ?, ?, ?)';
     
     // Usar la fecha formateada en lugar de la fecha directa
-    const result = await db.query(query, [fechaFormateada, cantidad, responsable, horaString, cliente_id]);
+    const result = await db.query(query, [fechaFormateada, cantidad, responsable, horaString, cliente_id, categoria, tipo]);
     
     // En algunos drivers de MySQL, el resultado puede tener diferentes estructuras
     // Adaptamos el código para manejar diferentes formatos de respuesta
@@ -119,6 +119,8 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
         nfu.cantidad, 
         nfu.responsable,
         nfu.cliente_id,
+        nfu.categoria,
+        nfu.tipo,
         cn.empresa AS cliente_empresa,
         cn.cuit AS cliente_cuit
       FROM nfu 
@@ -200,6 +202,8 @@ const obtenerConFiltros = async (filtros = {}) => {
         nfu.cantidad, 
         nfu.responsable,
         nfu.cliente_id,
+        nfu.categoria,
+        nfu.tipo,
         cn.empresa AS cliente_empresa,
         cn.cuit AS cliente_cuit
       FROM nfu 
