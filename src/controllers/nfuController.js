@@ -146,7 +146,9 @@ const listarNFU = async (req, res) => {
     // Filtros
     const filtros = {
       fechaDesde: req.query.fechaDesde || '',
-      fechaHasta: req.query.fechaHasta || ''
+      fechaHasta: req.query.fechaHasta || '',
+      categoria: req.query.categoria || '',
+      tipo: req.query.tipo || ''
     };
     
     // Obtener registros de NFU
@@ -189,7 +191,9 @@ const exportarCSV = async (req, res) => {
   try {
     const filtros = {
       fechaDesde: req.query.fechaDesde || '',
-      fechaHasta: req.query.fechaHasta || ''
+      fechaHasta: req.query.fechaHasta || '',
+      categoria: req.query.categoria || '',
+      tipo: req.query.tipo || ''
     };
 
     // Obtener registros con los filtros aplicados

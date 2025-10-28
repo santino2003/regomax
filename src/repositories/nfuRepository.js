@@ -101,7 +101,7 @@ const obtenerCantidadNFUHastaFecha = async (fecha) => {
  * Obtiene registros NFU con paginación y filtros
  * @param {number} page - Número de página
  * @param {number} limit - Límite de registros por página
- * @param {Object} filtros - Filtros a aplicar (fechaDesde, fechaHasta)
+ * @param {Object} filtros - Filtros a aplicar (fechaDesde, fechaHasta, categoria, tipo)
  * @returns {Promise<Object>} - Registros y metadatos de paginación
  */
 const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
@@ -140,6 +140,16 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
       queryParams.push(filtros.fechaHasta);
     }
     
+    if (filtros.categoria && filtros.categoria.trim() !== '') {
+      query += ' AND nfu.categoria = ?';
+      queryParams.push(filtros.categoria);
+    }
+    
+    if (filtros.tipo && filtros.tipo.trim() !== '') {
+      query += ' AND nfu.tipo = ?';
+      queryParams.push(filtros.tipo);
+    }
+    
     // Ordenar por fecha descendente
     query += ' ORDER BY nfu.fecha DESC';
     
@@ -169,6 +179,16 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
       countParams.push(filtros.fechaHasta);
     }
     
+    if (filtros.categoria && filtros.categoria.trim() !== '') {
+      countQuery += ' AND categoria = ?';
+      countParams.push(filtros.categoria);
+    }
+    
+    if (filtros.tipo && filtros.tipo.trim() !== '') {
+      countQuery += ' AND tipo = ?';
+      countParams.push(filtros.tipo);
+    }
+    
     const countResult = await db.query(countQuery, countParams);
     const total = countResult[0]?.total ?? 0;
     
@@ -189,7 +209,7 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
 
 /**
  * Obtiene registros NFU con filtros (sin paginación, para exportar)
- * @param {Object} filtros - Filtros a aplicar (fechaDesde, fechaHasta)
+ * @param {Object} filtros - Filtros a aplicar (fechaDesde, fechaHasta, categoria, tipo)
  * @returns {Promise<Array>} - Registros
  */
 const obtenerConFiltros = async (filtros = {}) => {
@@ -221,6 +241,16 @@ const obtenerConFiltros = async (filtros = {}) => {
     if (filtros.fechaHasta && filtros.fechaHasta.trim() !== '') {
       query += ' AND nfu.fecha <= ?';
       queryParams.push(filtros.fechaHasta);
+    }
+    
+    if (filtros.categoria && filtros.categoria.trim() !== '') {
+      query += ' AND nfu.categoria = ?';
+      queryParams.push(filtros.categoria);
+    }
+    
+    if (filtros.tipo && filtros.tipo.trim() !== '') {
+      query += ' AND nfu.tipo = ?';
+      queryParams.push(filtros.tipo);
     }
     
     // Ordenar por fecha descendente
