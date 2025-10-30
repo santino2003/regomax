@@ -83,6 +83,7 @@ class ReporteARRepository {
             const finStr = formatMySQLLocal(fin);
             
             // Consulta para obtener los despachos del día agrupados por cliente final (orden de venta)
+            // Solo incluye despachos de productos que están en stock (en_stock = 1)
             const result = await db.query(`
                 SELECT 
                     MIN(d.id) as despacho_id,
@@ -96,8 +97,11 @@ class ReporteARRepository {
                     despachos_detalle dd ON dd.despacho_id = d.id
                 LEFT JOIN 
                     ordenes_venta ov ON ov.id = d.orden_venta_id
+                LEFT JOIN
+                    productos p ON dd.producto = p.nombre
                 WHERE 
                     d.fecha BETWEEN ? AND ?
+                    AND (p.en_stock = 1 OR p.en_stock IS NULL)
                 GROUP BY 
                     d.orden_venta_id, ov.cliente_final
                 ORDER BY 

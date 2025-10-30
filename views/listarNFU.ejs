@@ -50,10 +50,10 @@
                                     <label for="tipo" class="form-label">Tipo:</label>
                                     <select class="form-select" id="tipo" name="tipo">
                                         <option value="">Todos</option>
-                                        <option value="Camioneta" <%= filtros && filtros.tipo === 'Camioneta' ? 'selected' : '' %>>Camioneta</option>
-                                        <option value="Camión" <%= filtros && filtros.tipo === 'Camión' ? 'selected' : '' %>>Camión</option>
                                         <option value="Auto" <%= filtros && filtros.tipo === 'Auto' ? 'selected' : '' %>>Auto</option>
-                                        <option value="Cubierta agrícola" <%= filtros && filtros.tipo === 'Cubierta agrícola' ? 'selected' : '' %>>Cubierta agrícola</option>
+                                        <option value="Camion" <%= filtros && filtros.tipo === 'Camion' ? 'selected' : '' %>>Camión</option>
+                                        <option value="Mix" <%= filtros && filtros.tipo === 'Mix' ? 'selected' : '' %>>Mix</option>
+                                        <option value="Otros" <%= filtros && filtros.tipo === 'Otros' ? 'selected' : '' %>>Otros</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
