@@ -630,6 +630,40 @@ const despacho = {
     despacharBolson: () => registrarHistorial('despachar', 'bolson', despachoDetalles.crear)
 };
 
+/**
+ * Funciones específicas para extraer detalles de familias
+ */
+const familiaDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            familia_id: req.params?.id,
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            familia_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de familias
+ */
+const familia = {
+    crear: () => registrarHistorial('crear', 'familia', familiaDetalles.crear),
+    editar: () => registrarHistorial('editar', 'familia', familiaDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'familia', familiaDetalles.eliminar)
+};
+
 module.exports = { 
     registrarHistorial,
     registrarLogin,
@@ -639,5 +673,6 @@ module.exports = {
     parteDiario,
     despacho,
     proveedor,
-    clienteNFU
+    clienteNFU,
+    familia
 };

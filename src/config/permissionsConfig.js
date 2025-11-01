@@ -70,6 +70,14 @@ const PERMISSIONS = {
     DELETE: 'clientes_nfu:delete',
   },
   
+  // Permisos para familias
+  FAMILIAS: {
+    VIEW: 'familia:view',
+    CREATE: 'familia:create',
+    EDIT: 'familia:edit',
+    DELETE: 'familia:delete',
+  },
+  
   // Permisos para días hábiles
   DIAS_HABILES: {
     VIEW: 'dias_habiles:view',

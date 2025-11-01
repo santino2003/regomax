@@ -194,8 +194,24 @@
                             </div>
                         </div>
                         
-                        <!-- Almacenes -->
-                       <!-- Next sprint -->
+                        <!-- Almacén -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAlmacen">
+                                    <i class="bi bi-box me-2"></i> Almacén
+                                </button>
+                            </h2>
+                            <div id="collapseAlmacen" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                                <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['familia:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/familias"><i class="bi bi-collection me-2"></i> Familias</a>
+                                    </div>
+                                    <% } %>
+                                    <!-- Puedes agregar más opciones de almacén aquí -->
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Administración del Sistema - Solo visible para usuarios con permisos adecuados -->
                         <% if (user && (user.role === 'admin' || 

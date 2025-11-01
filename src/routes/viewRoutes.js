@@ -310,6 +310,32 @@ router.get('/clientes-nfu/:id', [
     permissionsMiddleware.hasPermission('clientes_nfu:view')
 ], clienteNFUController.vistaVerCliente);
 
+// Rutas de Familias
+const familiaController = require('../controllers/familiaController');
+router.get('/familias', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('familia:view')
+], familiaController.vistaListarFamilias);
+
+router.get('/familias/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('familia:create')
+], familiaController.vistaNuevaFamilia);
+
+router.get('/familias/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('familia:edit')
+], familiaController.vistaEditarFamilia);
+
+router.get('/familias/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('familia:view')
+], familiaController.vistaVerFamilia);
+
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [
