@@ -40,10 +40,27 @@ class FamiliaRepository {
         }
     }
 
-    async obtenerTodas() {
+    async obtenerTodas(page = 1, limit = 10) {
         try {
-            const result = await db.query('SELECT * FROM familias ORDER BY nombre ASC');
-            return result;
+            // Contar total de registros
+            const countResult = await db.query('SELECT COUNT(*) as total FROM familias');
+            const totalRegistros = countResult[0].total;
+            
+            // Obtener registros paginados
+            const offset = (page - 1) * limit;
+            const result = await db.query(
+                `SELECT * FROM familias ORDER BY nombre ASC LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`
+            );
+            
+            return {
+                data: result,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total: totalRegistros,
+                    totalPages: Math.ceil(totalRegistros / limit)
+                }
+            };
         } catch (error) {
             console.error('Error en FamiliaRepository.obtenerTodas:', error);
             throw error;

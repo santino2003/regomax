@@ -18,17 +18,24 @@ const proveedoresController ={
 
     async vistaListarProveedores(req, res) {
         try {
+            // Obtener parámetros de paginación
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            
             // Obtener los parámetros de filtro
             const filtros = {
                 nombre: req.query.nombre || '',
                 contacto: req.query.contacto || '',
                 rubro: req.query.rubro || ''
             };
-            // Aquí deberías tener un método en el service/repository para obtener proveedores filtrados
-            const proveedores = await proveedorService.obtenerTodos(filtros);
+            
+            // Obtener proveedores con paginación
+            const resultado = await proveedorService.obtenerTodos(filtros, page, limit);
+            
             res.render('listarProveedores', {
                 username: req.user.username,
-                proveedores,
+                proveedores: resultado.data,
+                pagination: resultado.pagination,
                 filtros
             });
         } catch (error) {

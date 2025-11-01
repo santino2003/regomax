@@ -72,10 +72,15 @@ const familiaController = {
     // Vistas
     async vistaListarFamilias(req, res) {
         try {
-            const familias = await familiaService.obtenerTodas();
+            // Obtener parámetros de paginación
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            
+            const resultado = await familiaService.obtenerTodas(page, limit);
             res.render('listarFamilias', {
                 username: req.user.username,
-                familias
+                familias: resultado.data,
+                pagination: resultado.pagination
             });
         } catch (error) {
             console.error('Error al listar familias:', error);

@@ -50,10 +50,10 @@ class FamiliaService {
         }
     }   
 
-    async obtenerTodas() {
+    async obtenerTodas(page = 1, limit = 10) {
         try {
-            const familias = await familiaRepository.obtenerTodas();
-            return familias;
+            const resultado = await familiaRepository.obtenerTodas(page, limit);
+            return resultado;
         } catch (error) {
             console.error('Error en FamiliaService.obtenerTodas:', error);
             throw error;
