@@ -78,6 +78,14 @@ const PERMISSIONS = {
     DELETE: 'familia:delete',
   },
   
+  // Permisos para categorias
+  CATEGORIAS: {
+    VIEW: 'categoria:view',
+    CREATE: 'categoria:create',
+    EDIT: 'categoria:edit',
+    DELETE: 'categoria:delete',
+  },
+  
   // Permisos para días hábiles
   DIAS_HABILES: {
     VIEW: 'dias_habiles:view',

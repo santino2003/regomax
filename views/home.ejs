@@ -208,6 +208,11 @@
                                         <a href="/familias"><i class="bi bi-collection me-2"></i> Familias</a>
                                     </div>
                                     <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['categoria:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/categorias"><i class="bi bi-tags me-2"></i> Categorías</a>
+                                    </div>
+                                    <% } %>
                                     <!-- Puedes agregar más opciones de almacén aquí -->
                                 </div>
                             </div>

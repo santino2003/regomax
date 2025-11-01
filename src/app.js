@@ -26,6 +26,7 @@ const planificacionRoutes = require('./routes/api/planificacionRoutes'); // Impo
 const proveedorRoutes = require('./routes/proveedorRoutes');
 const clienteNFURoutes = require('./routes/clienteNFURoutes'); // Importamos las rutas de clientes NFU
 const familiaRoutes = require('./routes/familiaRoutes'); // Importamos las rutas de familias
+const categoriaRoutes = require('./routes/categoriaRoutes'); // Importamos las rutas de categorias
 // Crear aplicación Express
 const app = express();
 
@@ -62,6 +63,7 @@ app.use('/api/planificacion-produccion', planificacionRoutes); // Registramos la
 app.use('/api/proveedores', proveedorRoutes); // Rutas para gestión de proveedores
 app.use('/api/clientes-nfu', clienteNFURoutes); // Rutas para gestión de clientes NFU
 app.use('/api/familias', familiaRoutes); // Rutas para gestión de familias
+app.use('/api/categorias', categoriaRoutes); // Rutas para gestión de categorias
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);
 

@@ -664,6 +664,40 @@ const familia = {
     eliminar: () => registrarHistorial('eliminar', 'familia', familiaDetalles.eliminar)
 };
 
+/**
+ * Funciones específicas para extraer detalles de categorias
+ */
+const categoriaDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            categoria_id: req.params?.id,
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            categoria_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de categorias
+ */
+const categoria = {
+    crear: () => registrarHistorial('crear', 'categoria', categoriaDetalles.crear),
+    editar: () => registrarHistorial('editar', 'categoria', categoriaDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'categoria', categoriaDetalles.eliminar)
+};
+
 module.exports = { 
     registrarHistorial,
     registrarLogin,
@@ -674,5 +708,6 @@ module.exports = {
     despacho,
     proveedor,
     clienteNFU,
-    familia
+    familia,
+    categoria
 };

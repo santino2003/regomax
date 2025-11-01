@@ -336,6 +336,32 @@ router.get('/familias/:id', [
     permissionsMiddleware.hasPermission('familia:view')
 ], familiaController.vistaVerFamilia);
 
+// Rutas de Categorias
+const categoriaController = require('../controllers/categoriaController');
+router.get('/categorias', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('categoria:view')
+], categoriaController.vistaListarCategorias);
+
+router.get('/categorias/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('categoria:create')
+], categoriaController.vistaNuevaCategoria);
+
+router.get('/categorias/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('categoria:edit')
+], categoriaController.vistaEditarCategoria);
+
+router.get('/categorias/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('categoria:view')
+], categoriaController.vistaVerCategoria);
+
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [
