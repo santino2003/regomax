@@ -28,15 +28,33 @@
                     <div class="card-body">
                         <form id="filtrosForm" method="GET">
                             <div class="row g-3">
-                                <div class="col-md-5">
+                                <div class="col-md-3">
                                     <label for="fechaDesde" class="form-label">Desde:</label>
                                     <input type="date" class="form-control" id="fechaDesde" name="fechaDesde"
                                         value="<%= filtros && filtros.fechaDesde || '' %>">
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-md-3">
                                     <label for="fechaHasta" class="form-label">Hasta:</label>
                                     <input type="date" class="form-control" id="fechaHasta" name="fechaHasta"
                                         value="<%= filtros && filtros.fechaHasta || '' %>">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="categoria" class="form-label">Categoría:</label>
+                                    <select class="form-select" id="categoria" name="categoria">
+                                        <option value="">Todas</option>
+                                        <option value="NFU" <%= filtros && filtros.categoria === 'NFU' ? 'selected' : '' %>>NFU</option>
+                                        <option value="CNFU" <%= filtros && filtros.categoria === 'CNFU' ? 'selected' : '' %>>CNFU</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="tipo" class="form-label">Tipo:</label>
+                                    <select class="form-select" id="tipo" name="tipo">
+                                        <option value="">Todos</option>
+                                        <option value="Auto" <%= filtros && filtros.tipo === 'Auto' ? 'selected' : '' %>>Auto</option>
+                                        <option value="Camion" <%= filtros && filtros.tipo === 'Camion' ? 'selected' : '' %>>Camión</option>
+                                        <option value="Mix" <%= filtros && filtros.tipo === 'Mix' ? 'selected' : '' %>>Mix</option>
+                                        <option value="Otros" <%= filtros && filtros.tipo === 'Otros' ? 'selected' : '' %>>Otros</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
                                     <button type="submit" class="btn btn-primary me-2">
@@ -58,6 +76,8 @@
                                 <th>Fecha</th>
                                 <th>Responsable</th>
                                 <th>Cliente</th>
+                                <th>Categoría</th>
+                                <th>Tipo</th>
                                 <th>Cantidad (Kg)</th>
                             </tr>
                         </thead>
@@ -86,12 +106,22 @@
                                                 <span class="text-muted">-</span>
                                             <% } %>
                                         </td>
+                                        <td>
+                                            <% if (ingreso.categoria) { %>
+                                                <span class="badge bg-<%= ingreso.categoria === 'NFU' ? 'primary' : 'success' %>">
+                                                    <%= ingreso.categoria %>
+                                                </span>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= ingreso.tipo || '-' %></td>
                                         <td><%= ingreso.cantidad %></td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="4" class="text-center">No hay registros de ingresos NFU</td>
+                                    <td colspan="6" class="text-center">No hay registros de ingresos NFU</td>
                                 </tr>
                             <% } %>
                         </tbody>
@@ -99,20 +129,34 @@
                 </div>
                 
                 <% if (pagination && pagination.totalPages > 1) { %>
+                    <%
+                        // Helper function to build filter params
+                        const buildFilterParams = () => {
+                            let params = '';
+                            if (filtros) {
+                                if (filtros.fechaDesde) params += '&fechaDesde=' + filtros.fechaDesde;
+                                if (filtros.fechaHasta) params += '&fechaHasta=' + filtros.fechaHasta;
+                                if (filtros.categoria) params += '&categoria=' + encodeURIComponent(filtros.categoria);
+                                if (filtros.tipo) params += '&tipo=' + encodeURIComponent(filtros.tipo);
+                            }
+                            return params;
+                        };
+                        const filterParams = buildFilterParams();
+                    %>
                     <nav aria-label="Navegación de ingresos NFU">
                         <ul class="pagination justify-content-center mt-3">
                             <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                <a class="page-link" href="/nfu?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>" tabindex="-1">Anterior</a>
+                                <a class="page-link" href="/nfu?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= filterParams %>" tabindex="-1">Anterior</a>
                             </li>
                             
                             <% for(let i = 1; i <= pagination.totalPages; i++) { %>
                                 <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                                    <a class="page-link" href="/nfu?page=<%= i %>&limit=<%= pagination.limit %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>"><%= i %></a>
+                                    <a class="page-link" href="/nfu?page=<%= i %>&limit=<%= pagination.limit %><%= filterParams %>"><%= i %></a>
                                 </li>
                             <% } %>
                             
                             <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                <a class="page-link" href="/nfu?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>">Siguiente</a>
+                                <a class="page-link" href="/nfu?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= filterParams %>">Siguiente</a>
                             </li>
                         </ul>
                     </nav>
@@ -136,6 +180,12 @@
                             <% } %>
                             <% if (filtros && filtros.fechaHasta) { %>
                                 <input type="hidden" name="fechaHasta" value="<%= filtros.fechaHasta %>">
+                            <% } %>
+                            <% if (filtros && filtros.categoria) { %>
+                                <input type="hidden" name="categoria" value="<%= filtros.categoria %>">
+                            <% } %>
+                            <% if (filtros && filtros.tipo) { %>
+                                <input type="hidden" name="tipo" value="<%= filtros.tipo %>">
                             <% } %>
                         </form>
                     </div>
@@ -189,8 +239,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Obtener los filtros actuales
             const fechaDesde = document.getElementById('fechaDesde').value || '';
             const fechaHasta = document.getElementById('fechaHasta').value || '';
+            const categoria = document.getElementById('categoria').value || '';
+            const tipo = document.getElementById('tipo').value || '';
             
-            console.log('Filtros:', { fechaDesde, fechaHasta });
+            console.log('Filtros:', { fechaDesde, fechaHasta, categoria, tipo });
             
             // Construir URL con los filtros
             let url = '/api/nfu/exportar-csv?';
@@ -198,6 +250,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (fechaDesde) params.push(`fechaDesde=${encodeURIComponent(fechaDesde)}`);
             if (fechaHasta) params.push(`fechaHasta=${encodeURIComponent(fechaHasta)}`);
+            if (categoria) params.push(`categoria=${encodeURIComponent(categoria)}`);
+            if (tipo) params.push(`tipo=${encodeURIComponent(tipo)}`);
             
             url += params.join('&');
             
