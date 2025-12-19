@@ -27,6 +27,8 @@ const proveedorRoutes = require('./routes/proveedorRoutes');
 const clienteNFURoutes = require('./routes/clienteNFURoutes'); // Importamos las rutas de clientes NFU
 const familiaRoutes = require('./routes/familiaRoutes'); // Importamos las rutas de familias
 const categoriaRoutes = require('./routes/categoriaRoutes'); // Importamos las rutas de categorias
+const unidadMedidaRoutes = require('./routes/unidadMedidaRoutes'); // Importamos las rutas de unidades de medida
+const almacenRoutes = require('./routes/almacenRoutes'); // Importamos las rutas de almacenes
 // Crear aplicación Express
 const app = express();
 
@@ -64,6 +66,8 @@ app.use('/api/proveedores', proveedorRoutes); // Rutas para gestión de proveedo
 app.use('/api/clientes-nfu', clienteNFURoutes); // Rutas para gestión de clientes NFU
 app.use('/api/familias', familiaRoutes); // Rutas para gestión de familias
 app.use('/api/categorias', categoriaRoutes); // Rutas para gestión de categorias
+app.use('/api/unidades-medida', unidadMedidaRoutes); // Rutas para gestión de unidades de medida
+app.use('/api/almacenes', almacenRoutes); // Rutas para gestión de almacenes
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);
 

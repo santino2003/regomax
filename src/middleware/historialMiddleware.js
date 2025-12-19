@@ -698,6 +698,76 @@ const categoria = {
     eliminar: () => registrarHistorial('eliminar', 'categoria', categoriaDetalles.eliminar)
 };
 
+/**
+ * Funciones específicas para extraer detalles de unidades de medida
+ */
+const unidadMedidaDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            nombre_lindo: req.body?.nombreLindo,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            unidad_medida_id: req.params?.id,
+            nombre: req.body?.nombre,
+            nombre_lindo: req.body?.nombreLindo,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            unidad_medida_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de unidades de medida
+ */
+const unidadMedida = {
+    crear: () => registrarHistorial('crear', 'unidadMedida', unidadMedidaDetalles.crear),
+    editar: () => registrarHistorial('editar', 'unidadMedida', unidadMedidaDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'unidadMedida', unidadMedidaDetalles.eliminar)
+};
+
+/**
+ * Funciones específicas para extraer detalles de almacenes
+ */
+const almacenDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            almacen_id: req.params?.id,
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            almacen_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de almacenes
+ */
+const almacen = {
+    crear: () => registrarHistorial('crear', 'almacen', almacenDetalles.crear),
+    editar: () => registrarHistorial('editar', 'almacen', almacenDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'almacen', almacenDetalles.eliminar)
+};
+
 module.exports = { 
     registrarHistorial,
     registrarLogin,
@@ -709,5 +779,7 @@ module.exports = {
     proveedor,
     clienteNFU,
     familia,
-    categoria
+    categoria,
+    unidadMedida,
+    almacen
 };

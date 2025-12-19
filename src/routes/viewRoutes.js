@@ -362,6 +362,58 @@ router.get('/categorias/:id', [
     permissionsMiddleware.hasPermission('categoria:view')
 ], categoriaController.vistaVerCategoria);
 
+// Rutas de Unidades de Medida
+const unidadMedidaController = require('../controllers/unidadMedidaController');
+router.get('/unidades-medida', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('unidadMedida:view')
+], unidadMedidaController.vistaListarUnidadesMedida);
+
+router.get('/unidades-medida/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('unidadMedida:create')
+], unidadMedidaController.vistaNuevaUnidadMedida);
+
+router.get('/unidades-medida/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('unidadMedida:edit')
+], unidadMedidaController.vistaEditarUnidadMedida);
+
+router.get('/unidades-medida/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('unidadMedida:view')
+], unidadMedidaController.vistaVerUnidadMedida);
+
+// Rutas de Almacenes
+const almacenController = require('../controllers/almacenController');
+router.get('/almacenes', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('almacen:view')
+], almacenController.vistaListarAlmacenes);
+
+router.get('/almacenes/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('almacen:create')
+], almacenController.vistaNuevoAlmacen);
+
+router.get('/almacenes/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('almacen:edit')
+], almacenController.vistaEditarAlmacen);
+
+router.get('/almacenes/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('almacen:view')
+], almacenController.vistaVerAlmacen);
+
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [

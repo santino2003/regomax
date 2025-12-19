@@ -86,6 +86,22 @@ const PERMISSIONS = {
     DELETE: 'categoria:delete',
   },
   
+  // Permisos para unidades de medida
+  UNIDADES_MEDIDA: {
+    VIEW: 'unidadMedida:view',
+    CREATE: 'unidadMedida:create',
+    EDIT: 'unidadMedida:edit',
+    DELETE: 'unidadMedida:delete',
+  },
+  
+  // Permisos para almacenes
+  ALMACENES: {
+    VIEW: 'almacen:view',
+    CREATE: 'almacen:create',
+    EDIT: 'almacen:edit',
+    DELETE: 'almacen:delete',
+  },
+  
   // Permisos para días hábiles
   DIAS_HABILES: {
     VIEW: 'dias_habiles:view',

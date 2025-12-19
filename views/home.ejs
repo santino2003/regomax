@@ -213,6 +213,16 @@
                                         <a href="/categorias"><i class="bi bi-tags me-2"></i> Categorías</a>
                                     </div>
                                     <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['unidadMedida:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/unidades-medida"><i class="bi bi-rulers me-2"></i> Unidades de Medida</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['almacen:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/almacenes"><i class="bi bi-building me-2"></i> Almacenes</a>
+                                    </div>
+                                    <% } %>
                                     <!-- Puedes agregar más opciones de almacén aquí -->
                                 </div>
                             </div>
