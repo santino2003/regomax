@@ -372,7 +372,7 @@ const bolsonController = {
             // Añadir los datos
             resultado.forEach(bolson => {
                 worksheet.addRow({
-                    codigo: bolson.codigo || 'N/A',
+                    codigo: bolson.codigo != null ? String(bolson.codigo) : 'N/A',
                     producto: bolson.producto || 'N/A',
                     peso: bolson.peso || 'N/A',
                     precinto: bolson.precinto || 'N/A',
