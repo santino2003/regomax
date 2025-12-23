@@ -16,7 +16,7 @@ class ProveedorRepository {
         }
     }
 
-    async obtenerTodos(filtros = {}) {
+    async obtenerTodos(filtros = {}, page = 1, limit = 10) {
         try {
             let query = 'SELECT * FROM proveedores WHERE 1=1';
             const params = [];
@@ -39,11 +39,29 @@ class ProveedorRepository {
                 params.push(`%${filtros.rubro.trim()}%`);
             }
 
+            // Contar total de registros (antes de paginar)
+            const countQuery = query.replace('SELECT *', 'SELECT COUNT(*) as total');
+            const countResult = await db.query(countQuery, params);
+            const totalRegistros = countResult[0].total;
+
             // Ordenar por nombre
             query += ' ORDER BY nombre ASC';
 
+            // Agregar paginación
+            const offset = (page - 1) * limit;
+            query += ` LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+
             const result = await db.query(query, params);
-            return result;
+            
+            return {
+                data: result,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total: totalRegistros,
+                    totalPages: Math.ceil(totalRegistros / limit)
+                }
+            };
         } catch (error) {
             console.error('Error al obtener proveedores:', error);
             throw error;

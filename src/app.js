@@ -25,6 +25,11 @@ const productoRoutes = require('./routes/api/productoRoutes');
 const planificacionRoutes = require('./routes/api/planificacionRoutes'); // Importamos las rutas de planificación
 const proveedorRoutes = require('./routes/proveedorRoutes');
 const clienteNFURoutes = require('./routes/clienteNFURoutes'); // Importamos las rutas de clientes NFU
+const familiaRoutes = require('./routes/familiaRoutes'); // Importamos las rutas de familias
+const categoriaRoutes = require('./routes/categoriaRoutes'); // Importamos las rutas de categorias
+const unidadMedidaRoutes = require('./routes/unidadMedidaRoutes'); // Importamos las rutas de unidades de medida
+const almacenRoutes = require('./routes/almacenRoutes'); // Importamos las rutas de almacenes
+const bienRoutes = require('./routes/bienRoutes'); // Importamos las rutas de bienes
 // Crear aplicación Express
 const app = express();
 
@@ -44,6 +49,9 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Servir archivos estáticos desde la carpeta src/assets
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
+// Servir archivos subidos desde la carpeta uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Middleware para manejar errores de permisos
 app.use(permissionErrorHandler);
 
@@ -60,6 +68,11 @@ app.use('/api/reportear', reporteARRoutes); // Registramos las rutas del reporte
 app.use('/api/planificacion-produccion', planificacionRoutes); // Registramos las rutas de planificación
 app.use('/api/proveedores', proveedorRoutes); // Rutas para gestión de proveedores
 app.use('/api/clientes-nfu', clienteNFURoutes); // Rutas para gestión de clientes NFU
+app.use('/api/familias', familiaRoutes); // Rutas para gestión de familias
+app.use('/api/categorias', categoriaRoutes); // Rutas para gestión de categorias
+app.use('/api/unidades-medida', unidadMedidaRoutes); // Rutas para gestión de unidades de medida
+app.use('/api/almacenes', almacenRoutes); // Rutas para gestión de almacenes
+app.use('/api/bienes', bienRoutes); // Rutas para gestión de bienes
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);
 

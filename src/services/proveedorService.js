@@ -25,8 +25,8 @@ class ProveedorService {
     }
     
 
-    async obtenerTodos(filtros = {}) {
-        return await proveedorRepository.obtenerTodos(filtros);
+    async obtenerTodos(filtros = {}, page = 1, limit = 10) {
+        return await proveedorRepository.obtenerTodos(filtros, page, limit);
     }
 
     async obtenerPorId(id) {

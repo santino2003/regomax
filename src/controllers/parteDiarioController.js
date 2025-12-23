@@ -188,7 +188,8 @@ const parteDiarioController = {
             
             if (!parteDiario) {
                 return res.status(404).render('error', { 
-                    message: 'Parte diario no encontrado'
+                    message: 'Parte diario no encontrado',
+                    error: { status: 404, stack: 'No se encontró el parte diario' }
                 });
             }
             
@@ -342,14 +343,21 @@ const parteDiarioController = {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             
-            const estadosValidos = ['pendiente', 'aprobado'];
+            const estadosValidos = ['pendiente', 'aprobado', 'todos'];
             if (!estadosValidos.includes(estado)) {
                 return res.status(400).render('error', { 
-                    message: `Estado no válido. Debe ser uno de: ${estadosValidos.join(', ')}`
+                    message: `Estado no válido. Debe ser uno de: ${estadosValidos.join(', ')}`,
+                    error: { status: 400, stack: 'Estado no válido' }
                 });
             }
             
-            const resultado = await parteDiarioService.obtenerPartesDiariosPorEstado(estado, page, limit);
+            // Si el estado es 'todos', obtener todos los partes diarios, sino filtrar por estado
+            let resultado;
+            if (estado === 'todos') {
+                resultado = await parteDiarioService.obtenerTodosPartesDiarios(page, limit);
+            } else {
+                resultado = await parteDiarioService.obtenerPartesDiariosPorEstado(estado, page, limit);
+            }
             
             // Definir títulos según el estado
             let titulo;
@@ -359,6 +367,9 @@ const parteDiarioController = {
                     break;
                 case 'aprobado':
                     titulo = 'Partes Diarios Aprobados';
+                    break;
+                case 'todos':
+                    titulo = 'Todos los Partes Diarios';
                     break;
             }
             
@@ -411,7 +422,8 @@ const parteDiarioController = {
             
             if (!parteDiario) {
                 return res.status(404).render('error', { 
-                    message: 'Parte diario no encontrado'
+                    message: 'Parte diario no encontrado',
+                    error: { status: 404, stack: 'No se encontró el parte diario' }
                 });
             }
             

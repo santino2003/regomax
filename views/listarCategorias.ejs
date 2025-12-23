@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proveedores - Regomax</title>
+    <title>Categorias - Regomax</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -45,82 +45,41 @@
                 <div class="menu-container p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="menu-heading mb-0">
-                            <i class="bi bi-person-lines-fill me-2"></i>Gestión de Proveedores
+                            <i class="bi bi-tags me-2"></i>Gestión de Categorias
                         </h4>
                         <div>
-                            <a href="/proveedores/nuevo" class="btn btn-primary">
-                                <i class="bi bi-plus-circle me-2"></i>Nuevo Proveedor
+                            <a href="/categorias/nuevo" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Nueva Categoria
                             </a>
                         </div>
                     </div>
-                    <!-- Filtros -->
-                    <div class="card mb-4">
-                        <div class="card-header bg-light">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-funnel me-2"></i>Filtros
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <form id="filtrosForm" method="GET" action="/proveedores">
-                                <div class="row g-3">
-                                    <div class="col-md-6 col-lg-3">
-                                        <label for="nombre" class="form-label">Nombre</label>
-                                        <input type="text" class="form-control" id="nombre" name="nombre" value="<%= filtros.nombre %>" placeholder="Filtrar por nombre">
-                                    </div>
-                                    <div class="col-md-6 col-lg-3">
-                                        <label for="contacto" class="form-label">Contacto</label>
-                                        <input type="text" class="form-control" id="contacto" name="contacto" value="<%= filtros.contacto %>" placeholder="Filtrar por contacto">
-                                    </div>
-                                    <div class="col-md-6 col-lg-3">
-                                        <label for="rubro" class="form-label">Rubro</label>
-                                        <input type="text" class="form-control" id="rubro" name="rubro" value="<%= filtros.rubro %>" placeholder="Filtrar por rubro">
-                                    </div>
-                                    <div class="col-md-6 col-lg-3 d-flex align-items-end">
-                                        <button type="submit" class="btn btn-primary me-2">
-                                            <i class="bi bi-search me-1"></i>Buscar
-                                        </button>
-                                        <a href="/proveedores" class="btn btn-outline-secondary">
-                                            <i class="bi bi-x-circle me-1"></i>Limpiar
-                                        </a>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th>Nombre</th>
-                                    <th>Contacto</th>
-                                    <th>Teléfono</th>
-                                    <th>Email</th>
-                                    <th>Dirección</th>
-                                    <th>Web</th>
-                                    <th>Rubro</th>
+                                    <th>Responsable</th>
+                                    <th>Fecha Creación</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <% if(proveedores && proveedores.length > 0) { %>
-                                    <% proveedores.forEach(proveedor => { %>
+                                <% if(categorias && categorias.length > 0) { %>
+                                    <% categorias.forEach(categoria => { %>
                                         <tr>
-                                            <td><%= proveedor.nombre %></td>
-                                            <td><%= proveedor.contacto %></td>
-                                            <td><%= proveedor.telefono %></td>
-                                            <td><%= proveedor.email %></td>
-                                            <td><%= proveedor.direccion %></td>
-                                            <td><%= proveedor.web %></td>
-                                            <td><%= proveedor.rubro %></td>
+                                            <td><%= categoria.nombre %></td>
+                                            <td><%= categoria.responsable || '-' %></td>
+                                            <td><%= categoria.fecha_creacion ? new Date(categoria.fecha_creacion).toLocaleDateString('es-AR') : '-' %></td>
                                             <td>
                                                 <div class="btn-group" role="group">
-                                                    <a href="/proveedores/<%= proveedor.id %>" class="btn btn-sm btn-outline-primary" title="Ver">
+                                                    <a href="/categorias/<%= categoria.id %>" class="btn btn-sm btn-outline-primary" title="Ver">
                                                         <i class="bi bi-eye"></i>
                                                     </a>
-                                                    <a href="/proveedores/editar/<%= proveedor.id %>" class="btn btn-sm btn-outline-secondary" title="Editar">
+                                                    <a href="/categorias/editar/<%= categoria.id %>" class="btn btn-sm btn-outline-secondary" title="Editar">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
-                                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="<%= proveedor.id %>" title="Eliminar">
+                                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="<%= categoria.id %>" title="Eliminar">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
@@ -129,7 +88,7 @@
                                     <% }) %>
                                 <% } else { %>
                                     <tr>
-                                        <td colspan="8" class="text-center">No hay proveedores registrados</td>
+                                        <td colspan="4" class="text-center">No hay categorias registradas</td>
                                     </tr>
                                 <% } %>
                             </tbody>
@@ -137,18 +96,18 @@
                         
                         <!-- Paginación -->
                         <% if (pagination && pagination.totalPages > 1) { %>
-                            <nav aria-label="Navegación de proveedores">
+                            <nav aria-label="Navegación de categorias">
                                 <ul class="pagination justify-content-center">
                                     <!-- Botón Primera Página -->
                                     <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/proveedores?page=1&limit=<%= pagination.limit %><%= filtros && filtros.nombre ? '&nombre=' + filtros.nombre : '' %><%= filtros && filtros.contacto ? '&contacto=' + filtros.contacto : '' %><%= filtros && filtros.rubro ? '&rubro=' + filtros.rubro : '' %>" aria-label="Primera">
+                                        <a class="page-link" href="/categorias?page=1&limit=<%= pagination.limit %>" aria-label="Primera">
                                             <span aria-hidden="true">&laquo;&laquo;</span>
                                         </a>
                                     </li>
                                     
                                     <!-- Botón Anterior -->
                                     <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/proveedores?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= filtros && filtros.nombre ? '&nombre=' + filtros.nombre : '' %><%= filtros && filtros.contacto ? '&contacto=' + filtros.contacto : '' %><%= filtros && filtros.rubro ? '&rubro=' + filtros.rubro : '' %>" aria-label="Anterior">
+                                        <a class="page-link" href="/categorias?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %>" aria-label="Anterior">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
                                     </li>
@@ -157,21 +116,19 @@
                                     // Determinar qué páginas mostrar
                                     const totalPages = pagination.totalPages;
                                     const currentPage = pagination.page;
-                                    const maxPagesToShow = 5; // Número máximo de páginas a mostrar
+                                    const maxPagesToShow = 5;
                                     
                                     let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
                                     let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
                                     
-                                    // Ajustar el rango si estamos cerca del final
                                     if (endPage - startPage + 1 < maxPagesToShow) {
                                         startPage = Math.max(1, endPage - maxPagesToShow + 1);
                                     }
                                     
-                                    // Mostrar primera página si no está en el rango
                                     if (startPage > 1) { 
                                     %>
                                         <li class="page-item">
-                                            <a class="page-link" href="/proveedores?page=1&limit=<%= pagination.limit %><%= filtros && filtros.nombre ? '&nombre=' + filtros.nombre : '' %><%= filtros && filtros.contacto ? '&contacto=' + filtros.contacto : '' %><%= filtros && filtros.rubro ? '&rubro=' + filtros.rubro : '' %>">1</a>
+                                            <a class="page-link" href="/categorias?page=1&limit=<%= pagination.limit %>">1</a>
                                         </li>
                                         <% if (startPage > 2) { %>
                                             <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -181,7 +138,7 @@
                                     <!-- Páginas numéricas -->
                                     <% for (let i = startPage; i <= endPage; i++) { %>
                                         <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                                            <a class="page-link" href="/proveedores?page=<%= i %>&limit=<%= pagination.limit %><%= filtros && filtros.nombre ? '&nombre=' + filtros.nombre : '' %><%= filtros && filtros.contacto ? '&contacto=' + filtros.contacto : '' %><%= filtros && filtros.rubro ? '&rubro=' + filtros.rubro : '' %>"><%= i %></a>
+                                            <a class="page-link" href="/categorias?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
                                         </li>
                                     <% } %>
                                     
@@ -191,20 +148,20 @@
                                             <li class="page-item disabled"><span class="page-link">...</span></li>
                                         <% } %>
                                         <li class="page-item">
-                                            <a class="page-link" href="/proveedores?page=<%= totalPages %>&limit=<%= pagination.limit %><%= filtros && filtros.nombre ? '&nombre=' + filtros.nombre : '' %><%= filtros && filtros.contacto ? '&contacto=' + filtros.contacto : '' %><%= filtros && filtros.rubro ? '&rubro=' + filtros.rubro : '' %>"><%= totalPages %></a>
+                                            <a class="page-link" href="/categorias?page=<%= totalPages %>&limit=<%= pagination.limit %>"><%= totalPages %></a>
                                         </li>
                                     <% } %>
                                     
                                     <!-- Botón Siguiente -->
                                     <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/proveedores?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= filtros && filtros.nombre ? '&nombre=' + filtros.nombre : '' %><%= filtros && filtros.contacto ? '&contacto=' + filtros.contacto : '' %><%= filtros && filtros.rubro ? '&rubro=' + filtros.rubro : '' %>" aria-label="Siguiente">
+                                        <a class="page-link" href="/categorias?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %>" aria-label="Siguiente">
                                             <span aria-hidden="true">&raquo;</span>
                                         </a>
                                     </li>
                                     
                                     <!-- Botón Última Página -->
                                     <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/proveedores?page=<%= pagination.totalPages %>&limit=<%= pagination.limit %><%= filtros && filtros.nombre ? '&nombre=' + filtros.nombre : '' %><%= filtros && filtros.contacto ? '&contacto=' + filtros.contacto : '' %><%= filtros && filtros.rubro ? '&rubro=' + filtros.rubro : '' %>" aria-label="Última">
+                                        <a class="page-link" href="/categorias?page=<%= pagination.totalPages %>&limit=<%= pagination.limit %>" aria-label="Última">
                                             <span aria-hidden="true">&raquo;&raquo;</span>
                                         </a>
                                     </li>
@@ -218,7 +175,7 @@
                                     <p class="text-muted mb-0">
                                         Mostrando <%= ((pagination.page - 1) * pagination.limit) + 1 %> - 
                                         <%= Math.min(pagination.page * pagination.limit, pagination.total) %> 
-                                        de <%= pagination.total %> proveedores
+                                        de <%= pagination.total %> categorias
                                     </p>
                                 <% } %>
                             </div>
@@ -237,7 +194,7 @@
     </div>
 
     <!-- Modal de Confirmación para Eliminar -->
-    <div class="modal fade" id="deleteProveedorModal" tabindex="-1">
+    <div class="modal fade" id="deleteCategoriaModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
@@ -245,7 +202,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>¿Está seguro que desea eliminar el proveedor <span id="deleteProveedorNombre" class="fw-bold"></span>?</p>
+                    <p>¿Está seguro que desea eliminar la categoria <span id="deleteCategoriaNombre" class="fw-bold"></span>?</p>
                     <p class="text-danger mb-0">¡Esta acción no se puede deshacer!</p>
                 </div>
                 <div class="modal-footer">
@@ -260,35 +217,33 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Common JS (Para funcionalidades compartidas como logout) -->
+    <!-- Common JS -->
     <script src="/assets/js/common.js"></script>
     
     <!-- Script para manejar eliminación -->
     <script>
         $(document).ready(function() {
-            let proveedorIdToDelete = null;
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteProveedorModal'));
+            let categoriaIdToDelete = null;
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteCategoriaModal'));
             
             // Manejar clic en botón de eliminar
             $('.btn-delete').on('click', function() {
-                proveedorIdToDelete = $(this).data('id');
-                const proveedorNombre = $(this).closest('tr').find('td:first').text();
+                categoriaIdToDelete = $(this).data('id');
+                const categoriaNombre = $(this).closest('tr').find('td:first').text();
                 
-                $('#deleteProveedorNombre').text(proveedorNombre);
+                $('#deleteCategoriaNombre').text(categoriaNombre);
                 deleteModal.show();
             });
             
             // Confirmar eliminación
             $('#confirmDelete').on('click', function() {
-                if (!proveedorIdToDelete) return;
+                if (!categoriaIdToDelete) return;
                 
-                // Deshabilitar botón mientras se procesa
                 const btn = $(this);
                 const originalText = btn.html();
                 btn.html('<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...').prop('disabled', true);
                 
-                // Realizar petición de eliminación
-                fetch(`/api/proveedores/${proveedorIdToDelete}`, {
+                fetch(`/api/categorias/${categoriaIdToDelete}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -297,14 +252,11 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Cerrar modal y recargar la página
                         deleteModal.hide();
                         window.location.reload();
                     } else {
-                        // Cerrar modal y mostrar error
                         deleteModal.hide();
-                        console.error('Error:', data.message || 'No se pudo eliminar el proveedor');
-                        // Recargar de todas formas para actualizar el estado
+                        console.error('Error:', data.message || 'No se pudo eliminar la categoria');
                         setTimeout(() => window.location.reload(), 500);
                     }
                 })
@@ -314,7 +266,6 @@
                     setTimeout(() => window.location.reload(), 500);
                 })
                 .finally(() => {
-                    // Restaurar botón
                     btn.html(originalText).prop('disabled', false);
                 });
             });

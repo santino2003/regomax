@@ -70,6 +70,46 @@ const PERMISSIONS = {
     DELETE: 'clientes_nfu:delete',
   },
   
+  // Permisos para familias
+  FAMILIAS: {
+    VIEW: 'familia:view',
+    CREATE: 'familia:create',
+    EDIT: 'familia:edit',
+    DELETE: 'familia:delete',
+  },
+  
+  // Permisos para categorias
+  CATEGORIAS: {
+    VIEW: 'categoria:view',
+    CREATE: 'categoria:create',
+    EDIT: 'categoria:edit',
+    DELETE: 'categoria:delete',
+  },
+  
+  // Permisos para unidades de medida
+  UNIDADES_MEDIDA: {
+    VIEW: 'unidadMedida:view',
+    CREATE: 'unidadMedida:create',
+    EDIT: 'unidadMedida:edit',
+    DELETE: 'unidadMedida:delete',
+  },
+  
+  // Permisos para almacenes
+  ALMACENES: {
+    VIEW: 'almacen:view',
+    CREATE: 'almacen:create',
+    EDIT: 'almacen:edit',
+    DELETE: 'almacen:delete',
+  },
+  
+  // Permisos para bienes
+  BIENES: {
+    VIEW: 'bien:view',
+    CREATE: 'bien:create',
+    EDIT: 'bien:edit',
+    DELETE: 'bien:delete',
+  },
+  
   // Permisos para días hábiles
   DIAS_HABILES: {
     VIEW: 'dias_habiles:view',

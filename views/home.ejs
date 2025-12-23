@@ -194,8 +194,44 @@
                             </div>
                         </div>
                         
-                        <!-- Almacenes -->
-                       <!-- Next sprint -->
+                        <!-- Almacén -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAlmacen">
+                                    <i class="bi bi-box me-2"></i> Almacén
+                                </button>
+                            </h2>
+                            <div id="collapseAlmacen" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                                <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['familia:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/familias"><i class="bi bi-collection me-2"></i> Familias</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['categoria:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/categorias"><i class="bi bi-tags me-2"></i> Categorías</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['unidadMedida:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/unidades-medida"><i class="bi bi-rulers me-2"></i> Unidades de Medida</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['almacen:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/almacenes"><i class="bi bi-building me-2"></i> Almacenes</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bien:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/bienes"><i class="bi bi-box-seam me-2"></i> Bienes</a>
+                                    </div>
+                                    <% } %>
+                                    <!-- Puedes agregar más opciones de almacén aquí -->
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Administración del Sistema - Solo visible para usuarios con permisos adecuados -->
                         <% if (user && (user.role === 'admin' || 
