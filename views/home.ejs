@@ -223,6 +223,11 @@
                                         <a href="/almacenes"><i class="bi bi-building me-2"></i> Almacenes</a>
                                     </div>
                                     <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bien:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/bienes"><i class="bi bi-box-seam me-2"></i> Bienes</a>
+                                    </div>
+                                    <% } %>
                                     <!-- Puedes agregar más opciones de almacén aquí -->
                                 </div>
                             </div>

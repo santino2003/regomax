@@ -102,6 +102,14 @@ const PERMISSIONS = {
     DELETE: 'almacen:delete',
   },
   
+  // Permisos para bienes
+  BIENES: {
+    VIEW: 'bien:view',
+    CREATE: 'bien:create',
+    EDIT: 'bien:edit',
+    DELETE: 'bien:delete',
+  },
+  
   // Permisos para días hábiles
   DIAS_HABILES: {
     VIEW: 'dias_habiles:view',

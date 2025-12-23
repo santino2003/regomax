@@ -414,6 +414,32 @@ router.get('/almacenes/:id', [
     permissionsMiddleware.hasPermission('almacen:view')
 ], almacenController.vistaVerAlmacen);
 
+// Rutas de Bienes
+const bienController = require('../controllers/bienController');
+router.get('/bienes', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:view')
+], bienController.vistaListarBienes);
+
+router.get('/bienes/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:create')
+], bienController.vistaNuevoBien);
+
+router.get('/bienes/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:edit')
+], bienController.vistaEditarBien);
+
+router.get('/bienes/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:view')
+], bienController.vistaVerBien);
+
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [

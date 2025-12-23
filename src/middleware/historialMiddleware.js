@@ -768,6 +768,73 @@ const almacen = {
     eliminar: () => registrarHistorial('eliminar', 'almacen', almacenDetalles.eliminar)
 };
 
+/**
+ * Funciones específicas para extraer detalles de bienes
+ */
+const bienDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            tipo: req.body?.tipo,
+            categoria_id: req.body?.categoria_id,
+            familia_id: req.body?.familia_id,
+            precio: req.body?.precio,
+            proveedores: Array.isArray(req.body?.proveedores) ? req.body.proveedores.join(',') : req.body?.proveedores,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            bien_id: req.params?.id,
+            nombre: req.body?.nombre,
+            tipo: req.body?.tipo,
+            categoria_id: req.body?.categoria_id,
+            familia_id: req.body?.familia_id,
+            precio: req.body?.precio,
+            proveedores: Array.isArray(req.body?.proveedores) ? req.body.proveedores.join(',') : req.body?.proveedores,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            bien_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    },
+    actualizarStock: (req, res, body) => {
+        return {
+            bien_id: req.params?.id,
+            cantidad: req.body?.cantidad,
+            responsable: req.user?.username
+        };
+    },
+    subirArchivo: (req, res, body) => {
+        return {
+            bien_id: req.params?.id,
+            archivo: req.file?.originalname,
+            responsable: req.user?.username
+        };
+    },
+    eliminarArchivo: (req, res, body) => {
+        return {
+            archivo_id: req.params?.archivoId,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de bienes
+ */
+const bien = {
+    crear: () => registrarHistorial('crear', 'bien', bienDetalles.crear),
+    editar: () => registrarHistorial('editar', 'bien', bienDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'bien', bienDetalles.eliminar),
+    actualizarStock: () => registrarHistorial('actualizar_stock', 'bien', bienDetalles.actualizarStock),
+    subirArchivo: () => registrarHistorial('subir_archivo', 'bien', bienDetalles.subirArchivo),
+    eliminarArchivo: () => registrarHistorial('eliminar_archivo', 'bien', bienDetalles.eliminarArchivo)
+};
+
 module.exports = { 
     registrarHistorial,
     registrarLogin,
@@ -781,5 +848,6 @@ module.exports = {
     familia,
     categoria,
     unidadMedida,
-    almacen
+    almacen,
+    bien
 };
