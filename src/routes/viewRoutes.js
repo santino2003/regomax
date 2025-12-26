@@ -440,6 +440,32 @@ router.get('/bienes/:id', [
     permissionsMiddleware.hasPermission('bien:view')
 ], bienController.vistaVerBien);
 
+// Rutas de Kits
+const kitController = require('../controllers/kitController');
+router.get('/kits', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:view')
+], kitController.vistaListarKits);
+
+router.get('/kits/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:create')
+], kitController.vistaNuevoKit);
+
+router.get('/kits/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:edit')
+], kitController.vistaEditarKit);
+
+router.get('/kits/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:view')
+], kitController.vistaVerKit);
+
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');
 router.get('/reporte-general', [

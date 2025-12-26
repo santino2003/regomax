@@ -166,6 +166,64 @@ class BienService {
     }
 
     /**
+     * Incrementar stock de un bien
+     */
+    async incrementarStock(id, cantidad) {
+        try {
+            if (cantidad <= 0) {
+                throw new Error('La cantidad debe ser mayor a 0');
+            }
+            
+            const bien = await bienRepository.obtenerPorId(id);
+            if (!bien) {
+                throw new Error('Bien no encontrado');
+            }
+            
+            const nuevaCantidad = bien.cantidad_stock + cantidad;
+            await bienRepository.actualizarStock(id, nuevaCantidad);
+            
+            return {
+                success: true,
+                message: `Se incrementó el stock en ${cantidad} unidad(es)`,
+            };
+        } catch (error) {
+            console.error('Error en BienService.incrementarStock:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Descontar stock de un bien
+     */
+    async descontarStock(id, cantidad) {
+        try {
+            if (cantidad <= 0) {
+                throw new Error('La cantidad debe ser mayor a 0');
+            }
+            
+            const bien = await bienRepository.obtenerPorId(id);
+            if (!bien) {
+                throw new Error('Bien no encontrado');
+            }
+            
+            const nuevaCantidad = bien.cantidad_stock - cantidad;
+            if (nuevaCantidad < 0) {
+                throw new Error(`Stock insuficiente. Stock actual: ${bien.cantidad_stock}, intentando descontar: ${cantidad}`);
+            }
+            
+            await bienRepository.actualizarStock(id, nuevaCantidad);
+            
+            return {
+                success: true,
+                message: `Se descontó ${cantidad} unidad(es) del stock`,
+            };
+        } catch (error) {
+            console.error('Error en BienService.descontarStock:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Guardar archivo adjunto
      */
     async guardarArchivo(bienId, archivoData) {

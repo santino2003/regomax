@@ -51,11 +51,11 @@
                     
                     <form id="formEditarBien" class="needs-validation" data-bien-id="<%= bien.id %>" novalidate>
                         <!-- Información Básica -->
-                        <div class="card mb-3">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="mb-0">Información Básica</h5>
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body bg-light">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="codigo" class="form-label">Código</label>
@@ -92,11 +92,11 @@
                         </div>
 
                         <!-- Clasificación -->
-                        <div class="card mb-3">
-                            <div class="card-header bg-info text-white">
-                                <h5 class="mb-0">Clasificación</h5>
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #5bc0de; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Clasificación</h5>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body bg-light">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="categoria_id" class="form-label">Categoría</label>
@@ -121,11 +121,11 @@
                         </div>
 
                         <!-- Inventario y Precios -->
-                        <div class="card mb-3">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="mb-0">Inventario y Precios</h5>
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Inventario y Precios</h5>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body bg-light">
                                 <div class="row mb-3">
                                     <div class="col-md-4">
                                         <label for="unidad_medida_id" class="form-label">Unidad de Medida</label>
@@ -150,23 +150,16 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-12">
-                                        <div class="alert alert-info mb-0">
-                                            <i class="bi bi-info-circle me-2"></i>
-                                            <strong>Stock Actual:</strong> <%= bien.cantidad_stock %>
-                                            <span class="ms-3"><small>Para actualizar el stock, use el botón en la vista de detalles</small></span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Ubicación y Almacenamiento -->
-                        <div class="card mb-3">
-                            <div class="card-header bg-warning">
-                                <h5 class="mb-0">Ubicación y Almacenamiento</h5>
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #5bc0de; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Ubicación y Almacenamiento</h5>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body bg-light">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="ubicacion" class="form-label">Ubicación</label>
@@ -186,11 +179,11 @@
                         </div>
 
                         <!-- Proveedores -->
-                        <div class="card mb-3">
-                            <div class="card-header bg-secondary text-white">
-                                <h5 class="mb-0">Proveedores</h5>
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Proveedores</h5>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body bg-light">
                                 <div class="row mb-3">
                                     <div class="col-12">
                                         <label for="proveedores" class="form-label">Seleccionar Proveedores</label>
@@ -208,14 +201,14 @@
                         </div>
 
                         <!-- Archivos Adjuntos -->
-                        <div class="card mb-3">
-                            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">Archivos Adjuntos</h5>
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #5bc0de; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-paperclip me-2"></i>Archivos Adjuntos</h5>
                                 <button type="button" class="btn btn-sm btn-light" id="btnSubirArchivo">
                                     <i class="bi bi-upload me-1"></i>Subir Archivo
                                 </button>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body bg-light">
                                 <div id="listaArchivos">
                                     <% if (bien.archivos && bien.archivos.length > 0) { %>
                                     <ul class="list-group">

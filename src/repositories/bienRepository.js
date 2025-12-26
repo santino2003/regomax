@@ -150,7 +150,7 @@ class BienRepository {
      */
     async obtenerTodos(page = 1, limit = 10, filtros = {}) {
         try {
-            let whereConditions = [];
+            let whereConditions = ['(b.es_kit = FALSE OR b.es_kit IS NULL)'];
             let params = [];
             
             // Aplicar filtros
@@ -172,7 +172,7 @@ class BienRepository {
                 params.push(searchTerm, searchTerm, searchTerm);
             }
             
-            const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
+            const whereClause = 'WHERE ' + whereConditions.join(' AND ');
             
             // Contar total de registros
             const countQuery = `SELECT COUNT(*) as total FROM bienes b ${whereClause}`;

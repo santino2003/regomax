@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienes - Regomax</title>
+    <title>Kits - Regomax</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/assets/css/home.css">
@@ -41,14 +41,14 @@
                 <div class="menu-container p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="menu-heading mb-0">
-                            <i class="bi bi-box-seam me-2"></i>Bienes
+                            <i class="bi bi-collection me-2"></i>Kits
                         </h4>
                         <div>
-                            <a href="/kits" class="btn btn-info me-2">
-                                <i class="bi bi-collection me-2"></i>Ver Kits
+                            <a href="/bienes" class="btn btn-outline-secondary me-2">
+                                <i class="bi bi-arrow-left me-2"></i>Volver a Bienes
                             </a>
-                            <a href="/bienes/nuevo" class="btn btn-primary">
-                                <i class="bi bi-plus-circle me-2"></i>Nuevo Bien
+                            <a href="/kits/nuevo" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Nuevo Kit
                             </a>
                         </div>
                     </div>
@@ -59,7 +59,7 @@
                     <div class="card mb-3">
                         <div class="card-body">
                             <div class="row g-3">
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label for="filtroTipo" class="form-label">Tipo</label>
                                     <select class="form-select" id="filtroTipo">
                                         <option value="">Todos</option>
@@ -67,7 +67,7 @@
                                         <option value="Consumo">Consumo</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label for="filtroCategoria" class="form-label">Categoría</label>
                                     <select class="form-select" id="filtroCategoria">
                                         <option value="">Todas</option>
@@ -76,18 +76,9 @@
                                         <% }) %>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="filtroFamilia" class="form-label">Familia</label>
-                                    <select class="form-select" id="filtroFamilia">
-                                        <option value="">Todas</option>
-                                        <% familias.forEach(fam => { %>
-                                            <option value="<%= fam.id %>"><%= fam.nombre %></option>
-                                        <% }) %>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label for="filtroBusqueda" class="form-label">Buscar</label>
-                                    <input type="text" class="form-select" id="filtroBusqueda" placeholder="Código, nombre...">
+                                    <input type="text" class="form-control" id="filtroBusqueda" placeholder="Código, nombre...">
                                 </div>
                             </div>
                             <div class="row mt-3">
@@ -112,13 +103,13 @@
                                     <th>Nombre</th>
                                     <th>Tipo</th>
                                     <th>Categoría</th>
-                                    <th>Familia</th>
+                                    <th class="text-center">Componentes</th>
                                     <th class="text-end">Stock</th>
-                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Precio Total</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="tablaBienes">
+                            <tbody id="tablaKits">
                                 <tr>
                                     <td colspan="8" class="text-center">
                                         <div class="spinner-border text-primary" role="status">
@@ -131,7 +122,7 @@
                     </div>
 
                     <!-- Paginación -->
-                    <nav aria-label="Paginación de bienes">
+                    <nav aria-label="Paginación de kits">
                         <ul class="pagination justify-content-center" id="pagination"></ul>
                     </nav>
                 </div>
@@ -148,10 +139,10 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>¿Está seguro que desea eliminar el bien <strong id="bienNombre"></strong>?</p>
+                    <p>¿Está seguro que desea eliminar el kit <strong id="kitNombre"></strong>?</p>
                     <p class="text-danger mb-0">
                         <i class="bi bi-exclamation-triangle me-2"></i>
-                        Esta acción no se puede deshacer y eliminará también los proveedores asociados y archivos adjuntos.
+                        Esta acción no se puede deshacer y eliminará también las relaciones con los componentes del kit.
                     </p>
                 </div>
                 <div class="modal-footer">
@@ -165,6 +156,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/assets/js/common.js"></script>
-    <script src="/assets/js/listarBienes.js"></script>
+    <script src="/assets/js/listarKits.js"></script>
 </body>
 </html>

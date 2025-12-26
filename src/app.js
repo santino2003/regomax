@@ -30,6 +30,7 @@ const categoriaRoutes = require('./routes/categoriaRoutes'); // Importamos las r
 const unidadMedidaRoutes = require('./routes/unidadMedidaRoutes'); // Importamos las rutas de unidades de medida
 const almacenRoutes = require('./routes/almacenRoutes'); // Importamos las rutas de almacenes
 const bienRoutes = require('./routes/bienRoutes'); // Importamos las rutas de bienes
+const kitRoutes = require('./routes/kitRoutes'); // Importamos las rutas de kits
 // Crear aplicación Express
 const app = express();
 
@@ -73,6 +74,7 @@ app.use('/api/categorias', categoriaRoutes); // Rutas para gestión de categoria
 app.use('/api/unidades-medida', unidadMedidaRoutes); // Rutas para gestión de unidades de medida
 app.use('/api/almacenes', almacenRoutes); // Rutas para gestión de almacenes
 app.use('/api/bienes', bienRoutes); // Rutas para gestión de bienes
+app.use('/api/kits', kitRoutes); // Rutas para gestión de kits
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);
 
