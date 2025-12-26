@@ -202,6 +202,7 @@ class BienService {
             }
             
             const bien = await bienRepository.obtenerPorId(id);
+            const cantidadPrevia = bien.cantidad_stock;
             if (!bien) {
                 throw new Error('Bien no encontrado');
             }
@@ -210,7 +211,9 @@ class BienService {
             if (nuevaCantidad < 0) {
                 throw new Error(`Stock insuficiente. Stock actual: ${bien.cantidad_stock}, intentando descontar: ${cantidad}`);
             }
-            
+            if (nuevaCantidad <= bien.cantidad_critica && bien.cantidad_critica !== null && cantidadPrevia > bien.cantidad_critica) {
+                console.warn(`Advertencia: El stock del bien ID ${id} ha alcanzado el nivel crítico (${nuevaCantidad} unidades restantes).`);
+            }
             await bienRepository.actualizarStock(id, nuevaCantidad);
             
             return {

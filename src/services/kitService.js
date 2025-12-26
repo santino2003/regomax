@@ -173,10 +173,8 @@ class KitService {
                 throw new Error('Kit no encontrado');
             }
             
-            // Descontar stock del kit principal
-            await bienService.descontarStock(id, cantidad);
-            
             // Descontar stock de cada componente
+            // (No se descuenta del kit principal porque su stock es calculado)
             for (const componente of kit.componentes) {
                 const cantidadDescontar = componente.cantidad * cantidad;
                 await bienService.descontarStock(componente.bien_componente_id, cantidadDescontar);
@@ -207,10 +205,8 @@ class KitService {
                 throw new Error('Kit no encontrado');
             }
             
-            // Incrementar stock del kit principal
-            await bienService.incrementarStock(id, cantidad);
-            
             // Incrementar stock de cada componente
+            // (No se incrementa el kit principal porque su stock es calculado)
             for (const componente of kit.componentes) {
                 const cantidadIncrementar = componente.cantidad * cantidad;
                 await bienService.incrementarStock(componente.bien_componente_id, cantidadIncrementar);
