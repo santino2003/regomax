@@ -19,7 +19,12 @@ class EmailService {
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            }
+            },
+            connectionTimeout: 10000, // 10 segundos
+            greetingTimeout: 10000,
+            socketTimeout: 10000,
+            logger: true, // Log de nodemailer
+            debug: true // Debug mode
         });
 
         this.fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
@@ -228,12 +233,19 @@ class EmailService {
 
             console.log('📧 Enviando email...');
             
-            const info = await this.transporter.sendMail({
+            // Crear una promesa con timeout
+            const sendMailPromise = this.transporter.sendMail({
                 from: `"Sistema Regomax" <${this.fromEmail}>`,
                 to: toEmails.join(', '), // Múltiples destinatarios
                 subject: asunto,
                 html: html
             });
+
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Email timeout después de 15 segundos')), 15000);
+            });
+
+            const info = await Promise.race([sendMailPromise, timeoutPromise]);
 
             console.log(`✅ Email de stock crítico enviado exitosamente`);
             console.log(`   Destinatarios: ${toEmails.join(', ')}`);
