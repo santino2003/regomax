@@ -5,6 +5,13 @@ class EmailService {
         // Configurar el transporter con las credenciales de tu servidor de email
         const port = parseInt(process.env.EMAIL_PORT) || 587;
         
+        console.log('🔧 Configurando EmailService:', {
+            host: process.env.EMAIL_HOST,
+            port: port,
+            user: process.env.EMAIL_USER,
+            hasPassword: !!process.env.EMAIL_PASS
+        });
+        
         this.transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST || 'smtp.gmail.com',
             port: port,
@@ -17,7 +24,7 @@ class EmailService {
 
         this.fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
         // EMAIL_ALERT_TO puede ser múltiples emails separados por coma
-        this.defaultToEmails = null
+        this.defaultToEmails = process.env.EMAIL_ALERT_TO && process.env.EMAIL_ALERT_TO !== 'null'
             ? process.env.EMAIL_ALERT_TO.split(',').map(email => email.trim())
             : [];
     }
@@ -70,12 +77,19 @@ class EmailService {
      */
     async enviarAlertaStockCritico(bien, destinatarios = null) {
         try {
+            console.log('📧 Intentando enviar alerta de stock crítico:', {
+                bien: bien.nombre,
+                destinatarios: destinatarios
+            });
+            
             const toEmails = this.parseDestinatarios(destinatarios);
             
             if (toEmails.length === 0) {
                 console.warn('⚠️ No hay destinatarios configurados para enviar email de stock crítico');
                 return { success: false, message: 'No hay destinatarios configurados' };
             }
+
+            console.log('📧 Destinatarios parseados:', toEmails);
 
             const asunto = `⚠️ ALERTA: Stock Crítico - ${bien.nombre}`;
             
@@ -212,6 +226,8 @@ class EmailService {
                 </html>
             `;
 
+            console.log('📧 Enviando email...');
+            
             const info = await this.transporter.sendMail({
                 from: `"Sistema Regomax" <${this.fromEmail}>`,
                 to: toEmails.join(', '), // Múltiples destinatarios
@@ -219,8 +235,9 @@ class EmailService {
                 html: html
             });
 
-            console.log(`✅ Email de stock crítico enviado a: ${toEmails.join(', ')}`);
-            console.log('   Message ID:', info.messageId);
+            console.log(`✅ Email de stock crítico enviado exitosamente`);
+            console.log(`   Destinatarios: ${toEmails.join(', ')}`);
+            console.log(`   Message ID: ${info.messageId}`);
             
             return {
                 success: true,
@@ -228,7 +245,11 @@ class EmailService {
                 destinatarios: toEmails
             };
         } catch (error) {
-            console.error('❌ Error al enviar email de stock crítico:', error);
+            console.error('❌ Error al enviar email de stock crítico:', {
+                error: error.message,
+                code: error.code,
+                command: error.command
+            });
             throw error;
         }
     }
