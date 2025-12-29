@@ -4,6 +4,7 @@ const familiaRepository = require('../repositories/familiaRepository');
 const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
 const almacenRepository = require('../repositories/almacenRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
+const emailService = require('../utils/emailService');
 
 class BienService {
     /**
@@ -194,27 +195,46 @@ class BienService {
 
     /**
      * Descontar stock de un bien
+     * @param {Number} id - ID del bien
+     * @param {Number} cantidad - Cantidad a descontar
+     * @param {String|Array} emailsDestinatarios - Email(s) para notificación de stock crítico (opcional)
      */
-    async descontarStock(id, cantidad) {
+    async descontarStock(id, cantidad, emailsDestinatarios = null) {
         try {
             if (cantidad <= 0) {
                 throw new Error('La cantidad debe ser mayor a 0');
             }
             
             const bien = await bienRepository.obtenerPorId(id);
-            const cantidadPrevia = bien.cantidad_stock;
             if (!bien) {
                 throw new Error('Bien no encontrado');
             }
             
+            const cantidadPrevia = bien.cantidad_stock;
             const nuevaCantidad = bien.cantidad_stock - cantidad;
+            
             if (nuevaCantidad < 0) {
                 throw new Error(`Stock insuficiente. Stock actual: ${bien.cantidad_stock}, intentando descontar: ${cantidad}`);
             }
-            if (nuevaCantidad <= bien.cantidad_critica && bien.cantidad_critica !== null && cantidadPrevia > bien.cantidad_critica) {
-                console.warn(`Advertencia: El stock del bien ID ${id} ha alcanzado el nivel crítico (${nuevaCantidad} unidades restantes).`);
-            }
+            
+            // Actualizar el stock primero
             await bienRepository.actualizarStock(id, nuevaCantidad);
+            
+            // Verificar si se alcanza el stock crítico
+            if (nuevaCantidad <= bien.cantidad_critica && bien.cantidad_critica !== null && cantidadPrevia > bien.cantidad_critica) {
+                console.warn(`⚠️ Advertencia: El stock del bien ID ${id} ha alcanzado el nivel crítico (${nuevaCantidad} unidades restantes).`);
+                
+                // Actualizar el objeto bien con el nuevo stock para el email
+                bien.cantidad_stock = nuevaCantidad;
+                
+                // Enviar email de alerta de stock crítico
+                try {
+                    await emailService.enviarAlertaStockCritico(bien, emailsDestinatarios);
+                } catch (emailError) {
+                    console.error('Error al enviar email de stock crítico (el descuento ya se realizó):', emailError);
+                    // No lanzar error ya que el descuento ya se completó
+                }
+            }
             
             return {
                 success: true,
@@ -292,23 +312,7 @@ class BienService {
     /**
      * Verificar bienes con stock crítico
      */
-    async obtenerBienesStockCritico() {
-        try {
-            // Esta funcionalidad será útil para las notificaciones futuras
-            const bienes = await bienRepository.obtenerTodos(1, 1000);
-            
-            // Filtrar bienes donde cantidad_stock <= cantidad_critica
-            const bienesEnStockCritico = bienes.data.filter(bien => 
-                bien.cantidad_critica !== null && 
-                bien.cantidad_stock <= bien.cantidad_critica
-            );
-            
-            return bienesEnStockCritico;
-        } catch (error) {
-            console.error('Error en BienService.obtenerBienesStockCritico:', error);
-            throw error;
-        }
-    }
+   
 }
 
 module.exports = new BienService();
