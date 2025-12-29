@@ -4,6 +4,7 @@ const familiaRepository = require('../repositories/familiaRepository');
 const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
 const almacenRepository = require('../repositories/almacenRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
+const configAlertasStockRepository = require('../repositories/configAlertasStockRepository');
 const emailService = require('../utils/emailService');
 
 class BienService {
@@ -197,9 +198,8 @@ class BienService {
      * Descontar stock de un bien
      * @param {Number} id - ID del bien
      * @param {Number} cantidad - Cantidad a descontar
-     * @param {String|Array} emailsDestinatarios - Email(s) para notificación de stock crítico (opcional)
      */
-    async descontarStock(id, cantidad, emailsDestinatarios = null) {
+    async descontarStock(id, cantidad) {
         try {
             if (cantidad <= 0) {
                 throw new Error('La cantidad debe ser mayor a 0');
@@ -227,8 +227,9 @@ class BienService {
                 // Actualizar el objeto bien con el nuevo stock para el email
                 bien.cantidad_stock = nuevaCantidad;
                 
-                // Enviar email de alerta de stock crítico
+                // Obtener emails de usuarios configurados para recibir alertas
                 try {
+                    const emailsDestinatarios = await configAlertasStockRepository.obtenerEmailsActivos();
                     await emailService.enviarAlertaStockCritico(bien, emailsDestinatarios);
                 } catch (emailError) {
                     console.error('Error al enviar email de stock crítico (el descuento ya se realizó):', emailError);

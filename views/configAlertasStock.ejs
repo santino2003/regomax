@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Regomax</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= user.username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-bell-fill me-2"></i><%= title %>
+                        </h4>
+                        <div>
+                            <a href="/bienes" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Volver a Bienes
+                            </a>
+                        </div>
+                    </div>
+
+                    <div id="alertPlaceholder"></div>
+
+                    <!-- Información -->
+                    <div class="alert alert-info mb-4" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Información:</strong> Seleccione los usuarios que recibirán notificaciones por email cuando <strong>cualquier bien</strong> alcance su stock crítico.
+                        <br>
+                        <small class="mt-2 d-block">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            Para agregar o quitar usuarios, modifique la selección y haga clic en <strong>"Guardar Configuración"</strong>. 
+                            Los cambios no se aplicarán hasta que guarde.
+                        </small>
+                    </div>
+
+                    <form id="formConfigAlertas">
+                        <!-- Card de Configuración -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #dc3545; color: white;">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-envelope-at me-2"></i>Usuarios Destinatarios de Alertas
+                                </h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="usuarios" class="form-label fw-bold">
+                                            Seleccionar Usuarios
+                                        </label>
+                                        <select class="form-select" id="usuarios" name="usuarios" multiple style="width: 100%;">
+                                            <% todosUsuarios.forEach(user => { %>
+                                                <option value="<%= user.id %>" <%= idsConfigurados.includes(user.id) ? 'selected' : '' %>>
+                                                    <%= user.username %> - <%= user.email %> 
+                                                    <% if (user.role === 'admin') { %>(Admin)<% } %>
+                                                </option>
+                                            <% }) %>
+                                        </select>
+                                        <small class="text-muted form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Puede seleccionar múltiples usuarios. Si no selecciona ninguno, se usarán los destinatarios por defecto del sistema.
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    <strong>Importante:</strong> Solo aparecen usuarios que tienen un email configurado. Los usuarios sin email no pueden recibir notificaciones.
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button type="submit" id="btnGuardar" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-save me-2"></i>Guardar Configuración
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información Adicional -->
+                        <div class="card shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-question-circle-fill me-2"></i>¿Cómo funcionan las alertas?
+                                </h6>
+                            </div>
+                            <div class="card-body bg-light">
+                                <ul class="mb-0">
+                                    <li class="mb-2">Las alertas se envían automáticamente cuando el stock de un bien alcanza o baja del <strong>nivel crítico</strong> configurado</li>
+                                    <li class="mb-2">Solo se envía <strong>una alerta por cada vez</strong> que se alcance el nivel crítico (no se envían múltiples alertas mientras el stock permanezca bajo)</li>
+                                    <li class="mb-2">El email contiene información detallada del bien: nombre, código, stock actual, nivel crítico, ubicación y proveedores</li>
+                                    <li class="mb-2">Esta configuración es <strong>global</strong> y aplica para todos los bienes del sistema</li>
+                                    <li>Los usuarios seleccionados deben tener un email válido configurado en su perfil</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/common.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="/assets/js/configAlertasStock.js"></script>
+</body>
+</html>

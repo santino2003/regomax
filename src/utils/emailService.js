@@ -17,7 +17,7 @@ class EmailService {
 
         this.fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
         // EMAIL_ALERT_TO puede ser múltiples emails separados por coma
-        this.defaultToEmails = process.env.EMAIL_ALERT_TO 
+        this.defaultToEmails = null
             ? process.env.EMAIL_ALERT_TO.split(',').map(email => email.trim())
             : [];
     }
@@ -204,7 +204,7 @@ class EmailService {
                             </p>
                         </div>
                         <div class="footer">
-                            <p>Sistema de Gestión Regomax ABM</p>
+                            <p>Sistema de Gestión Regomax</p>
                             <p>Este es un mensaje automático, por favor no responder.</p>
                         </div>
                     </div>

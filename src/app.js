@@ -31,6 +31,7 @@ const unidadMedidaRoutes = require('./routes/unidadMedidaRoutes'); // Importamos
 const almacenRoutes = require('./routes/almacenRoutes'); // Importamos las rutas de almacenes
 const bienRoutes = require('./routes/bienRoutes'); // Importamos las rutas de bienes
 const kitRoutes = require('./routes/kitRoutes'); // Importamos las rutas de kits
+const configAlertasStockRoutes = require('./routes/configAlertasStockRoutes'); // Importamos las rutas de configuración de alertas
 // Crear aplicación Express
 const app = express();
 
@@ -75,6 +76,7 @@ app.use('/api/unidades-medida', unidadMedidaRoutes); // Rutas para gestión de u
 app.use('/api/almacenes', almacenRoutes); // Rutas para gestión de almacenes
 app.use('/api/bienes', bienRoutes); // Rutas para gestión de bienes
 app.use('/api/kits', kitRoutes); // Rutas para gestión de kits
+app.use('/config-alertas-stock', configAlertasStockRoutes); // Rutas para configuración de alertas
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);
 
