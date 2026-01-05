@@ -116,8 +116,9 @@ class SalidaService {
             }
             const stockNuevo = itemNuevo.cantidad_stock;
 
-            // Registrar movimiento en tabla de salidas
+            // Registrar movimiento en tabla de movimientos_stock
             await salidaRepository.registrarMovimiento({
+                tipo_movimiento: 'SALIDA',
                 tipo_item,
                 item_id,
                 codigo: itemActual.codigo,
@@ -125,7 +126,7 @@ class SalidaService {
                 cantidad,
                 stock_anterior: stockAnterior,
                 stock_nuevo: stockNuevo,
-                responsable_salida,
+                responsable: responsable_salida,
                 usuario_sistema
             });
 

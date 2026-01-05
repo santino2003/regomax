@@ -33,6 +33,7 @@ const bienRoutes = require('./routes/bienRoutes'); // Importamos las rutas de bi
 const kitRoutes = require('./routes/kitRoutes'); // Importamos las rutas de kits
 const configAlertasStockRoutes = require('./routes/configAlertasStockRoutes'); // Importamos las rutas de configuración de alertas
 const salidaRoutes = require('./routes/salidaRoutes'); // Importamos las rutas de salidas
+const ajusteInventarioRoutes = require('./routes/ajusteInventarioRoutes'); // Importamos las rutas de ajustes de inventario
 // Crear aplicación Express
 const app = express();
 
@@ -81,6 +82,9 @@ app.use('/config-alertas-stock', configAlertasStockRoutes); // Rutas para config
 
 // Montar rutas de salidas - incluye tanto vistas como API
 app.use('/', salidaRoutes); // Rutas para salidas de bienes/kits
+
+// Montar rutas de ajustes de inventario - incluye tanto vistas como API
+app.use('/', ajusteInventarioRoutes); // Rutas para ajustes de inventario
 
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);

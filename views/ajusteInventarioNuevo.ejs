@@ -1,0 +1,172 @@
+<%- include('partials/header', { title: pageTitle }) %>
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Estilos personalizados -->
+    <style>
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .form-label.required::after {
+            content: " *";
+            color: red;
+        }
+    </style>
+
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-arrow-left-right me-2"></i>Ajuste de Inventario
+                        </h4>
+                        <div>
+                            <a href="/ajuste-inventario/historial" class="btn btn-primary">
+                                <i class="bi bi-clock-history"></i> Historial
+                            </a>
+                            <a href="/home" class="btn btn-outline-secondary">
+                                <i class="bi bi-house"></i> Inicio
+                            </a>
+                        </div>
+                    </div>
+
+                    <p class="text-muted mb-4">Registre entradas y salidas de bienes del inventario</p>
+
+                    <div id="alertPlaceholder"></div>
+
+                    <!-- Formulario -->
+                    <form id="formAjuste" class="needs-validation" novalidate>
+                        <!-- Tipo de Movimiento -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Tipo de Movimiento</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label required">Seleccione el tipo</label>
+                                        <div class="btn-group w-100" role="group">
+                                            <input type="radio" class="btn-check" name="tipo_movimiento" id="radioEntrada" value="AJUSTE_ENTRADA" checked>
+                                            <label class="btn btn-outline-success" for="radioEntrada">
+                                                <i class="bi bi-arrow-down-circle"></i> ENTRADA
+                                            </label>
+
+                                            <input type="radio" class="btn-check" name="tipo_movimiento" id="radioSalida" value="AJUSTE_SALIDA">
+                                            <label class="btn btn-outline-danger" for="radioSalida">
+                                                <i class="bi bi-arrow-up-circle"></i> SALIDA
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Datos del Movimiento -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Datos del Movimiento</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row">
+                                    <!-- Fecha -->
+                                    <div class="col-md-4 mb-3">
+                                        <label for="fecha" class="form-label required">Fecha</label>
+                                        <input type="date" class="form-control" id="fecha" name="fecha" required>
+                                    </div>
+
+                                    <!-- Almacén -->
+                                    <div class="col-md-4 mb-3">
+                                        <label for="almacen_id" class="form-label">Almacén</label>
+                                        <select class="form-select" id="almacen_id" name="almacen_id">
+                                            <option value="">Seleccione un almacén (opcional)</option>
+                                            <% almacenes.forEach(alm => { %>
+                                                <option value="<%= alm.id %>"><%= alm.nombre %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+
+                                    <!-- Bien -->
+                                    <div class="col-md-4 mb-3">
+                                        <label for="item_id" class="form-label required">Bien</label>
+                                        <select class="form-select" id="item_id" name="item_id" required>
+                                            <option value="">Seleccione un bien</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!-- Cantidad -->
+                                    <div class="col-md-12 mb-3">
+                                        <label for="cantidad" class="form-label required">Cantidad</label>
+                                        <input type="number" class="form-control" id="cantidad" name="cantidad" min="1" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información Adicional -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información Adicional</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row">
+                                    <!-- Precio Unitario -->
+                                    <div class="col-md-6 mb-3">
+                                        <label for="precio_unitario" class="form-label">Precio Unitario</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="precio_unitario" name="precio_unitario" step="0.01" min="0">
+                                        </div>
+                                    </div>
+
+                                    <!-- Cliente -->
+                                    <div class="col-md-6 mb-3">
+                                        <label for="cliente" class="form-label">Cliente</label>
+                                        <input type="text" class="form-control" id="cliente" name="cliente" placeholder="Nombre del cliente (opcional)">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!-- Responsable (auto-completado con username) -->
+                                    <div class="col-md-12 mb-3">
+                                        <label for="responsable" class="form-label required">Responsable</label>
+                                        <input type="text" class="form-control" id="responsable" name="responsable" value="<%= username %>" readonly required>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!-- Observaciones -->
+                                    <div class="col-md-12 mb-3">
+                                        <label for="observaciones" class="form-label">Observaciones</label>
+                                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3" placeholder="Ingrese observaciones adicionales (opcional)"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" id="btnLimpiar">
+                                <i class="bi bi-x-circle"></i> Limpiar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Registrar Ajuste
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<%- include('partials/footer') %>
+
+    <!-- Scripts adicionales (después del footer para que jQuery ya esté cargado) -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/assets/js/ajusteInventario.js"></script>

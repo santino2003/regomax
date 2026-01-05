@@ -233,7 +233,16 @@
                                         <a href="/salida"><i class="bi bi-box-arrow-right me-2"></i> Salida de Bienes/Kits</a>
                                     </div>
                                     <% } %>
-                                    <!-- Puedes agregar más opciones de almacén aquí -->
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bienes_editar'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/ajuste-inventario"><i class="bi bi-arrow-left-right me-2"></i> Ajuste de Inventario</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bien:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/ajuste-inventario/historial"><i class="bi bi-clock-history me-2"></i> Historial de Movimientos</a>
+                                    </div>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
