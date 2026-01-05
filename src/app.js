@@ -32,6 +32,7 @@ const almacenRoutes = require('./routes/almacenRoutes'); // Importamos las rutas
 const bienRoutes = require('./routes/bienRoutes'); // Importamos las rutas de bienes
 const kitRoutes = require('./routes/kitRoutes'); // Importamos las rutas de kits
 const configAlertasStockRoutes = require('./routes/configAlertasStockRoutes'); // Importamos las rutas de configuración de alertas
+const salidaRoutes = require('./routes/salidaRoutes'); // Importamos las rutas de salidas
 // Crear aplicación Express
 const app = express();
 
@@ -77,6 +78,10 @@ app.use('/api/almacenes', almacenRoutes); // Rutas para gestión de almacenes
 app.use('/api/bienes', bienRoutes); // Rutas para gestión de bienes
 app.use('/api/kits', kitRoutes); // Rutas para gestión de kits
 app.use('/config-alertas-stock', configAlertasStockRoutes); // Rutas para configuración de alertas
+
+// Montar rutas de salidas - incluye tanto vistas como API
+app.use('/', salidaRoutes); // Rutas para salidas de bienes/kits
+
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);
 

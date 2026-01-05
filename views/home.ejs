@@ -228,6 +228,11 @@
                                         <a href="/bienes"><i class="bi bi-box-seam me-2"></i> Bienes</a>
                                     </div>
                                     <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bienes_editar'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/salida"><i class="bi bi-box-arrow-right me-2"></i> Salida de Bienes/Kits</a>
+                                    </div>
+                                    <% } %>
                                     <!-- Puedes agregar más opciones de almacén aquí -->
                                 </div>
                             </div>
