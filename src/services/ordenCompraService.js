@@ -1,6 +1,7 @@
 const ordenCompraRepository = require('../repositories/ordenCompraRepository');
 const bienRepository = require('../repositories/bienRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
+const ajusteInventarioRepository = require('../repositories/ajusteInventarioRepository');
 
 class OrdenCompraService {
     /**
@@ -194,7 +195,7 @@ class OrdenCompraService {
      * Actualizar cantidad recibida de un item
      * Solo permitido cuando la orden está en estado "En Proceso"
      */
-    async actualizarCantidadRecibida(ordenId, itemId, cantidadRecibida) {
+    async actualizarCantidadRecibida(ordenId, itemId, cantidadRecibida, username = 'sistema') {
         try {
             const orden = await ordenCompraRepository.obtenerPorId(ordenId);
             if (!orden) {
@@ -215,7 +216,53 @@ class OrdenCompraService {
                 throw new Error('La cantidad recibida no puede ser negativa');
             }
 
-            await ordenCompraRepository.actualizarCantidadRecibida(itemId, cantidadRecibida);
+            // Calcular la diferencia de cantidad recibida
+            const cantidadAnterior = item.cantidad_recibida || 0;
+            const diferencia = cantidadRecibida - cantidadAnterior;
+
+            // Validar que la cantidad recibida no pueda disminuir
+            if (diferencia < 0) {
+                throw new Error('La cantidad recibida no puede ser menor a la cantidad ya registrada');
+            }
+
+            if (diferencia !== 0) {
+                // Actualizar cantidad recibida
+                await ordenCompraRepository.actualizarCantidadRecibida(itemId, cantidadRecibida);
+
+                // Si hay un incremento, actualizar el stock del bien
+                if (diferencia > 0) {
+                    // Obtener el bien para actualizar su stock
+                    const bien = await bienRepository.obtenerPorId(item.bien_id);
+                    if (!bien) {
+                        throw new Error('El bien no existe');
+                    }
+
+                    const stockAnterior = bien.cantidad_stock || 0;
+                    const nuevoStock = stockAnterior + diferencia;
+                    
+                    // Actualizar stock del bien
+                    await bienRepository.actualizarStock(item.bien_id, nuevoStock);
+
+                    // Registrar en movimientos_stock como Entrada
+                    await ajusteInventarioRepository.registrarAjuste({
+                        tipo_movimiento: 'ENTRADA',
+                        tipo_item: 'bien',
+                        item_id: item.bien_id,
+                        codigo: bien.codigo,
+                        nombre: bien.nombre,
+                        cantidad: diferencia,
+                        stock_anterior: stockAnterior,
+                        stock_nuevo: nuevoStock,
+                        almacen_id: bien.almacen_defecto_id || null,
+                        precio_unitario: item.precio_unitario || null,
+                        cliente: null,
+                        responsable: username,
+                        usuario_sistema: username,
+                        fecha: new Date(),
+                        observaciones: `Recepción de Orden de Compra ${orden.codigo}`
+                    });
+                }
+            }
 
             return {
                 success: true,

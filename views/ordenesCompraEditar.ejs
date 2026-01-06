@@ -190,6 +190,7 @@
             const itemHtml = `
                 <div class="item-row position-relative" data-item="${itemCounter}">
                     <input type="hidden" name="items[${itemCounter}][id]" value="${item.id}">
+                    <input type="hidden" name="items[${itemCounter}][cantidad_recibida]" value="${item.cantidad_recibida || 0}">
                     <button type="button" class="btn btn-danger btn-sm btn-remove-item" onclick="eliminarItem(${itemCounter})">
                         <i class="bi bi-x-lg"></i> ¿ELIMINAR?
                     </button>
@@ -339,6 +340,7 @@
             $('.item-row').each(function() {
                 const $item = $(this);
                 const itemData = $item.find('input[name$="[id]"]').val();
+                const cantidadRecibida = $item.find('input[name$="[cantidad_recibida]"]').val();
                 
                 items.push({
                     id: itemData ? parseInt(itemData) : null,
@@ -346,6 +348,7 @@
                     centro_costo: $item.find('input[name$="[centro_costo]"]').val() || $item.find('select[name$="[centro_costo]"]').val(),
                     descripcion: $item.find('textarea[name$="[descripcion]"]').val(),
                     cantidad: parseFloat($item.find('input[name$="[cantidad]"]').val()),
+                    cantidad_recibida: cantidadRecibida ? parseFloat(cantidadRecibida) : 0,
                     unidad_medida_id: $item.find('select[name$="[unidad_medida_id]"]').val() ? parseInt($item.find('select[name$="[unidad_medida_id]"]').val()) : null,
                     proveedor_sugerido_id: $item.find('select[name$="[proveedor_sugerido_id]"]').val() ? parseInt($item.find('select[name$="[proveedor_sugerido_id]"]').val()) : null
                 });

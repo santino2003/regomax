@@ -259,7 +259,8 @@ const ordenCompraController = {
             const result = await ordenCompraService.actualizarCantidadRecibida(
                 parseInt(id), 
                 parseInt(itemId), 
-                parseFloat(cantidad_recibida)
+                parseFloat(cantidad_recibida),
+                req.user.username
             );
             
             return res.status(200).json({
