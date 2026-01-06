@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Orden de Compra - Regomax</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/home.css">
+    <style>
+        .item-row {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .btn-remove-item {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Orden de Compra <%= orden.codigo %>
+                        </h4>
+                        <a href="/ordenes-compra/<%= orden.id %>" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Volver
+                        </a>
+                    </div>
+                    
+                    <div id="alertPlaceholder"></div>
+                    
+                    <form id="formEditarOrden" class="needs-validation" novalidate>
+                        <!-- Información General -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información General</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="condicion" class="form-label">Condición <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="condicion" name="condicion" required>
+                                            <option value="">Seleccionar...</option>
+                                            <option value="No Critica" <%= orden.condicion === 'No Critica' ? 'selected' : '' %>>No Crítica</option>
+                                            <option value="Semi Critica" <%= orden.condicion === 'Semi Critica' ? 'selected' : '' %>>Semi Crítica</option>
+                                            <option value="Muy Critica" <%= orden.condicion === 'Muy Critica' ? 'selected' : '' %>>Muy Crítica</option>
+                                        </select>
+                                        <div class="invalid-feedback">La condición es obligatoria</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="fecha_entrega_solicitada" class="form-label">Fecha de Entrega Solicitada</label>
+                                        <input type="date" class="form-control" id="fecha_entrega_solicitada" name="fecha_entrega_solicitada" value="<%= orden.fecha_entrega_solicitada ? new Date(orden.fecha_entrega_solicitada).toISOString().split('T')[0] : '' %>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="fecha_entrega_proveedor" class="form-label">Fecha de Entrega Proveedor</label>
+                                        <input type="date" class="form-control" id="fecha_entrega_proveedor" name="fecha_entrega_proveedor" value="<%= orden.fecha_entrega_proveedor ? new Date(orden.fecha_entrega_proveedor).toISOString().split('T')[0] : '' %>">
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="asunto" class="form-label">Asunto</label>
+                                        <textarea class="form-control" id="asunto" name="asunto" rows="3"><%= orden.asunto || '' %></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="archivo" class="form-label">Archivo Adjunto</label>
+                                        <% if (orden.archivo_adjunto) { %>
+                                            <div class="mb-2">
+                                                <small class="text-muted">Archivo actual: <%= orden.archivo_adjunto %></small>
+                                            </div>
+                                        <% } %>
+                                        <input type="file" class="form-control" id="archivo" name="archivo" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
+                                        <small class="text-muted">Formatos permitidos: PDF, Word, Excel, Imágenes (máx. 10MB)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Items de la Orden -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #5bc0de; color: white;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>ITEMS</h5>
+                                    <button type="button" class="btn btn-light btn-sm" id="btnAgregarItem">
+                                        <i class="bi bi-plus-circle me-1"></i>Agregar otro/a Item
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body bg-light" id="itemsContainer">
+                                <!-- Los items se cargarán aquí -->
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="/ordenes-compra/<%= orden.id %>" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="btnGuardar">
+                                <i class="bi bi-save me-1"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const ordenId = <%= orden.id %>;
+        
+        // Datos cargados desde el servidor (EJS)
+        let bienes = <%- JSON.stringify(bienes) %>;
+        let proveedores = <%- JSON.stringify(proveedores) %>;
+        let unidadesMedida = <%- JSON.stringify(unidadesMedida) %>;
+        let itemsExistentes = <%- JSON.stringify(orden.items) %>;
+        let itemCounter = 0;
+
+        $(document).ready(function() {
+            // Cargar items existentes
+            itemsExistentes.forEach(item => {
+                agregarItemExistente(item);
+            });
+
+            $('#btnAgregarItem').on('click', agregarItemVacio);
+            
+            $('#formEditarOrden').on('submit', function(e) {
+                e.preventDefault();
+                if (this.checkValidity()) {
+                    guardarOrden();
+                }
+                this.classList.add('was-validated');
+            });
+
+            $('#logout-link').on('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            });
+        });
+
+        function agregarItemExistente(item) {
+            itemCounter++;
+            const itemHtml = `
+                <div class="item-row position-relative" data-item="${itemCounter}">
+                    <input type="hidden" name="items[${itemCounter}][id]" value="${item.id}">
+                    <button type="button" class="btn btn-danger btn-sm btn-remove-item" onclick="eliminarItem(${itemCounter})">
+                        <i class="bi bi-x-lg"></i> ¿ELIMINAR?
+                    </button>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">BIEN <span class="text-danger">*</span></label>
+                            <select class="form-select select2-bien" name="items[${itemCounter}][bien_id]" required>
+                                <option value="">---------</option>
+                                ${bienes.map(b => `<option value="${b.id}" ${b.id === item.bien_id ? 'selected' : ''}>${b.codigo} - ${b.nombre}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">CENTRO COSTO</label>
+                            <input type="text" class="form-control" name="items[${itemCounter}][centro_costo]" value="${item.centro_costo || ''}">
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <label class="form-label">DESCRIPCIÓN</label>
+                            <textarea class="form-control" name="items[${itemCounter}][descripcion]" rows="2">${item.descripcion || ''}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">CANTIDAD <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="items[${itemCounter}][cantidad]" step="0.01" value="${item.cantidad}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">UNIDAD DE MEDIDA</label>
+                            <select class="form-select" name="items[${itemCounter}][unidad_medida_id]">
+                                <option value="">---------</option>
+                                ${unidadesMedida.map(um => `<option value="${um.id}" ${um.id === item.unidad_medida_id ? 'selected' : ''}>${um.nombre}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">PROVEEDOR SUGERIDO</label>
+                            <select class="form-select" name="items[${itemCounter}][proveedor_sugerido_id]">
+                                <option value="">---------</option>
+                                ${proveedores.map(p => `<option value="${p.id}" ${p.id === item.proveedor_sugerido_id ? 'selected' : ''}>${p.nombre}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#itemsContainer').append(itemHtml);
+            
+            // Inicializar Select2 para el nuevo item
+            $(`[data-item="${itemCounter}"] .select2-bien`).select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Buscar bien...'
+            });
+        }
+
+        function agregarItemVacio() {
+            itemCounter++;
+            const itemHtml = `
+                <div class="item-row position-relative" data-item="${itemCounter}">
+                    <button type="button" class="btn btn-danger btn-sm btn-remove-item" onclick="eliminarItem(${itemCounter})">
+                        <i class="bi bi-x-lg"></i> ¿ELIMINAR?
+                    </button>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">BIEN <span class="text-danger">*</span></label>
+                            <select class="form-select select2-bien" name="items[${itemCounter}][bien_id]" required>
+                                <option value="">---------</option>
+                                ${bienes.map(b => `<option value="${b.id}">${b.codigo} - ${b.nombre}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">CENTRO COSTO</label>
+                            <input type="text" class="form-control" name="items[${itemCounter}][centro_costo]">
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <label class="form-label">DESCRIPCIÓN</label>
+                            <textarea class="form-control" name="items[${itemCounter}][descripcion]" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">CANTIDAD <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="items[${itemCounter}][cantidad]" step="0.01" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">UNIDAD DE MEDIDA</label>
+                            <select class="form-select" name="items[${itemCounter}][unidad_medida_id]">
+                                <option value="">---------</option>
+                                ${unidadesMedida.map(um => `<option value="${um.id}">${um.nombre}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">PROVEEDOR SUGERIDO</label>
+                            <select class="form-select" name="items[${itemCounter}][proveedor_sugerido_id]">
+                                <option value="">---------</option>
+                                ${proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#itemsContainer').append(itemHtml);
+            
+            // Inicializar Select2 para el nuevo item
+            $(`[data-item="${itemCounter}"] .select2-bien`).select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Buscar bien...'
+            });
+        }
+
+        function eliminarItem(itemId) {
+            const itemsCount = $('.item-row').length;
+            if (itemsCount <= 1) {
+                mostrarAlerta('Debe haber al menos un item en la orden', 'warning');
+                return;
+            }
+            $(`[data-item="${itemId}"]`).remove();
+        }
+
+        function guardarOrden() {
+            const formData = new FormData();
+            
+            // Campos generales
+            formData.append('condicion', $('#condicion').val());
+            formData.append('fecha_entrega_solicitada', $('#fecha_entrega_solicitada').val());
+            formData.append('fecha_entrega_proveedor', $('#fecha_entrega_proveedor').val());
+            formData.append('asunto', $('#asunto').val());
+            
+            // Archivo adjunto (si se seleccionó uno nuevo)
+            const archivo = $('#archivo')[0].files[0];
+            if (archivo) {
+                formData.append('archivo', archivo);
+            }
+
+            // Items
+            const items = [];
+            $('.item-row').each(function() {
+                const $item = $(this);
+                const itemData = $item.find('input[name$="[id]"]').val();
+                
+                items.push({
+                    id: itemData ? parseInt(itemData) : null,
+                    bien_id: parseInt($item.find('select[name$="[bien_id]"]').val()),
+                    centro_costo: $item.find('input[name$="[centro_costo]"]').val() || $item.find('select[name$="[centro_costo]"]').val(),
+                    descripcion: $item.find('textarea[name$="[descripcion]"]').val(),
+                    cantidad: parseFloat($item.find('input[name$="[cantidad]"]').val()),
+                    unidad_medida_id: $item.find('select[name$="[unidad_medida_id]"]').val() ? parseInt($item.find('select[name$="[unidad_medida_id]"]').val()) : null,
+                    proveedor_sugerido_id: $item.find('select[name$="[proveedor_sugerido_id]"]').val() ? parseInt($item.find('select[name$="[proveedor_sugerido_id]"]').val()) : null
+                });
+            });
+
+            formData.append('items', JSON.stringify(items));
+
+            $('#btnGuardar').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Guardando...');
+
+            $.ajax({
+                url: `/api/ordenes-compra/${ordenId}`,
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` },
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    mostrarAlerta('Orden de compra actualizada exitosamente', 'success');
+                    setTimeout(() => {
+                        window.location.href = `/ordenes-compra/${ordenId}`;
+                    }, 1500);
+                },
+                error: function(xhr) {
+                    $('#btnGuardar').prop('disabled', false).html('<i class="bi bi-save me-1"></i>Guardar Cambios');
+                    const error = xhr.responseJSON?.error || 'Error al actualizar la orden';
+                    mostrarAlerta(error, 'danger');
+                }
+            });
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            const alertHtml = `
+                <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                    ${mensaje}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            $('#alertPlaceholder').html(alertHtml);
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>

@@ -10,6 +10,7 @@ const productoController = require('../controllers/productoController');
 const despachoController = require('../controllers/despachoController');
 const parteDiarioController = require('../controllers/parteDiarioController');
 const historialController = require('../controllers/historialController');
+const ordenCompraController = require('../controllers/ordenCompraController');
 const historialService = require('../services/historialService');
 // Importar utilidades de fecha para compartir en todas las vistas
 const fechaUtils = require('../utils/fecha');
@@ -477,6 +478,35 @@ router.get('/kits/:id', [
     noCacheMiddleware,
     permissionsMiddleware.hasPermission('bien:view')
 ], kitController.vistaVerKit);
+
+// Rutas de Órdenes de Compra
+router.get('/ordenes-compra', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenCompra:view')
+], (req, res) => {
+    res.render('listarOrdenesCompra', { username: req.user.username });
+});
+
+router.get('/ordenes-compra/nueva', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenCompra:create')
+], ordenCompraController.vistaNuevaOrden);
+
+router.get('/ordenes-compra/:id/editar', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenCompra:edit')
+], ordenCompraController.vistaEditarOrden);
+
+router.get('/ordenes-compra/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenCompra:view')
+], (req, res) => {
+    res.render('ordenCompraDetalle', { username: req.user.username, ordenId: req.params.id });
+});
 
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');

@@ -190,6 +190,11 @@
                             </h2>
                             <div id="collapseCompras" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
                                 <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['ordenCompra:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/ordenes-compra"><i class="bi bi-cart-check me-2"></i> Órdenes de Compra</a>
+                                    </div>
+                                    <% } %>
                                     <% if (user && (user.role === 'admin' || user.permissions && user.permissions['proveedor:view'])) { %>
                                     <div class="submenu-item">
                                         <a href="/proveedores"><i class="bi bi-person-lines-fill me-2"></i> Proveedores</a>

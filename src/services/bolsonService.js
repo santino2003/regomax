@@ -57,15 +57,12 @@ class BolsonService {
                         ? JSON.parse(productoInfo.bienes_asociados) 
                         : productoInfo.bienes_asociados;
                     
-                    if (Array.isArray(bienesAsociados) && bienesAsociados.length > 0) {
-                        console.log(`🔄 Descontando ${bienesAsociados.length} bien(es) por creación de bolsón ${codigo}`);
-                        
+                    if (Array.isArray(bienesAsociados) && bienesAsociados.length > 0) {                        
                         // Descontar cada bien del array
                         for (const bien of bienesAsociados) {
                             if (bien.bien_id && bien.cantidad) {
                                 try {
                                     await bienService.descontarStock(bien.bien_id, parseFloat(bien.cantidad));
-                                    console.log(`✅ Stock descontado: ${bien.cantidad} unidades del bien ID ${bien.bien_id}`);
                                 } catch (bienError) {
                                     console.error(`❌ Error al descontar bien ID ${bien.bien_id}:`, bienError.message);
                                     // Continuar con los demás bienes aunque uno falle

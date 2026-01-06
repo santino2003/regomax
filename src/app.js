@@ -34,6 +34,7 @@ const kitRoutes = require('./routes/kitRoutes'); // Importamos las rutas de kits
 const configAlertasStockRoutes = require('./routes/configAlertasStockRoutes'); // Importamos las rutas de configuración de alertas
 const salidaRoutes = require('./routes/salidaRoutes'); // Importamos las rutas de salidas
 const ajusteInventarioRoutes = require('./routes/ajusteInventarioRoutes'); // Importamos las rutas de ajustes de inventario
+const ordenCompraRoutes = require('./routes/ordenCompraRoutes'); // Importamos las rutas de ordenes de compra
 // Crear aplicación Express
 const app = express();
 
@@ -78,6 +79,7 @@ app.use('/api/unidades-medida', unidadMedidaRoutes); // Rutas para gestión de u
 app.use('/api/almacenes', almacenRoutes); // Rutas para gestión de almacenes
 app.use('/api/bienes', bienRoutes); // Rutas para gestión de bienes
 app.use('/api/kits', kitRoutes); // Rutas para gestión de kits
+app.use('/api/ordenes-compra', ordenCompraRoutes); // Rutas para gestión de ordenes de compra
 app.use('/config-alertas-stock', configAlertasStockRoutes); // Rutas para configuración de alertas
 
 // Montar rutas de salidas - incluye tanto vistas como API
