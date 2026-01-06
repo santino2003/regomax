@@ -835,6 +835,78 @@ const bien = {
     eliminarArchivo: () => registrarHistorial('eliminar_archivo', 'bien', bienDetalles.eliminarArchivo)
 };
 
+/**
+ * Funciones específicas para extraer detalles de órdenes de compra
+ */
+const ordenCompraDetalles = {
+    crear: (req, res, body) => {
+        return {
+            codigo: body?.data?.codigo,
+            condicion: req.body?.condicion,
+            proveedor_id: req.body?.proveedor_id,
+            asunto: req.body?.asunto,
+            items_count: req.body?.items?.length || 0,
+            creado_por: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            condicion: req.body?.condicion,
+            estado: req.body?.estado,
+            items_count: req.body?.items?.length || 0,
+            modificado_por: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            eliminado_por: req.user?.username
+        };
+    },
+    cambiarEstado: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            nuevo_estado: req.body?.estado,
+            usuario: req.user?.username
+        };
+    },
+    actualizarCantidadRecibida: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            item_id: req.params?.itemId,
+            cantidad_recibida: req.body?.cantidad_recibida,
+            usuario: req.user?.username
+        };
+    },
+    subirArchivo: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            archivo: req.file?.filename,
+            usuario: req.user?.username
+        };
+    },
+    eliminarArchivo: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            usuario: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de órdenes de compra
+ */
+const ordenCompra = {
+    crear: () => registrarHistorial('crear', 'orden_compra', ordenCompraDetalles.crear),
+    editar: () => registrarHistorial('editar', 'orden_compra', ordenCompraDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'orden_compra', ordenCompraDetalles.eliminar),
+    cambiarEstado: () => registrarHistorial('cambiar_estado', 'orden_compra', ordenCompraDetalles.cambiarEstado),
+    actualizarCantidadRecibida: () => registrarHistorial('actualizar_cantidad_recibida', 'orden_compra', ordenCompraDetalles.actualizarCantidadRecibida),
+    subirArchivo: () => registrarHistorial('subir_archivo', 'orden_compra', ordenCompraDetalles.subirArchivo),
+    eliminarArchivo: () => registrarHistorial('eliminar_archivo', 'orden_compra', ordenCompraDetalles.eliminarArchivo)
+};
+
 module.exports = { 
     registrarHistorial,
     registrarLogin,
@@ -849,5 +921,6 @@ module.exports = {
     categoria,
     unidadMedida,
     almacen,
-    bien
+    bien,
+    ordenCompra
 };
