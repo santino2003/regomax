@@ -199,31 +199,6 @@
                         </div>
                     </div>
 
-                    <!-- Gestión de Stock -->
-                    <div class="card mb-3 shadow-sm">
-                        <div class="card-header" style="background-color: #17a2b8; color: white;">
-                            <h6 class="mb-0"><i class="bi bi-box-arrow-in-down me-2"></i>Gestión de Stock</h6>
-                        </div>
-                        <div class="card-body bg-light">
-                            <div class="row g-3">
-                                <div class="col-md-12">
-                                    <div class="alert alert-info mb-3">
-                                        <i class="bi bi-info-circle me-2"></i>
-                                        <strong>Nota:</strong> Al descontar o incrementar stock de este kit, se actualizará automáticamente el stock de todos sus componentes.
-                                    </div>
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-success" onclick="mostrarModalStock('incrementar')">
-                                            <i class="bi bi-plus-circle me-2"></i>Incrementar Stock
-                                        </button>
-                                        <button type="button" class="btn btn-danger" onclick="mostrarModalStock('descontar')">
-                                            <i class="bi bi-dash-circle me-2"></i>Descontar Stock
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Metadata -->
                     <div class="card shadow-sm">
                         <div class="card-body" style="background-color: #e7f7f9;">
@@ -233,31 +208,6 @@
                             </small>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Gestión de Stock -->
-    <div class="modal fade" id="modalStock" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalStockTitle">Gestionar Stock</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="cantidadStock" class="form-label">Cantidad</label>
-                        <input type="number" class="form-control" id="cantidadStock" min="1" value="1" required>
-                        <small class="text-muted" id="stockHelp">
-                            Se actualizará el stock del kit y de todos sus componentes.
-                        </small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnConfirmarStock">Confirmar</button>
                 </div>
             </div>
         </div>
