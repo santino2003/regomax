@@ -261,7 +261,8 @@
                         <!-- Administración del Sistema - Solo visible para usuarios con permisos adecuados -->
                         <% if (user && (user.role === 'admin' || 
                                      (user.permissions && (user.permissions['users:view'] || 
-                                                        user.permissions['configuracion:view'])))) { %>
+                                                        user.permissions['configuracion:view'] ||
+                                                        user.permissions['ordenes_compra:change_state'])))) { %>
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdminSistema">
@@ -276,7 +277,7 @@
                                     </div>
                                     <% } %>
                                     
-                                    <% if (user && (user.role === 'admin' || (user.permissions && user.permissions['ordenes_compra:manage_transitions']))) { %>
+                                    <% if (user && (user.role === 'admin' || (user.permissions && user.permissions['ordenes_compra:change_state']))) { %>
                                     <div class="submenu-item">
                                         <a href="#" data-bs-toggle="modal" data-bs-target="#modalPermisosTransicion"><i class="bi bi-arrow-left-right me-2"></i> Permisos de Transición OC</a>
                                     </div>

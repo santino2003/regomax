@@ -108,10 +108,11 @@ router.get(
 );
 
 // Cambiar estado de una orden
+// NOTA: No se valida permiso aquí porque la validación de transiciones específicas
+// se hace en el servicio (ordenCompraService.cambiarEstado)
 router.patch(
     '/:id/estado',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenes_compra:change_state'),
     historialMiddleware.ordenCompra?.cambiarEstado() || ((req, res, next) => next()),
     ordenCompraController.cambiarEstado
 );

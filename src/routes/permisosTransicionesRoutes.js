@@ -8,7 +8,7 @@ const permissionsMiddleware = require('../middleware/permissions');
 router.get(
   '/listado',
   auth.verifyToken,
-  permissionsMiddleware.hasPermission('ordenes_compra:manage_transitions'),
+  permissionsMiddleware.hasPermission('ordenes_compra:change_state'),
   permisosTransicionesController.listarTodosLosPermisos
 );
 
@@ -16,7 +16,7 @@ router.get(
 router.get(
   '/:username',
   auth.verifyToken,
-  permissionsMiddleware.hasPermission('ordenes_compra:manage_transitions'),
+  permissionsMiddleware.hasPermission('ordenes_compra:change_state'),
   permisosTransicionesController.obtenerPermisosUsuario
 );
 
@@ -24,7 +24,7 @@ router.get(
 router.put(
   '/:username',
   auth.verifyToken,
-  permissionsMiddleware.hasPermission('ordenes_compra:manage_transitions'),
+  permissionsMiddleware.hasPermission('ordenes_compra:change_state'),
   permisosTransicionesController.actualizarPermisosUsuario
 );
 

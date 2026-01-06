@@ -193,8 +193,16 @@ class OrdenCompraService {
 
             // Verificar permisos de transición (solo si no es admin)
             const usuario = await userRepository.findByUsername(username);
+            
             if (usuario && usuario.role !== 'admin') {
-                const permisos = usuario.permisos_transiciones_oc ? JSON.parse(usuario.permisos_transiciones_oc) : [];
+                let permisos = [];
+                if (usuario.permisos_transiciones_oc) {
+                    // Si ya es un objeto, usarlo directamente; si es string, parsearlo
+                    permisos = typeof usuario.permisos_transiciones_oc === 'string' 
+                        ? JSON.parse(usuario.permisos_transiciones_oc) 
+                        : usuario.permisos_transiciones_oc;
+                }
+                
                 const tienePermiso = permisos.some(p => p.desde === estadoActual && p.hacia === nuevoEstado);
                 
                 if (!tienePermiso) {
