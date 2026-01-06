@@ -158,11 +158,23 @@ router.get('/ordenes/:id', [
 ], OVController.vistaVisualizarOrden);
 
 // Rutas de productos - con verificación de permisos
+router.get('/productos', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('productos:view')
+], productoController.vistaListarProductos);
+
 router.get('/productos/nuevo', [
     authMiddleware.verifyToken, 
     noCacheMiddleware,
     permissionsMiddleware.hasPermission('productos:create')
 ], productoController.vistaNuevoProducto);
+
+router.get('/productos/editar/:id', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('productos:edit')
+], productoController.vistaEditarProducto);
 
 // Rutas de despachos - con verificación de permisos
 router.get('/despachos/nuevo', [

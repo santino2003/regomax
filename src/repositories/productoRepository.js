@@ -46,6 +46,41 @@ class ProductoRepository {
             throw error;
         }
     }
+    
+    async obtenerPorId(id) {
+        try {
+            const result = await db.query('SELECT * FROM productos WHERE id = ?', [id]);
+            return result[0] || null;
+        } catch (error) {
+            console.error('Error al obtener producto por ID:', error);
+            throw error;
+        }
+    }
+    
+    async actualizarProducto(id, nombre, unidad, enStock) {
+        try {
+            const query = `
+                UPDATE productos 
+                SET nombre = ?, unidad = ?, en_stock = ?
+                WHERE id = ?
+            `;
+            await db.query(query, [nombre, unidad, enStock ? 1 : 0, id]);
+            return true;
+        } catch (error) {
+            console.error('Error al actualizar producto:', error);
+            throw error;
+        }
+    }
+    
+    async eliminarProducto(id) {
+        try {
+            await db.query('DELETE FROM productos WHERE id = ?', [id]);
+            return true;
+        } catch (error) {
+            console.error('Error al eliminar producto:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new ProductoRepository();
