@@ -1,5 +1,6 @@
 const ProductoService = require('../services/productoService');
 const productoRepository = require('../repositories/productoRepository');
+const bienRepository = require('../repositories/bienRepository');
 
 const ProductoController = {
     async crearProducto(req, res) {
@@ -8,7 +9,8 @@ const ProductoController = {
                 nombre: req.body.nombre,
                 unidad: req.body.unidad,
                 enStock: req.body.enStock === true || req.body.enStock === 'true',
-                creadoPor: req.user.username
+                creadoPor: req.user.username,
+                bienes: req.body.bienes || [] // Array de {bien_id, cantidad}
             };
             
             const resultado = await ProductoService.crearProducto(productoData);
@@ -48,9 +50,14 @@ const ProductoController = {
     
     async vistaNuevoProducto(req, res) {
         try {
+            // Obtener lista de bienes para el selector
+            const bienesResult = await bienRepository.obtenerTodos(1, 1000, {});
+            const bienes = bienesResult.data || [];
+            
             return res.render('productosNuevo', {
                 title: 'Nuevo Producto',
-                username: req.user.username
+                username: req.user.username,
+                bienes: bienes
             });
         } catch (error) {
             console.error('Error al renderizar la vista de nuevo producto:', error);
@@ -122,10 +129,15 @@ const ProductoController = {
             const { id } = req.params;
             const producto = await ProductoService.obtenerProductoPorId(id);
             
+            // Obtener lista de bienes para el selector
+            const bienesResult = await bienRepository.obtenerTodos(1, 1000, {});
+            const bienes = bienesResult.data || [];
+            
             return res.render('productosEditar', {
                 title: 'Editar Producto',
                 username: req.user.username,
-                producto: producto
+                producto: producto,
+                bienes: bienes
             });
         } catch (error) {
             console.error('Error al renderizar vista de editar producto:', error);
@@ -145,7 +157,8 @@ const ProductoController = {
             const productoData = {
                 nombre: req.body.nombre,
                 unidad: req.body.unidad,
-                enStock: req.body.enStock === true || req.body.enStock === 'true'
+                enStock: req.body.enStock === true || req.body.enStock === 'true',
+                bienes: req.body.bienes || [] // Array de {bien_id, cantidad}
             };
             
             await ProductoService.actualizarProducto(id, productoData);

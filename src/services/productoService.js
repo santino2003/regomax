@@ -13,11 +13,21 @@ class ProductoService {
                 throw new Error('Ya existe un producto con este nombre');
             }
             
+            // Procesar bienes asociados
+            let bienesAsociados = null;
+            if (productoData.bienes && Array.isArray(productoData.bienes) && productoData.bienes.length > 0) {
+                bienesAsociados = productoData.bienes.map(bien => ({
+                    bien_id: parseInt(bien.bien_id),
+                    cantidad: parseFloat(bien.cantidad) || 1
+                }));
+            }
+            
             return await ProductoRepository.crearProducto(
                 productoData.nombre, 
                 productoData.unidad, 
                 productoData.enStock, 
-                productoData.creadoPor
+                productoData.creadoPor,
+                bienesAsociados
             );
         } catch (error) {
             console.error('Error en ProductoService.crearProducto:', error);
@@ -77,11 +87,21 @@ class ProductoService {
                 }
             }
             
+            // Procesar bienes asociados
+            let bienesAsociados = null;
+            if (productoData.bienes && Array.isArray(productoData.bienes) && productoData.bienes.length > 0) {
+                bienesAsociados = productoData.bienes.map(bien => ({
+                    bien_id: parseInt(bien.bien_id),
+                    cantidad: parseFloat(bien.cantidad) || 1
+                }));
+            }
+            
             return await ProductoRepository.actualizarProducto(
                 id,
                 productoData.nombre, 
                 productoData.unidad, 
-                productoData.enStock
+                productoData.enStock,
+                bienesAsociados
             );
         } catch (error) {
             console.error('Error en ProductoService.actualizarProducto:', error);

@@ -108,6 +108,115 @@
                             </div>
                         </div>
                         
+                        <!-- Sección de Bienes Asociados -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="bi bi-box-seam me-2"></i>Bienes Asociados (Opcional)</h6>
+                                <button type="button" class="btn btn-sm btn-primary" id="btnAgregarBien">
+                                    <i class="bi bi-plus-circle me-1"></i>Agregar Bien
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Los bienes seleccionados se descontarán automáticamente del stock cada vez que se cree un bolsón con este producto.
+                                </div>
+                                
+                                <!-- Tabla de bienes asociados -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="tablaBienes">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Bien</th>
+                                                <th>Stock Actual</th>
+                                                <th width="150">Cantidad a Descontar</th>
+                                                <th width="100">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% 
+                                            let bienesAsociados = [];
+                                            if (producto.bienes_asociados) {
+                                                try {
+                                                    bienesAsociados = typeof producto.bienes_asociados === 'string' 
+                                                        ? JSON.parse(producto.bienes_asociados) 
+                                                        : producto.bienes_asociados;
+                                                } catch(e) {}
+                                            }
+                                            %>
+                                            <% if (bienesAsociados && bienesAsociados.length > 0) { %>
+                                                <% bienesAsociados.forEach((bienAsoc, idx) => { 
+                                                    const bienInfo = bienes.find(b => b.id == bienAsoc.bien_id);
+                                                %>
+                                                    <tr data-bien-id="<%= bienAsoc.bien_id %>">
+                                                        <td><%= bienInfo ? bienInfo.nombre : 'Bien ID ' + bienAsoc.bien_id %></td>
+                                                        <td><%= bienInfo ? bienInfo.cantidad_stock : '-' %> <%= bienInfo ? (bienInfo.unidad_medida || '') : '' %></td>
+                                                        <td>
+                                                            <input type="number" class="form-control form-control-sm cantidad-bien" 
+                                                                   value="<%= bienAsoc.cantidad %>" min="0.01" step="0.01">
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-danger btn-eliminar-bien">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                <% }) %>
+                                            <% } else { %>
+                                                <tr id="filaVaciaBienes">
+                                                    <td colspan="4" class="text-center text-muted">
+                                                        <i class="bi bi-inbox me-2"></i>No hay bienes asociados
+                                                    </td>
+                                                </tr>
+                                            <% } %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Modal para agregar bien -->
+                        <div class="modal fade" id="modalAgregarBien" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Agregar Bien</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="modalBienSelect" class="form-label">Bien *</label>
+                                            <select class="form-select" id="modalBienSelect" required>
+                                                <option value="">-- Seleccione un bien --</option>
+                                                <% if(bienes && bienes.length > 0) { %>
+                                                    <% bienes.forEach(bien => { %>
+                                                        <option value="<%= bien.id %>" 
+                                                                data-nombre="<%= bien.nombre %>"
+                                                                data-stock="<%= bien.cantidad_stock %>"
+                                                                data-unidad="<%= bien.unidad_medida || '' %>">
+                                                            <%= bien.nombre %> (Stock: <%= bien.cantidad_stock %> <%= bien.unidad_medida || '' %>)
+                                                        </option>
+                                                    <% }) %>
+                                                <% } %>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="modalCantidad" class="form-label">Cantidad a Descontar *</label>
+                                            <input type="number" class="form-control" id="modalCantidad" 
+                                                   value="1" min="0.01" step="0.01" required>
+                                            <div class="form-text">Cantidad que se descontará por cada bolsón creado</div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-primary" id="btnGuardarBien">
+                                            <i class="bi bi-check-lg me-1"></i>Agregar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="row mb-3">
                             <div class="col">
                                 <button type="submit" id="submitBtn" class="btn btn-success">

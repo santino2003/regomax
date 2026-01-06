@@ -1,13 +1,23 @@
 const db = require('../config/db');
 
 class ProductoRepository {
-    async crearProducto(nombre, unidad, enStock, creadoPor) {
+    async crearProducto(nombre, unidad, enStock, creadoPor, bienesAsociados = null) {
         try {
             const query = `
-                INSERT INTO productos (nombre, unidad, en_stock, creado_por) 
-                VALUES (?, ?, ?, ?)
+                INSERT INTO productos (nombre, unidad, en_stock, creado_por, bienes_asociados) 
+                VALUES (?, ?, ?, ?, ?)
             `;
-            const result = await db.query(query, [nombre, unidad, enStock ? 1 : 0, creadoPor]);
+            const bienesJson = bienesAsociados && bienesAsociados.length > 0 
+                ? JSON.stringify(bienesAsociados) 
+                : null;
+            
+            const result = await db.query(query, [
+                nombre, 
+                unidad, 
+                enStock ? 1 : 0, 
+                creadoPor,
+                bienesJson
+            ]);
             return result.insertId;
         } catch (error) {
             console.error('Error al crear producto:', error);
@@ -57,14 +67,24 @@ class ProductoRepository {
         }
     }
     
-    async actualizarProducto(id, nombre, unidad, enStock) {
+    async actualizarProducto(id, nombre, unidad, enStock, bienesAsociados = null) {
         try {
             const query = `
                 UPDATE productos 
-                SET nombre = ?, unidad = ?, en_stock = ?
+                SET nombre = ?, unidad = ?, en_stock = ?, bienes_asociados = ?
                 WHERE id = ?
             `;
-            await db.query(query, [nombre, unidad, enStock ? 1 : 0, id]);
+            const bienesJson = bienesAsociados && bienesAsociados.length > 0 
+                ? JSON.stringify(bienesAsociados) 
+                : null;
+            
+            await db.query(query, [
+                nombre, 
+                unidad, 
+                enStock ? 1 : 0, 
+                bienesJson,
+                id
+            ]);
             return true;
         } catch (error) {
             console.error('Error al actualizar producto:', error);
