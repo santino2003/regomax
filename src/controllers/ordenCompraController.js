@@ -225,7 +225,8 @@ const ordenCompraController = {
                 });
             }
 
-            const result = await ordenCompraService.cambiarEstado(id, estado);
+            const username = req.user.username;
+            const result = await ordenCompraService.cambiarEstado(id, estado, username);
             
             return res.status(200).json({
                 success: true,

@@ -195,6 +195,21 @@ class UserRepository {
       throw error;
     }
   }
+
+  // Actualizar permisos de transiciones de orden de compra
+  async actualizarPermisosTransiciones(username, permisos) {
+    try {
+      const permisosJson = JSON.stringify(permisos);
+      await db.query(
+        'UPDATE users SET permisos_transiciones_oc = ? WHERE username = ?',
+        [permisosJson, username]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error al actualizar permisos de transiciones:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new UserRepository();

@@ -2,6 +2,7 @@ const ordenCompraRepository = require('../repositories/ordenCompraRepository');
 const bienRepository = require('../repositories/bienRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
 const ajusteInventarioRepository = require('../repositories/ajusteInventarioRepository');
+const userRepository = require('../repositories/userRepository');
 
 class OrdenCompraService {
     /**
@@ -167,8 +168,9 @@ class OrdenCompraService {
 
     /**
      * Cambiar el estado de una orden
+     * Valida que el usuario tenga permiso para realizar la transición
      */
-    async cambiarEstado(id, nuevoEstado) {
+    async cambiarEstado(id, nuevoEstado, username) {
         try {
             if (!this.validarEstado(nuevoEstado)) {
                 throw new Error('Estado inválido');
@@ -177,6 +179,27 @@ class OrdenCompraService {
             const orden = await ordenCompraRepository.obtenerPorId(id);
             if (!orden) {
                 throw new Error('La orden de compra no existe');
+            }
+
+            const estadoActual = orden.estado;
+
+            // Si el estado no cambia, no hay nada que hacer
+            if (estadoActual === nuevoEstado) {
+                return {
+                    success: true,
+                    message: 'El estado ya es el solicitado'
+                };
+            }
+
+            // Verificar permisos de transición (solo si no es admin)
+            const usuario = await userRepository.findByUsername(username);
+            if (usuario && usuario.role !== 'admin') {
+                const permisos = usuario.permisos_transiciones_oc ? JSON.parse(usuario.permisos_transiciones_oc) : [];
+                const tienePermiso = permisos.some(p => p.desde === estadoActual && p.hacia === nuevoEstado);
+                
+                if (!tienePermiso) {
+                    throw new Error(`No tienes permiso para cambiar de "${estadoActual}" a "${nuevoEstado}"`);
+                }
             }
 
             await ordenCompraRepository.actualizarEstado(id, nuevoEstado);

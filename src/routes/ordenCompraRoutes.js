@@ -66,7 +66,7 @@ const upload = multer({
 router.post(
     '/nuevo',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:create'),
+    permissionsMiddleware.hasPermission('ordenes_compra:create'),
     upload.single('archivo'),
     historialMiddleware.ordenCompra?.crear() || ((req, res, next) => next()),
     ordenCompraController.nuevaOrdenCompra
@@ -76,7 +76,7 @@ router.post(
 router.put(
     '/:id',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:edit'),
+    permissionsMiddleware.hasPermission('ordenes_compra:edit'),
     upload.single('archivo'),
     historialMiddleware.ordenCompra?.editar() || ((req, res, next) => next()),
     ordenCompraController.modificarOrdenCompra
@@ -86,7 +86,7 @@ router.put(
 router.delete(
     '/:id',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:delete'),
+    permissionsMiddleware.hasPermission('ordenes_compra:delete'),
     historialMiddleware.ordenCompra?.eliminar() || ((req, res, next) => next()),
     ordenCompraController.eliminarOrdenCompra
 );
@@ -95,7 +95,7 @@ router.delete(
 router.get(
     '/form/datos',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:view'),
+    permissionsMiddleware.hasPermission('ordenes_compra:view'),
     ordenCompraController.obtenerDatosFormulario
 );
 
@@ -103,7 +103,7 @@ router.get(
 router.get(
     '/estadisticas',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:view'),
+    permissionsMiddleware.hasPermission('ordenes_compra:view'),
     ordenCompraController.obtenerEstadisticas
 );
 
@@ -111,7 +111,7 @@ router.get(
 router.patch(
     '/:id/estado',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:edit'),
+    permissionsMiddleware.hasPermission('ordenes_compra:change_state'),
     historialMiddleware.ordenCompra?.cambiarEstado() || ((req, res, next) => next()),
     ordenCompraController.cambiarEstado
 );
@@ -120,7 +120,7 @@ router.patch(
 router.patch(
     '/:id/items/:itemId/cantidad-recibida',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:edit'),
+    permissionsMiddleware.hasPermission('ordenes_compra:edit'),
     historialMiddleware.ordenCompra?.actualizarCantidadRecibida() || ((req, res, next) => next()),
     ordenCompraController.actualizarCantidadRecibida
 );
@@ -129,7 +129,7 @@ router.patch(
 router.post(
     '/:id/archivos',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:edit'),
+    permissionsMiddleware.hasPermission('ordenes_compra:edit'),
     upload.single('archivo'),
     historialMiddleware.ordenCompra?.subirArchivo() || ((req, res, next) => next()),
     ordenCompraController.subirArchivo
@@ -139,7 +139,7 @@ router.post(
 router.delete(
     '/:id/archivos',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:edit'),
+    permissionsMiddleware.hasPermission('ordenes_compra:edit'),
     historialMiddleware.ordenCompra?.eliminarArchivo() || ((req, res, next) => next()),
     ordenCompraController.eliminarArchivo
 );
@@ -148,7 +148,7 @@ router.delete(
 router.get(
     '/',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:view'),
+    permissionsMiddleware.hasPermission('ordenes_compra:view'),
     ordenCompraController.obtenerOrdenesCompra
 );
 
@@ -156,7 +156,7 @@ router.get(
 router.get(
     '/:id',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenCompra:view'),
+    permissionsMiddleware.hasPermission('ordenes_compra:view'),
     ordenCompraController.obtenerOrdenCompraPorId
 );
 

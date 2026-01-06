@@ -47,6 +47,16 @@ const PERMISSIONS = {
     EXPORT: 'ordenes:export',
   },
   
+  // Permisos para órdenes de compra
+  ORDENES_COMPRA: {
+    VIEW: 'ordenes_compra:view',
+    CREATE: 'ordenes_compra:create',
+    EDIT: 'ordenes_compra:edit',
+    DELETE: 'ordenes_compra:delete',
+    CHANGE_STATE: 'ordenes_compra:change_state',
+    MANAGE_TRANSITIONS: 'ordenes_compra:manage_transitions', // Gestionar permisos de transición de estados
+  },
+  
   // Permisos para productos
   PRODUCTOS: {
     CREATE: 'productos:create',

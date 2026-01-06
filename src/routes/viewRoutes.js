@@ -483,7 +483,7 @@ router.get('/kits/:id', [
 router.get('/ordenes-compra', [
     authMiddleware.verifyToken,
     noCacheMiddleware,
-    permissionsMiddleware.hasPermission('ordenCompra:view')
+    permissionsMiddleware.hasPermission('ordenes_compra:view')
 ], (req, res) => {
     res.render('listarOrdenesCompra', { username: req.user.username });
 });
@@ -491,19 +491,19 @@ router.get('/ordenes-compra', [
 router.get('/ordenes-compra/nueva', [
     authMiddleware.verifyToken,
     noCacheMiddleware,
-    permissionsMiddleware.hasPermission('ordenCompra:create')
+    permissionsMiddleware.hasPermission('ordenes_compra:create')
 ], ordenCompraController.vistaNuevaOrden);
 
 router.get('/ordenes-compra/:id/editar', [
     authMiddleware.verifyToken,
     noCacheMiddleware,
-    permissionsMiddleware.hasPermission('ordenCompra:edit')
+    permissionsMiddleware.hasPermission('ordenes_compra:edit')
 ], ordenCompraController.vistaEditarOrden);
 
 router.get('/ordenes-compra/:id', [
     authMiddleware.verifyToken,
     noCacheMiddleware,
-    permissionsMiddleware.hasPermission('ordenCompra:view')
+    permissionsMiddleware.hasPermission('ordenes_compra:view')
 ], (req, res) => {
     res.render('ordenCompraDetalle', { username: req.user.username, ordenId: req.params.id });
 });
