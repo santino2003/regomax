@@ -349,6 +349,32 @@ router.get('/familias/:id', [
     permissionsMiddleware.hasPermission('familia:view')
 ], familiaController.vistaVerFamilia);
 
+// Rutas de Centros de Costo
+const centroCostoController = require('../controllers/centroCostoController');
+router.get('/centros-costo/listar', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('centro_costo:view')
+], centroCostoController.vistaListar);
+
+router.get('/centros-costo/nuevo-vista', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('centro_costo:create')
+], centroCostoController.vistaNuevo);
+
+router.get('/centros-costo/:id/editar', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('centro_costo:edit')
+], centroCostoController.vistaEditar);
+
+router.get('/centros-costo/:id/ver', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('centro_costo:view')
+], centroCostoController.vistaVer);
+
 // Rutas de Categorias
 const categoriaController = require('../controllers/categoriaController');
 router.get('/categorias', [

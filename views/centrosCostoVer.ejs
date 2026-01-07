@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle Centro de Costo - Regomax</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-building me-2"></i>Detalle del Centro de Costo
+                        </h4>
+                        <div>
+                            <a href="/centros-costo/<%= centroCosto.id %>/editar" class="btn btn-warning">
+                                <i class="bi bi-pencil me-2"></i>Editar
+                            </a>
+                            <button class="btn btn-danger ms-2 btn-delete" data-id="<%= centroCosto.id %>" data-nombre="<%= centroCosto.nombre %>">
+                                <i class="bi bi-trash me-2"></i>Eliminar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Alert placeholder -->
+                    <div id="alertPlaceholder"></div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Nombre:</label>
+                                    <p class="form-control-plaintext"><%= centroCosto.nombre %></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Estado:</label>
+                                    <p class="form-control-plaintext">
+                                        <span class="badge <%= centroCosto.activo ? 'bg-success' : 'bg-secondary' %>">
+                                            <%= centroCosto.activo ? 'Activo' : 'Inactivo' %>
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Responsable:</label>
+                                    <p class="form-control-plaintext"><%= centroCosto.responsable || '-' %></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Fecha de Creación:</label>
+                                    <p class="form-control-plaintext">
+                                        <%= centroCosto.fecha_creacion ? new Date(centroCosto.fecha_creacion).toLocaleDateString('es-AR') : '-' %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="/centros-costo/listar" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar el centro de costo <span id="deleteNombre" class="fw-bold"></span>?</p>
+                    <p class="text-danger mb-0">¡Esta acción no se puede deshacer!</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/assets/js/common.js"></script>
+    <script>
+        $(document).ready(function() {
+            let deleteId = null;
+            const deleteModal = new bootstrap.Modal('#deleteModal');
+            
+            $('.btn-delete').click(function() {
+                deleteId = $(this).data('id');
+                const nombre = $(this).data('nombre');
+                $('#deleteNombre').text(nombre);
+                deleteModal.show();
+            });
+            
+            $('#confirmDeleteBtn').click(function() {
+                if (!deleteId) return;
+                
+                const btn = $(this);
+                const originalText = btn.html();
+                btn.html('<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...').prop('disabled', true);
+                
+                $.ajax({
+                    url: `/api/centros-costo/${deleteId}`,
+                    method: 'DELETE',
+                    success: function(response) {
+                        showAlert('Centro de costo eliminado exitosamente', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/centros-costo/listar';
+                        }, 1500);
+                    },
+                    error: function(xhr) {
+                        deleteModal.hide();
+                        const error = xhr.responseJSON?.error || 'Error al eliminar el centro de costo';
+                        showAlert(error, 'danger');
+                        btn.html(originalText).prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

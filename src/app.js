@@ -26,6 +26,7 @@ const planificacionRoutes = require('./routes/api/planificacionRoutes'); // Impo
 const proveedorRoutes = require('./routes/proveedorRoutes');
 const clienteNFURoutes = require('./routes/clienteNFURoutes'); // Importamos las rutas de clientes NFU
 const familiaRoutes = require('./routes/familiaRoutes'); // Importamos las rutas de familias
+const centroCostoRoutes = require('./routes/centroCostoRoutes'); // Importamos las rutas de centros de costo
 const categoriaRoutes = require('./routes/categoriaRoutes'); // Importamos las rutas de categorias
 const unidadMedidaRoutes = require('./routes/unidadMedidaRoutes'); // Importamos las rutas de unidades de medida
 const almacenRoutes = require('./routes/almacenRoutes'); // Importamos las rutas de almacenes
@@ -75,6 +76,7 @@ app.use('/api/planificacion-produccion', planificacionRoutes); // Registramos la
 app.use('/api/proveedores', proveedorRoutes); // Rutas para gestión de proveedores
 app.use('/api/clientes-nfu', clienteNFURoutes); // Rutas para gestión de clientes NFU
 app.use('/api/familias', familiaRoutes); // Rutas para gestión de familias
+app.use('/api/centros-costo', centroCostoRoutes); // Rutas para gestión de centros de costo
 app.use('/api/categorias', categoriaRoutes); // Rutas para gestión de categorias
 app.use('/api/unidades-medida', unidadMedidaRoutes); // Rutas para gestión de unidades de medida
 app.use('/api/almacenes', almacenRoutes); // Rutas para gestión de almacenes

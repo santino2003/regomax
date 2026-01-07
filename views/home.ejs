@@ -224,6 +224,11 @@
                                         <a href="/categorias"><i class="bi bi-tags me-2"></i> Categorías</a>
                                     </div>
                                     <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['centro_costo:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/centros-costo/listar"><i class="bi bi-building-add me-2"></i> Centros de Costo</a>
+                                    </div>
+                                    <% } %>
                                     <% if (user && (user.role === 'admin' || user.permissions && user.permissions['unidadMedida:view'])) { %>
                                     <div class="submenu-item">
                                         <a href="/unidades-medida"><i class="bi bi-rulers me-2"></i> Unidades de Medida</a>

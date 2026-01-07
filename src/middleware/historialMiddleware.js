@@ -665,6 +665,48 @@ const familia = {
 };
 
 /**
+ * Funciones específicas para extraer detalles de centros de costo
+ */
+const centroCostoDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            centro_costo_id: req.params?.id,
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            centro_costo_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    },
+    cambiarEstado: (req, res, body) => {
+        return {
+            centro_costo_id: req.params?.id,
+            activo: req.body?.activo,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de centros de costo
+ */
+const centroCosto = {
+    crear: () => registrarHistorial('crear', 'centro_costo', centroCostoDetalles.crear),
+    editar: () => registrarHistorial('editar', 'centro_costo', centroCostoDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'centro_costo', centroCostoDetalles.eliminar),
+    cambiarEstado: () => registrarHistorial('cambiar_estado', 'centro_costo', centroCostoDetalles.cambiarEstado)
+};
+
+/**
  * Funciones específicas para extraer detalles de categorias
  */
 const categoriaDetalles = {
@@ -918,6 +960,7 @@ module.exports = {
     proveedor,
     clienteNFU,
     familia,
+    centroCosto,
     categoria,
     unidadMedida,
     almacen,

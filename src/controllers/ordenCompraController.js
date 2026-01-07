@@ -2,6 +2,7 @@ const ordenCompraService = require('../services/ordenCompraService');
 const bienRepository = require('../repositories/bienRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
 const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
+const centroCostoRepository = require('../repositories/centroCostoRepository');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -15,12 +16,14 @@ const ordenCompraController = {
             const bienesResult = await bienRepository.obtenerTodos(1, 10000, {});
             const proveedoresResult = await proveedorRepository.obtenerTodos({}, 1, 10000);
             const unidadesMedidaResult = await unidadMedidaRepository.obtenerTodas(1, 10000);
+            const centrosCosto = await centroCostoRepository.obtenerActivos();
 
             return res.render('ordenesCompraNueva', {
                 username: req.user.username,
                 bienes: bienesResult.data || [],
                 proveedores: proveedoresResult.data || [],
-                unidadesMedida: unidadesMedidaResult.data || []
+                unidadesMedida: unidadesMedidaResult.data || [],
+                centrosCosto: centrosCosto || []
             });
         } catch (error) {
             console.error('Error al renderizar vista de nueva orden:', error);
@@ -50,13 +53,15 @@ const ordenCompraController = {
             const bienesResult = await bienRepository.obtenerTodos(1, 10000, {});
             const proveedoresResult = await proveedorRepository.obtenerTodos({}, 1, 10000);
             const unidadesMedidaResult = await unidadMedidaRepository.obtenerTodas(1, 10000);
+            const centrosCosto = await centroCostoRepository.obtenerActivos();
 
             return res.render('ordenesCompraEditar', {
                 username: req.user.username,
                 orden: orden,
                 bienes: bienesResult.data || [],
                 proveedores: proveedoresResult.data || [],
-                unidadesMedida: unidadesMedidaResult.data || []
+                unidadesMedida: unidadesMedidaResult.data || [],
+                centrosCosto: centrosCosto || []
             });
         } catch (error) {
             console.error('Error al renderizar vista de editar orden:', error);
