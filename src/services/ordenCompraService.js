@@ -126,10 +126,30 @@ class OrdenCompraService {
                         throw new Error('La cantidad debe ser mayor a 0');
                     }
 
-                    // Validar que solo se puede editar cantidad_recibida en estado "En Proceso"
+                    // Validar que cantidad recibida no sea mayor que cantidad solicitada
                     if (item.cantidad_recibida !== undefined && item.cantidad_recibida !== null) {
-                        if (ordenData.estado !== 'En Proceso' && ordenActual.estado !== 'En Proceso') {
-                            throw new Error('Solo se puede ingresar cantidad recibida cuando la orden está en estado "En Proceso"');
+                        const cantidadRecibida = parseFloat(item.cantidad_recibida);
+                        const cantidadSolicitada = parseFloat(item.cantidad);
+                        
+                        if (cantidadRecibida > cantidadSolicitada) {
+                            throw new Error(`La cantidad recibida (${cantidadRecibida}) no puede ser mayor que la cantidad solicitada (${cantidadSolicitada})`);
+                        }
+                    }
+
+                    // Validar que solo se puede modificar cantidad_recibida en estado "En Proceso"
+                    // Solo validar si el item tiene ID (ya existe) y la cantidad recibida cambió
+                    if (item.id) {
+                        const itemActual = ordenActual.items.find(i => i.id === item.id);
+                        if (itemActual && item.cantidad_recibida !== undefined) {
+                            const cantidadRecibidaActual = parseFloat(itemActual.cantidad_recibida || 0);
+                            const cantidadRecibidaNueva = parseFloat(item.cantidad_recibida || 0);
+                            
+                            // Solo validar si cambió la cantidad recibida
+                            if (cantidadRecibidaNueva !== cantidadRecibidaActual) {
+                                if (ordenData.estado !== 'En Proceso' && ordenActual.estado !== 'En Proceso') {
+                                    throw new Error('Solo se puede modificar la cantidad recibida cuando la orden está en estado "En Proceso"');
+                                }
+                            }
                         }
                     }
                 }

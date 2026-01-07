@@ -37,6 +37,10 @@
     
     <!-- Main Content -->
     <div class="container my-4">
+        <!-- Contenedor de alertas -->
+        <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1050; margin-top: 60px;">
+        </div>
+        
         <div class="row mb-4">
             <div class="col">
                 <div class="menu-container p-4">
@@ -56,7 +60,6 @@
                             <thead>
                                 <tr>
                                     <th>Nombre</th>
-                                    <th>Estado</th>
                                     <th>Responsable</th>
                                     <th>Fecha Creación</th>
                                     <th>Acciones</th>
@@ -67,11 +70,6 @@
                                     <% centrosCosto.forEach(centro => { %>
                                         <tr>
                                             <td><%= centro.nombre %></td>
-                                            <td>
-                                                <span class="badge <%= centro.activo ? 'bg-success' : 'bg-secondary' %>">
-                                                    <%= centro.activo ? 'Activo' : 'Inactivo' %>
-                                                </span>
-                                            </td>
                                             <td><%= centro.responsable || '-' %></td>
                                             <td><%= centro.fecha_creacion ? new Date(centro.fecha_creacion).toLocaleDateString('es-AR') : '-' %></td>
                                             <td>
@@ -91,7 +89,7 @@
                                     <% }) %>
                                 <% } else { %>
                                     <tr>
-                                        <td colspan="5" class="text-center">No hay centros de costo registrados</td>
+                                        <td colspan="4" class="text-center">No hay centros de costo registrados</td>
                                     </tr>
                                 <% } %>
                             </tbody>
@@ -154,31 +152,65 @@
             let actionType = '';
             let targetId = '';
 
+            // Función para mostrar alertas bonitas
+            function mostrarAlerta(mensaje, tipo) {
+                const iconos = {
+                    'success': '<i class="bi bi-check-circle-fill me-2"></i>',
+                    'danger': '<i class="bi bi-exclamation-triangle-fill me-2"></i>',
+                    'warning': '<i class="bi bi-exclamation-circle-fill me-2"></i>',
+                    'info': '<i class="bi bi-info-circle-fill me-2"></i>'
+                };
+
+                const alerta = `
+                    <div class="alert alert-${tipo} alert-dismissible fade show shadow-lg" role="alert" style="min-width: 300px;">
+                        <div class="d-flex align-items-center">
+                            ${iconos[tipo] || ''}
+                            <div>${mensaje}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+
+                $('#alertContainer').append(alerta);
+
+                // Auto-cerrar después de 4 segundos
+                setTimeout(function() {
+                    $('#alertContainer .alert').first().fadeOut(function() {
+                        $(this).remove();
+                    });
+                }, 4000);
+            }
+
             // Eliminar centro de costo
             $('.btn-delete').click(function() {
                 targetId = $(this).data('id');
                 actionType = 'delete';
-                $('#confirmMessage').text('¿Está seguro que desea eliminar este centro de costo?');
+                $('#confirmMessage').text('¿Está seguro que desea eliminar este centro de costo? Esta acción no se puede deshacer.');
                 $('#confirmModal').modal('show');
             });
 
             // Confirmar acción
             $('#confirmBtn').click(function() {
                 if (actionType === 'delete') {
+                    // Cerrar modal primero
+                    $('#confirmModal').modal('hide');
+                    
+                    // Mostrar alerta de procesamiento
+                    mostrarAlerta('Eliminando centro de costo...', 'info');
+                    
                     $.ajax({
                         url: `/api/centros-costo/${targetId}`,
                         method: 'DELETE',
                         success: function(response) {
-                            showAlert('Centro de costo eliminado exitosamente', 'success');
+                            mostrarAlerta('✓ Centro de costo eliminado exitosamente', 'success');
                             setTimeout(() => location.reload(), 1500);
                         },
                         error: function(xhr) {
                             const error = xhr.responseJSON?.error || 'Error al eliminar el centro de costo';
-                            showAlert(error, 'danger');
+                            mostrarAlerta(error, 'danger');
                         }
                     });
                 }
-                $('#confirmModal').modal('hide');
             });
         });
     </script>

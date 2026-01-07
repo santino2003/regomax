@@ -171,6 +171,9 @@ class BienRepository {
                 const searchTerm = `%${filtros.busqueda}%`;
                 params.push(searchTerm, searchTerm, searchTerm);
             }
+            if (filtros.critico) {
+                whereConditions.push('b.cantidad_critica IS NOT NULL AND b.cantidad_stock <= b.cantidad_critica');
+            }
             
             const whereClause = 'WHERE ' + whereConditions.join(' AND ');
             

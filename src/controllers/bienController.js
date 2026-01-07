@@ -86,13 +86,15 @@ const bienController = {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
+            const critico = req.query.critico === '1' || req.query.critico === 'true';
             
             // Filtros opcionales
             const filtros = {
                 tipo: req.query.tipo,
                 categoria_id: req.query.categoria_id,
                 familia_id: req.query.familia_id,
-                busqueda: req.query.busqueda
+                busqueda: req.query.busqueda,
+                critico
             };
             
             const resultado = await bienService.obtenerTodos(page, limit, filtros);
@@ -240,12 +242,14 @@ const bienController = {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
+            const critico = req.query.critico === '1' || req.query.critico === 'true';
             
             const filtros = {
                 tipo: req.query.tipo,
                 categoria_id: req.query.categoria_id,
                 familia_id: req.query.familia_id,
-                busqueda: req.query.busqueda
+                busqueda: req.query.busqueda,
+                critico
             };
             
             const resultado = await bienService.obtenerTodos(page, limit, filtros);

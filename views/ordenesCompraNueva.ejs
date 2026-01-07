@@ -152,6 +152,7 @@
         let bienes = <%- JSON.stringify(bienes) %>;
         let proveedores = <%- JSON.stringify(proveedores) %>;
         let unidadesMedida = <%- JSON.stringify(unidadesMedida) %>;
+        let centrosCosto = <%- JSON.stringify(centrosCosto) %>;
         let itemCounter = 0;
 
         $(document).ready(function() {
@@ -194,6 +195,7 @@
                             <label class="form-label">CENTRO COSTO</label>
                             <select class="form-select" name="items[${itemCounter}][centro_costo]">
                                 <option value="">---------</option>
+                                ${centrosCosto.map(cc => `<option value="${cc.nombre}">${cc.nombre}</option>`).join('')}
                             </select>
                         </div>
                     </div>

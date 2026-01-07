@@ -169,11 +169,13 @@ $(document).ready(function() {
         const categoria = $('#filtroCategoria').val();
         const familia = $('#filtroFamilia').val();
         const busqueda = $('#filtroBusqueda').val().trim();
+        const critico = $('#filtroCritico').is(':checked');
         
         if (tipo) currentFilters.tipo = tipo;
         if (categoria) currentFilters.categoria_id = categoria;
         if (familia) currentFilters.familia_id = familia;
         if (busqueda) currentFilters.busqueda = busqueda;
+        if (critico) currentFilters.critico = '1';
         
         cargarBienes(1);
     });
@@ -183,6 +185,7 @@ $(document).ready(function() {
         $('#filtroCategoria').val('');
         $('#filtroFamilia').val('');
         $('#filtroBusqueda').val('');
+        $('#filtroCritico').prop('checked', false);
         currentFilters = {};
         cargarBienes(1);
     });

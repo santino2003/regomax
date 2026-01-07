@@ -50,7 +50,7 @@ class OrdenCompraRepository {
                         `INSERT INTO ordenes_compra_items (
                             orden_compra_id, bien_id, cantidad, cantidad_recibida,
                             unidad_medida_id, proveedor_sugerido_id, descripcion, 
-                            centro_costo_id, precio_unitario
+                            centro_costo, precio_unitario
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             ordenId,
@@ -60,7 +60,7 @@ class OrdenCompraRepository {
                             item.unidad_medida_id || null,
                             item.proveedor_sugerido_id || null,
                             item.descripcion || null,
-                            item.centro_costo_id || null,
+                            item.centro_costo || null,
                             item.precio_unitario || null
                         ]
                     );
@@ -116,7 +116,7 @@ class OrdenCompraRepository {
                         `INSERT INTO ordenes_compra_items (
                             orden_compra_id, bien_id, cantidad, cantidad_recibida,
                             unidad_medida_id, proveedor_sugerido_id, descripcion, 
-                            centro_costo_id, precio_unitario
+                            centro_costo, precio_unitario
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             id,
@@ -126,7 +126,7 @@ class OrdenCompraRepository {
                             item.unidad_medida_id || null,
                             item.proveedor_sugerido_id || null,
                             item.descripcion || null,
-                            item.centro_costo_id || null,
+                            item.centro_costo || null,
                             item.precio_unitario || null
                         ]
                     );
@@ -339,14 +339,11 @@ class OrdenCompraRepository {
                     b.descripcion as bien_descripcion,
                     um.nombre as unidad_medida_nombre,
                     um.nombre_lindo as unidad_medida_nombre_lindo,
-                    ps.nombre as proveedor_sugerido_nombre,
-                    cc.id as centro_costo_id,
-                    cc.nombre as centro_costo_nombre
+                    ps.nombre as proveedor_sugerido_nombre
                 FROM ordenes_compra_items oci
                 INNER JOIN bienes b ON oci.bien_id = b.id
                 LEFT JOIN unidades_medida um ON oci.unidad_medida_id = um.id
                 LEFT JOIN proveedores ps ON oci.proveedor_sugerido_id = ps.id
-                LEFT JOIN centro_de_costo cc ON oci.centro_costo_id = cc.id
                 WHERE oci.orden_compra_id = ?
                 ORDER BY oci.id`,
                 [id]

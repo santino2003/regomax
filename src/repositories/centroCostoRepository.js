@@ -104,9 +104,16 @@ class CentroCostoRepository {
 
     async existeEnOrdenes(id) {
         try {
+            // Primero obtenemos el nombre del centro de costo
+            const centroCosto = await this.obtenerPorId(id);
+            if (!centroCosto) {
+                return false;
+            }
+            
+            // Verificamos si existe en ordenes_compra_items (la columna es centro_costo VARCHAR)
             const result = await db.query(
-                'SELECT COUNT(*) as count FROM ordenes_compra WHERE centro_costo_id = ?',
-                [id]
+                'SELECT COUNT(*) as count FROM ordenes_compra_items WHERE centro_costo = ?',
+                [centroCosto.nombre]
             );
             return result[0].count > 0;
         } catch (error) {
