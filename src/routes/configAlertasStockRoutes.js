@@ -8,12 +8,12 @@ const permissions = require('../middleware/permissions');
 router.use(auth.verifyToken);
 
 // Mostrar página de configuración
-router.get('/', permissions.hasPermission('config'), configAlertasStockController.mostrarConfiguracion);
+router.get('/', permissions.hasPermission('configuracion:edit'), configAlertasStockController.mostrarConfiguracion);
 
 // Actualizar configuración
-router.post('/', permissions.hasPermission('config'), configAlertasStockController.actualizarConfiguracion);
+router.post('/', permissions.hasPermission('configuracion:edit'), configAlertasStockController.actualizarConfiguracion);
 
 // API: Obtener configuración actual
-router.get('/api', permissions.hasPermission('config'), configAlertasStockController.obtenerConfiguracion);
+router.get('/api', permissions.hasPermission('configuracion:view'), configAlertasStockController.obtenerConfiguracion);
 
 module.exports = router;

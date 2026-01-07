@@ -8,14 +8,14 @@ const historialMiddleware = require('../middleware/historialMiddleware');
 // Vista para nuevo ajuste
 router.get('/ajuste-inventario',
     auth.verifyToken,
-    permissions.hasPermission('bienes', 'editar'),
+    permissions.hasPermission('bien:edit'),
     ajusteInventarioController.renderAjusteNuevo
 );
 
 // Procesar ajuste
 router.post('/api/ajustes-inventario',
     auth.verifyToken,
-    permissions.hasPermission('bienes', 'editar'),
+    permissions.hasPermission('bien:edit'),
     historialMiddleware.registrarHistorial('ajuste_inventario', 'crear'),
     ajusteInventarioController.procesarAjuste
 );
@@ -23,14 +23,14 @@ router.post('/api/ajustes-inventario',
 // Obtener historial
 router.get('/api/ajustes-inventario',
     auth.verifyToken,
-    permissions.hasPermission('bienes', 'ver'),
+    permissions.hasPermission('bien:view'),
     ajusteInventarioController.obtenerHistorial
 );
 
 // Vista de historial
 router.get('/ajuste-inventario/historial',
     auth.verifyToken,
-    permissions.hasPermission('bienes', 'ver'),
+    permissions.hasPermission('bien:view'),
     ajusteInventarioController.renderHistorial
 );
 
