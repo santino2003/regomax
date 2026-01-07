@@ -162,7 +162,7 @@ router.get('/ordenes/:id', [
 router.get('/productos', [
     authMiddleware.verifyToken, 
     noCacheMiddleware,
-    permissionsMiddleware.hasPermission('productos:view')
+    permissionsMiddleware.hasAnyPermission(['productos:view', 'productos:create', 'productos:edit', 'productos:delete'])
 ], productoController.vistaListarProductos);
 
 router.get('/productos/nuevo', [

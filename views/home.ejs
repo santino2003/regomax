@@ -61,7 +61,7 @@
                             </h2>
                             <div id="collapseProduccion" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
                                 <div class="accordion-body">
-                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['productos:view'])) { %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && (user.permissions['productos:view'] || user.permissions['productos:create'] || user.permissions['productos:edit']))) { %>
                                     <div class="submenu-item">
                                         <a href="/productos"><i class="bi bi-box2 me-2"></i> Productos</a>
                                     </div>

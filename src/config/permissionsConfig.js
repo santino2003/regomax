@@ -59,6 +59,7 @@ const PERMISSIONS = {
   
   // Permisos para productos
   PRODUCTOS: {
+    VIEW: 'productos:view',
     CREATE: 'productos:create',
     EDIT: 'productos:edit',
     DELETE: 'productos:delete',
