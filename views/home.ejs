@@ -244,12 +244,12 @@
                                         <a href="/bienes"><i class="bi bi-box-seam me-2"></i> Bienes</a>
                                     </div>
                                     <% } %>
-                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bienes_editar'])) { %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bien:edit'])) { %>
                                     <div class="submenu-item">
                                         <a href="/salida"><i class="bi bi-box-arrow-right me-2"></i> Salida de Bienes/Kits</a>
                                     </div>
                                     <% } %>
-                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bienes_editar'])) { %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['bien:edit'])) { %>
                                     <div class="submenu-item">
                                         <a href="/ajuste-inventario"><i class="bi bi-arrow-left-right me-2"></i> Ajuste de Inventario</a>
                                     </div>
