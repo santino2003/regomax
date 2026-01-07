@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Kit - Regomax</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-plus-circle me-2"></i>Nuevo Kit
+                        </h4>
+                    </div>
+                    
+                    <div id="alertPlaceholder"></div>
+                    
+                    <form id="formNuevoKit" class="needs-validation" novalidate>
+                        <!-- Información Básica -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="nombre" class="form-label">Nombre del Kit <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                        <div class="invalid-feedback">El nombre es obligatorio</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="tipo" class="form-label">Tipo <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="tipo" name="tipo" required>
+                                            <option value="">Seleccionar...</option>
+                                            <% tipos.forEach(tipo => { %>
+                                                <option value="<%= tipo %>"><%= tipo %></option>
+                                            <% }) %>
+                                        </select>
+                                        <div class="invalid-feedback">El tipo es obligatorio</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="descripcion" class="form-label">Descripción</label>
+                                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Componentes del Kit -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #5bc0de; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Componentes del Kit <span class="text-danger">*</span></h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Importante:</strong> Un kit debe tener al menos 2 componentes. Seleccione los bienes que formarán parte de este kit.
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-primary" id="btnAgregarComponente">
+                                        <i class="bi bi-plus-circle me-2"></i>Agregar Componente
+                                    </button>
+                                </div>
+                                
+                                <div id="componentesContainer">
+                                    <!-- Los componentes se agregarán aquí dinámicamente -->
+                                </div>
+                                
+                                <div class="mt-3 p-3 bg-white rounded border">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Total Componentes:</strong> <span id="totalComponentes" class="badge bg-primary">0</span>
+                                        </div>
+                                        <div class="col-md-6 text-end">
+                                            <strong>Precio Total del Kit:</strong> <span id="precioTotal" class="text-primary fs-5">$0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clasificación -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Clasificación</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="categoria_id" class="form-label">Categoría</label>
+                                        <select class="form-select" id="categoria_id" name="categoria_id">
+                                            <option value="">Sin categoría</option>
+                                            <% categorias.forEach(cat => { %>
+                                                <option value="<%= cat.id %>"><%= cat.nombre %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="familia_id" class="form-label">Familia</label>
+                                        <select class="form-select" id="familia_id" name="familia_id">
+                                            <option value="">Sin familia</option>
+                                            <% familias.forEach(fam => { %>
+                                                <option value="<%= fam.id %>"><%= fam.nombre %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ubicación y Almacenamiento -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #5bc0de; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Ubicación y Almacenamiento</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="ubicacion" class="form-label">Ubicación</label>
+                                        <input type="text" class="form-control" id="ubicacion" name="ubicacion" placeholder="Ej: Estantería A-12">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="almacen_defecto_id" class="form-label">Almacén por Defecto</label>
+                                        <select class="form-select" id="almacen_defecto_id" name="almacen_defecto_id">
+                                            <option value="">Seleccionar...</option>
+                                            <% almacenes.forEach(alm => { %>
+                                                <option value="<%= alm.id %>"><%= alm.nombre %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col">
+                                <button type="submit" id="submitBtn" class="btn btn-primary">
+                                    <i class="bi bi-save me-2"></i>Guardar Kit
+                                </button>
+                                <a href="/kits" class="btn btn-outline-secondary ms-2">
+                                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Datos JSON para JavaScript -->
+    <script>
+        const bienesDisponibles = <%- JSON.stringify(bienesDisponibles) %>;
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="/assets/js/common.js"></script>
+    <script src="/assets/js/kitNuevo.js"></script>
+</body>
+</html>

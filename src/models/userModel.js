@@ -21,6 +21,21 @@ class User {
       this.permissions = {};
     }
     
+    // Manejar permisos de transiciones de órdenes de compra
+    if (data.permisos_transiciones_oc) {
+      if (typeof data.permisos_transiciones_oc === 'string') {
+        try {
+          this.permisos_transiciones_oc = JSON.parse(data.permisos_transiciones_oc);
+        } catch (e) {
+          this.permisos_transiciones_oc = [];
+        }
+      } else {
+        this.permisos_transiciones_oc = data.permisos_transiciones_oc;
+      }
+    } else {
+      this.permisos_transiciones_oc = null;
+    }
+    
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
   }

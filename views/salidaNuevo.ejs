@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salida de Bienes/Kits - Regomax</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/assets/css/home.css">
+    <style>
+        .tab-pane {
+            min-height: 300px;
+        }
+        .item-info-card {
+            background: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+        }
+        .stock-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        .stock-danger {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        #codigoInput {
+            font-size: 1.5rem;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header', { username: username }) %>
+
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-box-arrow-right me-2"></i>Salida de Bienes/Kits
+                        </h4>
+                        <a href="/bienes" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Volver
+                        </a>
+                    </div>
+                    
+                    <div id="alertPlaceholder"></div>
+
+                    <!-- Tabs Navigation -->
+                    <ul class="nav nav-tabs mb-4" id="salidaTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="paso1-tab" data-bs-toggle="tab" data-bs-target="#paso1" 
+                                    type="button" role="tab" aria-controls="paso1" aria-selected="true" disabled>
+                                <i class="bi bi-1-circle me-1"></i>Escanear Código
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="paso2-tab" data-bs-toggle="tab" data-bs-target="#paso2" 
+                                    type="button" role="tab" aria-controls="paso2" aria-selected="false" disabled>
+                                <i class="bi bi-2-circle me-1"></i>Confirmar Salida
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="salidaTabContent">
+                        <!-- PASO 1: Escanear Código -->
+                        <div class="tab-pane fade show active" id="paso1" role="tabpanel" aria-labelledby="paso1-tab">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body text-center p-5">
+                                            <i class="bi bi-upc-scan display-1 text-primary mb-4"></i>
+                                            <h5 class="card-title mb-4">Escanee o ingrese el código del bien/kit</h5>
+                                            
+                                            <div class="mb-4">
+                                                <input type="text" 
+                                                       class="form-control form-control-lg" 
+                                                       id="codigoInput" 
+                                                       placeholder="Código..."
+                                                       autofocus>
+                                                <div class="form-text">Presione ENTER para buscar</div>
+                                            </div>
+
+                                            <button type="button" class="btn btn-primary btn-lg" id="btnBuscar">
+                                                <i class="bi bi-search me-2"></i>Buscar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PASO 2: Confirmar Salida -->
+                        <div class="tab-pane fade" id="paso2" role="tabpanel" aria-labelledby="paso2-tab">
+                            <form id="formSalida">
+                                <input type="hidden" id="itemId" name="item_id">
+                                <input type="hidden" id="tipoItem" name="tipo_item">
+
+                                <!-- Información del Item -->
+                                <div class="card item-info-card mb-4" id="itemInfoCard">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <i class="bi bi-box-seam me-2"></i>
+                                            <span id="itemNombre"></span>
+                                        </h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p class="mb-2"><strong>Código:</strong> <span id="itemCodigo"></span></p>
+                                                <p class="mb-2"><strong>Tipo:</strong> <span id="itemTipo"></span></p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-2"><strong>Stock Actual:</strong> <span id="itemStock" class="badge bg-info fs-6"></span></p>
+                                                <p class="mb-2"><strong>Stock Crítico:</strong> <span id="itemCritico"></span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Formulario de Salida -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="cantidadInput" class="form-label">
+                                            <i class="bi bi-hash me-1"></i>Cantidad a Retirar *
+                                        </label>
+                                        <input type="number" 
+                                               class="form-control form-control-lg" 
+                                               id="cantidadInput" 
+                                               name="cantidad" 
+                                               min="1" 
+                                               value="1"
+                                               required>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="responsableInput" class="form-label">
+                                            <i class="bi bi-person me-1"></i>Responsable de la Salida *
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control form-control-lg" 
+                                               id="responsableInput" 
+                                               name="responsable_salida" 
+                                               placeholder="Nombre del responsable"
+                                               required>
+                                    </div>
+                                </div>
+
+                                <!-- Botones de Acción -->
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-secondary btn-lg" id="btnVolver">
+                                        <i class="bi bi-arrow-left me-2"></i>Volver
+                                    </button>
+                                    <button type="submit" class="btn btn-success btn-lg" id="btnEntregar">
+                                        <i class="bi bi-check-circle me-2"></i>Entregar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Salida
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">¿Confirma la salida de los siguientes datos?</p>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <p class="mb-2"><strong>Bien/Kit:</strong> <span id="modalNombre"></span></p>
+                            <p class="mb-2"><strong>Código:</strong> <span id="modalCodigo"></span></p>
+                            <p class="mb-2"><strong>Cantidad:</strong> <span id="modalCantidad" class="text-danger fw-bold"></span></p>
+                            <p class="mb-0"><strong>Responsable:</strong> <span id="modalResponsable"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarSalida">
+                        <i class="bi bi-check-circle me-1"></i>Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/assets/js/salidaNuevo.js"></script>
+</body>
+</html>

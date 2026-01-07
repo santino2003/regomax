@@ -25,6 +25,18 @@ const productoRoutes = require('./routes/api/productoRoutes');
 const planificacionRoutes = require('./routes/api/planificacionRoutes'); // Importamos las rutas de planificación
 const proveedorRoutes = require('./routes/proveedorRoutes');
 const clienteNFURoutes = require('./routes/clienteNFURoutes'); // Importamos las rutas de clientes NFU
+const familiaRoutes = require('./routes/familiaRoutes'); // Importamos las rutas de familias
+const centroCostoRoutes = require('./routes/centroCostoRoutes'); // Importamos las rutas de centros de costo
+const categoriaRoutes = require('./routes/categoriaRoutes'); // Importamos las rutas de categorias
+const unidadMedidaRoutes = require('./routes/unidadMedidaRoutes'); // Importamos las rutas de unidades de medida
+const almacenRoutes = require('./routes/almacenRoutes'); // Importamos las rutas de almacenes
+const bienRoutes = require('./routes/bienRoutes'); // Importamos las rutas de bienes
+const kitRoutes = require('./routes/kitRoutes'); // Importamos las rutas de kits
+const configAlertasStockRoutes = require('./routes/configAlertasStockRoutes'); // Importamos las rutas de configuración de alertas
+const salidaRoutes = require('./routes/salidaRoutes'); // Importamos las rutas de salidas
+const ajusteInventarioRoutes = require('./routes/ajusteInventarioRoutes'); // Importamos las rutas de ajustes de inventario
+const ordenCompraRoutes = require('./routes/ordenCompraRoutes'); // Importamos las rutas de ordenes de compra
+const permisosTransicionesRoutes = require('./routes/permisosTransicionesRoutes'); // Importamos las rutas de permisos de transiciones
 // Crear aplicación Express
 const app = express();
 
@@ -44,6 +56,9 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Servir archivos estáticos desde la carpeta src/assets
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
+// Servir archivos subidos desde la carpeta uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Middleware para manejar errores de permisos
 app.use(permissionErrorHandler);
 
@@ -60,6 +75,23 @@ app.use('/api/reportear', reporteARRoutes); // Registramos las rutas del reporte
 app.use('/api/planificacion-produccion', planificacionRoutes); // Registramos las rutas de planificación
 app.use('/api/proveedores', proveedorRoutes); // Rutas para gestión de proveedores
 app.use('/api/clientes-nfu', clienteNFURoutes); // Rutas para gestión de clientes NFU
+app.use('/api/familias', familiaRoutes); // Rutas para gestión de familias
+app.use('/api/centros-costo', centroCostoRoutes); // Rutas para gestión de centros de costo
+app.use('/api/categorias', categoriaRoutes); // Rutas para gestión de categorias
+app.use('/api/unidades-medida', unidadMedidaRoutes); // Rutas para gestión de unidades de medida
+app.use('/api/almacenes', almacenRoutes); // Rutas para gestión de almacenes
+app.use('/api/bienes', bienRoutes); // Rutas para gestión de bienes
+app.use('/api/kits', kitRoutes); // Rutas para gestión de kits
+app.use('/api/ordenes-compra', ordenCompraRoutes); // Rutas para gestión de ordenes de compra
+app.use('/api/permisos-transiciones', permisosTransicionesRoutes); // Rutas para gestión de permisos de transiciones
+app.use('/config-alertas-stock', configAlertasStockRoutes); // Rutas para configuración de alertas
+
+// Montar rutas de salidas - incluye tanto vistas como API
+app.use('/', salidaRoutes); // Rutas para salidas de bienes/kits
+
+// Montar rutas de ajustes de inventario - incluye tanto vistas como API
+app.use('/', ajusteInventarioRoutes); // Rutas para ajustes de inventario
+
 // Montar rutas NFU primero - IMPORTANTE: Se montan antes de las rutas de vistas
 app.use('/', nfuRoutes);
 

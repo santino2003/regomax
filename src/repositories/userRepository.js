@@ -104,6 +104,24 @@ class UserRepository {
     }
   }
 
+  // Obtener todos los usuarios que tengan email configurado (para notificaciones)
+  async findAllWithEmail() {
+    try {
+      const result = await db.query(
+        'SELECT id, username, email, role FROM users WHERE email IS NOT NULL AND email != "" ORDER BY username ASC'
+      );
+      
+      if (!result || result.length === 0) {
+        return [];
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error al obtener usuarios con email:', error);
+      throw error;
+    }
+  }
+
   // Actualizar un usuario
   async update(id, userData) {
     try {
@@ -174,6 +192,21 @@ class UserRepository {
       return result[0].count;
     } catch (error) {
       console.error('Error al contar administradores:', error);
+      throw error;
+    }
+  }
+
+  // Actualizar permisos de transiciones de orden de compra
+  async actualizarPermisosTransiciones(username, permisos) {
+    try {
+      const permisosJson = JSON.stringify(permisos);
+      await db.query(
+        'UPDATE users SET permisos_transiciones_oc = ? WHERE username = ?',
+        [permisosJson, username]
+      );
+      return true;
+    } catch (error) {
+      console.error('Error al actualizar permisos de transiciones:', error);
       throw error;
     }
   }

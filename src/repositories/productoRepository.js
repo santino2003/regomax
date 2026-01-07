@@ -1,13 +1,23 @@
 const db = require('../config/db');
 
 class ProductoRepository {
-    async crearProducto(nombre, unidad, enStock, creadoPor) {
+    async crearProducto(nombre, unidad, enStock, creadoPor, bienesAsociados = null) {
         try {
             const query = `
-                INSERT INTO productos (nombre, unidad, en_stock, creado_por) 
-                VALUES (?, ?, ?, ?)
+                INSERT INTO productos (nombre, unidad, en_stock, creado_por, bienes_asociados) 
+                VALUES (?, ?, ?, ?, ?)
             `;
-            const result = await db.query(query, [nombre, unidad, enStock ? 1 : 0, creadoPor]);
+            const bienesJson = bienesAsociados && bienesAsociados.length > 0 
+                ? JSON.stringify(bienesAsociados) 
+                : null;
+            
+            const result = await db.query(query, [
+                nombre, 
+                unidad, 
+                enStock ? 1 : 0, 
+                creadoPor,
+                bienesJson
+            ]);
             return result.insertId;
         } catch (error) {
             console.error('Error al crear producto:', error);
@@ -43,6 +53,51 @@ class ProductoRepository {
             return result;
         } catch (error) {
             console.error('Error al obtener productos en stock:', error);
+            throw error;
+        }
+    }
+    
+    async obtenerPorId(id) {
+        try {
+            const result = await db.query('SELECT * FROM productos WHERE id = ?', [id]);
+            return result[0] || null;
+        } catch (error) {
+            console.error('Error al obtener producto por ID:', error);
+            throw error;
+        }
+    }
+    
+    async actualizarProducto(id, nombre, unidad, enStock, bienesAsociados = null) {
+        try {
+            const query = `
+                UPDATE productos 
+                SET nombre = ?, unidad = ?, en_stock = ?, bienes_asociados = ?
+                WHERE id = ?
+            `;
+            const bienesJson = bienesAsociados && bienesAsociados.length > 0 
+                ? JSON.stringify(bienesAsociados) 
+                : null;
+            
+            await db.query(query, [
+                nombre, 
+                unidad, 
+                enStock ? 1 : 0, 
+                bienesJson,
+                id
+            ]);
+            return true;
+        } catch (error) {
+            console.error('Error al actualizar producto:', error);
+            throw error;
+        }
+    }
+    
+    async eliminarProducto(id) {
+        try {
+            await db.query('DELETE FROM productos WHERE id = ?', [id]);
+            return true;
+        } catch (error) {
+            console.error('Error al eliminar producto:', error);
             throw error;
         }
     }

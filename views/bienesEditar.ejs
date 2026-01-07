@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Bien - Regomax</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/home.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Bien
+                        </h4>
+                    </div>
+                    
+                    <div id="alertPlaceholder"></div>
+                    
+                    <form id="formEditarBien" class="needs-validation" data-bien-id="<%= bien.id %>" novalidate>
+                        <!-- Información Básica -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Información Básica</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="codigo" class="form-label">Código</label>
+                                        <input type="text" class="form-control" id="codigo" value="<%= bien.codigo %>" disabled>
+                                        <small class="text-muted">El código no puede modificarse</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="tipo" class="form-label">Tipo <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="tipo" name="tipo" required>
+                                            <option value="">Seleccionar...</option>
+                                            <% tipos.forEach(tipo => { %>
+                                                <option value="<%= tipo %>" <%= bien.tipo === tipo ? 'selected' : '' %>><%= tipo %></option>
+                                            <% }) %>
+                                        </select>
+                                        <div class="invalid-feedback">El tipo es obligatorio</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="nombre" name="nombre" value="<%= bien.nombre %>" required>
+                                        <div class="invalid-feedback">El nombre es obligatorio</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="descripcion" class="form-label">Descripción</label>
+                                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3"><%= bien.descripcion || '' %></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clasificación -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #5bc0de; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Clasificación</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="categoria_id" class="form-label">Categoría</label>
+                                        <select class="form-select" id="categoria_id" name="categoria_id">
+                                            <option value="">Sin categoría</option>
+                                            <% categorias.forEach(cat => { %>
+                                                <option value="<%= cat.id %>" <%= bien.categoria_id == cat.id ? 'selected' : '' %>><%= cat.nombre %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="familia_id" class="form-label">Familia</label>
+                                        <select class="form-select" id="familia_id" name="familia_id">
+                                            <option value="">Sin familia</option>
+                                            <% familias.forEach(fam => { %>
+                                                <option value="<%= fam.id %>" <%= bien.familia_id == fam.id ? 'selected' : '' %>><%= fam.nombre %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inventario y Precios -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Inventario y Precios</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="unidad_medida_id" class="form-label">Unidad de Medida</label>
+                                        <select class="form-select" id="unidad_medida_id" name="unidad_medida_id">
+                                            <option value="">Seleccionar...</option>
+                                            <% unidadesMedida.forEach(um => { %>
+                                                <option value="<%= um.id %>" <%= bien.unidad_medida_id == um.id ? 'selected' : '' %>><%= um.nombre_lindo %> (<%= um.nombre %>)</option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="precio" class="form-label">Precio</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="precio" name="precio" step="0.01" min="0" value="<%= bien.precio || 0 %>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="cantidad_critica" class="form-label">Cantidad Crítica</label>
+                                        <input type="number" class="form-control" id="cantidad_critica" name="cantidad_critica" min="0" value="<%= bien.cantidad_critica || '' %>" placeholder="Dejar vacío para sin avisos">
+                                        <small class="text-muted">Cantidad mínima para generar avisos</small>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ubicación y Almacenamiento -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #5bc0de; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Ubicación y Almacenamiento</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="ubicacion" class="form-label">Ubicación</label>
+                                        <input type="text" class="form-control" id="ubicacion" name="ubicacion" value="<%= bien.ubicacion || '' %>" placeholder="Ej: Estantería A-12">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="almacen_defecto_id" class="form-label">Almacén por Defecto</label>
+                                        <select class="form-select" id="almacen_defecto_id" name="almacen_defecto_id">
+                                            <option value="">Seleccionar...</option>
+                                            <% almacenes.forEach(alm => { %>
+                                                <option value="<%= alm.id %>" <%= bien.almacen_defecto_id == alm.id ? 'selected' : '' %>><%= alm.nombre %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Proveedores -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header" style="background-color: #17a2b8; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Proveedores</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label for="proveedores" class="form-label">Seleccionar Proveedores</label>
+                                        <select class="form-select" id="proveedores" name="proveedores" multiple>
+                                            <% proveedores.forEach(prov => { 
+                                                const isSelected = bien.proveedores && bien.proveedores.some(p => p.proveedor_id == prov.id);
+                                            %>
+                                                <option value="<%= prov.id %>" <%= isSelected ? 'selected' : '' %>><%= prov.nombre %></option>
+                                            <% }) %>
+                                        </select>
+                                        <small class="text-muted">Puede seleccionar múltiples proveedores</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Archivos Adjuntos -->
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #5bc0de; color: white;">
+                                <h5 class="mb-0"><i class="bi bi-paperclip me-2"></i>Archivos Adjuntos</h5>
+                                <button type="button" class="btn btn-sm btn-light" id="btnSubirArchivo">
+                                    <i class="bi bi-upload me-1"></i>Subir Archivo
+                                </button>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div id="listaArchivos">
+                                    <% if (bien.archivos && bien.archivos.length > 0) { %>
+                                    <ul class="list-group">
+                                        <% bien.archivos.forEach(archivo => { %>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center" id="archivo-<%= archivo.id %>">
+                                            <div>
+                                                <i class="bi <%= archivo.tipo_mime.includes('image') ? 'bi-file-image' : archivo.tipo_mime.includes('pdf') ? 'bi-file-pdf' : 'bi-file-earmark' %> me-2"></i>
+                                                <strong><%= archivo.nombre_archivo %></strong>
+                                                <br>
+                                                <small class="text-muted"><%= (archivo.tamanio / 1024).toFixed(2) %> KB</small>
+                                            </div>
+                                            <div>
+                                                <a href="/<%= archivo.ruta_archivo %>" target="_blank" class="btn btn-sm btn-outline-primary" title="Ver/Descargar">
+                                                    <i class="bi bi-download"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-danger ms-1" onclick="eliminarArchivo(<%= archivo.id %>, '<%= archivo.nombre_archivo.replace(/'/g, "\\'") %>')" title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </li>
+                                        <% }) %>
+                                    </ul>
+                                    <% } else { %>
+                                    <p class="text-muted mb-0" id="mensajeNoArchivos">No hay archivos adjuntos</p>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col">
+                                <button type="submit" id="submitBtn" class="btn btn-primary">
+                                    <i class="bi bi-save me-2"></i>Guardar Cambios
+                                </button>
+                                <a href="/bienes/<%= bien.id %>" class="btn btn-outline-secondary ms-2">
+                                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Subir Archivo -->
+    <div class="modal fade" id="modalArchivo" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Subir Archivo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="archivo" class="form-label">Seleccionar Archivo</label>
+                        <input type="file" class="form-control" id="archivo">
+                        <small class="text-muted">
+                            Máximo 10MB. Formatos: PDF, imágenes (JPG, PNG), documentos (DOC, DOCX, XLS, XLSX)
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarArchivo">Subir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Eliminación de Archivo -->
+    <div class="modal fade" id="modalEliminarArchivo" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar el archivo <strong id="nombreArchivoEliminar"></strong>?</p>
+                    <p class="text-danger mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Esta acción no se puede deshacer.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminarArchivo">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="/assets/js/common.js"></script>
+    <script src="/assets/js/bienesEditar.js"></script>
+</body>
+</html>

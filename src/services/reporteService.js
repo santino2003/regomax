@@ -259,6 +259,7 @@ const calcularProyeccion = async (fecha, datosAcumulados) => {
 
     // Obtener los días hábiles definidos para el mes
     const diasHabilesMes = await diasHabilesRepository.obtenerDiasHabilesSeleccionados(mes, anio);
+    console.log(`\x1b[31mDías hábiles del mes ${mes}/${anio}:\x1b[0m`, diasHabilesMes);
 
     // Total de días hábiles del mes (si no hay definidos, usar calendario completo)
     let totalDiasHabilesMes = diasHabilesMes?.length || 0;

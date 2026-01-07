@@ -2,6 +2,39 @@
  * common.js - Funciones compartidas para todas las páginas del sistema
  */
 
+// Alert helper for pages that don't define their own showAlert.
+if (typeof window.showAlert !== 'function') {
+    window.showAlert = function(message, type = 'success') {
+        const placeholder = document.getElementById('alertPlaceholder');
+        if (!placeholder) {
+            alert(message);
+            return;
+        }
+
+        placeholder.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+
+        if (type === 'success') {
+            setTimeout(() => {
+                const alertEl = placeholder.querySelector('.alert');
+                if (!alertEl) {
+                    return;
+                }
+                if (window.bootstrap && window.bootstrap.Alert) {
+                    const bsAlert = new window.bootstrap.Alert(alertEl);
+                    bsAlert.close();
+                } else {
+                    alertEl.remove();
+                }
+            }, 5000);
+        }
+    };
+}
+
 // Función para evitar el caché y prevenir la navegación hacia atrás
 function preventBackNavigation() {
     // Prevenir el uso del caché para esta página

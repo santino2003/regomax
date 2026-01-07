@@ -517,8 +517,28 @@ const proveedorDetalles = {
             rubro: req.body?.rubro,
             responsable: req.user?.username
         };
+    },
+    editar: (req, res, body) => {
+        return {
+            proveedor_id: req.params?.id,
+            campos_actualizados: {
+                nombre: req.body?.nombre,
+                contacto: req.body?.contacto,
+                telefono: req.body?.telefono,
+                email: req.body?.email,
+                direccion: req.body?.direccion,
+                web: req.body?.web,
+                rubro: req.body?.rubro
+            },
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            proveedor_id: req.params?.id,
+            responsable: req.user?.username
+        };
     }
-    // Puedes agregar más acciones si lo necesitas (consultar, editar, eliminar)
 };
 
 /**
@@ -526,7 +546,8 @@ const proveedorDetalles = {
  */
 const proveedor = {
     crear: () => registrarHistorial('crear', 'proveedor', proveedorDetalles.crear),
-    // Puedes agregar más acciones si lo necesitas
+    editar: () => registrarHistorial('editar', 'proveedor', proveedorDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'proveedor', proveedorDetalles.eliminar)
 };
 
 /**
@@ -609,6 +630,325 @@ const despacho = {
     despacharBolson: () => registrarHistorial('despachar', 'bolson', despachoDetalles.crear)
 };
 
+/**
+ * Funciones específicas para extraer detalles de familias
+ */
+const familiaDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            familia_id: req.params?.id,
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            familia_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de familias
+ */
+const familia = {
+    crear: () => registrarHistorial('crear', 'familia', familiaDetalles.crear),
+    editar: () => registrarHistorial('editar', 'familia', familiaDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'familia', familiaDetalles.eliminar)
+};
+
+/**
+ * Funciones específicas para extraer detalles de centros de costo
+ */
+const centroCostoDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            centro_costo_id: req.params?.id,
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            centro_costo_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    },
+    cambiarEstado: (req, res, body) => {
+        return {
+            centro_costo_id: req.params?.id,
+            activo: req.body?.activo,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de centros de costo
+ */
+const centroCosto = {
+    crear: () => registrarHistorial('crear', 'centro_costo', centroCostoDetalles.crear),
+    editar: () => registrarHistorial('editar', 'centro_costo', centroCostoDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'centro_costo', centroCostoDetalles.eliminar),
+    cambiarEstado: () => registrarHistorial('cambiar_estado', 'centro_costo', centroCostoDetalles.cambiarEstado)
+};
+
+/**
+ * Funciones específicas para extraer detalles de categorias
+ */
+const categoriaDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            categoria_id: req.params?.id,
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            categoria_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de categorias
+ */
+const categoria = {
+    crear: () => registrarHistorial('crear', 'categoria', categoriaDetalles.crear),
+    editar: () => registrarHistorial('editar', 'categoria', categoriaDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'categoria', categoriaDetalles.eliminar)
+};
+
+/**
+ * Funciones específicas para extraer detalles de unidades de medida
+ */
+const unidadMedidaDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            nombre_lindo: req.body?.nombreLindo,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            unidad_medida_id: req.params?.id,
+            nombre: req.body?.nombre,
+            nombre_lindo: req.body?.nombreLindo,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            unidad_medida_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de unidades de medida
+ */
+const unidadMedida = {
+    crear: () => registrarHistorial('crear', 'unidadMedida', unidadMedidaDetalles.crear),
+    editar: () => registrarHistorial('editar', 'unidadMedida', unidadMedidaDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'unidadMedida', unidadMedidaDetalles.eliminar)
+};
+
+/**
+ * Funciones específicas para extraer detalles de almacenes
+ */
+const almacenDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            almacen_id: req.params?.id,
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            almacen_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de almacenes
+ */
+const almacen = {
+    crear: () => registrarHistorial('crear', 'almacen', almacenDetalles.crear),
+    editar: () => registrarHistorial('editar', 'almacen', almacenDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'almacen', almacenDetalles.eliminar)
+};
+
+/**
+ * Funciones específicas para extraer detalles de bienes
+ */
+const bienDetalles = {
+    crear: (req, res, body) => {
+        return {
+            nombre: req.body?.nombre,
+            tipo: req.body?.tipo,
+            categoria_id: req.body?.categoria_id,
+            familia_id: req.body?.familia_id,
+            precio: req.body?.precio,
+            proveedores: Array.isArray(req.body?.proveedores) ? req.body.proveedores.join(',') : req.body?.proveedores,
+            responsable: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            bien_id: req.params?.id,
+            nombre: req.body?.nombre,
+            tipo: req.body?.tipo,
+            categoria_id: req.body?.categoria_id,
+            familia_id: req.body?.familia_id,
+            precio: req.body?.precio,
+            proveedores: Array.isArray(req.body?.proveedores) ? req.body.proveedores.join(',') : req.body?.proveedores,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            bien_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    },
+    actualizarStock: (req, res, body) => {
+        return {
+            bien_id: req.params?.id,
+            cantidad: req.body?.cantidad,
+            responsable: req.user?.username
+        };
+    },
+    subirArchivo: (req, res, body) => {
+        return {
+            bien_id: req.params?.id,
+            archivo: req.file?.originalname,
+            responsable: req.user?.username
+        };
+    },
+    eliminarArchivo: (req, res, body) => {
+        return {
+            archivo_id: req.params?.archivoId,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de bienes
+ */
+const bien = {
+    crear: () => registrarHistorial('crear', 'bien', bienDetalles.crear),
+    editar: () => registrarHistorial('editar', 'bien', bienDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'bien', bienDetalles.eliminar),
+    actualizarStock: () => registrarHistorial('actualizar_stock', 'bien', bienDetalles.actualizarStock),
+    subirArchivo: () => registrarHistorial('subir_archivo', 'bien', bienDetalles.subirArchivo),
+    eliminarArchivo: () => registrarHistorial('eliminar_archivo', 'bien', bienDetalles.eliminarArchivo)
+};
+
+/**
+ * Funciones específicas para extraer detalles de órdenes de compra
+ */
+const ordenCompraDetalles = {
+    crear: (req, res, body) => {
+        return {
+            codigo: body?.data?.codigo,
+            condicion: req.body?.condicion,
+            proveedor_id: req.body?.proveedor_id,
+            asunto: req.body?.asunto,
+            items_count: req.body?.items?.length || 0,
+            creado_por: req.user?.username
+        };
+    },
+    editar: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            condicion: req.body?.condicion,
+            estado: req.body?.estado,
+            items_count: req.body?.items?.length || 0,
+            modificado_por: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            eliminado_por: req.user?.username
+        };
+    },
+    cambiarEstado: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            nuevo_estado: req.body?.estado,
+            usuario: req.user?.username
+        };
+    },
+    actualizarCantidadRecibida: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            item_id: req.params?.itemId,
+            cantidad_recibida: req.body?.cantidad_recibida,
+            usuario: req.user?.username
+        };
+    },
+    subirArchivo: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            archivo: req.file?.filename,
+            usuario: req.user?.username
+        };
+    },
+    eliminarArchivo: (req, res, body) => {
+        return {
+            orden_id: req.params?.id,
+            usuario: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de órdenes de compra
+ */
+const ordenCompra = {
+    crear: () => registrarHistorial('crear', 'orden_compra', ordenCompraDetalles.crear),
+    editar: () => registrarHistorial('editar', 'orden_compra', ordenCompraDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'orden_compra', ordenCompraDetalles.eliminar),
+    cambiarEstado: () => registrarHistorial('cambiar_estado', 'orden_compra', ordenCompraDetalles.cambiarEstado),
+    actualizarCantidadRecibida: () => registrarHistorial('actualizar_cantidad_recibida', 'orden_compra', ordenCompraDetalles.actualizarCantidadRecibida),
+    subirArchivo: () => registrarHistorial('subir_archivo', 'orden_compra', ordenCompraDetalles.subirArchivo),
+    eliminarArchivo: () => registrarHistorial('eliminar_archivo', 'orden_compra', ordenCompraDetalles.eliminarArchivo)
+};
+
 module.exports = { 
     registrarHistorial,
     registrarLogin,
@@ -618,5 +958,12 @@ module.exports = {
     parteDiario,
     despacho,
     proveedor,
-    clienteNFU
+    clienteNFU,
+    familia,
+    centroCosto,
+    categoria,
+    unidadMedida,
+    almacen,
+    bien,
+    ordenCompra
 };

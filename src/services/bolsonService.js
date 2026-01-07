@@ -1,6 +1,8 @@
 const bolsonRepository = require('../repositories/bolsonRepository');
 const barcodeGenerator = require('../utils/barcodeGenerator');
 const generarBarcodeBase64 = require('../utils/imageBarcode');
+const productoRepository = require('../repositories/productoRepository');
+const bienService = require('./bienService');
 const { format } = require('date-fns');
 const { fechaActual, formatMySQLLocal } = require('../utils/fecha');
 // const imagenBarcodeGenerator = require('../utils/imagenBarcodeGenerator');
@@ -14,6 +16,9 @@ class BolsonService {
                 throw new Error('Datos incompletos para crear el bolson');
             }
 
+            // Obtener información del producto para verificar si tiene bien asociado
+            const productoInfo = await productoRepository.obtenerPorNombre(producto);
+            
             let ultimaFecha = await bolsonRepository.getUltimaFecha();
 
             let numero = (await bolsonRepository.getUltimoNumero()) + 1;
@@ -31,14 +36,7 @@ class BolsonService {
 
             // Imprimir la hora actual para diagnóstico (10:36 según mencionado)
             const ahora = new Date();
-            console.log('=== DIAGNÓSTICO DE HORA ===');
-            console.log('Hora actual del sistema:', ahora);
-            console.log('toString():', ahora.toString());
-            console.log('toLocaleString():', ahora.toLocaleString());
-            console.log('Hora (getHours):', ahora.getHours());
-            console.log('Minutos (getMinutes):', ahora.getMinutes());
-            console.log('=== FIN DIAGNÓSTICO ===');
-            
+
             // Obtener horas y minutos para guardar
             const horas = ahora.getHours().toString().padStart(2, '0');
             const minutos = ahora.getMinutes().toString().padStart(2, '0');
@@ -50,6 +48,33 @@ class BolsonService {
             const seCreoBolson = await bolsonRepository.crearBolson(
                 codigo, producto, peso, precinto, hoy, hora, responsable
             );
+            
+            // Descontar stock de los bienes asociados si existen
+            if (productoInfo && productoInfo.bienes_asociados) {
+                try {
+                    // Parsear el JSON de bienes asociados
+                    const bienesAsociados = typeof productoInfo.bienes_asociados === 'string' 
+                        ? JSON.parse(productoInfo.bienes_asociados) 
+                        : productoInfo.bienes_asociados;
+                    
+                    if (Array.isArray(bienesAsociados) && bienesAsociados.length > 0) {                        
+                        // Descontar cada bien del array
+                        for (const bien of bienesAsociados) {
+                            if (bien.bien_id && bien.cantidad) {
+                                try {
+                                    await bienService.descontarStock(bien.bien_id, parseFloat(bien.cantidad));
+                                } catch (bienError) {
+                                    console.error(`❌ Error al descontar bien ID ${bien.bien_id}:`, bienError.message);
+                                    // Continuar con los demás bienes aunque uno falle
+                                }
+                            }
+                        }
+                    }
+                } catch (stockError) {
+                    console.error('❌ Error al procesar descuento de bienes:', stockError);
+                    // No lanzar error, el bolsón ya se creó
+                }
+            }
             
             return {
                 success: true,

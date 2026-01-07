@@ -16,12 +16,89 @@ class ProveedorRepository {
         }
     }
 
-    async obtenerTodos() {
+    async obtenerTodos(filtros = {}, page = 1, limit = 10) {
         try {
-            const result = await db.query('SELECT * FROM proveedores');
-            return result;
+            let query = 'SELECT * FROM proveedores WHERE 1=1';
+            const params = [];
+
+            // Filtrar por nombre
+            if (filtros.nombre && filtros.nombre.trim()) {
+                query += ' AND nombre LIKE ?';
+                params.push(`%${filtros.nombre.trim()}%`);
+            }
+
+            // Filtrar por contacto
+            if (filtros.contacto && filtros.contacto.trim()) {
+                query += ' AND contacto LIKE ?';
+                params.push(`%${filtros.contacto.trim()}%`);
+            }
+
+            // Filtrar por rubro
+            if (filtros.rubro && filtros.rubro.trim()) {
+                query += ' AND rubro LIKE ?';
+                params.push(`%${filtros.rubro.trim()}%`);
+            }
+
+            // Contar total de registros (antes de paginar)
+            const countQuery = query.replace('SELECT *', 'SELECT COUNT(*) as total');
+            const countResult = await db.query(countQuery, params);
+            const totalRegistros = countResult[0].total;
+
+            // Ordenar por nombre
+            query += ' ORDER BY nombre ASC';
+
+            // Agregar paginación
+            const offset = (page - 1) * limit;
+            query += ` LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+
+            const result = await db.query(query, params);
+            
+            return {
+                data: result,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total: totalRegistros,
+                    totalPages: Math.ceil(totalRegistros / limit)
+                }
+            };
         } catch (error) {
             console.error('Error al obtener proveedores:', error);
+            throw error;
+        }
+    }
+
+    async obtenerPorId(id) {
+        try {
+            const result = await db.query('SELECT * FROM proveedores WHERE id = ?', [id]);
+            return result[0] || null;
+        } catch (error) {
+            console.error('Error al obtener proveedor por ID:', error);
+            throw error;
+        }
+    }
+
+    async eliminar(id) {
+        try {
+            await db.query('DELETE FROM proveedores WHERE id = ?', [id]);
+            return true;
+        } catch (error) {
+            console.error('Error al eliminar proveedor:', error);
+            throw error;
+        }
+    }
+
+    async actualizar(id, nombre, contacto, telefono, email, direccion, web, rubro) {
+        try {
+            await db.query(
+                `UPDATE proveedores 
+                SET nombre = ?, contacto = ?, telefono = ?, email = ?, direccion = ?, web = ?, rubro = ?
+                WHERE id = ?`,
+                [nombre, contacto, telefono, email, direccion, web, rubro, id]
+            );
+            return true;
+        } catch (error) {
+            console.error('Error al actualizar proveedor:', error);
             throw error;
         }
     }

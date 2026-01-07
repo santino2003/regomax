@@ -11,4 +11,10 @@ router.get('/', authMiddleware.verifyToken, productoController.obtenerProductosA
 // Ruta para obtener solo productos con stock para planificación
 router.get('/planificacion', authMiddleware.verifyToken, productoController.listarProductosParaPlanificacion);
 
+// Ruta para actualizar un producto
+router.put('/:id', authMiddleware.verifyToken, productoController.actualizarProducto);
+
+// Ruta para eliminar un producto
+router.delete('/:id', authMiddleware.verifyToken, productoController.eliminarProducto);
+
 module.exports = router;

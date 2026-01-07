@@ -10,6 +10,7 @@ const productoController = require('../controllers/productoController');
 const despachoController = require('../controllers/despachoController');
 const parteDiarioController = require('../controllers/parteDiarioController');
 const historialController = require('../controllers/historialController');
+const ordenCompraController = require('../controllers/ordenCompraController');
 const historialService = require('../services/historialService');
 // Importar utilidades de fecha para compartir en todas las vistas
 const fechaUtils = require('../utils/fecha');
@@ -158,11 +159,23 @@ router.get('/ordenes/:id', [
 ], OVController.vistaVisualizarOrden);
 
 // Rutas de productos - con verificación de permisos
+router.get('/productos', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('productos:view')
+], productoController.vistaListarProductos);
+
 router.get('/productos/nuevo', [
     authMiddleware.verifyToken, 
     noCacheMiddleware,
     permissionsMiddleware.hasPermission('productos:create')
 ], productoController.vistaNuevoProducto);
+
+router.get('/productos/editar/:id', [
+    authMiddleware.verifyToken, 
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('productos:edit')
+], productoController.vistaEditarProducto);
 
 // Rutas de despachos - con verificación de permisos
 router.get('/despachos/nuevo', [
@@ -270,6 +283,20 @@ router.get('/proveedores/nuevo', [
     permissionsMiddleware.hasPermission('proveedor:create')
 ], proveedorController.vistaNuevoProveedor);
 
+// Vista: Editar proveedor - DEBE IR ANTES de /proveedores/:id
+router.get('/proveedores/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:edit')
+], proveedorController.vistaEditarProveedor);
+
+// Vista: Ver proveedor por ID - DEBE IR DESPUÉS de /proveedores/nuevo y /proveedores/editar/:id
+router.get('/proveedores/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:view')
+], proveedorController.vistaVerProveedor);
+
 // Vistas de Clientes NFU
 const clienteNFUController = require('../controllers/clienteNFUController');
 router.get('/clientes-nfu', [
@@ -295,6 +322,217 @@ router.get('/clientes-nfu/:id', [
     noCacheMiddleware,
     permissionsMiddleware.hasPermission('clientes_nfu:view')
 ], clienteNFUController.vistaVerCliente);
+
+// Rutas de Familias
+const familiaController = require('../controllers/familiaController');
+router.get('/familias', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('familia:view')
+], familiaController.vistaListarFamilias);
+
+router.get('/familias/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('familia:create')
+], familiaController.vistaNuevaFamilia);
+
+router.get('/familias/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('familia:edit')
+], familiaController.vistaEditarFamilia);
+
+router.get('/familias/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('familia:view')
+], familiaController.vistaVerFamilia);
+
+// Rutas de Centros de Costo
+const centroCostoController = require('../controllers/centroCostoController');
+router.get('/centros-costo/listar', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('centro_costo:view')
+], centroCostoController.vistaListar);
+
+router.get('/centros-costo/nuevo-vista', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('centro_costo:create')
+], centroCostoController.vistaNuevo);
+
+router.get('/centros-costo/:id/editar', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('centro_costo:edit')
+], centroCostoController.vistaEditar);
+
+router.get('/centros-costo/:id/ver', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('centro_costo:view')
+], centroCostoController.vistaVer);
+
+// Rutas de Categorias
+const categoriaController = require('../controllers/categoriaController');
+router.get('/categorias', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('categoria:view')
+], categoriaController.vistaListarCategorias);
+
+router.get('/categorias/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('categoria:create')
+], categoriaController.vistaNuevaCategoria);
+
+router.get('/categorias/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('categoria:edit')
+], categoriaController.vistaEditarCategoria);
+
+router.get('/categorias/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('categoria:view')
+], categoriaController.vistaVerCategoria);
+
+// Rutas de Unidades de Medida
+const unidadMedidaController = require('../controllers/unidadMedidaController');
+router.get('/unidades-medida', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('unidadMedida:view')
+], unidadMedidaController.vistaListarUnidadesMedida);
+
+router.get('/unidades-medida/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('unidadMedida:create')
+], unidadMedidaController.vistaNuevaUnidadMedida);
+
+router.get('/unidades-medida/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('unidadMedida:edit')
+], unidadMedidaController.vistaEditarUnidadMedida);
+
+router.get('/unidades-medida/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('unidadMedida:view')
+], unidadMedidaController.vistaVerUnidadMedida);
+
+// Rutas de Almacenes
+const almacenController = require('../controllers/almacenController');
+router.get('/almacenes', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('almacen:view')
+], almacenController.vistaListarAlmacenes);
+
+router.get('/almacenes/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('almacen:create')
+], almacenController.vistaNuevoAlmacen);
+
+router.get('/almacenes/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('almacen:edit')
+], almacenController.vistaEditarAlmacen);
+
+router.get('/almacenes/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('almacen:view')
+], almacenController.vistaVerAlmacen);
+
+// Rutas de Bienes
+const bienController = require('../controllers/bienController');
+router.get('/bienes', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:view')
+], bienController.vistaListarBienes);
+
+router.get('/bienes/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:create')
+], bienController.vistaNuevoBien);
+
+router.get('/bienes/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:edit')
+], bienController.vistaEditarBien);
+
+router.get('/bienes/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:view')
+], bienController.vistaVerBien);
+
+// Rutas de Kits
+const kitController = require('../controllers/kitController');
+router.get('/kits', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:view')
+], kitController.vistaListarKits);
+
+router.get('/kits/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:create')
+], kitController.vistaNuevoKit);
+
+router.get('/kits/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:edit')
+], kitController.vistaEditarKit);
+
+router.get('/kits/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('bien:view')
+], kitController.vistaVerKit);
+
+// Rutas de Órdenes de Compra
+router.get('/ordenes-compra', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_compra:view')
+], (req, res) => {
+    res.render('listarOrdenesCompra', { username: req.user.username });
+});
+
+router.get('/ordenes-compra/nueva', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_compra:create')
+], ordenCompraController.vistaNuevaOrden);
+
+router.get('/ordenes-compra/:id/editar', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_compra:edit')
+], ordenCompraController.vistaEditarOrden);
+
+router.get('/ordenes-compra/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_compra:view')
+], (req, res) => {
+    res.render('ordenCompraDetalle', { username: req.user.username, ordenId: req.params.id });
+});
 
 // Ruta para el reporte productivo (antes reporte general consolidado)
 const reporteController = require('../controllers/reporteController');

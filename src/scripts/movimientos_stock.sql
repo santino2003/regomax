@@ -1,0 +1,25 @@
+-- Tabla para registrar movimientos de stock (salidas y ajustes de inventario)
+CREATE TABLE IF NOT EXISTS movimientos_stock (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_movimiento ENUM('SALIDA', 'ENTRADA', 'AJUSTE_ENTRADA', 'AJUSTE_SALIDA') NOT NULL,
+    tipo_item ENUM('bien', 'kit') NOT NULL,
+    item_id INT NOT NULL,
+    codigo VARCHAR(50) NOT NULL,
+    nombre VARCHAR(255) NOT NULL,
+    cantidad INT NOT NULL,
+    stock_anterior INT NOT NULL,
+    stock_nuevo INT NOT NULL,
+    almacen_id INT,
+    precio_unitario DECIMAL(10,2),
+    cliente VARCHAR(255),
+    responsable VARCHAR(255) NOT NULL,
+    usuario_sistema VARCHAR(100) NOT NULL,
+    fecha_movimiento DATETIME DEFAULT CURRENT_TIMESTAMP,
+    observaciones TEXT,
+    INDEX idx_tipo_movimiento (tipo_movimiento),
+    INDEX idx_tipo_item (tipo_item, item_id),
+    INDEX idx_fecha (fecha_movimiento),
+    INDEX idx_responsable (responsable),
+    INDEX idx_almacen (almacen_id),
+    FOREIGN KEY (almacen_id) REFERENCES almacenes(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
