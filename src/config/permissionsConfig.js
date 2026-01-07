@@ -59,6 +59,7 @@ const PERMISSIONS = {
   
   // Permisos para productos
   PRODUCTOS: {
+    VIEW: 'productos:view',
     CREATE: 'productos:create',
     EDIT: 'productos:edit',
     DELETE: 'productos:delete',
@@ -94,6 +95,14 @@ const PERMISSIONS = {
     CREATE: 'categoria:create',
     EDIT: 'categoria:edit',
     DELETE: 'categoria:delete',
+  },
+  
+  // Permisos para centros de costo
+  CENTROS_COSTO: {
+    VIEW: 'centro_costo:view',
+    CREATE: 'centro_costo:create',
+    EDIT: 'centro_costo:edit',
+    DELETE: 'centro_costo:delete',
   },
   
   // Permisos para unidades de medida
