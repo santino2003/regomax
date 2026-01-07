@@ -97,6 +97,14 @@ const PERMISSIONS = {
     DELETE: 'categoria:delete',
   },
   
+  // Permisos para centros de costo
+  CENTROS_COSTO: {
+    VIEW: 'centro_costo:view',
+    CREATE: 'centro_costo:create',
+    EDIT: 'centro_costo:edit',
+    DELETE: 'centro_costo:delete',
+  },
+  
   // Permisos para unidades de medida
   UNIDADES_MEDIDA: {
     VIEW: 'unidadMedida:view',
