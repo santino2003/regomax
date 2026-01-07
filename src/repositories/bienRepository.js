@@ -136,6 +136,33 @@ class BienRepository {
      */
     async eliminarBien(id) {
         try {
+            // Verificar si hay órdenes de compra activas con este bien
+            const ordenesActivas = await db.query(`
+                SELECT oc.codigo, oc.estado 
+                FROM ordenes_compra_items oci
+                INNER JOIN ordenes_compra oc ON oci.orden_compra_id = oc.id
+                WHERE oci.bien_id = ? 
+                AND oc.estado NOT IN ('Cerrada', 'Cancelada')
+                LIMIT 5
+            `, [id]);
+            
+            if (ordenesActivas && ordenesActivas.length > 0) {
+                const codigosOrdenesActivas = ordenesActivas.map(o => o.codigo).join(', ');
+                throw new Error(`No se puede eliminar el bien porque está asociado a órdenes de compra activas: ${codigosOrdenesActivas}`);
+            }
+            
+            // Verificar si hay órdenes de compra (incluso cerradas) con este bien
+            const todasOrdenes = await db.query(`
+                SELECT COUNT(*) as total 
+                FROM ordenes_compra_items 
+                WHERE bien_id = ?
+            `, [id]);
+            
+            if (todasOrdenes && todasOrdenes[0].total > 0) {
+                throw new Error(`No se puede eliminar el bien porque está asociado a ${todasOrdenes[0].total} orden(es) de compra. Por razones de trazabilidad, los bienes con historial de órdenes no pueden eliminarse.`);
+            }
+            
+            // Si no hay órdenes de compra, proceder con la eliminación
             // Las relaciones se eliminan en cascada por las FK
             await db.query('DELETE FROM bienes WHERE id = ?', [id]);
             return true;
@@ -207,10 +234,10 @@ class BienRepository {
             return {
                 data: result,
                 pagination: {
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    total: totalRegistros,
-                    totalPages: Math.ceil(totalRegistros / limit)
+                    paginaActual: parseInt(page),
+                    limite: parseInt(limit),
+                    totalRegistros: totalRegistros,
+                    totalPaginas: Math.ceil(totalRegistros / limit)
                 }
             };
         } catch (error) {
