@@ -6,7 +6,6 @@
     <title>Órdenes de Compra - Regomax</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="/assets/css/home.css">
     <style>
         .badge-Abierta { background-color: #17a2b8; }
@@ -66,7 +65,7 @@
                     <div class="card mb-3">
                         <div class="card-body">
                             <form id="filtrosForm" class="row g-3">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="filtroEstado" class="form-label">Estado</label>
                                     <select class="form-select" id="filtroEstado" name="estado">
                                         <option value="">Todos</option>
@@ -78,7 +77,7 @@
                                         <option value="Cerrada">Cerrada</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="filtroCondicion" class="form-label">Condición</label>
                                     <select class="form-select" id="filtroCondicion" name="condicion">
                                         <option value="">Todas</option>
@@ -87,9 +86,15 @@
                                         <option value="Muy Critica">Muy Crítica</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <label for="filtroBien" class="form-label">Bien</label>
+                                    <select class="form-select" id="filtroBien" name="bien_id">
+                                        <option value="">Todos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
                                     <label for="filtroBusqueda" class="form-label">Buscar</label>
-                                    <input type="text" class="form-control" id="filtroBusqueda" name="busqueda" placeholder="Código o asunto...">
+                                    <input type="text" class="form-control" id="filtroBusqueda" name="busqueda" placeholder="Código, bien o asunto...">
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
                                     <button type="submit" class="btn btn-primary w-100">
@@ -102,22 +107,39 @@
 
                     <!-- Tabla de órdenes -->
                     <div class="table-responsive">
-                        <table id="tablaOrdenesCompra" class="table table-striped table-hover">
+                        <table class="table table-striped table-hover">
                             <thead class="table-primary">
                                 <tr>
                                     <th>Código</th>
-                                    <th>Estado</th>
-                                    <th>Condición</th>
-                                    <th>Proveedor</th>
+                                    <th>F. Creación</th>
                                     <th>F. Entrega Solicitada</th>
-                                    <th>Items</th>
-                                    <th>Creado Por</th>
-                                    <th>Fecha Creación</th>
+                                    <th>F. Entrega Proveedor</th>
+                                    <th>Estado</th>
+                                    <th>Asunto</th>
+                                    <th>Responsable</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody></tbody>
+                            <tbody id="tablaOrdenesCompra"></tbody>
                         </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    <nav aria-label="Navegación de órdenes de compra" id="paginacionContainer"></nav>
+
+                    <!-- Info de paginación y selector de items por página -->
+                    <div class="d-flex justify-content-between align-items-center mt-3" id="paginacionInfo">
+                        <div id="infoRegistros">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                        <div>
+                            <select class="form-select form-select-sm" id="limitSelector">
+                                <option value="10">10 por página</option>
+                                <option value="25">25 por página</option>
+                                <option value="50">50 por página</option>
+                                <option value="100">100 por página</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -158,167 +180,7 @@
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script>
-        const token = localStorage.getItem('token');
-
-        $(document).ready(function() {
-            cargarOrdenes();
-            
-            $('#filtrosForm').on('submit', function(e) {
-                e.preventDefault();
-                cargarOrdenes();
-            });
-
-            $('#btnGuardarEstado').on('click', function() {
-                cambiarEstado();
-            });
-
-            $('#logout-link').on('click', function(e) {
-                e.preventDefault();
-                localStorage.removeItem('token');
-                window.location.href = '/login.html';
-            });
-        });
-
-        function cargarOrdenes() {
-            const filtros = {
-                estado: $('#filtroEstado').val(),
-                condicion: $('#filtroCondicion').val(),
-                busqueda: $('#filtroBusqueda').val()
-            };
-
-            $.ajax({
-                url: '/api/ordenes-compra',
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` },
-                data: filtros,
-                success: function(response) {
-                    if (response.success) {
-                        renderizarTabla(response.data.ordenes);
-                    }
-                },
-                error: function(xhr) {
-                    mostrarAlerta('Error al cargar órdenes de compra', 'danger');
-                }
-            });
-        }
-
-        function renderizarTabla(ordenes) {
-            if ($.fn.DataTable.isDataTable('#tablaOrdenesCompra')) {
-                $('#tablaOrdenesCompra').DataTable().destroy();
-            }
-
-            const tbody = $('#tablaOrdenesCompra tbody');
-            tbody.empty();
-
-            ordenes.forEach(orden => {
-                const estadoClass = orden.estado.replace(/\s/g, '');
-                const condicionClass = orden.condicion.replace(/\s/g, '');
-                const fechaSolicitada = orden.fecha_entrega_solicitada ? 
-                    new Date(orden.fecha_entrega_solicitada).toLocaleDateString('es-AR') : '-';
-                const fechaCreacion = new Date(orden.created_at).toLocaleDateString('es-AR');
-                
-                const row = `
-                    <tr>
-                        <td><strong>${orden.codigo}</strong></td>
-                        <td><span class="badge badge-${estadoClass}">${orden.estado}</span></td>
-                        <td><span class="badge badge-${condicionClass}">${orden.condicion}</span></td>
-                        <td>${orden.proveedor_nombre || '-'}</td>
-                        <td>${fechaSolicitada}</td>
-                        <td><span class="badge bg-info">${orden.total_items}</span></td>
-                        <td>${orden.creado_por}</td>
-                        <td>${fechaCreacion}</td>
-                        <td>
-                            <a href="/ordenes-compra/${orden.id}" class="btn btn-sm btn-info" title="Ver">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="/ordenes-compra/${orden.id}/editar" class="btn btn-sm btn-warning" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button class="btn btn-sm btn-success" onclick="abrirModalEstado(${orden.id}, '${orden.estado}')" title="Cambiar Estado">
-                                <i class="bi bi-arrow-repeat"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="eliminarOrden(${orden.id})" title="Eliminar">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                tbody.append(row);
-            });
-
-            $('#tablaOrdenesCompra').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
-                },
-                order: [[7, 'desc']]
-            });
-        }
-
-        function abrirModalEstado(ordenId, estadoActual) {
-            $('#ordenIdEstado').val(ordenId);
-            $('#nuevoEstado').val(estadoActual);
-            new bootstrap.Modal($('#modalCambiarEstado')).show();
-        }
-
-        function cambiarEstado() {
-            const ordenId = $('#ordenIdEstado').val();
-            const nuevoEstado = $('#nuevoEstado').val();
-
-            $.ajax({
-                url: `/api/ordenes-compra/${ordenId}/estado`,
-                method: 'PATCH',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({ estado: nuevoEstado }),
-                success: function(response) {
-                    if (response.success) {
-                        mostrarAlerta('Estado actualizado exitosamente', 'success');
-                        $('#modalCambiarEstado').modal('hide');
-                        cargarOrdenes();
-                    }
-                },
-                error: function(xhr) {
-                    const error = xhr.responseJSON?.error || 'Error al cambiar estado';
-                    mostrarAlerta(error, 'danger');
-                }
-            });
-        }
-
-        function eliminarOrden(ordenId) {
-            if (!confirm('¿Está seguro de eliminar esta orden de compra?')) return;
-
-            $.ajax({
-                url: `/api/ordenes-compra/${ordenId}`,
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` },
-                success: function(response) {
-                    if (response.success) {
-                        mostrarAlerta('Orden eliminada exitosamente', 'success');
-                        cargarOrdenes();
-                    }
-                },
-                error: function(xhr) {
-                    const error = xhr.responseJSON?.error || 'Error al eliminar orden';
-                    mostrarAlerta(error, 'danger');
-                }
-            });
-        }
-
-        function mostrarAlerta(mensaje, tipo) {
-            const alerta = `
-                <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
-                    ${mensaje}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            $('#alertPlaceholder').html(alerta);
-            setTimeout(() => $('.alert').alert('close'), 5000);
-        }
-    </script>
+    <script src="/assets/js/common.js"></script>
+    <script src="/assets/js/listarOrdenesCompra.js"></script>
 </body>
 </html>

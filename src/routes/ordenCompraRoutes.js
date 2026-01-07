@@ -145,6 +145,14 @@ router.delete(
     ordenCompraController.eliminarArchivo
 );
 
+// Exportar orden de compra a PDF
+router.get(
+    '/:id/exportar-pdf',
+    auth.verifyToken,
+    permissionsMiddleware.hasPermission('ordenes_compra:view'),
+    ordenCompraController.exportarPDF
+);
+
 // Obtener todas las ordenes de compra (con filtros)
 router.get(
     '/',

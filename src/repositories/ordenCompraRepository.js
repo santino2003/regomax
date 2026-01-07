@@ -261,9 +261,14 @@ class OrdenCompraRepository {
                 params.push(filtros.fecha_hasta);
             }
 
+            if (filtros.bien_id) {
+                whereConditions.push('oci.bien_id = ?');
+                params.push(filtros.bien_id);
+            }
+
             if (filtros.busqueda) {
-                whereConditions.push('(oc.codigo LIKE ? OR oc.asunto LIKE ?)');
-                params.push(`%${filtros.busqueda}%`, `%${filtros.busqueda}%`);
+                whereConditions.push('(oc.codigo LIKE ? OR oc.asunto LIKE ? OR b.nombre LIKE ?)');
+                params.push(`%${filtros.busqueda}%`, `%${filtros.busqueda}%`, `%${filtros.busqueda}%`);
             }
 
             const whereClause = whereConditions.length > 0 
@@ -280,6 +285,7 @@ class OrdenCompraRepository {
                 FROM ordenes_compra oc
                 LEFT JOIN proveedores p ON oc.proveedor_id = p.id
                 LEFT JOIN ordenes_compra_items oci ON oc.id = oci.orden_compra_id
+                LEFT JOIN bienes b ON oci.bien_id = b.id
                 ${whereClause}
                 GROUP BY oc.id
                 ORDER BY oc.created_at DESC
@@ -292,6 +298,8 @@ class OrdenCompraRepository {
             const countQuery = `
                 SELECT COUNT(DISTINCT oc.id) as total
                 FROM ordenes_compra oc
+                LEFT JOIN ordenes_compra_items oci ON oc.id = oci.orden_compra_id
+                LEFT JOIN bienes b ON oci.bien_id = b.id
                 ${whereClause}
             `;
             const [countResult] = await db.query(countQuery, params);

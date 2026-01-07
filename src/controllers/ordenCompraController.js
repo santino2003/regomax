@@ -1,4 +1,5 @@
 const ordenCompraService = require('../services/ordenCompraService');
+const pdfOrdenCompraService = require('../services/pdfOrdenCompraService');
 const bienRepository = require('../repositories/bienRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
 const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
@@ -171,6 +172,7 @@ const ordenCompraController = {
                 estado: req.query.estado,
                 proveedor_id: req.query.proveedor_id,
                 condicion: req.query.condicion,
+                bien_id: req.query.bien_id,
                 fecha_desde: req.query.fecha_desde,
                 fecha_hasta: req.query.fecha_hasta,
                 busqueda: req.query.busqueda
@@ -413,6 +415,32 @@ const ordenCompraController = {
             return res.status(500).json({
                 success: false,
                 error: error.message || 'Error al obtener estadísticas'
+            });
+        }
+    },
+
+    /**
+     * Exportar orden de compra a PDF
+     */
+    async exportarPDF(req, res) {
+        try {
+            const { id } = req.params;
+            
+            // Generar el PDF
+            const pdfDoc = await pdfOrdenCompraService.generarPDF(id);
+            
+            // Configurar headers para descarga
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename=orden-compra-${id}.pdf`);
+            
+            // Pipe el PDF a la respuesta
+            pdfDoc.pipe(res);
+            
+        } catch (error) {
+            console.error('Error al exportar PDF:', error);
+            return res.status(500).json({
+                success: false,
+                error: error.message || 'Error al exportar PDF'
             });
         }
     }
