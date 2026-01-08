@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 
 // Filtro de archivos permitidos
 const fileFilter = (req, file, cb) => {
-    // Permitir documentos, imágenes y PDFs
+    // Permitir documentos, imágenes, PDFs y archivos DWG
     const allowedMimes = [
         'image/jpeg',
         'image/jpg',
@@ -42,13 +42,24 @@ const fileFilter = (req, file, cb) => {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain'
+        'text/plain',
+        'application/acad',
+        'application/x-acad',
+        'application/autocad_dwg',
+        'image/x-dwg',
+        'application/dwg',
+        'application/x-dwg',
+        'application/x-autocad',
+        'image/vnd.dwg',
+        'drawing/x-dwg'
     ];
     
-    if (allowedMimes.includes(file.mimetype)) {
+    // También permitir archivos con extensión .dwg aunque el mimetype no coincida
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedMimes.includes(file.mimetype) || ext === '.dwg') {
         cb(null, true);
     } else {
-        cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes, PDFs y documentos de Office.'), false);
+        cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes, PDFs, documentos de Office y archivos DWG.'), false);
     }
 };
 
@@ -67,7 +78,7 @@ router.post(
     '/nuevo',
     auth.verifyToken,
     permissionsMiddleware.hasPermission('ordenes_compra:create'),
-    upload.single('archivo'),
+    upload.array('archivos', 10),
     historialMiddleware.ordenCompra?.crear() || ((req, res, next) => next()),
     ordenCompraController.nuevaOrdenCompra
 );
@@ -77,7 +88,7 @@ router.put(
     '/:id',
     auth.verifyToken,
     permissionsMiddleware.hasPermission('ordenes_compra:edit'),
-    upload.single('archivo'),
+    upload.array('archivos', 10),
     historialMiddleware.ordenCompra?.editar() || ((req, res, next) => next()),
     ordenCompraController.modificarOrdenCompra
 );
@@ -121,7 +132,7 @@ router.patch(
 router.patch(
     '/:id/items/:itemId/cantidad-recibida',
     auth.verifyToken,
-    permissionsMiddleware.hasPermission('ordenes_compra:edit'),
+    permissionsMiddleware.hasPermission('ordenes_compra:view'),
     historialMiddleware.ordenCompra?.actualizarCantidadRecibida() || ((req, res, next) => next()),
     ordenCompraController.actualizarCantidadRecibida
 );
@@ -131,7 +142,7 @@ router.post(
     '/:id/archivos',
     auth.verifyToken,
     permissionsMiddleware.hasPermission('ordenes_compra:edit'),
-    upload.single('archivo'),
+    upload.array('archivos', 10),
     historialMiddleware.ordenCompra?.subirArchivo() || ((req, res, next) => next()),
     ordenCompraController.subirArchivo
 );
