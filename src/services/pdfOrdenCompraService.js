@@ -135,8 +135,8 @@ class PDFOrdenCompraService {
                     xPos = 40;
                     const rowHeight = 22;
 
-                    // Bien (código + nombre) - texto más pequeño
-                    const bienText = `${item.bien_codigo || ''} - ${item.bien_nombre || ''}`;
+                    // Bien (solo nombre, sin código)
+                    const bienText = item.bien_nombre || '';
                     doc.fontSize(7)
                        .text(bienText, xPos + 5, currentY, { 
                            width: colWidths.bien - 10, 
