@@ -169,7 +169,9 @@ class OrdenCompraService {
                 asunto: ordenData.asunto !== undefined ? ordenData.asunto : ordenActual.asunto,
                 proveedor_id: ordenData.proveedor_id !== undefined 
                     ? ordenData.proveedor_id 
-                    : ordenActual.proveedor_id
+                    : ordenActual.proveedor_id,
+                archivos_adjuntos: ordenData.archivos_adjuntos, // Agregar archivos nuevos
+                archivos_eliminar: ordenData.archivos_eliminar // Archivos a eliminar
             };
 
             // Si se proporcionan items, usarlos; sino mantener los actuales

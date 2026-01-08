@@ -221,8 +221,10 @@
             $('#ordenDetalle').html(html);
             
             // Renderizar archivos adjuntos
-            if (orden.archivo_adjunto && $('#archivos-container').length > 0) {
-                renderizarArchivos(orden.archivo_adjunto);
+            if (orden.archivo_adjunto) {
+                if ($('#archivos-container').length > 0) {
+                    renderizarArchivos(orden.archivo_adjunto);
+                }
             }
         }
 
@@ -232,6 +234,7 @@
             
             try {
                 const archivos = JSON.parse(archivoAdjunto);
+                
                 if (Array.isArray(archivos)) {
                     archivos.forEach(archivo => {
                         const extension = archivo.split('.').pop().toLowerCase();

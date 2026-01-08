@@ -122,6 +122,13 @@ const ordenCompraController = {
                 }
             }
 
+            // Archivos a eliminar
+            if (ordenData.archivos_eliminar) {
+                if (typeof ordenData.archivos_eliminar === 'string') {
+                    ordenData.archivos_eliminar = JSON.parse(ordenData.archivos_eliminar);
+                }
+            }
+
             // Si hay archivos adjuntos (múltiples archivos)
             if (req.files && req.files.length > 0) {
                 ordenData.archivos_adjuntos = req.files.map(file => file.filename);

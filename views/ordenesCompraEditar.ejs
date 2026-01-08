@@ -120,15 +120,20 @@
                                                     archivosActuales = [orden.archivo_adjunto];
                                                 }
                                                 %>
-                                                <small class="text-muted d-block mb-1">Archivos actuales:</small>
-                                                <% archivosActuales.forEach(function(archivo) { %>
-                                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                                        <i class="bi bi-file-earmark"></i>
-                                                        <a href="/uploads/ordenes-compra/<%= archivo %>" target="_blank" class="text-decoration-none">
-                                                            <%= archivo %>
-                                                        </a>
-                                                    </div>
-                                                <% }); %>
+                                                <small class="text-muted d-block mb-2">Archivos actuales:</small>
+                                                <div id="archivos-actuales">
+                                                    <% archivosActuales.forEach(function(archivo, index) { %>
+                                                        <div class="d-flex align-items-center gap-2 mb-1" data-archivo="<%= archivo %>">
+                                                            <i class="bi bi-file-earmark"></i>
+                                                            <a href="/uploads/ordenes-compra/<%= archivo %>" target="_blank" class="text-decoration-none flex-grow-1">
+                                                                <%= archivo %>
+                                                            </a>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarArchivo('<%= archivo %>')">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    <% }); %>
+                                                </div>
                                             </div>
                                         <% } %>
                                         <input type="file" class="form-control" id="archivos" name="archivos" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.dwg">
@@ -346,6 +351,21 @@
             $(`[data-item="${itemId}"]`).remove();
         }
 
+        // Array para rastrear archivos a eliminar
+        let archivosAEliminar = [];
+
+        function eliminarArchivo(nombreArchivo) {
+            if (confirm('¿Estás seguro de eliminar este archivo?')) {
+                // Marcar para eliminación
+                archivosAEliminar.push(nombreArchivo);
+                
+                // Remover visualmente
+                $(`[data-archivo="${nombreArchivo}"]`).fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }
+        }
+
         function guardarOrden() {
             const formData = new FormData();
             
@@ -361,6 +381,11 @@
                 for (let i = 0; i < archivos.length; i++) {
                     formData.append('archivos', archivos[i]);
                 }
+            }
+
+            // Archivos a eliminar
+            if (archivosAEliminar.length > 0) {
+                formData.append('archivos_eliminar', JSON.stringify(archivosAEliminar));
             }
 
             // Items

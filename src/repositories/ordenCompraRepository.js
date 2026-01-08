@@ -110,12 +110,20 @@ class OrdenCompraRepository {
                 ordenData.proveedor_id || null
             ];
             
-            // Si hay nuevos archivos, agregarlos a los existentes
-            if (ordenData.archivos_adjuntos && ordenData.archivos_adjuntos.length > 0) {
-                const ordenActual = await this.obtenerPorId(id);
+            // Si hay nuevos archivos o archivos a eliminar, actualizar
+            if ((ordenData.archivos_adjuntos && ordenData.archivos_adjuntos.length > 0) || 
+                (ordenData.archivos_eliminar && ordenData.archivos_eliminar.length > 0)) {
+                
+                // Obtener archivo actual usando la misma conexión
+                const [rows] = await connection.query(
+                    'SELECT archivo_adjunto FROM ordenes_compra WHERE id = ?',
+                    [id]
+                );
+                
+                const ordenActual = rows[0];
                 let archivosExistentes = [];
                 
-                if (ordenActual.archivo_adjunto) {
+                if (ordenActual && ordenActual.archivo_adjunto) {
                     try {
                         archivosExistentes = JSON.parse(ordenActual.archivo_adjunto);
                         if (!Array.isArray(archivosExistentes)) {
@@ -126,9 +134,20 @@ class OrdenCompraRepository {
                     }
                 }
                 
-                archivosExistentes = [...archivosExistentes, ...ordenData.archivos_adjuntos];
+                // Eliminar archivos marcados
+                if (ordenData.archivos_eliminar && ordenData.archivos_eliminar.length > 0) {
+                    archivosExistentes = archivosExistentes.filter(
+                        archivo => !ordenData.archivos_eliminar.includes(archivo)
+                    );
+                }
+                
+                // Agregar nuevos archivos
+                if (ordenData.archivos_adjuntos && ordenData.archivos_adjuntos.length > 0) {
+                    archivosExistentes = [...archivosExistentes, ...ordenData.archivos_adjuntos];
+                }
+                
                 updateFields += ', archivo_adjunto = ?';
-                updateValues.push(JSON.stringify(archivosExistentes));
+                updateValues.push(archivosExistentes.length > 0 ? JSON.stringify(archivosExistentes) : null);
             }
             
             updateValues.push(id);
