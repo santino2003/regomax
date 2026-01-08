@@ -1,10 +1,19 @@
 $(document).ready(function() {
     let itemEncontrado = null;
+    let procesandoSalida = false; // Flag para controlar el estado de procesamiento
 
     // Auto-focus en el input de código al cargar
     setTimeout(() => {
         $('#codigoInput').focus();
     }, 100);
+
+    // Evento cuando el modal se oculta (por cualquier motivo)
+    $('#confirmModal').on('hidden.bs.modal', function() {
+        // Solo limpiar si no estamos procesando
+        if (!procesandoSalida) {
+            $('#btnEntregar').prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Entregar');
+        }
+    });
 
     // Buscar al presionar ENTER
     $('#codigoInput').on('keypress', function(e) {
@@ -70,6 +79,9 @@ $(document).ready(function() {
      * Mostrar paso 2 con información del item
      */
     function mostrarPaso2(item) {
+        // Resetear estado de procesamiento
+        procesandoSalida = false;
+        
         // Guardar datos en campos ocultos
         $('#itemId').val(item.id);
         $('#tipoItem').val(item.tipo_item);
@@ -93,6 +105,9 @@ $(document).ready(function() {
             card.addClass('item-info-card');
         }
 
+        // Asegurar que el botón esté habilitado
+        $('#btnEntregar').prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Entregar');
+
         // Cambiar a paso 2
         $('#paso1-tab').removeClass('active');
         $('#paso2-tab').addClass('active');
@@ -113,6 +128,7 @@ $(document).ready(function() {
      */
     function volverPaso1() {
         itemEncontrado = null;
+        procesandoSalida = false; // Resetear estado de procesamiento
         
         // Cambiar a paso 1
         $('#paso2-tab').removeClass('active');
@@ -128,6 +144,12 @@ $(document).ready(function() {
         $('#formSalida')[0].reset();
         $('#cantidadInput').val(1);
 
+        // Restablecer botón de entregar
+        $('#btnEntregar').prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Entregar');
+        
+        // Restablecer botón de confirmar
+        $('#btnConfirmarSalida').prop('disabled', false);
+
         // Limpiar alertas
         $('#alertPlaceholder').empty();
     }
@@ -136,6 +158,11 @@ $(document).ready(function() {
      * Procesar salida
      */
     function procesarSalida() {
+        // Evitar procesar si ya está procesando
+        if (procesandoSalida) {
+            return;
+        }
+
         const cantidad = parseInt($('#cantidadInput').val());
         const responsable = $('#responsableInput').val().trim();
 
@@ -169,15 +196,26 @@ $(document).ready(function() {
      * Confirmar y procesar salida (desde el modal)
      */
     $('#btnConfirmarSalida').on('click', function() {
+        const botonConfirmar = $(this);
+        const botonEntregar = $('#btnEntregar');
+        
+        // Marcar que estamos procesando
+        procesandoSalida = true;
+        
+        // Deshabilitar botón de confirmar para evitar doble clic
+        botonConfirmar.prop('disabled', true);
+        
         // Cerrar modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
-        modal.hide();
+        if (modal) {
+            modal.hide();
+        }
 
         const cantidad = parseInt($('#cantidadInput').val());
         const responsable = $('#responsableInput').val().trim();
 
-        // Deshabilitar botón
-        $('#btnEntregar').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Procesando...');
+        // Deshabilitar botón de entregar y mostrar estado de procesamiento
+        botonEntregar.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Procesando...');
 
         // Enviar datos
         const datos = {
@@ -193,6 +231,10 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify(datos),
             success: function(response) {
+                // Rehabilitar botón de confirmar
+                botonConfirmar.prop('disabled', false);
+                procesandoSalida = false;
+                
                 if (response.success) {
                     mostrarAlerta(response.message, 'success');
                     
@@ -202,13 +244,17 @@ $(document).ready(function() {
                     }, 2000);
                 } else {
                     mostrarAlerta('Error al procesar la salida', 'danger');
-                    $('#btnEntregar').prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Entregar');
+                    botonEntregar.prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Entregar');
                 }
             },
             error: function(xhr) {
+                // Rehabilitar botón de confirmar
+                botonConfirmar.prop('disabled', false);
+                procesandoSalida = false;
+                
                 const error = xhr.responseJSON?.error || 'Error al procesar la salida';
                 mostrarAlerta(error, 'danger');
-                $('#btnEntregar').prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Entregar');
+                botonEntregar.prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Entregar');
             }
         });
     });
