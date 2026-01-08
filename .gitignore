@@ -2,3 +2,7 @@ node_modules/
 .env
 Bienes.csv
 importarBienesCSV.js
+items_rechazados.json
+migrarOC.js
+OrdenesDeCompra.csv
+OrdenesCompraItems.csv

@@ -143,13 +143,13 @@ function renderizarTabla(ordenes) {
 function renderizarPaginacion(pagination, filtros) {
     const container = $('#paginacionContainer');
     
-    if (!pagination || pagination.totalPages <= 1) {
+    if (!pagination || pagination.totalPaginas <= 1) {
         container.html('');
         return;
     }
 
-    const totalPages = pagination.totalPages;
-    const currentPageNum = pagination.page;
+    const totalPages = pagination.totalPaginas;
+    const currentPageNum = pagination.paginaActual;
     const maxPagesToShow = 5;
     
     let startPage = Math.max(1, currentPageNum - Math.floor(maxPagesToShow / 2));
@@ -236,8 +236,8 @@ function renderizarPaginacion(pagination, filtros) {
 
 function renderizarInfoRegistros(cantidadMostrada, pagination) {
     const infoDiv = $('#infoRegistros');
-    if (pagination && pagination.total) {
-        infoDiv.html(`Mostrando ${cantidadMostrada} de ${pagination.total} órdenes de compra`);
+    if (pagination && pagination.totalRegistros) {
+        infoDiv.html(`Mostrando ${cantidadMostrada} de ${pagination.totalRegistros} órdenes de compra`);
     } else {
         infoDiv.html('');
     }

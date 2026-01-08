@@ -1,6 +1,7 @@
 // listarBienes.js
 $(document).ready(function() {
     let currentPage = 1;
+    let currentLimit = 10;
     let currentFilters = {};
     let bienIdToDelete = null;
     const modalEliminar = new bootstrap.Modal('#modalEliminar');
@@ -19,7 +20,7 @@ $(document).ready(function() {
     function cargarBienes(page = 1) {
         const params = new URLSearchParams({
             page: page,
-            limit: 10,
+            limit: currentLimit,
             ...currentFilters
         });
         
@@ -29,6 +30,7 @@ $(document).ready(function() {
                 if (data.success) {
                     renderTabla(data.data.bienes);
                     renderPaginacion(data.data.paginacion);
+                    renderInfoRegistros(data.data.bienes.length, data.data.paginacion);
                     currentPage = page;
                 } else {
                     showAlert('Error al cargar los bienes', 'danger');
@@ -89,36 +91,99 @@ $(document).ready(function() {
             return;
         }
         
+        const totalPages = paginacion.totalPaginas;
+        const currentPageNum = paginacion.paginaActual;
+        const maxPagesToShow = 5;
+        
+        let startPage = Math.max(1, currentPageNum - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        
+        // Ajustar el rango si estamos cerca del final
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
         let html = '';
         
-        // Botón anterior
+        // Botón Primera Página
         html += `
-            <li class="page-item ${paginacion.paginaActual === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="cambiarPagina(${paginacion.paginaActual - 1}); return false;">Anterior</a>
+            <li class="page-item ${currentPageNum === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="cambiarPagina(1); return false;" aria-label="Primera">
+                    <span aria-hidden="true">&laquo;&laquo;</span>
+                </a>
             </li>
         `;
         
-        // Páginas
-        for (let i = 1; i <= paginacion.totalPaginas; i++) {
-            if (i === 1 || i === paginacion.totalPaginas || (i >= paginacion.paginaActual - 2 && i <= paginacion.paginaActual + 2)) {
-                html += `
-                    <li class="page-item ${i === paginacion.paginaActual ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="cambiarPagina(${i}); return false;">${i}</a>
-                    </li>
-                `;
-            } else if (i === paginacion.paginaActual - 3 || i === paginacion.paginaActual + 3) {
+        // Botón Anterior
+        html += `
+            <li class="page-item ${currentPageNum === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="cambiarPagina(${currentPageNum - 1}); return false;" aria-label="Anterior">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        `;
+        
+        // Mostrar primera página si no está en el rango
+        if (startPage > 1) {
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="cambiarPagina(1); return false;">1</a>
+                </li>
+            `;
+            if (startPage > 2) {
                 html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
             }
         }
         
-        // Botón siguiente
+        // Páginas numéricas
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+                <li class="page-item ${i === currentPageNum ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="cambiarPagina(${i}); return false;">${i}</a>
+                </li>
+            `;
+        }
+        
+        // Mostrar última página si no está en el rango
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="cambiarPagina(${totalPages}); return false;">${totalPages}</a>
+                </li>
+            `;
+        }
+        
+        // Botón Siguiente
         html += `
-            <li class="page-item ${paginacion.paginaActual === paginacion.totalPaginas ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="cambiarPagina(${paginacion.paginaActual + 1}); return false;">Siguiente</a>
+            <li class="page-item ${currentPageNum === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="cambiarPagina(${currentPageNum + 1}); return false;" aria-label="Siguiente">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        `;
+        
+        // Botón Última Página
+        html += `
+            <li class="page-item ${currentPageNum === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="cambiarPagina(${totalPages}); return false;" aria-label="Última">
+                    <span aria-hidden="true">&raquo;&raquo;</span>
+                </a>
             </li>
         `;
         
         paginationEl.html(html);
+    }
+    
+    function renderInfoRegistros(cantidadMostrada, paginacion) {
+        const infoDiv = $('#infoRegistros');
+        if (paginacion && paginacion.totalRegistros) {
+            infoDiv.html(`Mostrando ${cantidadMostrada} de ${paginacion.totalRegistros} bienes`);
+        } else {
+            infoDiv.html('');
+        }
     }
     
     // Funciones globales para usar en onclick
@@ -187,6 +252,12 @@ $(document).ready(function() {
         $('#filtroBusqueda').val('');
         $('#filtroCritico').prop('checked', false);
         currentFilters = {};
+        cargarBienes(1);
+    });
+    
+    // Selector de límite
+    $('#limitSelector').on('change', function() {
+        currentLimit = parseInt($(this).val());
         cargarBienes(1);
     });
     
