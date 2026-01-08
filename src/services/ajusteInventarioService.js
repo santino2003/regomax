@@ -1,5 +1,6 @@
 const ajusteInventarioRepository = require('../repositories/ajusteInventarioRepository');
 const bienRepository = require('../repositories/bienRepository');
+const bienService = require('./bienService');
 
 class AjusteInventarioService {
     /**
@@ -65,7 +66,13 @@ class AjusteInventarioService {
             const resultado = await ajusteInventarioRepository.registrarAjuste(ajusteData);
 
             // Actualizar el stock del bien
-            await bienRepository.actualizarStock(data.item_id, stockNuevo);
+            // Para SALIDA/AJUSTE_SALIDA usar descontarStock que maneja alertas
+            // Para ENTRADA/AJUSTE_ENTRADA actualizar directamente
+            if (data.tipo_movimiento === 'SALIDA' || data.tipo_movimiento === 'AJUSTE_SALIDA') {
+                await bienService.descontarStock(data.item_id, parseInt(data.cantidad));
+            } else {
+                await bienRepository.actualizarStock(data.item_id, stockNuevo);
+            }
 
             return {
                 success: true,

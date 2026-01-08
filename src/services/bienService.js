@@ -221,6 +221,8 @@ class BienService {
             await bienRepository.actualizarStock(id, nuevaCantidad);
             
             // Verificar si se alcanza el stock crítico
+            console.log(`📊 Verificando stock crítico - Bien ID ${id}: nuevo=${nuevaCantidad}, crítico=${bien.cantidad_critica}, previo=${cantidadPrevia}`);
+            
             if (nuevaCantidad <= bien.cantidad_critica && bien.cantidad_critica !== null && cantidadPrevia > bien.cantidad_critica) {
                 console.warn(`⚠️ Advertencia: El stock del bien ID ${id} ha alcanzado el nivel crítico (${nuevaCantidad} unidades restantes).`);
                 
@@ -229,12 +231,23 @@ class BienService {
                 
                 // Obtener emails de usuarios configurados para recibir alertas
                 try {
+                    console.log('📧 Obteniendo emails de destinatarios para alerta...');
                     const emailsDestinatarios = await configAlertasStockRepository.obtenerEmailsActivos();
-                    await emailService.enviarAlertaStockCritico(bien, emailsDestinatarios);
+                    console.log('📧 Emails encontrados:', emailsDestinatarios);
+                    
+                    if (emailsDestinatarios && emailsDestinatarios.length > 0) {
+                        console.log('📧 Enviando email de alerta de stock crítico...');
+                        await emailService.enviarAlertaStockCritico(bien, emailsDestinatarios);
+                        console.log('✅ Email de alerta enviado exitosamente');
+                    } else {
+                        console.warn('⚠️ No hay destinatarios configurados para recibir alertas de stock');
+                    }
                 } catch (emailError) {
-                    console.error('Error al enviar email de stock crítico (el descuento ya se realizó):', emailError);
+                    console.error('❌ Error al enviar email de stock crítico (el descuento ya se realizó):', emailError);
                     // No lanzar error ya que el descuento ya se completó
                 }
+            } else {
+                console.log(`ℹ️ Stock no alcanzó el nivel crítico o ya estaba por debajo. No se envía alerta.`);
             }
             
             return {
