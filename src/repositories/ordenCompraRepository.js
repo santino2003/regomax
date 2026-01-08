@@ -209,6 +209,34 @@ class OrdenCompraRepository {
     }
 
     /**
+     * Obtener el siguiente número de orden disponible
+     * Extrae el número máximo de los códigos OC-XXXX y retorna el siguiente
+     */
+    async obtenerSiguienteNumeroOrden() {
+        try {
+            // Buscar todos los códigos que empiezan con OC- y extraer el número máximo
+            const result = await db.query(`
+                SELECT CAST(SUBSTRING(codigo, 4) AS UNSIGNED) as numero
+                FROM ordenes_compra 
+                WHERE codigo LIKE 'OC-%' 
+                  AND codigo REGEXP '^OC-[0-9]+$'
+                ORDER BY CAST(SUBSTRING(codigo, 4) AS UNSIGNED) DESC 
+                LIMIT 1
+            `);
+            
+            if (result.length > 0 && result[0].numero) {
+                return result[0].numero + 1;
+            }
+            
+            // Si no hay órdenes, empezar desde 1
+            return 1;
+        } catch (error) {
+            console.error('Error en OrdenCompraRepository.obtenerSiguienteNumeroOrden:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Eliminar una orden de compra
      */
     async eliminarOrdenCompra(id) {

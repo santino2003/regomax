@@ -6,12 +6,13 @@ const userRepository = require('../repositories/userRepository');
 
 class OrdenCompraService {
     /**
-     * Generar código único para la orden de compra basado en el ID
-     * Formato: OC-XXX (se genera después de insertar en BD)
+     * Generar código único para la orden de compra
+     * Obtiene el siguiente número disponible de la BD
+     * Formato: OC-XXX (mínimo 3 dígitos con ceros a la izquierda)
      */
-    generarCodigoPorId(id) {
-        // Formato: OC-XXX (mínimo 3 dígitos con ceros a la izquierda)
-        return `OC-${id.toString().padStart(3, '0')}`;
+    async generarSiguienteCodigo() {
+        const siguienteNumero = await ordenCompraRepository.obtenerSiguienteNumeroOrden();
+        return `OC-${siguienteNumero.toString().padStart(3, '0')}`;
     }
 
     /**
@@ -61,9 +62,12 @@ class OrdenCompraService {
                 }
             }
 
-            // Preparar datos de la orden (sin código, se generará después con el ID)
+            // Preparar datos de la orden
+            // Generar código antes de crear la orden
+            const codigoFinal = await this.generarSiguienteCodigo();
+            
             const datosOrden = {
-                codigo: 'TEMP', // Código temporal, se actualizará después
+                codigo: codigoFinal, // Código ya generado con el siguiente número disponible
                 estado: 'Abierta', // Siempre inicia en Abierta
                 fecha_entrega_solicitada: ordenData.fecha_entrega_solicitada || null,
                 fecha_entrega_proveedor: ordenData.fecha_entrega_proveedor || null,
@@ -76,10 +80,6 @@ class OrdenCompraService {
 
             // Crear la orden con sus items
             const result = await ordenCompraRepository.crearOrdenCompra(datosOrden, ordenData.items);
-            
-            // Generar código basado en el ID y actualizar
-            const codigoFinal = this.generarCodigoPorId(result.id);
-            await ordenCompraRepository.actualizarCodigo(result.id, codigoFinal);
             
             // Actualizar el código en el resultado
             result.codigo = codigoFinal;
