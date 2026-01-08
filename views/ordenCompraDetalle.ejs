@@ -175,10 +175,42 @@
                         ${orden.archivo_adjunto ? `
                         <div class="row mb-3">
                             <div class="col-12">
-                                <p><strong>Archivo Adjunto:</strong></p>
-                                <a href="/uploads/ordenes-compra/${orden.archivo_adjunto}" target="_blank" class="btn btn-sm btn-info">
-                                    <i class="bi bi-download me-1"></i>Descargar Archivo
-                                </a>
+                                <p><strong>Archivos Adjuntos:</strong></p>
+                                ${(() => {
+                                    try {
+                                        const archivos = JSON.parse(orden.archivo_adjunto);
+                                        if (Array.isArray(archivos)) {
+                                            return archivos.map(archivo => {
+                                                const extension = archivo.split('.').pop().toLowerCase();
+                                                const iconos = {
+                                                    'pdf': 'bi-file-pdf text-danger',
+                                                    'doc': 'bi-file-word text-primary',
+                                                    'docx': 'bi-file-word text-primary',
+                                                    'xls': 'bi-file-excel text-success',
+                                                    'xlsx': 'bi-file-excel text-success',
+                                                    'jpg': 'bi-file-image text-info',
+                                                    'jpeg': 'bi-file-image text-info',
+                                                    'png': 'bi-file-image text-info',
+                                                    'dwg': 'bi-file-earmark-code text-warning'
+                                                };
+                                                const icono = iconos[extension] || 'bi-file-earmark';
+                                                return \`
+                                                    <div class="d-inline-block me-2 mb-2">
+                                                        <a href="/uploads/ordenes-compra/\${archivo}" target="_blank" class="btn btn-sm btn-outline-info">
+                                                            <i class="bi \${icono} me-1"></i>\${archivo}
+                                                        </a>
+                                                    </div>
+                                                \`;
+                                            }).join('');
+                                        }
+                                    } catch(e) {
+                                        return \`
+                                            <a href="/uploads/ordenes-compra/\${orden.archivo_adjunto}" target="_blank" class="btn btn-sm btn-info">
+                                                <i class="bi bi-download me-1"></i>Descargar Archivo
+                                            </a>
+                                        \`;
+                                    }
+                                })()}
                             </div>
                         </div>
                         ` : ''}

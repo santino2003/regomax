@@ -22,6 +22,12 @@ class OrdenCompraRepository {
         try {
             await connection.beginTransaction();
             
+            // Si hay múltiples archivos, guardarlos como JSON
+            let archivoAdjunto = ordenData.archivo_adjunto || null;
+            if (ordenData.archivos_adjuntos && ordenData.archivos_adjuntos.length > 0) {
+                archivoAdjunto = JSON.stringify(ordenData.archivos_adjuntos);
+            }
+            
             // Insertar la orden de compra
             const [result] = await connection.query(
                 `INSERT INTO ordenes_compra (
@@ -35,7 +41,7 @@ class OrdenCompraRepository {
                     ordenData.fecha_entrega_proveedor || null,
                     ordenData.condicion,
                     ordenData.asunto || null,
-                    ordenData.archivo_adjunto || null,
+                    archivoAdjunto,
                     ordenData.proveedor_id || null,
                     ordenData.creado_por
                 ]
@@ -86,25 +92,51 @@ class OrdenCompraRepository {
         try {
             await connection.beginTransaction();
             
+            // Preparar datos de actualización
+            let updateFields = `
+                estado = ?,
+                fecha_entrega_solicitada = ?, 
+                fecha_entrega_proveedor = ?,
+                condicion = ?, 
+                asunto = ?, 
+                proveedor_id = ?
+            `;
+            let updateValues = [
+                ordenData.estado,
+                ordenData.fecha_entrega_solicitada || null,
+                ordenData.fecha_entrega_proveedor || null,
+                ordenData.condicion,
+                ordenData.asunto || null,
+                ordenData.proveedor_id || null
+            ];
+            
+            // Si hay nuevos archivos, agregarlos a los existentes
+            if (ordenData.archivos_adjuntos && ordenData.archivos_adjuntos.length > 0) {
+                const ordenActual = await this.obtenerPorId(id);
+                let archivosExistentes = [];
+                
+                if (ordenActual.archivo_adjunto) {
+                    try {
+                        archivosExistentes = JSON.parse(ordenActual.archivo_adjunto);
+                        if (!Array.isArray(archivosExistentes)) {
+                            archivosExistentes = [ordenActual.archivo_adjunto];
+                        }
+                    } catch (e) {
+                        archivosExistentes = [ordenActual.archivo_adjunto];
+                    }
+                }
+                
+                archivosExistentes = [...archivosExistentes, ...ordenData.archivos_adjuntos];
+                updateFields += ', archivo_adjunto = ?';
+                updateValues.push(JSON.stringify(archivosExistentes));
+            }
+            
+            updateValues.push(id);
+            
             // Actualizar la orden de compra
             await connection.query(
-                `UPDATE ordenes_compra SET 
-                    estado = ?,
-                    fecha_entrega_solicitada = ?, 
-                    fecha_entrega_proveedor = ?,
-                    condicion = ?, 
-                    asunto = ?, 
-                    proveedor_id = ?
-                WHERE id = ?`,
-                [
-                    ordenData.estado,
-                    ordenData.fecha_entrega_solicitada || null,
-                    ordenData.fecha_entrega_proveedor || null,
-                    ordenData.condicion,
-                    ordenData.asunto || null,
-                    ordenData.proveedor_id || null,
-                    id
-                ]
+                `UPDATE ordenes_compra SET ${updateFields} WHERE id = ?`,
+                updateValues
             );
             
             // Actualizar items: eliminar todos y volver a insertar
@@ -429,6 +461,75 @@ class OrdenCompraRepository {
             return stats;
         } catch (error) {
             console.error('Error en OrdenCompraRepository.obtenerEstadisticas:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Agregar múltiples archivos a una orden de compra
+     */
+    async agregarArchivos(ordenId, archivos) {
+        try {
+            // Obtener archivos existentes
+            const ordenActual = await this.obtenerPorId(ordenId);
+            let archivosExistentes = [];
+            
+            if (ordenActual.archivo_adjunto) {
+                try {
+                    archivosExistentes = JSON.parse(ordenActual.archivo_adjunto);
+                    if (!Array.isArray(archivosExistentes)) {
+                        archivosExistentes = [ordenActual.archivo_adjunto];
+                    }
+                } catch (e) {
+                    // Si no es JSON, es un archivo único
+                    archivosExistentes = [ordenActual.archivo_adjunto];
+                }
+            }
+            
+            // Agregar nuevos archivos
+            archivosExistentes = [...archivosExistentes, ...archivos];
+            
+            // Actualizar en la base de datos como JSON
+            await db.query(
+                'UPDATE ordenes_compra SET archivo_adjunto = ? WHERE id = ?',
+                [JSON.stringify(archivosExistentes), ordenId]
+            );
+            
+            return true;
+        } catch (error) {
+            console.error('Error en OrdenCompraRepository.agregarArchivos:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener archivos de una orden de compra
+     */
+    async obtenerArchivos(ordenId) {
+        try {
+            const orden = await this.obtenerPorId(ordenId);
+            if (orden && orden.archivo_adjunto) {
+                try {
+                    const archivos = JSON.parse(orden.archivo_adjunto);
+                    if (Array.isArray(archivos)) {
+                        return archivos.map((archivo, index) => ({
+                            id: index + 1,
+                            nombre_archivo: archivo,
+                            ruta_archivo: archivo
+                        }));
+                    }
+                } catch (e) {
+                    // Si no es JSON, es un archivo único
+                    return [{
+                        id: 1,
+                        nombre_archivo: orden.archivo_adjunto,
+                        ruta_archivo: orden.archivo_adjunto
+                    }];
+                }
+            }
+            return [];
+        } catch (error) {
+            console.error('Error en OrdenCompraRepository.obtenerArchivos:', error);
             throw error;
         }
     }

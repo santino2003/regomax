@@ -73,7 +73,8 @@ class OrdenCompraService {
                 fecha_entrega_proveedor: ordenData.fecha_entrega_proveedor || null,
                 condicion: ordenData.condicion,
                 asunto: ordenData.asunto || null,
-                archivo_adjunto: ordenData.archivo_adjunto || null,
+                archivo_adjunto: ordenData.archivo_adjunto || null, // Legacy - un solo archivo
+                archivos_adjuntos: ordenData.archivos_adjuntos || [], // Múltiples archivos
                 proveedor_id: ordenData.proveedor_id || null,
                 creado_por: usuario
             };
@@ -382,7 +383,7 @@ class OrdenCompraService {
     }
 
     /**
-     * Actualizar archivo adjunto
+     * Actualizar archivo adjunto (método legacy - mantener por compatibilidad)
      */
     async actualizarArchivo(id, rutaArchivo) {
         try {
@@ -399,6 +400,31 @@ class OrdenCompraService {
             };
         } catch (error) {
             console.error('Error en OrdenCompraService.actualizarArchivo:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Agregar múltiples archivos adjuntos a una orden de compra
+     */
+    async agregarArchivos(id, archivos) {
+        try {
+            const orden = await ordenCompraRepository.obtenerPorId(id);
+            if (!orden) {
+                throw new Error('La orden de compra no existe');
+            }
+
+            // Si la tabla de archivos múltiples existe, usarla
+            // Si no, agregar a la columna archivo_adjunto como JSON
+            await ordenCompraRepository.agregarArchivos(id, archivos);
+
+            return {
+                success: true,
+                message: 'Archivos agregados exitosamente',
+                archivos: archivos
+            };
+        } catch (error) {
+            console.error('Error en OrdenCompraService.agregarArchivos:', error);
             throw error;
         }
     }

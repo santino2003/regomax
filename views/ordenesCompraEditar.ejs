@@ -106,14 +106,33 @@
 
                                 <div class="row mb-3">
                                     <div class="col-12">
-                                        <label for="archivo" class="form-label">Archivo Adjunto</label>
+                                        <label for="archivos" class="form-label">Archivos Adjuntos</label>
                                         <% if (orden.archivo_adjunto) { %>
                                             <div class="mb-2">
-                                                <small class="text-muted">Archivo actual: <%= orden.archivo_adjunto %></small>
+                                                <% 
+                                                let archivosActuales = [];
+                                                try {
+                                                    archivosActuales = JSON.parse(orden.archivo_adjunto);
+                                                    if (!Array.isArray(archivosActuales)) {
+                                                        archivosActuales = [orden.archivo_adjunto];
+                                                    }
+                                                } catch(e) {
+                                                    archivosActuales = [orden.archivo_adjunto];
+                                                }
+                                                %>
+                                                <small class="text-muted d-block mb-1">Archivos actuales:</small>
+                                                <% archivosActuales.forEach(function(archivo) { %>
+                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                        <i class="bi bi-file-earmark"></i>
+                                                        <a href="/uploads/ordenes-compra/<%= archivo %>" target="_blank" class="text-decoration-none">
+                                                            <%= archivo %>
+                                                        </a>
+                                                    </div>
+                                                <% }); %>
                                             </div>
                                         <% } %>
-                                        <input type="file" class="form-control" id="archivo" name="archivo" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
-                                        <small class="text-muted">Formatos permitidos: PDF, Word, Excel, Imágenes (máx. 10MB)</small>
+                                        <input type="file" class="form-control" id="archivos" name="archivos" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.dwg">
+                                        <small class="text-muted">Formatos permitidos: PDF, Word, Excel, Imágenes, DWG (máx. 10MB por archivo). Puedes seleccionar múltiples archivos.</small>
                                     </div>
                                 </div>
                             </div>
@@ -336,10 +355,12 @@
             formData.append('fecha_entrega_proveedor', $('#fecha_entrega_proveedor').val());
             formData.append('asunto', $('#asunto').val());
             
-            // Archivo adjunto (si se seleccionó uno nuevo)
-            const archivo = $('#archivo')[0].files[0];
-            if (archivo) {
-                formData.append('archivo', archivo);
+            // Archivos adjuntos (si se seleccionaron nuevos)
+            const archivos = $('#archivos')[0].files;
+            if (archivos && archivos.length > 0) {
+                for (let i = 0; i < archivos.length; i++) {
+                    formData.append('archivos', archivos[i]);
+                }
             }
 
             // Items

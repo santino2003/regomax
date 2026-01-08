@@ -86,9 +86,9 @@ const ordenCompraController = {
                 ordenData.items = JSON.parse(ordenData.items);
             }
 
-            // Si hay archivo adjunto
-            if (req.file) {
-                ordenData.archivo_adjunto = req.file.filename;
+            // Si hay archivos adjuntos (múltiples archivos)
+            if (req.files && req.files.length > 0) {
+                ordenData.archivos_adjuntos = req.files.map(file => file.filename);
             }
 
             const result = await ordenCompraService.crearOrdenCompra(ordenData, req.user.username);
@@ -122,9 +122,9 @@ const ordenCompraController = {
                 }
             }
 
-            // Si hay archivo adjunto
-            if (req.file) {
-                ordenData.archivo_adjunto = req.file.filename;
+            // Si hay archivos adjuntos (múltiples archivos)
+            if (req.files && req.files.length > 0) {
+                ordenData.archivos_adjuntos = req.files.map(file => file.filename);
             }
 
             await ordenCompraService.modificarOrdenCompra(id, ordenData);
@@ -291,40 +291,44 @@ const ordenCompraController = {
         try {
             const { id } = req.params;
 
-            if (!req.file) {
+            if (!req.files || req.files.length === 0) {
                 return res.status(400).json({
                     success: false,
-                    error: 'No se proporcionó ningún archivo'
+                    error: 'No se proporcionaron archivos'
                 });
             }
 
-            const rutaArchivo = req.file.filename;
-            await ordenCompraService.actualizarArchivo(id, rutaArchivo);
+            const archivos = req.files.map(file => file.filename);
+            await ordenCompraService.agregarArchivos(id, archivos);
 
             return res.status(200).json({
                 success: true,
-                message: 'Archivo subido exitosamente',
+                message: `${archivos.length} archivo(s) subido(s) exitosamente`,
                 data: {
-                    archivo: rutaArchivo,
-                    url: `/uploads/ordenes-compra/${rutaArchivo}`
+                    archivos: archivos.map(archivo => ({
+                        nombre: archivo,
+                        url: `/uploads/ordenes-compra/${archivo}`
+                    }))
                 }
             });
         } catch (error) {
-            console.error('Error al subir archivo:', error);
+            console.error('Error al subir archivos:', error);
             
-            // Eliminar el archivo si hubo error
-            if (req.file) {
-                const filePath = path.join(__dirname, '../../uploads/ordenes-compra', req.file.filename);
-                try {
-                    await fs.unlink(filePath);
-                } catch (unlinkError) {
-                    console.error('Error al eliminar archivo temporal:', unlinkError);
+            // Eliminar los archivos si hubo error
+            if (req.files && req.files.length > 0) {
+                for (const file of req.files) {
+                    const filePath = path.join(__dirname, '../../uploads/ordenes-compra', file.filename);
+                    try {
+                        await fs.unlink(filePath);
+                    } catch (unlinkError) {
+                        console.error('Error al eliminar archivo temporal:', unlinkError);
+                    }
                 }
             }
 
             return res.status(500).json({
                 success: false,
-                error: error.message || 'Error al subir archivo'
+                error: error.message || 'Error al subir archivos'
             });
         }
     },
