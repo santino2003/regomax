@@ -145,18 +145,74 @@
                     %>
                     <nav aria-label="Navegación de ingresos NFU">
                         <ul class="pagination justify-content-center mt-3">
+                            <!-- Botón Primera Página -->
                             <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                <a class="page-link" href="/nfu?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= filterParams %>" tabindex="-1">Anterior</a>
+                                <a class="page-link" href="/nfu?page=1&limit=<%= pagination.limit %><%= filterParams %>" aria-label="Primera">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
                             </li>
                             
-                            <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+                            <!-- Botón Anterior -->
+                            <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+                                <a class="page-link" href="/nfu?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= filterParams %>" aria-label="Anterior">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            <% 
+                            // Determinar qué páginas mostrar
+                            const totalPages = pagination.totalPages;
+                            const currentPage = pagination.page;
+                            const maxPagesToShow = 5; // Número máximo de páginas a mostrar
+                            
+                            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+                            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+                            
+                            // Ajustar el rango si estamos cerca del final
+                            if (endPage - startPage + 1 < maxPagesToShow) {
+                                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                            }
+                            
+                            // Mostrar primera página si no está en el rango
+                            if (startPage > 1) { 
+                            %>
+                                <li class="page-item">
+                                    <a class="page-link" href="/nfu?page=1&limit=<%= pagination.limit %><%= filterParams %>">1</a>
+                                </li>
+                                <% if (startPage > 2) { %>
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                <% } %>
+                            <% } %>
+                            
+                            <!-- Páginas numéricas -->
+                            <% for (let i = startPage; i <= endPage; i++) { %>
                                 <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
                                     <a class="page-link" href="/nfu?page=<%= i %>&limit=<%= pagination.limit %><%= filterParams %>"><%= i %></a>
                                 </li>
                             <% } %>
                             
+                            <!-- Mostrar última página si no está en el rango -->
+                            <% if (endPage < totalPages) { %>
+                                <% if (endPage < totalPages - 1) { %>
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                <% } %>
+                                <li class="page-item">
+                                    <a class="page-link" href="/nfu?page=<%= totalPages %>&limit=<%= pagination.limit %><%= filterParams %>"><%= totalPages %></a>
+                                </li>
+                            <% } %>
+                            
+                            <!-- Botón Siguiente -->
                             <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                <a class="page-link" href="/nfu?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= filterParams %>">Siguiente</a>
+                                <a class="page-link" href="/nfu?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= filterParams %>" aria-label="Siguiente">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            
+                            <!-- Botón Última Página -->
+                            <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
+                                <a class="page-link" href="/nfu?page=<%= pagination.totalPages %>&limit=<%= pagination.limit %><%= filterParams %>" aria-label="Última">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
                             </li>
                         </ul>
                     </nav>

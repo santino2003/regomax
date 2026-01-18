@@ -159,11 +159,7 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
     
     // Ejecutar la consulta
     const registros = await db.query(query, queryParams);
-    
-    // Debug: verificar los primeros registros
-    if (registros.length > 0) {
-      console.log('🔍 Debug NFU - Primer registro:', JSON.stringify(registros[0], null, 2));
-    }
+  
     
     // Consulta para contar total de registros con los mismos filtros
     let countQuery = 'SELECT COUNT(*) as total FROM nfu WHERE 1=1';
