@@ -130,6 +130,9 @@ function renderizarTabla(ordenes) {
                     <button class="btn btn-sm btn-success" onclick="abrirModalEstado(${orden.id}, '${orden.estado}')" title="Cambiar Estado">
                         <i class="bi bi-arrow-repeat"></i>
                     </button>
+                    <button class="btn btn-sm btn-secondary" onclick="imprimirOrden(${orden.id})" title="Imprimir PDF">
+                        <i class="bi bi-printer"></i>
+                    </button>
                     <button class="btn btn-sm btn-danger" onclick="eliminarOrden(${orden.id})" title="Eliminar">
                         <i class="bi bi-trash"></i>
                     </button>
@@ -292,6 +295,27 @@ window.eliminarOrden = function(ordenId) {
             const error = xhr.responseJSON?.error || 'Error al eliminar orden';
             mostrarAlerta(error, 'danger');
         }
+    });
+};
+
+window.imprimirOrden = function(ordenId) {
+    const url = `/api/ordenes-compra/${ordenId}/exportar-pdf`;
+    
+    // Crear un enlace temporal con el token en los headers
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+    })
+    .catch(error => {
+        console.error('Error al generar PDF:', error);
+        mostrarAlerta('Error al generar el PDF', 'danger');
     });
 };
 
