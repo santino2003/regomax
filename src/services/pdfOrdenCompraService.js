@@ -90,7 +90,7 @@ class PDFOrdenCompraService {
                 centroCosto: 85,
                 descripcion: 140,
                 cantidad: 45,
-                precio: 45
+                unidad: 45
             };
 
             // Línea superior
@@ -115,7 +115,7 @@ class PDFOrdenCompraService {
             doc.text('Cantidad', xPos + 5, itemTableY + 4, { width: colWidths.cantidad - 10, align: 'right' });
             xPos += colWidths.cantidad;
             
-            doc.text('Precio', xPos + 5, itemTableY + 3, { width: colWidths.precio - 10, align: 'right' });
+            doc.text('Unidad', xPos + 5, itemTableY + 3, { width: colWidths.unidad - 10, align: 'center' });
 
             // Línea debajo de encabezados
             currentY = itemTableY + 14;
@@ -175,14 +175,11 @@ class PDFOrdenCompraService {
                     });
                     xPos += colWidths.cantidad;
 
-                    // Precio
-                    const precio = parseFloat(item.precio_sugerido) || 0;
-                    doc.text(precio.toLocaleString('es-AR', { 
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }), xPos + 5, currentY, { 
-                        width: colWidths.precio - 10, 
-                        align: 'right',
+                    // Unidad (tipo de unidad del bien)
+                    const unidad = item.unidad_medida_nombre_lindo || item.unidad_medida_nombre || '-';
+                    doc.text(unidad, xPos + 5, currentY, { 
+                        width: colWidths.unidad - 10, 
+                        align: 'center',
                         height: rowHeight
                     });
 
@@ -228,7 +225,7 @@ class PDFOrdenCompraService {
             doc.moveTo(xPos, itemsStartY)
                .lineTo(xPos, itemsEndY)
                .stroke();
-            xPos += colWidths.precio;
+            xPos += colWidths.unidad;
             
             // Borde derecho
             doc.moveTo(xPos, itemsStartY)
