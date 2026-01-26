@@ -23,14 +23,14 @@ class AjusteInventarioService {
             }
 
             // Calcular stock anterior y nuevo
-            const stockAnterior = parseInt(bien.cantidad_stock) || 0;
+            const stockAnterior = parseFloat(bien.cantidad_stock) || 0;
             let stockNuevo;
 
             // ENTRADA y AJUSTE_ENTRADA suman, SALIDA y AJUSTE_SALIDA restan
             if (data.tipo_movimiento === 'ENTRADA' || data.tipo_movimiento === 'AJUSTE_ENTRADA') {
-                stockNuevo = stockAnterior + parseInt(data.cantidad);
+                stockNuevo = stockAnterior + parseFloat(data.cantidad);
             } else if (data.tipo_movimiento === 'SALIDA' || data.tipo_movimiento === 'AJUSTE_SALIDA') {
-                stockNuevo = stockAnterior - parseInt(data.cantidad);
+                stockNuevo = stockAnterior - parseFloat(data.cantidad);
                 
                 // Validar que no quede stock negativo
                 if (stockNuevo < 0) {
@@ -47,7 +47,7 @@ class AjusteInventarioService {
                 item_id: data.item_id,
                 codigo: bien.codigo,
                 nombre: bien.nombre,
-                cantidad: parseInt(data.cantidad),
+                cantidad: parseFloat(data.cantidad),
                 stock_anterior: stockAnterior,
                 stock_nuevo: stockNuevo,
                 almacen_id: data.almacen_id || null,
@@ -69,7 +69,7 @@ class AjusteInventarioService {
             // Para SALIDA/AJUSTE_SALIDA usar descontarStock que maneja alertas
             // Para ENTRADA/AJUSTE_ENTRADA actualizar directamente
             if (data.tipo_movimiento === 'SALIDA' || data.tipo_movimiento === 'AJUSTE_SALIDA') {
-                await bienService.descontarStock(data.item_id, parseInt(data.cantidad));
+                await bienService.descontarStock(data.item_id, parseFloat(data.cantidad));
             } else {
                 await bienRepository.actualizarStock(data.item_id, stockNuevo);
             }

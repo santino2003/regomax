@@ -291,7 +291,7 @@ class OrdenCompraService {
                         throw new Error('El bien no existe');
                     }
 
-                    const stockAnterior = bien.cantidad_stock || 0;
+                    const stockAnterior = parseFloat(bien.cantidad_stock) || 0;
                     const nuevoStock = stockAnterior + diferencia;
                     
                     // Actualizar stock del bien

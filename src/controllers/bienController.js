@@ -140,7 +140,7 @@ const bienController = {
                 return res.status(400).json({ error: 'La cantidad es requerida' });
             }
             
-            await bienService.actualizarStock(id, parseInt(cantidad));
+            await bienService.actualizarStock(id, parseFloat(cantidad));
             return res.status(200).json({
                 success: true,
                 message: 'Stock actualizado exitosamente',

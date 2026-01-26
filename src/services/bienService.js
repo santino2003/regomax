@@ -181,7 +181,7 @@ class BienService {
                 throw new Error('Bien no encontrado');
             }
             
-            const nuevaCantidad = bien.cantidad_stock + cantidad;
+            const nuevaCantidad = parseFloat(bien.cantidad_stock) + cantidad;
             await bienRepository.actualizarStock(id, nuevaCantidad);
             
             return {
@@ -210,8 +210,8 @@ class BienService {
                 throw new Error('Bien no encontrado');
             }
             
-            const cantidadPrevia = bien.cantidad_stock;
-            const nuevaCantidad = bien.cantidad_stock - cantidad;
+            const cantidadPrevia = parseFloat(bien.cantidad_stock);
+            const nuevaCantidad = cantidadPrevia - cantidad;
             
             if (nuevaCantidad < 0) {
                 throw new Error(`Stock insuficiente. Stock actual: ${bien.cantidad_stock}, intentando descontar: ${cantidad}`);
