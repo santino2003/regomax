@@ -449,10 +449,11 @@ const ordenCompraController = {
             // Generar el PDF
             const pdfDoc = await pdfOrdenCompraService.generarPDF(id);
             
-            // Configurar headers para descarga con el código de la orden
+            // Configurar headers para que el navegador use el nombre correcto al guardar
             const nombreArchivo = `${orden.codigo}.pdf`;
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename=${nombreArchivo}`);
+            // Usar inline para abrir en ventana, pero con filename para cuando se guarde
+            res.setHeader('Content-Disposition', `inline; filename="${nombreArchivo}"`);
             
             // Pipe el PDF a la respuesta
             pdfDoc.pipe(res);

@@ -7,7 +7,22 @@ const authMiddleware = {
   // Middleware para verificar token JWT
   verifyToken(req, res, next) {
     try {
-      const token = req.cookies && req.cookies.token;
+      // Intentar obtener el token desde cookies, query string o headers
+      let token = req.cookies && req.cookies.token;
+      
+      // Si no hay token en cookies, buscar en query string (para PDFs abiertos en nueva ventana)
+      if (!token && req.query.token) {
+        token = req.query.token;
+      }
+      
+      // Si no hay token en cookies ni query, buscar en headers Authorization
+      if (!token) {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          token = authHeader.substring(7);
+        }
+      }
+      
       if (!token) {
         if (req.originalUrl.startsWith('/api/')) {
           return res.status(401).json({ success: false, message: 'No autorizado - Token no encontrado' });
