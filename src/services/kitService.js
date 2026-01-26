@@ -227,11 +227,12 @@ class KitService {
      */
     async obtenerDatosFormulario() {
         try {
+            // Obtener todas las opciones sin paginación (límite alto)
             const [categorias, familias, unidadesMedida, almacenes, bienesDisponibles] = await Promise.all([
-                categoriaRepository.obtenerTodas(),
-                familiaRepository.obtenerTodas(),
-                unidadMedidaRepository.obtenerTodas(),
-                almacenRepository.obtenerTodos(),
+                categoriaRepository.obtenerTodas(1, 1000),
+                familiaRepository.obtenerTodas(1, 1000),
+                unidadMedidaRepository.obtenerTodas(1, 1000),
+                almacenRepository.obtenerTodos(1, 1000),
                 kitRepository.obtenerBienesDisponibles()
             ]);
             
@@ -245,18 +246,6 @@ class KitService {
             };
         } catch (error) {
             console.error('Error en KitService.obtenerDatosFormulario:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Buscar bienes disponibles para componentes de kit
-     */
-    async buscarBienesDisponibles(busqueda = '', page = 1, limit = 30) {
-        try {
-            return await kitRepository.buscarBienesDisponibles(busqueda, page, limit);
-        } catch (error) {
-            console.error('Error en KitService.buscarBienesDisponibles:', error);
             throw error;
         }
     }
