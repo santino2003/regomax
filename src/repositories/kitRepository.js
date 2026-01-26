@@ -314,6 +314,61 @@ class KitRepository {
             throw error;
         }
     }
+
+    async buscarBienesDisponibles(busqueda = '', page = 1, limit = 30) {
+        try {
+            const offset = (page - 1) * limit;
+            let whereClause = 'WHERE es_kit = FALSE';
+            const params = [];
+            
+            if (busqueda && busqueda.trim() !== '') {
+                whereClause += ` AND (
+                    LOWER(codigo) LIKE LOWER($1) OR 
+                    LOWER(nombre) LIKE LOWER($1) OR
+                    CAST(cantidad_stock AS TEXT) LIKE $1
+                )`;
+                params.push(`%${busqueda}%`);
+            }
+            
+            const countQuery = `
+                SELECT COUNT(*) as total
+                FROM bienes
+                ${whereClause}
+            `;
+            
+            const dataQuery = `
+                SELECT 
+                    id,
+                    codigo,
+                    nombre,
+                    tipo,
+                    cantidad_stock,
+                    precio
+                FROM bienes
+                ${whereClause}
+                ORDER BY nombre ASC
+                LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+            `;
+            
+            const countResult = await db.query(countQuery, params);
+            const dataResult = await db.query(dataQuery, [...params, limit, offset]);
+            
+            const total = parseInt(countResult[0].total);
+            
+            return {
+                data: dataResult,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
+        } catch (error) {
+            console.error('Error al buscar bienes disponibles:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new KitRepository();

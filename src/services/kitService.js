@@ -248,6 +248,18 @@ class KitService {
             throw error;
         }
     }
+
+    /**
+     * Buscar bienes disponibles para componentes de kit
+     */
+    async buscarBienesDisponibles(busqueda = '', page = 1, limit = 30) {
+        try {
+            return await kitRepository.buscarBienesDisponibles(busqueda, page, limit);
+        } catch (error) {
+            console.error('Error en KitService.buscarBienesDisponibles:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new KitService();
