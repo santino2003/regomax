@@ -437,12 +437,22 @@ const ordenCompraController = {
         try {
             const { id } = req.params;
             
+            // Obtener la orden para usar su código como nombre del archivo
+            const orden = await ordenCompraService.obtenerOrdenPorId(id);
+            if (!orden) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Orden de compra no encontrada'
+                });
+            }
+            
             // Generar el PDF
             const pdfDoc = await pdfOrdenCompraService.generarPDF(id);
             
-            // Configurar headers para descarga
+            // Configurar headers para descarga con el código de la orden
+            const nombreArchivo = `${orden.codigo}.pdf`;
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename=orden-compra-${id}.pdf`);
+            res.setHeader('Content-Disposition', `inline; filename=${nombreArchivo}`);
             
             // Pipe el PDF a la respuesta
             pdfDoc.pipe(res);
