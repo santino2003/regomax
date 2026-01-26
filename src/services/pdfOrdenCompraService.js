@@ -133,18 +133,10 @@ class PDFOrdenCompraService {
                     currentY += 3;
                     
                     xPos = 40;
-                    
-                    // Calcular altura necesaria para la descripción
-                    const descripcion = item.descripcion || '';
-                    const bienText = item.bien_nombre || '';
-                    
-                    // Calcular líneas necesarias para descripción (aproximado)
-                    const descripcionLineas = Math.ceil(descripcion.length / 35) || 1;
-                    const bienLineas = Math.ceil(bienText.length / 50) || 1;
-                    const lineasNecesarias = Math.max(descripcionLineas, bienLineas, 1);
-                    const rowHeight = Math.max(22, lineasNecesarias * 11);
+                    const rowHeight = 22;
 
                     // Bien (solo nombre, sin código)
+                    const bienText = item.bien_nombre || '';
                     doc.fontSize(7)
                        .text(bienText, xPos + 5, currentY, { 
                            width: colWidths.bien - 10, 
@@ -163,7 +155,7 @@ class PDFOrdenCompraService {
                     xPos += colWidths.centroCosto;
 
                     // Descripción
-                    doc.text(descripcion, xPos + 5, currentY, { 
+                    doc.text(item.descripcion || '', xPos + 5, currentY, { 
                         width: colWidths.descripcion - 10, 
                         align: 'left',
                         height: rowHeight,

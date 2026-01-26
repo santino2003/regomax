@@ -163,7 +163,7 @@ $(document).ready(function() {
             return;
         }
 
-        const cantidad = parseFloat($('#cantidadInput').val());
+        const cantidad = parseInt($('#cantidadInput').val());
         const responsable = $('#responsableInput').val().trim();
 
         // Validaciones
@@ -211,7 +211,7 @@ $(document).ready(function() {
             modal.hide();
         }
 
-        const cantidad = parseFloat($('#cantidadInput').val());
+        const cantidad = parseInt($('#cantidadInput').val());
         const responsable = $('#responsableInput').val().trim();
 
         // Deshabilitar botón de entregar y mostrar estado de procesamiento

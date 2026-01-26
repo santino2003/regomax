@@ -106,17 +106,9 @@
 
                                 <div class="row mb-3">
                                     <div class="col-12">
-                                        <label class="form-label">Archivos Adjuntos</label>
-                                        <div class="d-flex gap-2 mb-2">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarArchivo">
-                                                <i class="bi bi-paperclip me-1"></i>Agregar Archivo(s)
-                                            </button>
-                                        </div>
-                                        <input type="file" class="d-none" id="archivoInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.dwg">
-                                        <div id="listaArchivos" class="border rounded p-2 bg-light" style="min-height: 50px;">
-                                            <small class="text-muted">No hay archivos seleccionados</small>
-                                        </div>
-                                        <small class="text-muted">Formatos permitidos: PDF, Word, Excel, Imágenes, DWG (máx. 10MB por archivo).</small>
+                                        <label for="archivos" class="form-label">Archivos Adjuntos</label>
+                                        <input type="file" class="form-control" id="archivos" name="archivos" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.dwg">
+                                        <small class="text-muted">Formatos permitidos: PDF, Word, Excel, Imágenes, DWG (máx. 10MB por archivo). Puedes seleccionar múltiples archivos.</small>
                                     </div>
                                 </div>
                             </div>
@@ -162,40 +154,11 @@
         let unidadesMedida = <%- JSON.stringify(unidadesMedida) %>;
         let centrosCosto = <%- JSON.stringify(centrosCosto) %>;
         let itemCounter = 0;
-        let archivosSeleccionados = []; // Array para guardar los archivos
 
         $(document).ready(function() {
             agregarItemVacio();
 
             $('#btnAgregarItem').on('click', agregarItemVacio);
-            
-            // Manejar el botón de agregar archivo
-            $('#btnAgregarArchivo').on('click', function() {
-                $('#archivoInput').click();
-            });
-
-            // Manejar la selección de archivos
-            $('#archivoInput').on('change', function(e) {
-                const nuevosArchivos = Array.from(e.target.files);
-                
-                // Validar tamaño (10MB por archivo)
-                for (const archivo of nuevosArchivos) {
-                    if (archivo.size > 10 * 1024 * 1024) {
-                        mostrarAlerta(`El archivo "${archivo.name}" excede el tamaño máximo de 10MB`, 'warning');
-                        continue;
-                    }
-                    
-                    // Verificar si el archivo ya fue agregado
-                    const yaExiste = archivosSeleccionados.some(a => a.name === archivo.name && a.size === archivo.size);
-                    if (!yaExiste) {
-                        archivosSeleccionados.push(archivo);
-                    }
-                }
-                
-                actualizarListaArchivos();
-                // Limpiar el input para poder seleccionar el mismo archivo nuevamente
-                e.target.value = '';
-            });
             
             $('#formNuevaOrden').on('submit', function(e) {
                 e.preventDefault();
@@ -277,60 +240,6 @@
             });
         }
 
-        function actualizarListaArchivos() {
-            const listaArchivos = $('#listaArchivos');
-            
-            if (archivosSeleccionados.length === 0) {
-                listaArchivos.html('<small class="text-muted">No hay archivos seleccionados</small>');
-                return;
-            }
-            
-            let html = '<div class="list-group list-group-flush">';
-            archivosSeleccionados.forEach((archivo, index) => {
-                const tamañoMB = (archivo.size / (1024 * 1024)).toFixed(2);
-                const icono = obtenerIconoArchivo(archivo.name);
-                
-                html += `
-                    <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-2">
-                        <div class="d-flex align-items-center">
-                            <i class="bi ${icono} me-2 text-primary"></i>
-                            <div>
-                                <small class="fw-bold d-block">${archivo.name}</small>
-                                <small class="text-muted">${tamañoMB} MB</small>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-danger" onclick="eliminarArchivo(${index})" title="Eliminar">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            
-            listaArchivos.html(html);
-        }
-
-        function obtenerIconoArchivo(nombre) {
-            const extension = nombre.split('.').pop().toLowerCase();
-            const iconos = {
-                'pdf': 'bi-file-pdf-fill',
-                'doc': 'bi-file-word-fill',
-                'docx': 'bi-file-word-fill',
-                'xls': 'bi-file-excel-fill',
-                'xlsx': 'bi-file-excel-fill',
-                'jpg': 'bi-file-image-fill',
-                'jpeg': 'bi-file-image-fill',
-                'png': 'bi-file-image-fill',
-                'dwg': 'bi-file-earmark-fill'
-            };
-            return iconos[extension] || 'bi-file-earmark-fill';
-        }
-
-        function eliminarArchivo(index) {
-            archivosSeleccionados.splice(index, 1);
-            actualizarListaArchivos();
-        }
-
         function eliminarItem(itemId) {
             const itemsCount = $('.item-row').length;
             if (itemsCount <= 1) {
@@ -350,11 +259,12 @@
             formData.append('fecha_entrega_proveedor', $('#fecha_entrega_proveedor').val() || '');
             formData.append('asunto', $('#asunto').val() || '');
             
-            // Archivos adjuntos desde el array
-            if (archivosSeleccionados.length > 0) {
-                archivosSeleccionados.forEach(archivo => {
-                    formData.append('archivos', archivo);
-                });
+            // Archivos adjuntos (múltiples)
+            const archivos = $('#archivos')[0].files;
+            if (archivos && archivos.length > 0) {
+                for (let i = 0; i < archivos.length; i++) {
+                    formData.append('archivos', archivos[i]);
+                }
             }
 
             // Recolectar items

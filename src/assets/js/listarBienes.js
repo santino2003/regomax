@@ -42,20 +42,6 @@ $(document).ready(function() {
             });
     }
     
-    /**
-     * Formatear cantidad: si es entero mostrar sin decimales, si tiene decimales mostrarlos
-     */
-    function formatearCantidad(valor) {
-        const num = parseFloat(valor);
-        if (isNaN(num)) return valor;
-        // Si es número entero, mostrar sin decimales
-        if (num % 1 === 0) {
-            return num.toString();
-        }
-        // Si tiene decimales, mostrar con hasta 2 decimales
-        return num.toFixed(2).replace(/\.?0+$/, '');
-    }
-
     function renderTabla(bienes) {
         const tbody = $('#tablaBienes');
         
@@ -77,7 +63,7 @@ $(document).ready(function() {
                     <td><span class="badge ${bien.tipo === 'Uso' ? 'bg-info' : 'bg-warning'}">${bien.tipo}</span></td>
                     <td>${bien.categoria_nombre || '-'}</td>
                     <td>${bien.familia_nombre || '-'}</td>
-                    <td class="text-end ${stockClass}">${formatearCantidad(bien.cantidad_stock)}</td>
+                    <td class="text-end ${stockClass}">${bien.cantidad_stock}</td>
                     <td class="text-end">$${parseFloat(bien.precio || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                     <td class="text-center">
                         <a href="/bienes/${bien.id}" class="btn btn-sm btn-outline-info" title="Ver">

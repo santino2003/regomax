@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 
 // Filtro de archivos permitidos
 const fileFilter = (req, file, cb) => {
-    // Permitir documentos, imágenes, PDFs y archivos DWG
+    // Permitir documentos, imágenes y PDFs
     const allowedMimes = [
         'image/jpeg',
         'image/jpg',
@@ -42,24 +42,13 @@ const fileFilter = (req, file, cb) => {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain',
-        'application/acad',
-        'application/x-acad',
-        'application/autocad_dwg',
-        'image/x-dwg',
-        'application/dwg',
-        'application/x-dwg',
-        'application/x-autocad',
-        'image/vnd.dwg',
-        'drawing/x-dwg'
+        'text/plain'
     ];
     
-    // También permitir archivos con extensión .dwg aunque el mimetype no coincida
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (allowedMimes.includes(file.mimetype) || ext === '.dwg') {
+    if (allowedMimes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes, PDFs, documentos de Office y archivos DWG.'), false);
+        cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes, PDFs y documentos de Office.'), false);
     }
 };
 

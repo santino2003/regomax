@@ -84,12 +84,7 @@
                                 <div class="col-md-2">
                                     <label class="text-muted small mb-1">Stock</label>
                                     <div class="fs-4 <%= bien.cantidad_critica && bien.cantidad_stock <= bien.cantidad_critica ? 'text-danger' : 'text-info' %> fw-bold">
-                                        <% 
-                                        // Formatear cantidad: si es entero mostrar sin decimales, si tiene decimales mostrarlos
-                                        const stock = parseFloat(bien.cantidad_stock);
-                                        const stockFormateado = stock % 1 === 0 ? stock.toString() : stock.toFixed(2).replace(/\.?0+$/, '');
-                                        %>
-                                        <%= stockFormateado %>
+                                        <%= bien.cantidad_stock %>
                                         <% if (bien.cantidad_critica && bien.cantidad_stock <= bien.cantidad_critica) { %>
                                         <i class="bi bi-exclamation-triangle-fill" title="Stock crítico"></i>
                                         <% } %>

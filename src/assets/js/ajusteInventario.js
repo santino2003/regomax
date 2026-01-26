@@ -93,7 +93,7 @@ $(document).ready(function() {
         }
 
         // Validar que la cantidad sea mayor a 0
-        const cantidad = parseFloat($('#cantidad').val());
+        const cantidad = parseInt($('#cantidad').val());
         if (!cantidad || cantidad <= 0) {
             Swal.fire({
                 icon: 'warning',

@@ -301,46 +301,17 @@ window.eliminarOrden = function(ordenId) {
 window.imprimirOrden = function(ordenId) {
     const url = `/api/ordenes-compra/${ordenId}/exportar-pdf`;
     
-    // Descargar el PDF con el nombre correcto
+    // Crear un enlace temporal con el token en los headers
     fetch(url, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${token}`
         }
     })
-    .then(response => {
-        // Extraer el nombre del archivo del header Content-Disposition
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'orden-compra.pdf';
-        
-        if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename=(.+)/);
-            if (filenameMatch && filenameMatch[1]) {
-                filename = filenameMatch[1].replace(/['"]/g, '');
-            }
-        }
-        
-        return response.blob().then(blob => ({ blob, filename }));
-    })
-    .then(({ blob, filename }) => {
-        // Crear URL del blob
-        const blobUrl = window.URL.createObjectURL(blob);
-        
-        // Crear elemento <a> para descargar
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = blobUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        
-        // Descargar automáticamente
-        a.click();
-        
-        // Limpiar después de un momento
-        setTimeout(() => {
-            window.URL.revokeObjectURL(blobUrl);
-            document.body.removeChild(a);
-        }, 100);
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
     })
     .catch(error => {
         console.error('Error al generar PDF:', error);
