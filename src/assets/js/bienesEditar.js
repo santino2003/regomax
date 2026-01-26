@@ -94,53 +94,97 @@ $(document).ready(function() {
     // Subir Archivo
     $('#btnSubirArchivo').on('click', function() {
         $('#archivo').val('');
+        $('#listaArchivosSeleccionados').html('');
         modalArchivo.show();
     });
     
-    $('#btnConfirmarArchivo').on('click', function() {
+    // Preview de archivos seleccionados en el modal
+    $('#archivo').on('change', function() {
+        const files = this.files;
+        const container = $('#listaArchivosSeleccionados');
+        
+        if (files.length === 0) {
+            container.html('');
+            return;
+        }
+        
+        let html = '<div class="alert alert-info"><strong>Archivos seleccionados:</strong><ul class="mb-0 mt-2">';
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const size = (file.size / 1024).toFixed(2);
+            const sizeClass = file.size > 10 * 1024 * 1024 ? 'text-danger' : '';
+            html += `<li class="${sizeClass}">${file.name} (${size} KB)</li>`;
+        }
+        html += '</ul></div>';
+        container.html(html);
+    });
+    
+    $('#btnConfirmarArchivo').on('click', async function() {
         const fileInput = $('#archivo')[0];
         if (!fileInput.files || fileInput.files.length === 0) {
-            alert('Por favor seleccione un archivo');
+            alert('Por favor seleccione al menos un archivo');
             return;
         }
         
-        const file = fileInput.files[0];
-        if (file.size > 10 * 1024 * 1024) {
-            alert('El archivo no puede superar los 10MB');
-            return;
-        }
-        
+        const files = fileInput.files;
         const btn = $(this);
         const originalText = btn.html();
-        btn.html('<span class="spinner-border spinner-border-sm"></span>').prop('disabled', true);
+        btn.html('<span class="spinner-border spinner-border-sm"></span> Subiendo...').prop('disabled', true);
         
-        const formData = new FormData();
-        formData.append('archivo', file);
+        let archivosSubidos = 0;
+        let errores = [];
         
-        fetch(`/api/bienes/${bienId}/archivos`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showAlert('Archivo subido correctamente', 'success');
-                modalArchivo.hide();
-                // Recargar la página para mostrar el nuevo archivo
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
-            } else {
-                alert(data.error || 'Error al subir el archivo');
+        // Subir archivos uno por uno
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            if (file.size > 10 * 1024 * 1024) {
+                errores.push(`${file.name}: Excede el tamaño máximo (10MB)`);
+                continue;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al subir el archivo');
-        })
-        .finally(() => {
-            btn.html(originalText).prop('disabled', false);
-        });
+            
+            const formData = new FormData();
+            formData.append('archivo', file);
+            
+            try {
+                const response = await fetch(`/api/bienes/${bienId}/archivos`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    archivosSubidos++;
+                } else {
+                    errores.push(`${file.name}: ${data.error || 'Error al subir'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errores.push(`${file.name}: Error de red`);
+            }
+        }
+        
+        btn.html(originalText).prop('disabled', false);
+        
+        // Mostrar resultado
+        if (errores.length > 0) {
+            let mensaje = '';
+            if (archivosSubidos > 0) {
+                mensaje = `${archivosSubidos} archivo(s) subido(s) correctamente.\n\n`;
+            }
+            mensaje += 'Errores:\n' + errores.join('\n');
+            alert(mensaje);
+        } else {
+            showAlert(`${archivosSubidos} archivo(s) subido(s) correctamente`, 'success');
+        }
+        
+        modalArchivo.hide();
+        
+        // Recargar la página para mostrar los nuevos archivos
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
     });
     
     // Confirmar eliminación de archivo
