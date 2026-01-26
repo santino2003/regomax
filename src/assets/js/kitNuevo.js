@@ -2,6 +2,9 @@
 $(document).ready(function() {
     let componenteCounter = 0;
     let componentes = [];
+    
+    // Debug: Verificar que se cargaron los bienes
+    console.log('Bienes disponibles cargados:', bienesDisponibles.length);
 
     function showAlert(message, type) {
         const alertHtml = `

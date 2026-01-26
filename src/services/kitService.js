@@ -227,11 +227,12 @@ class KitService {
      */
     async obtenerDatosFormulario() {
         try {
+            // Obtener todas las opciones sin paginación (límite alto)
             const [categorias, familias, unidadesMedida, almacenes, bienesDisponibles] = await Promise.all([
-                categoriaRepository.obtenerTodas(),
-                familiaRepository.obtenerTodas(),
-                unidadMedidaRepository.obtenerTodas(),
-                almacenRepository.obtenerTodos(),
+                categoriaRepository.obtenerTodas(1, 1000),
+                familiaRepository.obtenerTodas(1, 1000),
+                unidadMedidaRepository.obtenerTodas(1, 1000),
+                almacenRepository.obtenerTodos(1, 1000),
                 kitRepository.obtenerBienesDisponibles()
             ]);
             
