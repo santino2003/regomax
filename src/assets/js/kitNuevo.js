@@ -38,6 +38,14 @@ $(document).ready(function() {
                             <label class="form-label small mb-1">Bien</label>
                             <select class="form-select select-bien" required>
                                 <option value="">Seleccionar bien...</option>
+                                ${bienesDisponibles.map(bien => `
+                                    <option value="${bien.id}" 
+                                            data-precio="${bien.precio || 0}"
+                                            data-stock="${bien.cantidad_stock}"
+                                            data-codigo="${bien.codigo}">
+                                        ${bien.codigo} - ${bien.nombre} (Stock: ${bien.cantidad_stock})
+                                    </option>
+                                `).join('')}
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -59,58 +67,6 @@ $(document).ready(function() {
         `;
         
         $('#componentesContainer').append(componenteHtml);
-        
-        // Inicializar Select2 para el nuevo select con datos del array bienesDisponibles
-        const $newSelect = $('.componente-item').last().find('.select-bien');
-        
-        // Preparar los datos para Select2
-        const bienesData = bienesDisponibles.map(bien => ({
-            id: bien.id,
-            text: `${bien.codigo} - ${bien.nombre} (Stock: ${bien.cantidad_stock})`,
-            precio: bien.precio || 0,
-            stock: bien.cantidad_stock,
-            codigo: bien.codigo,
-            nombre: bien.nombre
-        }));
-        
-        $newSelect.select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Seleccionar bien...',
-            allowClear: true,
-            width: '100%',
-            data: bienesData,
-            templateResult: formatBienOption,
-            templateSelection: formatBienSelection
-        });
-        
-        // Guardar los datos del bien seleccionado en data attributes
-        $newSelect.on('select2:select', function(e) {
-            const data = e.params.data;
-            $(this).data('precio', data.precio);
-            $(this).data('stock', data.stock);
-            $(this).data('codigo', data.codigo);
-        });
-    }
-    
-    // Formato personalizado para las opciones del select
-    function formatBienOption(bien) {
-        if (!bien.id) {
-            return bien.text;
-        }
-        
-        const $container = $(
-            `<div class="select2-bien-option">
-                <div><strong>${bien.codigo || ''}</strong> - ${bien.nombre || bien.text}</div>
-                <small class="text-muted">Stock: ${bien.stock || 0} | Precio: $${(bien.precio || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</small>
-            </div>`
-        );
-        
-        return $container;
-    }
-    
-    // Formato para la selección
-    function formatBienSelection(bien) {
-        return bien.text || bien.codigo + ' - ' + bien.nombre;
     }
 
     // Agregar componente
@@ -128,10 +84,10 @@ $(document).ready(function() {
     // Cambio en selección de bien
     $(document).on('change', '.select-bien', function() {
         const $item = $(this).closest('.componente-item');
-        const $select = $(this);
-        const precio = parseFloat($select.data('precio') || 0);
-        const stock = $select.data('stock');
-        const codigo = $select.data('codigo');
+        const $option = $(this).find('option:selected');
+        const precio = parseFloat($option.data('precio') || 0);
+        const stock = $option.data('stock');
+        const codigo = $option.data('codigo');
         
         if (codigo) {
             const cantidad = parseInt($item.find('.input-cantidad').val()) || 1;
@@ -150,10 +106,10 @@ $(document).ready(function() {
     // Cambio en cantidad
     $(document).on('change', '.input-cantidad', function() {
         const $item = $(this).closest('.componente-item');
-        const $select = $item.find('.select-bien');
-        const precio = parseFloat($select.data('precio') || 0);
-        const stock = $select.data('stock');
-        const codigo = $select.data('codigo');
+        const $option = $item.find('.select-bien option:selected');
+        const precio = parseFloat($option.data('precio') || 0);
+        const stock = $option.data('stock');
+        const codigo = $option.data('codigo');
         const cantidad = parseInt($(this).val()) || 1;
         
         if (codigo) {
