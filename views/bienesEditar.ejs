@@ -264,12 +264,14 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="archivo" class="form-label">Seleccionar Archivo</label>
-                        <input type="file" class="form-control" id="archivo">
+                        <label for="archivo" class="form-label">Seleccionar Archivos</label>
+                        <input type="file" class="form-control" id="archivo" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.dwg">
                         <small class="text-muted">
-                            Máximo 10MB. Formatos: PDF, imágenes (JPG, PNG), documentos (DOC, DOCX, XLS, XLSX)
+                            Puede seleccionar múltiples archivos. Máximo 10MB por archivo. 
+                            Formatos: PDF, imágenes (JPG, PNG), documentos (DOC, DOCX, XLS, XLSX), DWG
                         </small>
                     </div>
+                    <div id="listaArchivosSeleccionados"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

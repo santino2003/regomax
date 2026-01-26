@@ -291,7 +291,7 @@ class OrdenCompraService {
                         throw new Error('El bien no existe');
                     }
 
-                    const stockAnterior = bien.cantidad_stock || 0;
+                    const stockAnterior = parseFloat(bien.cantidad_stock) || 0;
                     const nuevoStock = stockAnterior + diferencia;
                     
                     // Actualizar stock del bien
@@ -338,9 +338,10 @@ class OrdenCompraService {
                 throw new Error('La orden de compra no existe');
             }
 
-            // Opcional: validar que no se pueda eliminar en ciertos estados
-            if (['Entregado', 'Cerrada'].includes(orden.estado)) {
-                throw new Error('No se puede eliminar una orden en estado Entregado o Cerrada');
+            // Permitir eliminar órdenes cerradas, pero no las que están en estado "Entregado"
+            // Las órdenes "Entregado" tienen movimientos de inventario asociados
+            if (orden.estado === 'Entregado') {
+                throw new Error('No se puede eliminar una orden en estado Entregado porque tiene movimientos de inventario asociados');
             }
 
             await ordenCompraRepository.eliminarOrdenCompra(id);
