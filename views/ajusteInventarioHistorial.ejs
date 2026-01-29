@@ -26,9 +26,6 @@
                             </a>
                         </div>
                     </div>
-
-                    <p class="text-muted mb-4">Registro de todos los movimientos de inventario</p>
-
                     <!-- Filtros -->
                     <div class="card mb-4 shadow-sm">
                         <div class="card-header" style="background-color: #17a2b8; color: white;">
@@ -130,6 +127,15 @@
             let paginaActual = 1;
             let registrosPorPagina = 20;
 
+            // Obtener el bien_id de la URL si existe
+            const urlParams = new URLSearchParams(window.location.search);
+            const bienIdFiltro = urlParams.get('bien_id');
+
+            // Si hay un bien_id en la URL, cargar el nombre del bien
+            if (bienIdFiltro) {
+                cargarNombreBien(bienIdFiltro);
+            }
+
             // Cargar movimientos al inicio
             cargarMovimientos();
             
@@ -147,6 +153,33 @@
             });
 
             /**
+             * Cargar el nombre del bien
+             */
+            function cargarNombreBien(bienId) {
+                $.ajax({
+                    url: `/api/bienes/${bienId}`,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.success && response.data) {
+                            const bien = response.data;
+                            // Actualizar el título
+                            $('.menu-heading').html(`
+                                <i class="bi bi-clock-history me-2"></i>Historial de Movimientos
+                                <small class="text-muted ms-2">(${bien.codigo} - ${bien.nombre})</small>
+                            `);
+                            // Agregar badge informativo
+                            $('.text-muted.mb-4').html(`
+                                Mostrando todos los movimientos del bien: <strong>${bien.codigo} - ${bien.nombre}</strong>
+                                <a href="/ajuste-inventario/historial" class="ms-3 btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i> Ver todos los bienes
+                                </a>
+                            `);
+                        }
+                    }
+                });
+            }
+
+            /**
              * Cargar movimientos con filtros
              */
             function cargarMovimientos() {
@@ -157,6 +190,11 @@
                     fecha_desde: $('#filtroFechaDesde').val(),
                     fecha_hasta: $('#filtroFechaHasta').val()
                 };
+
+                // Agregar bien_id si existe en la URL
+                if (bienIdFiltro) {
+                    filtros.bien_id = bienIdFiltro;
+                }
 
                 $.ajax({
                     url: '/api/ajustes-inventario',
