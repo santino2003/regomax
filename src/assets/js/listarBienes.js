@@ -86,6 +86,9 @@ $(document).ready(function() {
                         <a href="/bienes/editar/${bien.id}" class="btn btn-sm btn-outline-warning" title="Editar">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        <a href="/ajuste-inventario/historial?bien_id=${bien.id}" class="btn btn-sm btn-outline-primary" title="Historial">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
                         <button class="btn btn-sm btn-outline-danger" onclick="confirmarEliminar(${bien.id}, '${bien.nombre.replace(/'/g, "\\'")}')">
                             <i class="bi bi-trash"></i>
                         </button>
