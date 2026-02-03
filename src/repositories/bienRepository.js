@@ -41,7 +41,7 @@ class BienRepository {
                     bienData.familia_id || null,
                     bienData.unidad_medida_id || null,
                     bienData.precio || 0,
-                    bienData.cantidad_critica || null,
+                    bienData.cantidad_critica !== undefined && bienData.cantidad_critica !== null ? bienData.cantidad_critica : null,
                     bienData.ubicacion || null,
                     bienData.almacen_defecto_id || null,
                     bienData.responsable
@@ -101,7 +101,7 @@ class BienRepository {
                     bienData.familia_id || null,
                     bienData.unidad_medida_id || null,
                     bienData.precio || 0,
-                    bienData.cantidad_critica || null,
+                    bienData.cantidad_critica !== undefined && bienData.cantidad_critica !== null ? bienData.cantidad_critica : null,
                     bienData.ubicacion || null,
                     bienData.almacen_defecto_id || null,
                     id
@@ -199,6 +199,7 @@ class BienRepository {
                 params.push(searchTerm, searchTerm, searchTerm);
             }
             if (filtros.critico) {
+                // Incluir bienes con stock crítico definido (incluso 0) donde el stock actual sea menor o igual
                 whereConditions.push('b.cantidad_critica IS NOT NULL AND b.cantidad_stock <= b.cantidad_critica');
             }
             
