@@ -91,15 +91,15 @@ $(document).ready(function() {
         $('#itemCodigo').text(item.codigo);
         $('#itemTipo').text(item.tipo_item === 'bien' ? 'Bien' : 'Kit');
         $('#itemStock').text(item.cantidad_stock + (item.unidad_medida ? ' ' + item.unidad_medida : ''));
-        $('#itemCritico').text(item.cantidad_critica || 'N/A');
+        $('#itemCritico').text((item.cantidad_critica !== null && item.cantidad_critica !== undefined) ? item.cantidad_critica : 'N/A');
 
         // Aplicar clase de advertencia si el stock está crítico
         const card = $('#itemInfoCard');
         card.removeClass('item-info-card stock-warning stock-danger');
         
-        if (item.cantidad_stock <= item.cantidad_critica) {
+        if (item.cantidad_critica !== null && item.cantidad_critica !== undefined && item.cantidad_stock <= item.cantidad_critica) {
             card.addClass('stock-danger');
-        } else if (item.cantidad_stock <= item.cantidad_critica * 1.5) {
+        } else if (item.cantidad_critica !== null && item.cantidad_critica !== undefined && item.cantidad_stock <= item.cantidad_critica * 1.5) {
             card.addClass('stock-warning');
         } else {
             card.addClass('item-info-card');

@@ -133,65 +133,71 @@ class PDFOrdenCompraService {
                     currentY += 3;
                     
                     xPos = 40;
+                    const rowStartY = currentY;
                     
-                    // Calcular altura necesaria para la descripción
+                    // Preparar textos
                     const descripcion = item.descripcion || '';
                     const bienText = item.bien_nombre || '';
+                    const centroCosto = item.centro_costo || '-';
+                    const unidad = item.unidad_medida_nombre_lindo || item.unidad_medida_nombre || '-';
+                    const cantidad = parseFloat(item.cantidad) || 0;
                     
-                    // Calcular líneas necesarias para descripción (aproximado)
-                    const descripcionLineas = Math.ceil(descripcion.length / 35) || 1;
-                    const bienLineas = Math.ceil(bienText.length / 50) || 1;
-                    const lineasNecesarias = Math.max(descripcionLineas, bienLineas, 1);
-                    const rowHeight = Math.max(22, lineasNecesarias * 11);
+                    // Calcular altura real necesaria para cada campo usando heightOfString
+                    doc.fontSize(7);
+                    const bienHeight = doc.heightOfString(bienText, { 
+                        width: colWidths.bien - 10 
+                    });
+                    const descripcionHeight = doc.heightOfString(descripcion, { 
+                        width: colWidths.descripcion - 10 
+                    });
+                    const centroCostoHeight = doc.heightOfString(centroCosto, { 
+                        width: colWidths.centroCosto - 10 
+                    });
+                    
+                    // Altura real de la fila (la más alta + padding)
+                    const rowHeight = Math.max(bienHeight, descripcionHeight, centroCostoHeight, 12) + 6;
 
                     // Bien (solo nombre, sin código)
                     doc.fontSize(7)
                        .text(bienText, xPos + 5, currentY, { 
                            width: colWidths.bien - 10, 
                            align: 'left',
-                           height: rowHeight,
                            lineBreak: true
                        });
                     xPos += colWidths.bien;
 
                     // Centro de Costo
-                    doc.text(item.centro_costo || '-', xPos + 5, currentY, { 
+                    doc.text(centroCosto, xPos + 5, currentY, { 
                         width: colWidths.centroCosto - 10, 
-                        align: 'left',
-                        height: rowHeight
+                        align: 'left'
                     });
                     xPos += colWidths.centroCosto;
 
-                    // Descripción
+                    // Descripción - sin limit de height
                     doc.text(descripcion, xPos + 5, currentY, { 
                         width: colWidths.descripcion - 10, 
                         align: 'left',
-                        height: rowHeight,
                         lineBreak: true
                     });
                     xPos += colWidths.descripcion;
 
                     // Cantidad
-                    const cantidad = parseFloat(item.cantidad) || 0;
                     doc.text(cantidad.toLocaleString('es-AR', { 
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 3
                     }), xPos + 5, currentY, { 
                         width: colWidths.cantidad - 10, 
-                        align: 'right',
-                        height: rowHeight
+                        align: 'right'
                     });
                     xPos += colWidths.cantidad;
 
-                    // Unidad (tipo de unidad del bien)
-                    const unidad = item.unidad_medida_nombre_lindo || item.unidad_medida_nombre || '-';
+                    // Unidad
                     doc.text(unidad, xPos + 5, currentY, { 
                         width: colWidths.unidad - 10, 
-                        align: 'center',
-                        height: rowHeight
+                        align: 'center'
                     });
 
-                    currentY += rowHeight;
+                    currentY = rowStartY + rowHeight;
 
                     // Línea divisoria horizontal
                     doc.moveTo(40, currentY)

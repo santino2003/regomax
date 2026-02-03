@@ -66,7 +66,8 @@ $(document).ready(function() {
         
         let html = '';
         bienes.forEach(bien => {
-            const stockClass = bien.cantidad_critica && bien.cantidad_stock <= bien.cantidad_critica 
+            // Considerar crítico si cantidad_critica está definida (incluso si es 0) y el stock es menor o igual
+            const stockClass = (bien.cantidad_critica !== null && bien.cantidad_critica !== undefined && bien.cantidad_stock <= bien.cantidad_critica)
                 ? 'text-danger fw-bold' 
                 : '';
             

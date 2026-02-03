@@ -6,3 +6,9 @@ items_rechazados.json
 migrarOC.js
 OrdenesDeCompra.csv
 OrdenesCompraItems.csv
+
+# Ignorar archivos subidos pero mantener estructura de carpetas
+uploads/bienes/*
+!uploads/bienes/.gitkeep
+uploads/ordenes-compra/*
+!uploads/ordenes-compra/.gitkeep

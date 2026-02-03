@@ -223,7 +223,8 @@ class BienService {
             // Verificar si se alcanza el stock crítico
             console.log(`📊 Verificando stock crítico - Bien ID ${id}: nuevo=${nuevaCantidad}, crítico=${bien.cantidad_critica}, previo=${cantidadPrevia}`);
             
-            if (nuevaCantidad <= bien.cantidad_critica && bien.cantidad_critica !== null && cantidadPrevia > bien.cantidad_critica) {
+            // Alerta si: 1) cantidad_critica está definida (incluso si es 0), 2) nuevo stock es <= crítico, 3) stock previo era > crítico
+            if (bien.cantidad_critica !== null && bien.cantidad_critica !== undefined && nuevaCantidad <= bien.cantidad_critica && cantidadPrevia > bien.cantidad_critica) {
                 console.warn(`⚠️ Advertencia: El stock del bien ID ${id} ha alcanzado el nivel crítico (${nuevaCantidad} unidades restantes).`);
                 
                 // Actualizar el objeto bien con el nuevo stock para el email

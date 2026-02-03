@@ -62,7 +62,7 @@ $(document).ready(function() {
             familia_id: $('#familia_id').val() || null,
             unidad_medida_id: $('#unidad_medida_id').val() || null,
             precio: parseFloat($('#precio').val()) || 0,
-            cantidad_critica: $('#cantidad_critica').val() ? parseInt($('#cantidad_critica').val()) : null,
+            cantidad_critica: $('#cantidad_critica').val() !== '' ? parseInt($('#cantidad_critica').val()) : null,
             ubicacion: $('#ubicacion').val().trim() || null,
             almacen_defecto_id: $('#almacen_defecto_id').val() || null,
             proveedores: $('#proveedores').val() || []
