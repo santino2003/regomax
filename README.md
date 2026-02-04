@@ -18,3 +18,6 @@ Stock al dia de hoy de polvo
 errores:
 despacho:create (varios enpoint)
 Agregar opcion de eliminar bolson
+
+
+FIltros: Desde Hasta, tipo, y CNFU/NFU

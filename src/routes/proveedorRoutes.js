@@ -13,6 +13,22 @@ router.post('/nuevo',
     proveedorController.nuevoProveedor
 );
 
+// Ruta para actualizar proveedor
+router.put('/:id', 
+    auth.verifyToken,
+    permissionsMiddleware.hasPermission('proveedor:edit'),
+    historialMiddleware.proveedor.editar(),
+    proveedorController.actualizarProveedor
+);
+
+// Ruta para eliminar proveedor
+router.delete('/:id', 
+    auth.verifyToken,
+    permissionsMiddleware.hasPermission('proveedor:delete'),
+    historialMiddleware.proveedor.eliminar(),
+    proveedorController.eliminarProveedor
+);
+
 // Puedes agregar más rutas aquí si lo necesitas
 
 module.exports = router;

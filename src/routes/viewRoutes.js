@@ -270,6 +270,20 @@ router.get('/proveedores/nuevo', [
     permissionsMiddleware.hasPermission('proveedor:create')
 ], proveedorController.vistaNuevoProveedor);
 
+// Vista: Editar proveedor - DEBE IR ANTES de /proveedores/:id
+router.get('/proveedores/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:edit')
+], proveedorController.vistaEditarProveedor);
+
+// Vista: Ver proveedor por ID - DEBE IR DESPUÉS de /proveedores/nuevo y /proveedores/editar/:id
+router.get('/proveedores/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('proveedor:view')
+], proveedorController.vistaVerProveedor);
+
 // Vistas de Clientes NFU
 const clienteNFUController = require('../controllers/clienteNFUController');
 router.get('/clientes-nfu', [

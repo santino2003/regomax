@@ -517,8 +517,28 @@ const proveedorDetalles = {
             rubro: req.body?.rubro,
             responsable: req.user?.username
         };
+    },
+    editar: (req, res, body) => {
+        return {
+            proveedor_id: req.params?.id,
+            campos_actualizados: {
+                nombre: req.body?.nombre,
+                contacto: req.body?.contacto,
+                telefono: req.body?.telefono,
+                email: req.body?.email,
+                direccion: req.body?.direccion,
+                web: req.body?.web,
+                rubro: req.body?.rubro
+            },
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            proveedor_id: req.params?.id,
+            responsable: req.user?.username
+        };
     }
-    // Puedes agregar más acciones si lo necesitas (consultar, editar, eliminar)
 };
 
 /**
@@ -526,7 +546,8 @@ const proveedorDetalles = {
  */
 const proveedor = {
     crear: () => registrarHistorial('crear', 'proveedor', proveedorDetalles.crear),
-    // Puedes agregar más acciones si lo necesitas
+    editar: () => registrarHistorial('editar', 'proveedor', proveedorDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'proveedor', proveedorDetalles.eliminar)
 };
 
 /**
