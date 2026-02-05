@@ -126,7 +126,6 @@ $(document).ready(function() {
     async function subirArchivos(bienId, files) {
         const archivosSubidos = [];
         const errores = [];
-        
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             
