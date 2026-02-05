@@ -132,8 +132,8 @@ const bienController = {
             const bien = await bienService.obtenerPorId(id);
             
             // Generar código de barras
-            if (bien && bien.data) {
-                bien.data.barcodeBase64 = await generarBarcodeBase64(bien.data.codigo);
+            if (bien) {
+                bien.barcodeBase64 = await generarBarcodeBase64(bien.codigo);
             }
             
             return res.status(200).json(bien);

@@ -4,7 +4,7 @@ let bienId;
 let modalArchivo;
 
 // Función global para imprimir código de barras (llamada desde onclick en HTML)
-function imprimirCodigo(base64Data, codigo) {
+function imprimirCodigo(base64Data, codigo, nombre) {
     // Crear iframe oculto para impresión
     const printFrame = document.createElement('iframe');
     printFrame.style.position = 'fixed';
@@ -43,6 +43,7 @@ function imprimirCodigo(base64Data, codigo) {
                 <body>
                     <img src="data:image/png;base64,${base64Data}" alt="Código de barras ${codigo}">
                     <div style="font-size: 10pt; margin-top: 2mm;">${codigo}</div>
+                    <div style="font-size: 8pt; margin-top: 1mm;">${nombre || ''}</div>
                 </body>
             </html>
         `);
