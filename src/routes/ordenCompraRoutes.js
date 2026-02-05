@@ -7,16 +7,15 @@ const ordenCompraController = require('../controllers/ordenCompraController');
 const auth = require('../middleware/auth');
 const historialMiddleware = require('../middleware/historialMiddleware');
 const permissionsMiddleware = require('../middleware/permissions');
+const { getUploadPath, ensureUploadDir } = require('../config/uploads');
 
 // Configuración de multer para subida de archivos
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, '../../uploads/ordenes-compra');
+        const uploadDir = getUploadPath('ordenes-compra');
         
-        // Crear directorio si no existe
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
+        // Asegurar que el directorio exista
+        ensureUploadDir('ordenes-compra');
         
         cb(null, uploadDir);
     },

@@ -127,7 +127,7 @@ class BienRepository {
                 }
             }
             
-            // Actualizar proveedores: eliminar todos y volver a insertar
+            // Actualizar proveedores: eliminar todos y volver a inserta
             await connection.query('DELETE FROM bienes_proveedores WHERE bien_id = ?', [id]);
             
             if (proveedoresIds && proveedoresIds.length > 0) {
