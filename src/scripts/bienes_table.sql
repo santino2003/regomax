@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS bienes (
     descripcion TEXT,
     tipo ENUM('Uso', 'Consumo') NOT NULL,
     categoria_id INT,
-    familia_id INT,
     unidad_medida_id INT,
     precio DECIMAL(12, 2) DEFAULT 0.00,
     cantidad_critica INT NULL COMMENT 'Cantidad mínima para generar aviso. NULL = sin avisos',
@@ -20,11 +19,22 @@ CREATE TABLE IF NOT EXISTS bienes (
     INDEX idx_nombre (nombre),
     INDEX idx_tipo (tipo),
     INDEX idx_categoria (categoria_id),
-    INDEX idx_familia (familia_id),
     FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL,
-    FOREIGN KEY (familia_id) REFERENCES familias(id) ON DELETE SET NULL,
     FOREIGN KEY (unidad_medida_id) REFERENCES unidades_medida(id) ON DELETE SET NULL,
     FOREIGN KEY (almacen_defecto_id) REFERENCES almacenes(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de relación bienes-familias (un bien puede tener múltiples familias)
+CREATE TABLE IF NOT EXISTS bienes_familias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    bien_id INT NOT NULL,
+    familia_id INT NOT NULL,
+    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_bien_familia (bien_id, familia_id),
+    FOREIGN KEY (bien_id) REFERENCES bienes(id) ON DELETE CASCADE,
+    FOREIGN KEY (familia_id) REFERENCES familias(id) ON DELETE CASCADE,
+    INDEX idx_bien_id (bien_id),
+    INDEX idx_familia_id (familia_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de relación bienes-proveedores (un bien puede tener múltiples proveedores)

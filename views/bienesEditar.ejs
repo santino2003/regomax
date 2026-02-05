@@ -108,13 +108,37 @@
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="familia_id" class="form-label">Familia</label>
-                                        <select class="form-select" id="familia_id" name="familia_id">
-                                            <option value="">Sin familia</option>
-                                            <% familias.forEach(fam => { %>
-                                                <option value="<%= fam.id %>" <%= bien.familia_id == fam.id ? 'selected' : '' %>><%= fam.nombre %></option>
-                                            <% }) %>
-                                        </select>
+                                        <label for="familiaSelector" class="form-label">Familias</label>
+                                        <!-- Selector para agregar familias -->
+                                        <div class="input-group mb-2">
+                                            <select class="form-select" id="familiaSelector">
+                                                <option value="">Seleccionar familia...</option>
+                                                <% familias.forEach(fam => { %>
+                                                    <option value="<%= fam.id %>" data-nombre="<%= fam.nombre %>"><%= fam.nombre %></option>
+                                                <% }) %>
+                                            </select>
+                                            <button class="btn btn-outline-primary" type="button" id="btnAgregarFamilia">
+                                                <i class="bi bi-plus-lg"></i> Agregar
+                                            </button>
+                                        </div>
+                                        <!-- Container de familias seleccionadas -->
+                                        <div id="familiasSeleccionadas" class="border rounded p-2 bg-white" style="min-height: 100px;">
+                                            <% 
+                                            // Renderizar familias existentes como tags
+                                            const familiasActuales = bien.familias || [];
+                                            if (familiasActuales.length === 0) { %>
+                                                <small class="text-muted">No hay familias seleccionadas</small>
+                                            <% } else {
+                                                familiasActuales.forEach(fam => { %>
+                                                    <span class="badge bg-primary me-1 mb-1" style="font-size: 0.9rem;" data-familia-id="<%= fam.id %>">
+                                                        <%= fam.nombre %>
+                                                        <button type="button" class="btn-close btn-close-white btn-sm ms-1" style="font-size: 0.6rem;" onclick="eliminarFamilia(<%= fam.id %>)"></button>
+                                                    </span>
+                                                <% });
+                                            } %>
+                                        </div>
+                                        <!-- Hidden input para enviar IDs -->
+                                        <input type="hidden" id="familias" name="familias" value="<%= (bien.familias || []).map(f => f.id).join(',') %>">
                                     </div>
                                 </div>
                             </div>

@@ -52,8 +52,11 @@ class BienService {
             // Procesar proveedores
             const proveedoresIds = bienData.proveedores || [];
             
+            // Procesar familias
+            const familiasIds = bienData.familias || [];
+            
             // Crear el bien
-            const result = await bienRepository.crearBien(bienData, proveedoresIds);
+            const result = await bienRepository.crearBien(bienData, proveedoresIds, familiasIds);
             
             return {
                 success: true,
@@ -83,7 +86,10 @@ class BienService {
             // Procesar proveedores
             const proveedoresIds = bienData.proveedores || [];
             
-            await bienRepository.modificarBien(id, bienData, proveedoresIds);
+            // Procesar familias
+            const familiasIds = bienData.familias || [];
+            
+            await bienRepository.modificarBien(id, bienData, proveedoresIds, familiasIds);
             
             return {
                 success: true,

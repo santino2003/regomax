@@ -71,13 +71,21 @@ $(document).ready(function() {
                 ? 'text-danger fw-bold' 
                 : '';
             
+            // Procesar familias - puede venir como array o string concatenado
+            let familiasDisplay = '-';
+            if (bien.familias_nombres) {
+                // Si viene como string concatenado del GROUP_CONCAT
+                const familiasArray = bien.familias_nombres.split(', ').map(f => f.trim()).filter(f => f);
+                familiasDisplay = familiasArray.map(f => `<span class="badge bg-info me-1">${f}</span>`).join('');
+            }
+            
             html += `
                 <tr>
                     <td>${bien.codigo}</td>
                     <td>${bien.nombre}</td>
                     <td><span class="badge ${bien.tipo === 'Uso' ? 'bg-info' : 'bg-warning'}">${bien.tipo}</span></td>
                     <td>${bien.categoria_nombre || '-'}</td>
-                    <td>${bien.familia_nombre || '-'}</td>
+                    <td>${familiasDisplay}</td>
                     <td class="text-end ${stockClass}">${formatearCantidad(bien.cantidad_stock)}</td>
                     <td class="text-end">$${parseFloat(bien.precio || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                     <td class="text-center">

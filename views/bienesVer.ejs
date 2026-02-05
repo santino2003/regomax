@@ -117,8 +117,16 @@
                                     <div><%= bien.categoria_nombre || 'Sin categoría' %></div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="text-muted small">Familia</label>
-                                    <div><%= bien.familia_nombre || 'Sin familia' %></div>
+                                    <label class="text-muted small">Familias</label>
+                                    <div>
+                                        <% if (bien.familias && bien.familias.length > 0) { %>
+                                            <% bien.familias.forEach((fam, index) => { %>
+                                                <span class="badge bg-info me-1"><%= fam.nombre %></span>
+                                            <% }) %>
+                                        <% } else { %>
+                                            Sin familias
+                                        <% } %>
+                                    </div>
                                 </div>
                             </div>
                         </div>

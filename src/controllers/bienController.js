@@ -17,6 +17,13 @@ const bienController = {
                 bienData.proveedores = bienData.proveedores.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
             }
             
+            // Procesar familias (pueden venir como array o string separado por comas)
+            if (bienData.familias && typeof bienData.familias === 'string') {
+                bienData.familias = bienData.familias.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+            } else if (!bienData.familias) {
+                bienData.familias = [];
+            }
+            
             const result = await bienService.crearBien(bienData);
             return res.status(201).json({
                 success: true,
@@ -43,6 +50,13 @@ const bienController = {
             // Procesar proveedores
             if (bienData.proveedores && typeof bienData.proveedores === 'string') {
                 bienData.proveedores = bienData.proveedores.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+            }
+
+            // Procesar familias
+            if (bienData.familias && typeof bienData.familias === 'string') {
+                bienData.familias = bienData.familias.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+            } else if (!bienData.familias) {
+                bienData.familias = [];
             }
 
             await bienService.modificarBien(id, bienData);
