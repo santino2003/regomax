@@ -1,5 +1,29 @@
 const db = require('../config/db');
 
+/**
+ * Normaliza la ruta de archivo para URLs web
+ * Convierte rutas absolutas del sistema a rutas relativas web
+ */
+function normalizarRutaArchivo(rutaArchivo) {
+    if (!rutaArchivo) return rutaArchivo;
+    
+    // Si ya empieza con 'uploads/', está bien
+    if (rutaArchivo.startsWith('uploads/')) {
+        return rutaArchivo;
+    }
+    
+    // Si tiene una ruta absoluta como /var/regomax-uploads/bienes/archivo.pdf
+    // o var/regomax-uploads/bienes/archivo.pdf (sin barra inicial)
+    // extraemos solo la parte desde bienes/ u ordenes-compra/
+    const match = rutaArchivo.match(/(?:.*\/)?(bienes|ordenes-compra)\/(.*)/);
+    if (match) {
+        return `uploads/${match[1]}/${match[2]}`;
+    }
+    
+    // Si no coincide con ningún patrón, devolver tal cual
+    return rutaArchivo;
+}
+
 class BienRepository {
     /**
      * Verificar si un código de bien ya existe
@@ -324,7 +348,11 @@ class BienRepository {
                 SELECT * FROM bienes_archivos WHERE bien_id = ?
             `, [id]);
             
-            bien.archivos = archivos;
+            // Normalizar rutas de archivos para URLs web
+            bien.archivos = archivos.map(archivo => ({
+                ...archivo,
+                ruta_archivo: normalizarRutaArchivo(archivo.ruta_archivo)
+            }));
             
             return bien;
         } catch (error) {
