@@ -327,7 +327,6 @@ class OrdenCompraRepository {
                     params.push(filtros.estado);
                 }
             }
-
             if (filtros.proveedor_id) {
                 whereConditions.push('oc.proveedor_id = ?');
                 params.push(filtros.proveedor_id);
