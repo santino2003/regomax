@@ -17,7 +17,7 @@ class BienRepository {
     /**
      * Crear un nuevo bien
      */
-    async crearBien(bienData, proveedoresIds = []) {
+    async crearBien(bienData, proveedoresIds = [], familiasIds = []) {
         const connection = await db.pool.getConnection();
         try {
             await connection.beginTransaction();
@@ -25,20 +25,19 @@ class BienRepository {
             // El código ya viene generado desde el service
             const codigo = bienData.codigo;
             
-            // Insertar el bien
+            // Insertar el bien (sin familia_id)
             const [result] = await connection.query(
                 `INSERT INTO bienes (
-                    codigo, nombre, descripcion, tipo, categoria_id, familia_id, 
+                    codigo, nombre, descripcion, tipo, categoria_id, 
                     unidad_medida_id, precio, cantidad_critica, ubicacion, 
                     almacen_defecto_id, responsable
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     codigo,
                     bienData.nombre,
                     bienData.descripcion || null,
                     bienData.tipo,
                     bienData.categoria_id || null,
-                    bienData.familia_id || null,
                     bienData.unidad_medida_id || null,
                     bienData.precio || 0,
                     bienData.cantidad_critica !== undefined && bienData.cantidad_critica !== null ? bienData.cantidad_critica : null,
@@ -49,6 +48,16 @@ class BienRepository {
             );
             
             const bienId = result.insertId;
+            
+            // Asociar familias si existen
+            if (familiasIds && familiasIds.length > 0) {
+                for (const familiaId of familiasIds) {
+                    await connection.query(
+                        'INSERT INTO bienes_familias (bien_id, familia_id) VALUES (?, ?)',
+                        [bienId, familiaId]
+                    );
+                }
+            }
             
             // Asociar proveedores si existen
             if (proveedoresIds && proveedoresIds.length > 0) {
@@ -74,19 +83,18 @@ class BienRepository {
     /**
      * Modificar un bien existente
      */
-    async modificarBien(id, bienData, proveedoresIds = []) {
+    async modificarBien(id, bienData, proveedoresIds = [], familiasIds = []) {
         const connection = await db.pool.getConnection();
         try {
             await connection.beginTransaction();
             
-            // Actualizar el bien
+            // Actualizar el bien (sin familia_id)
             await connection.query(
                 `UPDATE bienes SET 
                     nombre = ?, 
                     descripcion = ?, 
                     tipo = ?, 
                     categoria_id = ?, 
-                    familia_id = ?, 
                     unidad_medida_id = ?, 
                     precio = ?, 
                     cantidad_critica = ?, 
@@ -98,7 +106,6 @@ class BienRepository {
                     bienData.descripcion || null,
                     bienData.tipo,
                     bienData.categoria_id || null,
-                    bienData.familia_id || null,
                     bienData.unidad_medida_id || null,
                     bienData.precio || 0,
                     bienData.cantidad_critica !== undefined && bienData.cantidad_critica !== null ? bienData.cantidad_critica : null,
@@ -107,6 +114,18 @@ class BienRepository {
                     id
                 ]
             );
+            
+            // Actualizar familias: eliminar todas y volver a insertar
+            await connection.query('DELETE FROM bienes_familias WHERE bien_id = ?', [id]);
+            
+            if (familiasIds && familiasIds.length > 0) {
+                for (const familiaId of familiasIds) {
+                    await connection.query(
+                        'INSERT INTO bienes_familias (bien_id, familia_id) VALUES (?, ?)',
+                        [id, familiaId]
+                    );
+                }
+            }
             
             // Actualizar proveedores: eliminar todos y volver a insertar
             await connection.query('DELETE FROM bienes_proveedores WHERE bien_id = ?', [id]);
@@ -190,7 +209,7 @@ class BienRepository {
                 params.push(filtros.categoria_id);
             }
             if (filtros.familia_id) {
-                whereConditions.push('b.familia_id = ?');
+                whereConditions.push('bf.familia_id = ?');
                 params.push(filtros.familia_id);
             }
             if (filtros.busqueda) {
@@ -206,7 +225,12 @@ class BienRepository {
             const whereClause = 'WHERE ' + whereConditions.join(' AND ');
             
             // Contar total de registros
-            const countQuery = `SELECT COUNT(*) as total FROM bienes b ${whereClause}`;
+            const countQuery = `
+                SELECT COUNT(DISTINCT b.id) as total 
+                FROM bienes b 
+                LEFT JOIN bienes_familias bf ON b.id = bf.bien_id
+                ${whereClause}
+            `;
             const countResult = await db.query(countQuery, params);
             const totalRegistros = countResult[0].total;
             
@@ -216,16 +240,19 @@ class BienRepository {
                 SELECT 
                     b.*,
                     c.nombre as categoria_nombre,
-                    f.nombre as familia_nombre,
                     um.nombre as unidad_medida_nombre,
                     um.nombre_lindo as unidad_medida_nombre_lindo,
-                    a.nombre as almacen_nombre
+                    a.nombre as almacen_nombre,
+                    GROUP_CONCAT(DISTINCT f.nombre ORDER BY f.nombre SEPARATOR ', ') as familias_nombres,
+                    GROUP_CONCAT(DISTINCT f.id ORDER BY f.nombre SEPARATOR ',') as familias_ids
                 FROM bienes b
                 LEFT JOIN categorias c ON b.categoria_id = c.id
-                LEFT JOIN familias f ON b.familia_id = f.id
+                LEFT JOIN bienes_familias bf ON b.id = bf.bien_id
+                LEFT JOIN familias f ON bf.familia_id = f.id
                 LEFT JOIN unidades_medida um ON b.unidad_medida_id = um.id
                 LEFT JOIN almacenes a ON b.almacen_defecto_id = a.id
                 ${whereClause}
+                GROUP BY b.id
                 ORDER BY b.fecha_creacion DESC 
                 LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
             `;
@@ -256,13 +283,11 @@ class BienRepository {
                 SELECT 
                     b.*,
                     c.nombre as categoria_nombre,
-                    f.nombre as familia_nombre,
                     um.nombre as unidad_medida_nombre,
                     um.nombre_lindo as unidad_medida_nombre_lindo,
                     a.nombre as almacen_nombre
                 FROM bienes b
                 LEFT JOIN categorias c ON b.categoria_id = c.id
-                LEFT JOIN familias f ON b.familia_id = f.id
                 LEFT JOIN unidades_medida um ON b.unidad_medida_id = um.id
                 LEFT JOIN almacenes a ON b.almacen_defecto_id = a.id
                 WHERE b.id = ?
@@ -272,6 +297,17 @@ class BienRepository {
             if (result.length === 0) return null;
             
             const bien = result[0];
+            
+            // Obtener familias asociadas
+            const familias = await db.query(`
+                SELECT f.* 
+                FROM familias f
+                INNER JOIN bienes_familias bf ON f.id = bf.familia_id
+                WHERE bf.bien_id = ?
+                ORDER BY f.nombre
+            `, [id]);
+            
+            bien.familias = familias;
             
             // Obtener proveedores asociados
             const proveedores = await db.query(`

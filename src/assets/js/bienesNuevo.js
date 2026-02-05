@@ -7,6 +7,86 @@ $(document).ready(function() {
         allowClear: true
     });
     
+    // ===== GESTIÓN DE FAMILIAS =====
+    let familiasSeleccionadasArray = [];
+    
+    function actualizarFamiliasUI() {
+        const container = $('#familiasSeleccionadas');
+        
+        if (familiasSeleccionadasArray.length === 0) {
+            container.html('<small class="text-muted">No hay familias seleccionadas</small>');
+        } else {
+            let html = '';
+            familiasSeleccionadasArray.forEach(familia => {
+                html += `
+                    <span class="badge bg-primary me-1 mb-1" style="font-size: 0.9rem;" data-familia-id="${familia.id}">
+                        ${familia.nombre}
+                        <button type="button" class="btn-close btn-close-white btn-sm ms-1" style="font-size: 0.6rem;" data-familia-id="${familia.id}"></button>
+                    </span>
+                `;
+            });
+            container.html(html);
+        }
+        
+        // Actualizar hidden input
+        const ids = familiasSeleccionadasArray.map(f => f.id);
+        $('#familias').val(ids.join(','));
+        
+        // Deshabilitar opciones ya seleccionadas
+        $('#familiaSelector option').each(function() {
+            const optionId = parseInt($(this).val());
+            if (ids.includes(optionId)) {
+                $(this).prop('disabled', true);
+            } else {
+                $(this).prop('disabled', false);
+            }
+        });
+    }
+    
+    // Agregar familia
+    $('#btnAgregarFamilia').on('click', function() {
+        const selector = $('#familiaSelector');
+        const selectedId = parseInt(selector.val());
+        const selectedNombre = selector.find('option:selected').data('nombre');
+        
+        if (!selectedId) {
+            return;
+        }
+        
+        // Verificar si ya está agregada
+        if (familiasSeleccionadasArray.find(f => f.id === selectedId)) {
+            return;
+        }
+        
+        // Agregar a array
+        familiasSeleccionadasArray.push({
+            id: selectedId,
+            nombre: selectedNombre
+        });
+        
+        // Resetear selector
+        selector.val('');
+        
+        // Actualizar UI
+        actualizarFamiliasUI();
+    });
+    
+    // Eliminar familia (delegated event)
+    $(document).on('click', '#familiasSeleccionadas .btn-close', function() {
+        const familiaId = parseInt($(this).data('familia-id'));
+        familiasSeleccionadasArray = familiasSeleccionadasArray.filter(f => f.id !== familiaId);
+        actualizarFamiliasUI();
+    });
+    
+    // Permitir agregar con Enter en el selector
+    $('#familiaSelector').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $('#btnAgregarFamilia').click();
+        }
+    });
+    // ===== FIN GESTIÓN DE FAMILIAS =====
+    
     const form = $('#formNuevoBien');
     const submitBtn = $('#submitBtn');
     const alertPlaceholder = $('#alertPlaceholder');
@@ -97,7 +177,7 @@ $(document).ready(function() {
             descripcion: $('#descripcion').val().trim() || null,
             tipo: $('#tipo').val(),
             categoria_id: $('#categoria_id').val() || null,
-            familia_id: $('#familia_id').val() || null,
+            familias: $('#familias').val() || [],
             unidad_medida_id: $('#unidad_medida_id').val() || null,
             precio: parseFloat($('#precio').val()) || 0,
             cantidad_critica: $('#cantidad_critica').val() !== '' ? parseInt($('#cantidad_critica').val()) : null,
