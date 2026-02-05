@@ -7,16 +7,15 @@ const bienController = require('../controllers/bienController');
 const auth = require('../middleware/auth');
 const historialMiddleware = require('../middleware/historialMiddleware');
 const permissionsMiddleware = require('../middleware/permissions');
+const { getUploadPath, ensureUploadDir } = require('../config/uploads');
 
 // Configuración de multer para subida de archivos
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, '../../uploads/bienes');
+        const uploadDir = getUploadPath('bienes');
         
-        // Crear directorio si no existe
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
+        // Asegurar que el directorio exista
+        ensureUploadDir('bienes');
         
         cb(null, uploadDir);
     },

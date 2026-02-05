@@ -4,8 +4,14 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
+// Configuración de uploads
+const { initializeUploadDirs, UPLOADS_BASE_PATH } = require('./config/uploads');
+
 // Configurar zona horaria para Argentina/Buenos Aires
 process.env.TZ = process.env.TZ || 'America/Argentina/Buenos_Aires';
+
+// Inicializar directorios de uploads
+initializeUploadDirs();
 
 // Importar rutas y middleware
 const authRoutes = require('./routes/authRoutes');
@@ -57,7 +63,8 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // Servir archivos subidos desde la carpeta uploads
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Usar UPLOADS_BASE_PATH configurado en uploads.js
+app.use('/uploads', express.static(UPLOADS_BASE_PATH));
 
 // Middleware para manejar errores de permisos
 app.use(permissionErrorHandler);

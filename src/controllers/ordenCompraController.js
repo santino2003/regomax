@@ -4,6 +4,7 @@ const bienRepository = require('../repositories/bienRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
 const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
 const centroCostoRepository = require('../repositories/centroCostoRepository');
+const { getUploadPath } = require('../config/uploads');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -324,7 +325,7 @@ const ordenCompraController = {
             // Eliminar los archivos si hubo error
             if (req.files && req.files.length > 0) {
                 for (const file of req.files) {
-                    const filePath = path.join(__dirname, '../../uploads/ordenes-compra', file.filename);
+                    const filePath = path.join(getUploadPath('ordenes-compra'), file.filename);
                     try {
                         await fs.unlink(filePath);
                     } catch (unlinkError) {
@@ -358,7 +359,7 @@ const ordenCompraController = {
             }
 
             // Eliminar el archivo del sistema de archivos
-            const filePath = path.join(__dirname, '../../uploads/ordenes-compra', orden.archivo_adjunto);
+            const filePath = path.join(getUploadPath('ordenes-compra'), orden.archivo_adjunto);
             try {
                 await fs.unlink(filePath);
             } catch (unlinkError) {
