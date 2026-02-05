@@ -316,8 +316,16 @@ class OrdenCompraRepository {
 
             // Aplicar filtros
             if (filtros.estado) {
-                whereConditions.push('oc.estado = ?');
-                params.push(filtros.estado);
+                // Si el estado contiene coma, es un filtro múltiple (ej: "En Proceso,Aprobada")
+                if (filtros.estado.includes(',')) {
+                    const estados = filtros.estado.split(',').map(e => e.trim());
+                    const placeholders = estados.map(() => '?').join(',');
+                    whereConditions.push(`oc.estado IN (${placeholders})`);
+                    params.push(...estados);
+                } else {
+                    whereConditions.push('oc.estado = ?');
+                    params.push(filtros.estado);
+                }
             }
 
             if (filtros.proveedor_id) {
