@@ -1,4 +1,5 @@
 const bienService = require('../services/bienService');
+const { UPLOADS_BASE_PATH } = require('../config/uploads');
 const path = require('path');
 const fs = require('fs').promises;
 const generarBarcodeBase64 = require('../utils/imageBarcode');
@@ -180,7 +181,9 @@ const bienController = {
             }
 
             // Convertir ruta absoluta a ruta relativa web
-            const rutaRelativa = req.file.path.replace(/\\/g, '/').replace(/^.*\/uploads\//, 'uploads/');
+            // Extraer la parte después de UPLOADS_BASE_PATH y agregar prefijo 'uploads/'
+            const rutaAbsoluta = req.file.path.replace(/\\/g, '/');
+            const rutaRelativa = 'uploads/' + path.relative(UPLOADS_BASE_PATH, rutaAbsoluta).replace(/\\/g, '/');
             
             const archivoData = {
                 nombre: req.file.originalname,
