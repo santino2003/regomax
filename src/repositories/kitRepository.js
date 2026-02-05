@@ -4,25 +4,24 @@ class KitRepository {
     /**
      * Crear un nuevo kit (bien con es_kit = true)
      */
-    async crearKit(kitData, componentesIds = []) {
+    async crearKit(kitData, componentesIds = [], familiasIds = []) {
         const connection = await db.pool.getConnection();
         try {
             await connection.beginTransaction();
             
-            // Insertar el bien como kit
+            // Insertar el bien como kit (sin familia_id)
             const [result] = await connection.query(
                 `INSERT INTO bienes (
-                    codigo, nombre, descripcion, tipo, categoria_id, familia_id, 
+                    codigo, nombre, descripcion, tipo, categoria_id, 
                     unidad_medida_id, precio, ubicacion, 
                     almacen_defecto_id, responsable, es_kit
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
                 [
                     kitData.codigo,
                     kitData.nombre,
                     kitData.descripcion || null,
                     kitData.tipo || 'Uso',
                     kitData.categoria_id || null,
-                    kitData.familia_id || null,
                     kitData.unidad_medida_id || null,
                     kitData.precio || 0,
                     kitData.ubicacion || null,
@@ -32,6 +31,16 @@ class KitRepository {
             );
             
             const kitId = result.insertId;
+            
+            // Asociar familias si existen
+            if (familiasIds && familiasIds.length > 0) {
+                for (const familiaId of familiasIds) {
+                    await connection.query(
+                        'INSERT INTO bienes_familias (bien_id, familia_id) VALUES (?, ?)',
+                        [kitId, familiaId]
+                    );
+                }
+            }
             
             // Asociar componentes al kit
             if (componentesIds && componentesIds.length > 0) {
@@ -57,19 +66,18 @@ class KitRepository {
     /**
      * Modificar un kit existente
      */
-    async modificarKit(id, kitData, componentesIds = []) {
+    async modificarKit(id, kitData, componentesIds = [], familiasIds = []) {
         const connection = await db.pool.getConnection();
         try {
             await connection.beginTransaction();
             
-            // Actualizar el kit
+            // Actualizar el kit (sin familia_id)
             await connection.query(
                 `UPDATE bienes SET 
                     nombre = ?, 
                     descripcion = ?, 
                     tipo = ?, 
                     categoria_id = ?, 
-                    familia_id = ?, 
                     unidad_medida_id = ?, 
                     precio = ?, 
                     ubicacion = ?, 
@@ -80,7 +88,6 @@ class KitRepository {
                     kitData.descripcion || null,
                     kitData.tipo || 'Uso',
                     kitData.categoria_id || null,
-                    kitData.familia_id || null,
                     kitData.unidad_medida_id || null,
                     kitData.precio || 0,
                     kitData.ubicacion || null,
@@ -88,6 +95,18 @@ class KitRepository {
                     id
                 ]
             );
+            
+            // Actualizar familias: eliminar todas y volver a insertar
+            await connection.query('DELETE FROM bienes_familias WHERE bien_id = ?', [id]);
+            
+            if (familiasIds && familiasIds.length > 0) {
+                for (const familiaId of familiasIds) {
+                    await connection.query(
+                        'INSERT INTO bienes_familias (bien_id, familia_id) VALUES (?, ?)',
+                        [id, familiaId]
+                    );
+                }
+            }
             
             // Actualizar componentes: eliminar todos y volver a insertar
             await connection.query('DELETE FROM bien_componentes WHERE bien_kit_id = ?', [id]);
@@ -162,14 +181,16 @@ class KitRepository {
                 SELECT 
                     b.*,
                     c.nombre as categoria_nombre,
-                    f.nombre as familia_nombre,
                     um.nombre as unidad_medida_nombre,
                     um.nombre_lindo as unidad_medida_nombre_lindo,
                     a.nombre as almacen_nombre,
-                    (SELECT COUNT(*) FROM bien_componentes WHERE bien_kit_id = b.id) as num_componentes
+                    (SELECT COUNT(*) FROM bien_componentes WHERE bien_kit_id = b.id) as num_componentes,
+                    (SELECT GROUP_CONCAT(f.nombre SEPARATOR ', ') 
+                     FROM bienes_familias bf 
+                     INNER JOIN familias f ON bf.familia_id = f.id 
+                     WHERE bf.bien_id = b.id) as familias_nombres
                 FROM bienes b
                 LEFT JOIN categorias c ON b.categoria_id = c.id
-                LEFT JOIN familias f ON b.familia_id = f.id
                 LEFT JOIN unidades_medida um ON b.unidad_medida_id = um.id
                 LEFT JOIN almacenes a ON b.almacen_defecto_id = a.id
                 ${whereClause}
@@ -226,13 +247,15 @@ class KitRepository {
                 SELECT 
                     b.*,
                     c.nombre as categoria_nombre,
-                    f.nombre as familia_nombre,
                     um.nombre as unidad_medida_nombre,
                     um.nombre_lindo as unidad_medida_nombre_lindo,
-                    a.nombre as almacen_nombre
+                    a.nombre as almacen_nombre,
+                    (SELECT GROUP_CONCAT(f.nombre SEPARATOR ', ') 
+                     FROM bienes_familias bf 
+                     INNER JOIN familias f ON bf.familia_id = f.id 
+                     WHERE bf.bien_id = b.id) as familias_nombres
                 FROM bienes b
                 LEFT JOIN categorias c ON b.categoria_id = c.id
-                LEFT JOIN familias f ON b.familia_id = f.id
                 LEFT JOIN unidades_medida um ON b.unidad_medida_id = um.id
                 LEFT JOIN almacenes a ON b.almacen_defecto_id = a.id
                 WHERE b.id = ? AND b.es_kit = TRUE

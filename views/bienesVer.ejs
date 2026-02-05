@@ -47,7 +47,7 @@
                             <a href="/bienes/editar/<%= bien.id %>" class="btn btn-warning">
                                 <i class="bi bi-pencil me-2"></i>Editar
                             </a>
-                            <button type="button" onclick="imprimirCodigo('<%= bien.barcodeBase64 %>', '<%= bien.codigo %>')" class="btn btn-primary ms-2">
+                            <button type="button" onclick="imprimirCodigo('<%= bien.barcodeBase64 %>', '<%= bien.codigo %>', `<%= bien.nombre %>`)" class="btn btn-primary ms-2">
                                 <i class="bi bi-printer me-2"></i>Imprimir Código
                             </button>
                             <a href="/bienes" class="btn btn-outline-secondary ms-2">

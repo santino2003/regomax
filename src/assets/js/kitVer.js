@@ -14,7 +14,7 @@ $(document).ready(function() {
     }
 
     // Función global para imprimir código de barras (llamada desde onclick en HTML)
-    window.imprimirCodigo = function(base64Data, codigo) {
+    window.imprimirCodigo = function(base64Data, codigo, nombre) {
         // Crear iframe oculto para impresión
         const printFrame = document.createElement('iframe');
         printFrame.style.position = 'fixed';
@@ -53,6 +53,7 @@ $(document).ready(function() {
                     <body>
                         <img src="data:image/png;base64,${base64Data}" alt="Código de barras ${codigo}">
                         <div style="font-size: 10pt; margin-top: 2mm;">${codigo}</div>
+                        <div style="font-size: 8pt; margin-top: 1mm;">${nombre || ''}</div>
                     </body>
                 </html>
             `);

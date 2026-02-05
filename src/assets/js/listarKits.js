@@ -70,6 +70,9 @@ $(document).ready(function() {
                         <a href="/kits/editar/${kit.id}" class="btn btn-sm btn-outline-warning" title="Editar">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="imprimirCodigoKit(${kit.id}, '${kit.codigo.replace(/'/g, "\\'")}', '${kit.nombre.replace(/'/g, "\\'")}')">
+                            <i class="bi bi-printer"></i>
+                        </button>
                         <button class="btn btn-sm btn-outline-danger" onclick="confirmarEliminar(${kit.id}, '${kit.nombre.replace(/'/g, "\\'")}')">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -190,6 +193,95 @@ $(document).ready(function() {
             $('#btnFiltrar').click();
         }
     });
+    
+    // Función global para imprimir código de barras de un kit
+    window.imprimirCodigoKit = function(kitId, codigo, nombre) {
+        console.log('Imprimiendo código para kit:', kitId, codigo, nombre);
+        
+        // Obtener el código de barras del servidor
+        fetch(`/api/kits/${kitId}`)
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data recibida:', data);
+                // El endpoint puede devolver { success: true, data: {...} } o directamente el objeto
+                const kitData = data.data || data;
+                
+                if (kitData && kitData.barcodeBase64) {
+                    imprimirCodigo(kitData.barcodeBase64, codigo, nombre);
+                } else {
+                    console.error('No se encontró barcodeBase64 en la respuesta:', data);
+                    showAlert('No se pudo obtener el código de barras', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error al obtener el código de barras', 'danger');
+            });
+    };
+    
+    // Función para imprimir código de barras (similar a bienesVer.js)
+    function imprimirCodigo(base64Data, codigo, nombre) {
+        // Crear iframe oculto para impresión
+        const printFrame = document.createElement('iframe');
+        printFrame.style.position = 'fixed';
+        printFrame.style.right = '0';
+        printFrame.style.bottom = '0';
+        printFrame.style.width = '0';
+        printFrame.style.height = '0';
+        printFrame.style.border = '0';
+        
+        document.body.appendChild(printFrame);
+        
+        printFrame.onload = function() {
+            const doc = printFrame.contentDocument || printFrame.contentWindow.document;
+            doc.write(`
+                <html>
+                    <head>
+                        <title>Etiqueta - ${codigo}</title>
+                        <style>
+                            @page {
+                                size: 90mm 45mm;
+                                margin: 0;
+                                padding: 0;
+                            }
+                            body {
+                                margin: 0;
+                                padding: 2mm;
+                                text-align: center;
+                                font-family: Arial, sans-serif;
+                            }
+                            img {
+                                max-width: 80mm;
+                                height: auto;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <img src="data:image/png;base64,${base64Data}" alt="Código de barras ${codigo}">
+                        <div style="font-size: 10pt; margin-top: 2mm;">${codigo}</div>
+                        <div style="font-size: 8pt; margin-top: 1mm;">${nombre}</div>
+                    </body>
+                </html>
+            `);
+            doc.close();
+            
+            // Esperar a que la imagen se cargue antes de imprimir
+            setTimeout(() => {
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+                
+                // Remover el iframe después de imprimir
+                setTimeout(() => {
+                    document.body.removeChild(printFrame);
+                }, 1000);
+            }, 250);
+        };
+        
+        printFrame.src = 'about:blank';
+    }
     
     // Cargar datos iniciales
     cargarKits(1);
