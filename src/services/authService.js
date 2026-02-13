@@ -17,7 +17,6 @@ class AuthService {
 
       // Verificar contraseña
       const isPasswordValid = await hashUtils.comparePassword(password, user.password);
-      console.log("password",password, user.password, isPasswordValid);
       if (!isPasswordValid) {
         console.log('invalid password');
         throw new Error('Credenciales inválidas');
