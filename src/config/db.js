@@ -1,19 +1,17 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// Opciones optimizadas para Railway - Evitar fugas de memoria y conexiones
 const connectionOptions = {
   waitForConnections: true,
-  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '5'), // Reducido para menos memoria
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '3'), // ⚠️ Reducido a 3
   queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '0'),
-  connectTimeout: parseInt(process.env.DB_CONNECT_TIMEOUT || '10000'), // Reducido a 10s
-  acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '10000'), // Reducido a 10s
-  timeout: parseInt(process.env.DB_TIMEOUT || '10000'), // Reducido a 10s
+  connectTimeout: parseInt(process.env.DB_CONNECT_TIMEOUT || '10000'),
+  acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '10000'),
+  timeout: parseInt(process.env.DB_TIMEOUT || '10000'),
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
-  // CRÍTICO: Cerrar conexiones inactivas automáticamente
-  idleTimeout: 30000, // Cerrar conexiones inactivas después de 30s
-  maxIdle: 2 // Máximo 2 conexiones inactivas en el pool
+  idleTimeout: 30000,
+  maxIdle: 2
 };
 
 console.log('🔌 Inicializando conexión a base de datos...');
@@ -63,15 +61,6 @@ async function verifyConnection(retries = parseInt(process.env.DB_RETRY_ATTEMPTS
     } catch (err) {
       console.error(`🔴 Error en intento ${attempt}:`, err.code || err.message);
       
-      if (err.code === 'ETIMEDOUT') {
-        console.error('⏱️ Timeout - Verifica conectividad de red o firewall');
-      } else if (err.code === 'ECONNREFUSED') {
-        console.error('🚫 Conexión rechazada - El servidor MySQL no está disponible');
-      } else if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-        console.error('📡 Conexión perdida - El servidor cerró la conexión');
-      }
-      
-      // Cerrar pool anterior completamente
       if (pool) {
         try {
           await pool.end();
@@ -103,38 +92,45 @@ async function verifyConnection(retries = parseInt(process.env.DB_RETRY_ATTEMPTS
   return false;
 }
 
-// Ping anti-timeout para Railway + Monitoreo de pool
-let keepaliveInterval = setInterval(async () => {
+// ✅ FIX 1: Evitar duplicación usando global
+if (global._keepaliveInterval) {
+  clearInterval(global._keepaliveInterval);
+  console.log('🔄 Limpiando keepalive anterior para evitar leak');
+}
+
+// ✅ FIX 2: Keepalive SIMPLE sin acceso a internals
+global._keepaliveInterval = setInterval(async () => {
   try {
     const currentPool = getPool();
     if (currentPool) {
       await currentPool.query('SELECT 1');
-      
-      // Mostrar estado del pool para debugging
-      const poolState = currentPool.pool;
-      const allConns = poolState._allConnections?.length || 0;
-      const freeConns = poolState._freeConnections?.length || 0;
-      const inUse = allConns - freeConns;
-      
-      console.log('🟢 Keepalive OK - Pool:', {
-        total: allConns,
-        libres: freeConns,
-        enUso: inUse
-      });
-      
-      // Alertar si hay muchas conexiones en uso
-      if (inUse > 3) {
-        console.warn('⚠️ Alto uso de conexiones:', inUse, '- Verifica si hay fugas');
-      }
+      console.log('🟢 Keepalive OK');
     }
   } catch (e) {
-    console.log('🔴 Keepalive falló:', e.message, '- Recreando pool...');
+    console.error('🔴 Keepalive falló:', e.message);
     if (pool) {
       await pool.end().catch(() => {});
     }
     pool = null;
   }
 }, 300000); // 5 minutos
+
+// ✅ FIX 3: Monitoreo de memoria para detectar leaks (sin crear múltiples intervals)
+if (process.env.DEBUG_MEMORY === 'true') {
+  if (global._memoryMonitorInterval) {
+    clearInterval(global._memoryMonitorInterval);
+    console.log('🔄 Limpiando monitor de memoria anterior para evitar leak');
+  }
+  
+  global._memoryMonitorInterval = setInterval(() => {
+    const m = process.memoryUsage();
+    console.log('💾 MEMORIA:', {
+      rss: Math.round(m.rss / 1024 / 1024) + 'MB',
+      heap: Math.round(m.heapUsed / 1024 / 1024) + 'MB',
+      external: Math.round(m.external / 1024 / 1024) + 'MB'
+    });
+  }, 60000); // Cada minuto
+}
 
 function hasPlaceholders(sql) {
   return /\?/.test(sql);
@@ -181,7 +177,7 @@ async function query(text, params) {
     const reconnectErrors = ['ECONNREFUSED', 'ETIMEDOUT', 'PROTOCOL_CONNECTION_LOST', 'ECONNRESET', 'EPIPE'];
     
     if (reconnectErrors.includes(error.code)) {
-      console.error('🔁 Conexión perdida:', error.code, '- Recreando pool y reintentando...');
+      console.error('🔁 Conexión perdida:', error.code, '- Intentando reconectar...');
       
       if (pool) {
         await pool.end().catch(() => {});
@@ -205,34 +201,42 @@ async function query(text, params) {
   }
 }
 
-// Limpieza al cerrar la aplicación
-process.on('SIGTERM', async () => {
-  console.log('🛑 SIGTERM recibido - Cerrando conexiones DB...');
-  clearInterval(keepaliveInterval);
-  if (pool) {
-    await pool.end();
-    console.log('✅ Pool de conexiones cerrado correctamente');
+// Limpieza completa al cerrar
+function cleanup() {
+  console.log('🛑 Cerrando conexiones DB...');
+  
+  // Limpiar todos los intervals para evitar leaks
+  if (global._keepaliveInterval) {
+    clearInterval(global._keepaliveInterval);
+    console.log('✅ Keepalive interval limpiado');
   }
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  console.log('🛑 SIGINT recibido - Cerrando conexiones DB...');
-  clearInterval(keepaliveInterval);
-  if (pool) {
-    await pool.end();
-    console.log('✅ Pool de conexiones cerrado correctamente');
+  if (global._memoryMonitorInterval) {
+    clearInterval(global._memoryMonitorInterval);
+    console.log('✅ Memory monitor interval limpiado');
   }
-  process.exit(0);
-});
+  
+  if (pool) {
+    pool.end().then(() => {
+      console.log('✅ Pool cerrado correctamente');
+      process.exit(0);
+    }).catch(() => {
+      process.exit(0);
+    });
+  } else {
+    process.exit(0);
+  }
+}
 
-// Primera verificación al boot
+process.on('SIGTERM', cleanup);
+process.on('SIGINT', cleanup);
+
+// Primera verificación
 verifyConnection();
 
 module.exports = {
   query,
   get pool() {
-    return getPool(); // Getter dinámico para compatibilidad con db.pool.getConnection()
+    return getPool();
   },
   getPool,
   verifyConnection
