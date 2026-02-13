@@ -1,11 +1,93 @@
 // bienesNuevo.js
 $(document).ready(function() {
-    // Inicializar Select2 para selección múltiple de proveedores
-    $('#proveedores').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Seleccionar proveedores...',
-        allowClear: true
+    // ===== GESTIÓN DE PROVEEDORES =====
+    let proveedorCounter = 0;
+    let proveedoresData = []; // Array para guardar datos de proveedores
+    
+    // Cargar lista de proveedores desde el servidor (se pasa desde EJS)
+    let proveedores = window.proveedoresDisponibles || [];
+    
+    function agregarProveedorVacio() {
+        proveedorCounter++;
+        const proveedorHtml = `
+            <div class="proveedor-row" data-proveedor="${proveedorCounter}">
+                <button type="button" class="btn btn-danger btn-sm btn-remove-proveedor" onclick="eliminarProveedor(${proveedorCounter})">
+                    <i class="bi bi-x-lg"></i> Eliminar
+                </button>
+                
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+                        <select class="form-select select2-proveedor" data-proveedor-id="${proveedorCounter}" required>
+                            <option value="">Seleccionar proveedor...</option>
+                            ${proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Precio <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control proveedor-precio" data-proveedor-id="${proveedorCounter}" 
+                               step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Moneda <span class="text-danger">*</span></label>
+                        <select class="form-select proveedor-moneda" data-proveedor-id="${proveedorCounter}" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="ARS">ARS ($)</option>
+                            <option value="USD">USD (US$)</option>
+                            <option value="EUR">EUR (€)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('#proveedoresContainer').append(proveedorHtml);
+        
+        // Inicializar Select2 para el nuevo proveedor
+        $(`[data-proveedor="${proveedorCounter}"] .select2-proveedor`).select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Buscar proveedor...'
+        });
+    }
+    
+    // Función global para eliminar proveedor
+    window.eliminarProveedor = function(proveedorId) {
+        $(`[data-proveedor="${proveedorId}"]`).remove();
+        
+        // Si no quedan proveedores, mostrar mensaje
+        if ($('#proveedoresContainer .proveedor-row').length === 0) {
+            $('#proveedoresContainer').html('<p class="text-muted text-center py-3">No hay proveedores agregados. Haga clic en "Agregar Proveedor" para añadir uno.</p>');
+        }
+    };
+    
+    function recopilarProveedores() {
+        const proveedores = [];
+        $('#proveedoresContainer .proveedor-row').each(function() {
+            const proveedorId = $(this).find('.select2-proveedor').val();
+            const precio = parseFloat($(this).find('.proveedor-precio').val());
+            const moneda = $(this).find('.proveedor-moneda').val();
+            
+            if (proveedorId && !isNaN(precio) && moneda) {
+                proveedores.push([parseInt(proveedorId), precio, moneda]);
+            }
+        });
+        return proveedores;
+    }
+    
+    // Inicializar con mensaje por defecto
+    if ($('#proveedoresContainer .proveedor-row').length === 0) {
+        $('#proveedoresContainer').html('<p class="text-muted text-center py-3">No hay proveedores agregados. Haga clic en "Agregar Proveedor" para añadir uno.</p>');
+    }
+    
+    $('#btnAgregarProveedor').on('click', function() {
+        // Limpiar mensaje si existe
+        if ($('#proveedoresContainer p.text-muted').length > 0) {
+            $('#proveedoresContainer').empty();
+        }
+        agregarProveedorVacio();
     });
+    // ===== FIN GESTIÓN DE PROVEEDORES =====
     
     // ===== GESTIÓN DE FAMILIAS =====
     let familiasSeleccionadasArray = [];
@@ -171,19 +253,21 @@ $(document).ready(function() {
         const originalText = submitBtn.html();
         submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...').prop('disabled', true);
         
-        const formData = {
-            nombre: $('#nombre').val().trim(),
-            descripcion: $('#descripcion').val().trim() || null,
-            tipo: $('#tipo').val(),
-            categoria_id: $('#categoria_id').val() || null,
-            familias: $('#familias').val() || [],
-            unidad_medida_id: $('#unidad_medida_id').val() || null,
-            precio: parseFloat($('#precio').val()) || 0,
-            cantidad_critica: $('#cantidad_critica').val() !== '' ? parseInt($('#cantidad_critica').val()) : null,
-            ubicacion: $('#ubicacion').val().trim() || null,
-            almacen_defecto_id: $('#almacen_defecto_id').val() || null,
-            proveedores: $('#proveedores').val() || []
-        };
+        // Recopilar proveedores como array de tuplas
+        const proveedoresTuplas = recopilarProveedores();
+        
+            const formData = {
+                nombre: $('#nombre').val().trim(),
+                descripcion: $('#descripcion').val().trim() || null,
+                tipo: $('#tipo').val(),
+                categoria_id: $('#categoria_id').val() || null,
+                familias: $('#familias').val() ? $('#familias').val().split(',').map(id => parseInt(id)) : [],
+                unidad_medida_id: $('#unidad_medida_id').val() || null,
+                cantidad_critica: $('#cantidad_critica').val() !== '' ? parseInt($('#cantidad_critica').val()) : null,
+                ubicacion: $('#ubicacion').val().trim() || null,
+                almacen_defecto_id: $('#almacen_defecto_id').val() || null,
+                proveedores: proveedoresTuplas // Array de tuplas: [[id, precio, moneda], ...]
+            };        console.log('Datos a enviar:', formData);
         
         try {
             // Paso 1: Crear el bien

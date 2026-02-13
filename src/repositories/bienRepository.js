@@ -41,7 +41,7 @@ class BienRepository {
     /**
      * Crear un nuevo bien
      */
-    async crearBien(bienData, proveedoresIds = [], familiasIds = []) {
+    async crearBien(bienData, familiasIds = []) {
         const connection = await db.pool.getConnection();
         try {
             await connection.beginTransaction();
@@ -83,15 +83,6 @@ class BienRepository {
                 }
             }
             
-            // Asociar proveedores si existen
-            if (proveedoresIds && proveedoresIds.length > 0) {
-                for (const proveedorId of proveedoresIds) {
-                    await connection.query(
-                        'INSERT INTO bienes_proveedores (bien_id, proveedor_id) VALUES (?, ?)',
-                        [bienId, proveedorId]
-                    );
-                }
-            }
             
             await connection.commit();
             return { id: bienId, codigo };
@@ -107,7 +98,7 @@ class BienRepository {
     /**
      * Modificar un bien existente
      */
-    async modificarBien(id, bienData, proveedoresIds = [], familiasIds = []) {
+    async modificarBien(id, bienData, familiasIds = []) {
         const connection = await db.pool.getConnection();
         try {
             await connection.beginTransaction();
@@ -151,17 +142,7 @@ class BienRepository {
                 }
             }
             
-            // Actualizar proveedores: eliminar todos y volver a inserta
-            await connection.query('DELETE FROM bienes_proveedores WHERE bien_id = ?', [id]);
-            
-            if (proveedoresIds && proveedoresIds.length > 0) {
-                for (const proveedorId of proveedoresIds) {
-                    await connection.query(
-                        'INSERT INTO bienes_proveedores (bien_id, proveedor_id) VALUES (?, ?)',
-                        [id, proveedorId]
-                    );
-                }
-            }
+            // Los proveedores ahora se manejan en bienProveedorService/Repository
             
             await connection.commit();
             return true;
@@ -333,12 +314,13 @@ class BienRepository {
             
             bien.familias = familias;
             
-            // Obtener proveedores asociados
+            // Obtener proveedores asociados con precio y moneda
             const proveedores = await db.query(`
-                SELECT p.* 
+                SELECT p.*, bp.precio, bp.moneda
                 FROM proveedores p
                 INNER JOIN bienes_proveedores bp ON p.id = bp.proveedor_id
                 WHERE bp.bien_id = ?
+                ORDER BY p.nombre
             `, [id]);
             
             bien.proveedores = proveedores;

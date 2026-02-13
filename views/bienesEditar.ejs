@@ -9,6 +9,21 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="/assets/css/home.css">
+    <style>
+        .proveedor-row {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            position: relative;
+        }
+        .btn-remove-proveedor {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -147,11 +162,11 @@
                         <!-- Inventario y Precios -->
                         <div class="card mb-3 shadow-sm">
                             <div class="card-header" style="background-color: #17a2b8; color: white;">
-                                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Inventario y Precios</h5>
+                                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Inventario</h5>
                             </div>
                             <div class="card-body bg-light">
                                 <div class="row mb-3">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label for="unidad_medida_id" class="form-label">Unidad de Medida</label>
                                         <select class="form-select" id="unidad_medida_id" name="unidad_medida_id">
                                             <option value="">Seleccionar...</option>
@@ -160,20 +175,11 @@
                                             <% }) %>
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="precio" class="form-label">Precio</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" id="precio" name="precio" step="0.01" min="0" value="<%= bien.precio || 0 %>">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label for="cantidad_critica" class="form-label">Cantidad Crítica</label>
                                         <input type="number" class="form-control" id="cantidad_critica" name="cantidad_critica" min="0" value="<%= bien.cantidad_critica || '' %>" placeholder="Dejar vacío para sin avisos">
                                         <small class="text-muted">Cantidad mínima para generar avisos</small>
                                     </div>
-                                </div>
-                                <div class="row">
                                 </div>
                             </div>
                         </div>
@@ -205,22 +211,15 @@
                         <!-- Proveedores -->
                         <div class="card mb-3 shadow-sm">
                             <div class="card-header" style="background-color: #17a2b8; color: white;">
-                                <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Proveedores</h5>
-                            </div>
-                            <div class="card-body bg-light">
-                                <div class="row mb-3">
-                                    <div class="col-12">
-                                        <label for="proveedores" class="form-label">Seleccionar Proveedores</label>
-                                        <select class="form-select" id="proveedores" name="proveedores" multiple>
-                                            <% proveedores.forEach(prov => { 
-                                                const isSelected = bien.proveedores && bien.proveedores.some(p => p.proveedor_id == prov.id);
-                                            %>
-                                                <option value="<%= prov.id %>" <%= isSelected ? 'selected' : '' %>><%= prov.nombre %></option>
-                                            <% }) %>
-                                        </select>
-                                        <small class="text-muted">Puede seleccionar múltiples proveedores</small>
-                                    </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Proveedores</h5>
+                                    <button type="button" class="btn btn-light btn-sm" id="btnAgregarProveedor">
+                                        <i class="bi bi-plus-circle me-1"></i>Agregar Proveedor
+                                    </button>
                                 </div>
+                            </div>
+                            <div class="card-body bg-light" id="proveedoresContainer">
+                                <!-- Los proveedores se agregarán dinámicamente aquí -->
                             </div>
                         </div>
 
@@ -331,6 +330,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        // Pasar datos al JavaScript
+        window.proveedoresDisponibles = <%- JSON.stringify(proveedores) %>;
+        window.proveedoresActuales = <%- JSON.stringify(bien.proveedores || []) %>;
+    </script>
     <script src="/assets/js/common.js"></script>
     <script src="/assets/js/bienesEditar.js"></script>
 </body>
