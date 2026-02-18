@@ -103,6 +103,36 @@ class BienProveedorRepository {
             throw error;
         }
     }
+
+    /**
+     * Obtener todos los bienes asociados a un proveedor con su precio y moneda
+     */
+    async obtenerBienesPorProveedor(proveedorId) {
+        try {
+            const rows = await db.query(
+                `SELECT 
+                    b.id,
+                    b.nombre,
+                    b.descripcion,
+                    b.tipo,
+                    c.nombre as categoria,
+                    um.nombre as unidad_medida,
+                    bp.precio,
+                    bp.moneda
+                FROM bienes_proveedores bp
+                INNER JOIN bienes b ON bp.bien_id = b.id
+                LEFT JOIN categorias c ON b.categoria_id = c.id
+                LEFT JOIN unidades_medida um ON b.unidad_medida_id = um.id
+                WHERE bp.proveedor_id = ?
+                ORDER BY b.nombre`,
+                [proveedorId]
+            );
+            return rows;
+        } catch (error) {
+            console.error('Error en BienProveedorRepository.obtenerBienesPorProveedor:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new BienProveedorRepository();

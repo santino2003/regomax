@@ -92,6 +92,23 @@ class BienProveedorService {
             throw error;
         }
     }
+
+    /**
+     * Obtener todos los bienes asociados a un proveedor
+     */
+    async obtenerBienesPorProveedor(proveedorId) {
+        try {
+            const bienes = await bienProveedorRepository.obtenerBienesPorProveedor(proveedorId);
+            
+            return {
+                success: true,
+                data: bienes
+            };
+        } catch (error) {
+            console.error('Error en BienProveedorService.obtenerBienesPorProveedor:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new BienProveedorService();

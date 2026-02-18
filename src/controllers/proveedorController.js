@@ -1,4 +1,5 @@
 const proveedorService = require('../services/proveedorService');
+const bienProveedorService = require('../services/bienProveedorService');
 
 const proveedoresController ={
     async nuevoProveedor(req, res) {
@@ -75,9 +76,21 @@ const proveedoresController ={
                 });
             }
 
+            // Obtener los bienes asociados a este proveedor
+            let bienes = [];
+            try {
+                const resultadoBienes = await bienProveedorService.obtenerBienesPorProveedor(id);
+                console.log('Resultado bienes:', resultadoBienes);
+                bienes = Array.isArray(resultadoBienes.data) ? resultadoBienes.data : [];
+            } catch (errorBienes) {
+                console.error('Error al obtener bienes del proveedor:', errorBienes);
+                // Si hay error, bienes queda como array vacío
+            }
+
             res.render('proveedoresVer', {
                 username: req.user.username,
-                proveedor
+                proveedor,
+                bienes
             });
         } catch (error) {
             console.error('Error al ver proveedor:', error);
