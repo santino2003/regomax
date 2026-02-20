@@ -109,6 +109,14 @@ router.get(
     ordenCompraController.obtenerDatosFormulario
 );
 
+// Obtener proveedores asociados a un bien específico
+router.get(
+    '/bienes/:bienId/proveedores',
+    auth.verifyToken,
+    permissionsMiddleware.hasPermission('ordenes_compra:view'),
+    ordenCompraController.obtenerProveedoresPorBien
+);
+
 // Obtener estadísticas
 router.get(
     '/estadisticas',

@@ -1,8 +1,10 @@
 const ordenCompraRepository = require('../repositories/ordenCompraRepository');
 const bienRepository = require('../repositories/bienRepository');
-const proveedorRepository = require('../repositories/proveedorRepository');
 const ajusteInventarioRepository = require('../repositories/ajusteInventarioRepository');
 const userRepository = require('../repositories/userRepository');
+const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
+const centroCostoRepository = require('../repositories/centroCostoRepository');
+const bienProveedorRepository = require('../repositories/bienProveedorRepository');
 
 class OrdenCompraService {
     /**
@@ -76,8 +78,12 @@ class OrdenCompraService {
                 archivo_adjunto: ordenData.archivo_adjunto || null, // Legacy - un solo archivo
                 archivos_adjuntos: ordenData.archivos_adjuntos || [], // Múltiples archivos
                 proveedor_id: ordenData.proveedor_id || null,
+                contrafactura: ordenData.contrafactura || false, // Campo contrafactura
                 creado_por: usuario
             };
+
+            console.log('Crear Orden - Contrafactura recibida:', ordenData.contrafactura);
+            console.log('Crear Orden - Contrafactura en datosOrden:', datosOrden.contrafactura);
 
             // Crear la orden con sus items
             const result = await ordenCompraRepository.crearOrdenCompra(datosOrden, ordenData.items);
@@ -170,9 +176,16 @@ class OrdenCompraService {
                 proveedor_id: ordenData.proveedor_id !== undefined 
                     ? ordenData.proveedor_id 
                     : ordenActual.proveedor_id,
+                contrafactura: ordenData.contrafactura !== undefined 
+                    ? ordenData.contrafactura 
+                    : ordenActual.contrafactura,
                 archivos_adjuntos: ordenData.archivos_adjuntos, // Agregar archivos nuevos
                 archivos_eliminar: ordenData.archivos_eliminar // Archivos a eliminar
             };
+
+            console.log('Contrafactura en Service - recibida:', ordenData.contrafactura);
+            console.log('Contrafactura en Service - actual:', ordenActual.contrafactura);
+            console.log('Contrafactura en Service - final:', datosActualizados.contrafactura);
 
             // Si se proporcionan items, usarlos; sino mantener los actuales
             const items = ordenData.items || ordenActual.items;
@@ -440,6 +453,43 @@ class OrdenCompraService {
             return await ordenCompraRepository.obtenerEstadisticas();
         } catch (error) {
             console.error('Error en OrdenCompraService.obtenerEstadisticas:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener datos necesarios para el formulario de orden de compra
+     */
+    async obtenerDatosFormulario() {
+        try {
+            const bienesResult = await bienRepository.obtenerTodos(1, 10000, {});
+            const unidadesMedidaResult = await unidadMedidaRepository.obtenerTodas(1, 10000);
+            const centrosCosto = await centroCostoRepository.obtenerActivos();
+
+            return {
+                bienes: bienesResult.data || [],
+                unidadesMedida: unidadesMedidaResult.data || [],
+                centrosCosto: centrosCosto || []
+            };
+        } catch (error) {
+            console.error('Error en OrdenCompraService.obtenerDatosFormulario:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener proveedores asociados a un bien específico
+     */
+    async obtenerProveedoresPorBien(bienId) {
+        try {
+            if (!bienId) {
+                throw new Error('El ID del bien es requerido');
+            }
+
+            const proveedores = await bienProveedorRepository.obtenerProveedoresPorBien(bienId);
+            return proveedores;
+        } catch (error) {
+            console.error('Error en OrdenCompraService.obtenerProveedoresPorBien:', error);
             throw error;
         }
     }

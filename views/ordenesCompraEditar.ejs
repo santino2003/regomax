@@ -84,6 +84,14 @@
                                         </select>
                                         <div class="invalid-feedback">La condición es obligatoria</div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mt-4">
+                                            <input class="form-check-input" type="checkbox" id="contrafactura" name="contrafactura" value="true" <%= orden.contrafactura ? 'checked' : '' %>>
+                                            <label class="form-check-label" for="contrafactura">
+                                                <i class="bi bi-receipt me-1"></i>Es a Contrafactura
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="row mb-3">
@@ -200,7 +208,6 @@
         
         // Datos cargados desde el servidor (EJS)
         let bienes = <%- JSON.stringify(bienes) %>;
-        let proveedores = <%- JSON.stringify(proveedores) %>;
         let unidadesMedida = <%- JSON.stringify(unidadesMedida) %>;
         let centrosCosto = <%- JSON.stringify(centrosCosto) %>;
         let itemsExistentes = <%- JSON.stringify(orden.items) %>;
@@ -307,9 +314,8 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">PROVEEDOR SUGERIDO</label>
-                            <select class="form-select" name="items[${itemCounter}][proveedor_sugerido_id]">
-                                <option value="">---------</option>
-                                ${proveedores.map(p => `<option value="${p.id}" ${p.id === item.proveedor_sugerido_id ? 'selected' : ''}>${p.nombre}</option>`).join('')}
+                            <select class="form-select proveedor-select" name="items[${itemCounter}][proveedor_sugerido_id]" data-selected="${item.proveedor_sugerido_id || ''}">
+                                <option value="">Cargando...</option>
                             </select>
                         </div>
                     </div>
@@ -323,6 +329,28 @@
                 theme: 'bootstrap-5',
                 width: '100%',
                 placeholder: 'Buscar bien...'
+            });
+
+            // Cargar proveedores asociados al bien existente
+            const bienId = item.bien_id;
+            const $proveedorSelect = $(`[data-item="${itemCounter}"] .proveedor-select`);
+            const proveedorSeleccionado = item.proveedor_sugerido_id;
+
+            if (bienId) {
+                cargarProveedoresPorBien(bienId, $proveedorSelect, proveedorSeleccionado);
+            }
+
+            // Event listener para cuando se cambie el bien
+            $(`[data-item="${itemCounter}"] .select2-bien`).on('change', function() {
+                const nuevoBienId = $(this).val();
+                const $provSelect = $(this).closest('[data-item]').find('.proveedor-select');
+                
+                if (!nuevoBienId) {
+                    $provSelect.html('<option value="">Seleccione un bien primero</option>');
+                    return;
+                }
+                
+                cargarProveedoresPorBien(nuevoBienId, $provSelect);
             });
         }
 
@@ -372,9 +400,8 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">PROVEEDOR SUGERIDO</label>
-                            <select class="form-select" name="items[${itemCounter}][proveedor_sugerido_id]">
-                                <option value="">---------</option>
-                                ${proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
+                            <select class="form-select proveedor-select" name="items[${itemCounter}][proveedor_sugerido_id]">
+                                <option value="">Seleccione un bien primero</option>
                             </select>
                         </div>
                     </div>
@@ -388,6 +415,49 @@
                 theme: 'bootstrap-5',
                 width: '100%',
                 placeholder: 'Buscar bien...'
+            });
+
+            // Event listener para cargar proveedores cuando se selecciona un bien
+            $(`[data-item="${itemCounter}"] .select2-bien`).on('change', function() {
+                const bienId = $(this).val();
+                const $proveedorSelect = $(this).closest('[data-item]').find('.proveedor-select');
+                
+                if (!bienId) {
+                    $proveedorSelect.html('<option value="">Seleccione un bien primero</option>');
+                    return;
+                }
+                
+                cargarProveedoresPorBien(bienId, $proveedorSelect);
+            });
+        }
+
+        function cargarProveedoresPorBien(bienId, $select, proveedorSeleccionado = null) {
+            $select.html('<option value="">Cargando...</option>');
+            
+            $.ajax({
+                url: `/api/ordenes-compra/bienes/${bienId}/proveedores`,
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                success: function(response) {
+                    if (response.success && response.data && response.data.length > 0) {
+                        let options = '<option value="">---------</option>';
+                        response.data.forEach(proveedor => {
+                            const nombre = proveedor.nombre || 'Sin nombre';
+                            const precio = proveedor.precio ? ` - ${proveedor.moneda} ${proveedor.precio}` : '';
+                            const selected = proveedorSeleccionado && proveedor.id == proveedorSeleccionado ? 'selected' : '';
+                            options += `<option value="${proveedor.id}" ${selected}>${nombre}${precio}</option>`;
+                        });
+                        $select.html(options);
+                    } else {
+                        $select.html('<option value="">Sin proveedores asociados</option>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al cargar proveedores:', error);
+                    $select.html('<option value="">Error al cargar proveedores</option>');
+                }
             });
         }
 
@@ -479,6 +549,10 @@
             formData.append('fecha_entrega_solicitada', $('#fecha_entrega_solicitada').val());
             formData.append('fecha_entrega_proveedor', $('#fecha_entrega_proveedor').val());
             formData.append('asunto', $('#asunto').val());
+            formData.append('contrafactura', $('#contrafactura').is(':checked') ? 'true' : 'false');
+            
+            console.log('Contrafactura checkbox:', $('#contrafactura').is(':checked'));
+            console.log('Valor enviado:', $('#contrafactura').is(':checked') ? 'true' : 'false');
             
             // Archivos nuevos a agregar
             if (archivosNuevos.length > 0) {

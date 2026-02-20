@@ -156,6 +156,11 @@
                             <div class="col-md-6">
                                 <p><strong>Proveedor:</strong> ${orden.proveedor_nombre || '-'}</p>
                                 <p><strong>Condición:</strong> <span class="badge bg-warning text-dark">${orden.condicion}</span></p>
+                                <p><strong>Contrafactura:</strong> 
+                                    ${orden.contrafactura ? 
+                                        '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Sí</span>' : 
+                                        '<span class="badge bg-secondary"><i class="bi bi-x-circle"></i> No</span>'}
+                                </p>
                                 <p><strong>Creado por:</strong> ${orden.creado_por}</p>
                             </div>
                             <div class="col-md-6">

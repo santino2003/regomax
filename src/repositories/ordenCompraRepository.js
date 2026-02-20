@@ -32,8 +32,8 @@ class OrdenCompraRepository {
             const [result] = await connection.query(
                 `INSERT INTO ordenes_compra (
                     codigo, estado, fecha_entrega_solicitada, fecha_entrega_proveedor,
-                    condicion, asunto, archivo_adjunto, proveedor_id, creado_por
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    condicion, asunto, archivo_adjunto, proveedor_id, creado_por, contrafactura
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     ordenData.codigo,
                     ordenData.estado || 'Abierta',
@@ -43,7 +43,8 @@ class OrdenCompraRepository {
                     ordenData.asunto || null,
                     archivoAdjunto,
                     ordenData.proveedor_id || null,
-                    ordenData.creado_por
+                    ordenData.creado_por,
+                    ordenData.contrafactura || false
                 ]
             );
             
@@ -99,7 +100,8 @@ class OrdenCompraRepository {
                 fecha_entrega_proveedor = ?,
                 condicion = ?, 
                 asunto = ?, 
-                proveedor_id = ?
+                proveedor_id = ?,
+                contrafactura = ?
             `;
             let updateValues = [
                 ordenData.estado,
@@ -107,8 +109,12 @@ class OrdenCompraRepository {
                 ordenData.fecha_entrega_proveedor || null,
                 ordenData.condicion,
                 ordenData.asunto || null,
-                ordenData.proveedor_id || null
+                ordenData.proveedor_id || null,
+                ordenData.contrafactura || false
             ];
+            
+            console.log('Valor de contrafactura en Repository:', ordenData.contrafactura, 'Tipo:', typeof ordenData.contrafactura);
+            console.log('UpdateValues:', updateValues);
             
             // Si hay nuevos archivos o archivos a eliminar, actualizar
             if ((ordenData.archivos_adjuntos && ordenData.archivos_adjuntos.length > 0) || 
