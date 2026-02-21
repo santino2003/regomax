@@ -40,6 +40,33 @@ class BienProveedorRepository {
             connection.release();
         }
     }
+    async obtenerPrecioProveedorBien(bienId, proveedorId) {
+        const query = `
+            SELECT 
+                bp.bien_id,
+                bp.proveedor_id,
+                bp.precio,
+                bp.moneda,
+                bp.fecha_asignacion,
+                p.nombre as proveedor_nombre,
+                b.nombre as bien_nombre,
+                b.codigo as bien_codigo
+            FROM bienes_proveedores bp
+            INNER JOIN proveedores p ON bp.proveedor_id = p.id
+            INNER JOIN bienes b ON bp.bien_id = b.id
+            WHERE bp.bien_id = ?
+            AND bp.proveedor_id = ?
+            LIMIT 1
+        `;
+
+        const result = await db.query(query, [bienId, proveedorId]);
+        
+        // Manejar el resultado igual que en ordenCompraRepository
+        const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : 
+                     Array.isArray(result) ? result : [result];
+        
+        return rows[0] || null;
+    }
 
     /**
      * Editar/Actualizar asociaciones bien-proveedor en una transacción

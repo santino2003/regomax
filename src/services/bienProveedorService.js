@@ -109,6 +109,32 @@ class BienProveedorService {
             throw error;
         }
     }
+
+    /**
+     * Obtener el precio del proveedor para un bien específico
+     * Busca en la tabla de relación bienes_proveedores
+     */
+    async obtenerPrecioProveedorBien(bienId, proveedorId) {
+        try {
+            if (!bienId || !proveedorId) {
+                throw new Error('El ID del bien y del proveedor son requeridos');
+            }
+
+            const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(bienId, proveedorId);
+            
+            if (!precioInfo) {
+                throw new Error('No se encontró información de precio para este bien y proveedor');
+            }
+
+            return {
+                success: true,
+                data: precioInfo
+            };
+        } catch (error) {
+            console.error('❌ [bienProveedorService] Error en obtenerPrecioProveedorBien:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new BienProveedorService();

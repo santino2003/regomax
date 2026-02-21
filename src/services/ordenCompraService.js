@@ -5,6 +5,7 @@ const userRepository = require('../repositories/userRepository');
 const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
 const centroCostoRepository = require('../repositories/centroCostoRepository');
 const bienProveedorRepository = require('../repositories/bienProveedorRepository');
+const pagosService = require('./pagosService');
 
 class OrdenCompraService {
     /**
@@ -292,10 +293,21 @@ class OrdenCompraService {
                 throw new Error('La cantidad recibida no puede ser menor a la cantidad ya registrada');
             }
 
+            // Variable para guardar advertencias de pago
+            let warningMessage = '';
+
             if (diferencia !== 0) {
                 // Actualizar cantidad recibida
                 await ordenCompraRepository.actualizarCantidadRecibida(itemId, cantidadRecibida);
-
+                
+                // Registrar pago por la cantidad recibida
+                const pagoResult = await pagosService.registrarPagoPorRecepcion(ordenId, itemId, diferencia, username);
+                
+                // Si hay advertencia de pago, guardarla para informar al usuario
+                if (pagoResult && pagoResult.warning) {
+                    warningMessage = pagoResult.message;
+                }
+                
                 // Si hay un incremento, actualizar el stock del bien
                 if (diferencia > 0) {
                     // Obtener el bien para actualizar su stock
@@ -333,7 +345,8 @@ class OrdenCompraService {
 
             return {
                 success: true,
-                message: 'Cantidad recibida actualizada exitosamente'
+                message: 'Cantidad recibida actualizada exitosamente',
+                warning: warningMessage || undefined
             };
         } catch (error) {
             console.error('Error en OrdenCompraService.actualizarCantidadRecibida:', error);
@@ -490,6 +503,29 @@ class OrdenCompraService {
             return proveedores;
         } catch (error) {
             console.error('Error en OrdenCompraService.obtenerProveedoresPorBien:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener información del proveedor de un item específico de una orden
+     * Valida que el item pertenezca a la orden especificada
+     */
+    async obtenerProveedorDeItem(ordenId, itemId) {
+        try {
+            if (!ordenId || !itemId) {
+                throw new Error('El ID de la orden y del item son requeridos');
+            }
+
+            const itemInfo = await ordenCompraRepository.obtenerProveedorDeItem(ordenId, itemId);
+            
+            if (!itemInfo) {
+                throw new Error('Item no encontrado en esta orden de compra');
+            }
+
+            return itemInfo;
+        } catch (error) {
+            console.error('Error en OrdenCompraService.obtenerProveedorDeItem:', error);
             throw error;
         }
     }

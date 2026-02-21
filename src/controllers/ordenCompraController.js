@@ -287,7 +287,8 @@ const ordenCompraController = {
             
             return res.status(200).json({
                 success: true,
-                message: result.message
+                message: result.message,
+                warning: result.warning || undefined
             });
         } catch (error) {
             console.error('Error al actualizar cantidad recibida:', error);
