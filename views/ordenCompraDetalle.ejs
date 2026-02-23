@@ -116,6 +116,8 @@
                 new Date(orden.fecha_entrega_solicitada).toLocaleDateString('es-AR') : '-';
             const fechaProveedor = orden.fecha_entrega_proveedor ? 
                 new Date(orden.fecha_entrega_proveedor).toLocaleDateString('es-AR') : '-';
+            const fechaPago = orden.fecha_pago ? 
+                new Date(orden.fecha_pago).toLocaleDateString('es-AR') : '-';
             const fechaCreacion = new Date(orden.created_at).toLocaleDateString('es-AR');
 
             let itemsHtml = '';
@@ -166,6 +168,9 @@
                             <div class="col-md-6">
                                 <p><strong>F. Entrega Solicitada:</strong> ${fechaSolicitada}</p>
                                 <p><strong>F. Entrega Proveedor:</strong> ${fechaProveedor}</p>
+                                ${orden.contrafactura && orden.fecha_pago ? `
+                                <p><strong>Fecha de Pago:</strong> ${fechaPago}</p>
+                                ` : ''}
                                 <p><strong>Fecha Creación:</strong> ${fechaCreacion}</p>
                             </div>
                         </div>

@@ -80,11 +80,13 @@ class OrdenCompraService {
                 archivos_adjuntos: ordenData.archivos_adjuntos || [], // Múltiples archivos
                 proveedor_id: ordenData.proveedor_id || null,
                 contrafactura: ordenData.contrafactura || false, // Campo contrafactura
+                fecha_pago: ordenData.fecha_pago || null, // Fecha de pago (cuando es contrafactura)
                 creado_por: usuario
             };
 
             console.log('Crear Orden - Contrafactura recibida:', ordenData.contrafactura);
             console.log('Crear Orden - Contrafactura en datosOrden:', datosOrden.contrafactura);
+            console.log('Crear Orden - Fecha de pago:', datosOrden.fecha_pago);
 
             // Crear la orden con sus items
             const result = await ordenCompraRepository.crearOrdenCompra(datosOrden, ordenData.items);
@@ -180,6 +182,9 @@ class OrdenCompraService {
                 contrafactura: ordenData.contrafactura !== undefined 
                     ? ordenData.contrafactura 
                     : ordenActual.contrafactura,
+                fecha_pago: ordenData.fecha_pago !== undefined
+                    ? ordenData.fecha_pago
+                    : ordenActual.fecha_pago,
                 archivos_adjuntos: ordenData.archivos_adjuntos, // Agregar archivos nuevos
                 archivos_eliminar: ordenData.archivos_eliminar // Archivos a eliminar
             };
@@ -187,6 +192,8 @@ class OrdenCompraService {
             console.log('Contrafactura en Service - recibida:', ordenData.contrafactura);
             console.log('Contrafactura en Service - actual:', ordenActual.contrafactura);
             console.log('Contrafactura en Service - final:', datosActualizados.contrafactura);
+            console.log('Fecha de pago en Service - recibida:', ordenData.fecha_pago);
+            console.log('Fecha de pago en Service - final:', datosActualizados.fecha_pago);
 
             // Si se proporcionan items, usarlos; sino mantener los actuales
             const items = ordenData.items || ordenActual.items;
@@ -302,15 +309,12 @@ class OrdenCompraService {
                 
                 // Registrar pago por la cantidad recibida
                 const esContrafactura = await ordenCompraRepository.esContraFactura(ordenId); // Verificar si es contrafactura para el registro de pago
-                if (esContrafactura) {
-                    console.log(`La orden ${orden.codigo} es una contrafactura. No se registrará el pago automáticamente.`);
-                }else {
-                    
+                if (!esContrafactura) {
                     const pagoResult = await pagosService.registrarPagoPorRecepcion(ordenId, itemId, diferencia, username);
                     if (pagoResult && pagoResult.warning) {
                         warningMessage = pagoResult.message;
-                    }
-                }   
+                    }                
+                }
                 // Si hay un incremento, actualizar el stock del bien
                 if (diferencia > 0) {
                     // Obtener el bien para actualizar su stock

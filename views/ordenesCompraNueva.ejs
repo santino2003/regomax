@@ -93,6 +93,17 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Fecha de Pago (solo visible si es contrafactura) -->
+                                <div class="row mb-3" id="fechaPagoContainer" style="display: none;">
+                                    <div class="col-md-6">
+                                        <label for="fecha_pago" class="form-label">
+                                            <i class="bi bi-calendar-event me-1"></i>Fecha de Pago <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" class="form-control" id="fecha_pago" name="fecha_pago">
+                                        <div class="invalid-feedback">La fecha de pago es obligatoria cuando es contrafactura</div>
+                                    </div>
+                                </div>
                                 
                                 <div class="row mb-3">
                                     <div class="col-md-6">
@@ -175,6 +186,22 @@
             agregarItemVacio();
 
             $('#btnAgregarItem').on('click', agregarItemVacio);
+            
+            // Manejar el checkbox de contrafactura para mostrar/ocultar fecha de pago
+            $('#contrafactura').on('change', function() {
+                const isChecked = $(this).is(':checked');
+                const $fechaPagoContainer = $('#fechaPagoContainer');
+                const $fechaPagoInput = $('#fecha_pago');
+                
+                if (isChecked) {
+                    $fechaPagoContainer.slideDown();
+                    $fechaPagoInput.prop('required', true);
+                } else {
+                    $fechaPagoContainer.slideUp();
+                    $fechaPagoInput.prop('required', false);
+                    $fechaPagoInput.val(''); // Limpiar el valor
+                }
+            });
             
             // Manejar el botón de agregar archivo
             $('#btnAgregarArchivo').on('click', function() {
@@ -391,9 +418,11 @@
             formData.append('fecha_entrega_proveedor', $('#fecha_entrega_proveedor').val() || '');
             formData.append('asunto', $('#asunto').val() || '');
             formData.append('contrafactura', $('#contrafactura').is(':checked') ? 'true' : 'false');
+            formData.append('fecha_pago', $('#fecha_pago').val() || '');
             
             console.log('Contrafactura checkbox:', $('#contrafactura').is(':checked'));
             console.log('Valor enviado:', $('#contrafactura').is(':checked') ? 'true' : 'false');
+            console.log('Fecha de pago:', $('#fecha_pago').val());
             
             // Archivos adjuntos desde el array
             if (archivosSeleccionados.length > 0) {

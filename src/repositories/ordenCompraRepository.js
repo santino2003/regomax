@@ -32,8 +32,8 @@ class OrdenCompraRepository {
             const [result] = await connection.query(
                 `INSERT INTO ordenes_compra (
                     codigo, estado, fecha_entrega_solicitada, fecha_entrega_proveedor,
-                    condicion, asunto, archivo_adjunto, proveedor_id, creado_por, contrafactura
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    condicion, asunto, archivo_adjunto, proveedor_id, creado_por, contrafactura, fecha_pago
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     ordenData.codigo,
                     ordenData.estado || 'Abierta',
@@ -44,7 +44,8 @@ class OrdenCompraRepository {
                     archivoAdjunto,
                     ordenData.proveedor_id || null,
                     ordenData.creado_por,
-                    ordenData.contrafactura || false
+                    ordenData.contrafactura || false,
+                    ordenData.fecha_pago || null
                 ]
             );
             
@@ -101,7 +102,8 @@ class OrdenCompraRepository {
                 condicion = ?, 
                 asunto = ?, 
                 proveedor_id = ?,
-                contrafactura = ?
+                contrafactura = ?,
+                fecha_pago = ?
             `;
             let updateValues = [
                 ordenData.estado,
@@ -110,7 +112,8 @@ class OrdenCompraRepository {
                 ordenData.condicion,
                 ordenData.asunto || null,
                 ordenData.proveedor_id || null,
-                ordenData.contrafactura || false
+                ordenData.contrafactura || false,
+                ordenData.fecha_pago || null
             ];
             
             console.log('Valor de contrafactura en Repository:', ordenData.contrafactura, 'Tipo:', typeof ordenData.contrafactura);
