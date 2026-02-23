@@ -118,6 +118,8 @@
                 new Date(orden.fecha_entrega_proveedor).toLocaleDateString('es-AR') : '-';
             const fechaPago = orden.fecha_pago ? 
                 new Date(orden.fecha_pago).toLocaleDateString('es-AR') : '-';
+            const fechaAdelanto = orden.fecha_adelanto ? 
+                new Date(orden.fecha_adelanto).toLocaleDateString('es-AR') : '-';
             const fechaCreacion = new Date(orden.created_at).toLocaleDateString('es-AR');
 
             let itemsHtml = '';
@@ -174,6 +176,32 @@
                                 <p><strong>Fecha Creación:</strong> ${fechaCreacion}</p>
                             </div>
                         </div>
+                        ${orden.contrafactura && (orden.monto_adelanto || orden.fecha_adelanto) ? `
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading"><i class="bi bi-cash-coin me-2"></i>Información de Adelanto/Seña</h6>
+                                    <div class="row">
+                                        ${orden.monto_adelanto ? `
+                                        <div class="col-md-4">
+                                            <strong>Monto:</strong> ${parseFloat(orden.monto_adelanto).toFixed(2)} ${orden.moneda_adelanto || 'ARS'}
+                                        </div>
+                                        ` : ''}
+                                        ${orden.moneda_adelanto && orden.monto_adelanto ? `
+                                        <div class="col-md-4">
+                                            <strong>Moneda:</strong> ${orden.moneda_adelanto}
+                                        </div>
+                                        ` : ''}
+                                        ${orden.fecha_adelanto ? `
+                                        <div class="col-md-4">
+                                            <strong>Fecha Seña:</strong> ${fechaAdelanto}
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
                         ${orden.asunto ? `
                         <div class="row mb-3">
                             <div class="col-12">

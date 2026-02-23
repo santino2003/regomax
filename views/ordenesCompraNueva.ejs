@@ -96,12 +96,35 @@
 
                                 <!-- Fecha de Pago (solo visible si es contrafactura) -->
                                 <div class="row mb-3" id="fechaPagoContainer" style="display: none;">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <label for="fecha_pago" class="form-label">
                                             <i class="bi bi-calendar-event me-1"></i>Fecha de Pago <span class="text-danger">*</span>
                                         </label>
                                         <input type="date" class="form-control" id="fecha_pago" name="fecha_pago">
                                         <div class="invalid-feedback">La fecha de pago es obligatoria cuando es contrafactura</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="monto_adelanto" class="form-label">
+                                            <i class="bi bi-cash-coin me-1"></i>Monto de Adelanto (Opcional)
+                                        </label>
+                                        <input type="number" class="form-control" id="monto_adelanto" name="monto_adelanto" 
+                                               step="0.01" min="0" placeholder="0.00">
+                                        <small class="text-muted">Dejar en blanco si no hay adelanto</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="moneda_adelanto" class="form-label">Moneda</label>
+                                        <select class="form-select" id="moneda_adelanto" name="moneda_adelanto">
+                                            <option value="ARS">ARS</option>
+                                            <option value="USD">USD</option>
+                                            <option value="EUR">EUR</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="fecha_adelanto" class="form-label">
+                                            <i class="bi bi-calendar-check me-1"></i>Fecha Seña
+                                        </label>
+                                        <input type="date" class="form-control" id="fecha_adelanto" name="fecha_adelanto">
+                                        <small class="text-muted">Fecha del adelanto</small>
                                     </div>
                                 </div>
                                 
@@ -419,10 +442,16 @@
             formData.append('asunto', $('#asunto').val() || '');
             formData.append('contrafactura', $('#contrafactura').is(':checked') ? 'true' : 'false');
             formData.append('fecha_pago', $('#fecha_pago').val() || '');
+            formData.append('monto_adelanto', $('#monto_adelanto').val() || '');
+            formData.append('moneda_adelanto', $('#moneda_adelanto').val() || 'ARS');
+            formData.append('fecha_adelanto', $('#fecha_adelanto').val() || '');
             
             console.log('Contrafactura checkbox:', $('#contrafactura').is(':checked'));
             console.log('Valor enviado:', $('#contrafactura').is(':checked') ? 'true' : 'false');
             console.log('Fecha de pago:', $('#fecha_pago').val());
+            console.log('Monto de adelanto:', $('#monto_adelanto').val());
+            console.log('Moneda adelanto:', $('#moneda_adelanto').val());
+            console.log('Fecha adelanto:', $('#fecha_adelanto').val());
             
             // Archivos adjuntos desde el array
             if (archivosSeleccionados.length > 0) {

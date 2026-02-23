@@ -1,11 +1,11 @@
 const ordenCompraRepository = require('../repositories/ordenCompraRepository');
 const bienRepository = require('../repositories/bienRepository');
+const pagosService = require('./pagosService');
 const ajusteInventarioRepository = require('../repositories/ajusteInventarioRepository');
 const userRepository = require('../repositories/userRepository');
 const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
 const centroCostoRepository = require('../repositories/centroCostoRepository');
 const bienProveedorRepository = require('../repositories/bienProveedorRepository');
-const pagosService = require('./pagosService');
 
 class OrdenCompraService {
     /**
@@ -81,6 +81,9 @@ class OrdenCompraService {
                 proveedor_id: ordenData.proveedor_id || null,
                 contrafactura: ordenData.contrafactura || false, // Campo contrafactura
                 fecha_pago: ordenData.fecha_pago || null, // Fecha de pago (cuando es contrafactura)
+                monto_adelanto: ordenData.monto_adelanto || null, // Monto de adelanto (cuando es contrafactura)
+                moneda_adelanto: ordenData.moneda_adelanto || 'ARS', // Moneda del adelanto
+                fecha_adelanto: ordenData.fecha_adelanto || null, // Fecha de la seña/adelanto
                 creado_por: usuario
             };
 
@@ -93,6 +96,67 @@ class OrdenCompraService {
             
             // Actualizar el código en el resultado
             result.codigo = codigoFinal;
+
+            // Si es contrafactura, registrar los pagos correspondientes
+            if (ordenData.contrafactura && ordenData.fecha_pago) {
+                try {
+                    // Calcular el monto total de la orden consultando precios de bienes_proveedores
+                    let montoTotal = 0;
+                    for (const item of ordenData.items) {
+                        if (item.bien_id && item.proveedor_sugerido_id && item.cantidad) {
+                            try {
+                                // Obtener el precio del proveedor para ese bien
+                                const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
+                                    item.bien_id,
+                                    item.proveedor_sugerido_id
+                                );
+                                
+                                if (precioInfo && precioInfo.precio) {
+                                    const precio = parseFloat(precioInfo.precio);
+                                    const cantidad = parseFloat(item.cantidad);
+                                    montoTotal += precio * cantidad;
+                                    console.log(`💰 Item ${item.bien_id}: ${cantidad} × $${precio} = $${(precio * cantidad).toFixed(2)}`);
+                                }
+                            } catch (error) {
+                                console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}`);
+                            }
+                        }
+                    }
+
+                    console.log(`💰 Monto total calculado: $${montoTotal.toFixed(2)}`);
+
+                    // Solo proceder si hay un monto total válido
+                    if (montoTotal > 0) {
+                        // Si hay monto de adelanto, registrarlo
+                        if (ordenData.monto_adelanto && parseFloat(ordenData.monto_adelanto) > 0) {
+                            console.log('📝 Registrando adelanto de pago...');
+                            await pagosService.registrarAdelanto({
+                                ordenId: result.id,
+                                montoAdelanto: ordenData.monto_adelanto,
+                                fechaPago: ordenData.fecha_pago,
+                                username: usuario
+                            });
+                        }
+
+                        // Registrar el pago del saldo completo para la fecha indicada
+                        console.log('📝 Registrando pago de saldo completo...');
+                        await pagosService.registrarPagoSaldoCompleto({
+                            ordenId: result.id,
+                            montoTotal: montoTotal,
+                            montoAdelanto: ordenData.monto_adelanto || 0,
+                            fechaPago: ordenData.fecha_pago,
+                            username: usuario
+                        });
+
+                        console.log('✅ Pagos registrados exitosamente');
+                    } else {
+                        console.warn('⚠️ No se pudo calcular el monto total. Verifica que los items tengan proveedor sugerido y precios configurados.');
+                    }
+                } catch (pagoError) {
+                    console.error('⚠️ Error al registrar pagos (la orden se creó correctamente):', pagoError);
+                    // No lanzamos el error para no fallar la creación de la orden
+                }
+            }
 
             return {
                 success: true,
@@ -185,6 +249,15 @@ class OrdenCompraService {
                 fecha_pago: ordenData.fecha_pago !== undefined
                     ? ordenData.fecha_pago
                     : ordenActual.fecha_pago,
+                monto_adelanto: ordenData.monto_adelanto !== undefined
+                    ? ordenData.monto_adelanto
+                    : ordenActual.monto_adelanto,
+                moneda_adelanto: ordenData.moneda_adelanto !== undefined
+                    ? ordenData.moneda_adelanto
+                    : ordenActual.moneda_adelanto,
+                fecha_adelanto: ordenData.fecha_adelanto !== undefined
+                    ? ordenData.fecha_adelanto
+                    : ordenActual.fecha_adelanto,
                 archivos_adjuntos: ordenData.archivos_adjuntos, // Agregar archivos nuevos
                 archivos_eliminar: ordenData.archivos_eliminar // Archivos a eliminar
             };
@@ -199,6 +272,73 @@ class OrdenCompraService {
             const items = ordenData.items || ordenActual.items;
 
             await ordenCompraRepository.modificarOrdenCompra(id, datosActualizados, items);
+
+            // Si cambió a contrafactura o se modificó la fecha/monto de pago, actualizar pagos
+            const cambioAContrafactura = !ordenActual.contrafactura && datosActualizados.contrafactura;
+            const cambioFechaPago = ordenActual.fecha_pago !== datosActualizados.fecha_pago;
+            const cambioMontoAdelanto = ordenData.monto_adelanto !== undefined && 
+                                       ordenData.monto_adelanto !== ordenActual.monto_adelanto;
+
+            if (datosActualizados.contrafactura && datosActualizados.fecha_pago && 
+                (cambioAContrafactura || cambioFechaPago || cambioMontoAdelanto)) {
+                try {
+                    // Calcular el monto total de la orden consultando precios de bienes_proveedores
+                    let montoTotal = 0;
+                    for (const item of items) {
+                        if (item.bien_id && item.proveedor_sugerido_id && item.cantidad) {
+                            try {
+                                // Obtener el precio del proveedor para ese bien
+                                const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
+                                    item.bien_id,
+                                    item.proveedor_sugerido_id
+                                );
+                                
+                                if (precioInfo && precioInfo.precio) {
+                                    const precio = parseFloat(precioInfo.precio);
+                                    const cantidad = parseFloat(item.cantidad);
+                                    montoTotal += precio * cantidad;
+                                    console.log(`💰 Item ${item.bien_id}: ${cantidad} × $${precio} = $${(precio * cantidad).toFixed(2)}`);
+                                }
+                            } catch (error) {
+                                console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}`);
+                            }
+                        }
+                    }
+
+                    console.log(`💰 Monto total calculado: $${montoTotal.toFixed(2)}`);
+
+                    // Solo proceder si hay un monto total válido
+                    if (montoTotal > 0) {
+                        // Si hay monto de adelanto, registrarlo
+                        if (ordenData.monto_adelanto && parseFloat(ordenData.monto_adelanto) > 0) {
+                            console.log('📝 Registrando/actualizando adelanto de pago...');
+                            await pagosService.registrarAdelanto({
+                                ordenId: id,
+                                montoAdelanto: ordenData.monto_adelanto,
+                                fechaPago: datosActualizados.fecha_pago,
+                                username: ordenActual.creado_por
+                            });
+                        }
+
+                        // Registrar el pago del saldo completo para la fecha indicada
+                        console.log('📝 Registrando/actualizando pago de saldo completo...');
+                        await pagosService.registrarPagoSaldoCompleto({
+                            ordenId: id,
+                            montoTotal: montoTotal,
+                            montoAdelanto: ordenData.monto_adelanto || 0,
+                            fechaPago: datosActualizados.fecha_pago,
+                            username: ordenActual.creado_por
+                        });
+
+                        console.log('✅ Pagos actualizados exitosamente');
+                    } else {
+                        console.warn('⚠️ No se pudo calcular el monto total. Verifica que los items tengan proveedor sugerido y precios configurados.');
+                    }
+                } catch (pagoError) {
+                    console.error('⚠️ Error al actualizar pagos (la orden se modificó correctamente):', pagoError);
+                    // No lanzamos el error para no fallar la modificación de la orden
+                }
+            }
 
             return {
                 success: true,

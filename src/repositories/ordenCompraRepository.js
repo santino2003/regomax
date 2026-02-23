@@ -32,8 +32,9 @@ class OrdenCompraRepository {
             const [result] = await connection.query(
                 `INSERT INTO ordenes_compra (
                     codigo, estado, fecha_entrega_solicitada, fecha_entrega_proveedor,
-                    condicion, asunto, archivo_adjunto, proveedor_id, creado_por, contrafactura, fecha_pago
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    condicion, asunto, archivo_adjunto, proveedor_id, creado_por, contrafactura, 
+                    fecha_pago, monto_adelanto, moneda_adelanto, fecha_adelanto
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     ordenData.codigo,
                     ordenData.estado || 'Abierta',
@@ -45,7 +46,10 @@ class OrdenCompraRepository {
                     ordenData.proveedor_id || null,
                     ordenData.creado_por,
                     ordenData.contrafactura || false,
-                    ordenData.fecha_pago || null
+                    ordenData.fecha_pago || null,
+                    ordenData.monto_adelanto || null,
+                    ordenData.moneda_adelanto || 'ARS',
+                    ordenData.fecha_adelanto || null
                 ]
             );
             
@@ -103,7 +107,10 @@ class OrdenCompraRepository {
                 asunto = ?, 
                 proveedor_id = ?,
                 contrafactura = ?,
-                fecha_pago = ?
+                fecha_pago = ?,
+                monto_adelanto = ?,
+                moneda_adelanto = ?,
+                fecha_adelanto = ?
             `;
             let updateValues = [
                 ordenData.estado,
@@ -113,7 +120,10 @@ class OrdenCompraRepository {
                 ordenData.asunto || null,
                 ordenData.proveedor_id || null,
                 ordenData.contrafactura || false,
-                ordenData.fecha_pago || null
+                ordenData.fecha_pago || null,
+                ordenData.monto_adelanto || null,
+                ordenData.moneda_adelanto || 'ARS',
+                ordenData.fecha_adelanto || null
             ];
             
             console.log('Valor de contrafactura en Repository:', ordenData.contrafactura, 'Tipo:', typeof ordenData.contrafactura);
