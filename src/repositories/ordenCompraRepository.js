@@ -601,6 +601,30 @@ class OrdenCompraRepository {
         }
         
     }
+
+    /**
+     * Obtener si una orden de compra es a contra factura
+     * @param {number} ordenId - ID de la orden de compra
+     * @returns {Promise<boolean>} - true si es contra factura, false en caso contrario
+     */
+    async esContraFactura(ordenId) {
+        try {
+            const [result] = await db.query(
+                'SELECT contrafactura FROM ordenes_compra WHERE id = ?',
+                [ordenId]
+            );
+            
+            if (!result) {
+                return false;
+            }
+            
+            // Convertir a boolean (puede venir como tinyint 0 o 1)
+            return Boolean(result.contrafactura);
+        } catch (error) {
+            console.error('Error en OrdenCompraRepository.esContraFactura:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new OrdenCompraRepository();

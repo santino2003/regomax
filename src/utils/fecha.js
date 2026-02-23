@@ -117,6 +117,57 @@ function formatearFechaHoraLocal(fecha) {
   }
 }
 
+/**
+ * Calcula el jueves de la próxima semana o de dentro de 2 semanas según el día actual
+ * Lógica:
+ * - Si hoy es Lunes a Jueves → devuelve el jueves de la semana SIGUIENTE
+ * - Si hoy es Viernes a Domingo → devuelve el jueves de dentro de 2 semanas
+ * 
+ * @param {Date} [fechaReferencia] - Fecha de referencia (opcional). Si no se proporciona, usa la fecha actual de Buenos Aires
+ * @returns {Date} - Fecha del jueves calculado
+ */
+function calcularJuevesProximaSemana(fechaReferencia) {
+  // Si no se proporciona fecha, usar la actual de Buenos Aires
+  const fecha = fechaReferencia || fechaActual();
+  
+  // Obtener el día de la semana (0 = Domingo, 1 = Lunes, ..., 6 = Sábado)
+  const diaSemana = fecha.getDay();
+  
+  // Calcular días hasta el próximo jueves
+  let diasHastaJueves;
+  
+  // Si es Viernes (5), Sábado (6) o Domingo (0) → jueves de dentro de 2 semanas
+  if (diaSemana === 5 || diaSemana === 6 || diaSemana === 0) {
+    // Calcular días hasta el jueves de dentro de 2 semanas
+    if (diaSemana === 5) { // Viernes
+      diasHastaJueves = 13; // Viernes + 13 días = jueves de dentro de 2 semanas
+    } else if (diaSemana === 6) { // Sábado
+      diasHastaJueves = 12; // Sábado + 12 días = jueves de dentro de 2 semanas
+    } else { // Domingo (0)
+      diasHastaJueves = 11; // Domingo + 11 días = jueves de dentro de 2 semanas
+    }
+  } 
+  // Si es Lunes (1) a Jueves (4) → jueves de la semana SIGUIENTE
+  else {
+    // Días hasta el jueves de la próxima semana
+    if (diaSemana === 1) { // Lunes
+      diasHastaJueves = 10; // Lunes + 10 días = jueves siguiente
+    } else if (diaSemana === 2) { // Martes
+      diasHastaJueves = 9; // Martes + 9 días = jueves siguiente
+    } else if (diaSemana === 3) { // Miércoles
+      diasHastaJueves = 8; // Miércoles + 8 días = jueves siguiente
+    } else { // Jueves (4)
+      diasHastaJueves = 7; // Jueves + 7 días = jueves siguiente
+    }
+  }
+  
+  // Crear nueva fecha sumando los días calculados
+  const jueves = new Date(fecha);
+  jueves.setDate(fecha.getDate() + diasHastaJueves);
+  
+  return jueves;
+}
+
 module.exports = { 
   pad, 
   formatMySQLLocal, 
@@ -125,5 +176,6 @@ module.exports = {
   ventanaMesOperativo,
   fechaActual,
   formatearFechaLocal,
-  formatearFechaHoraLocal
+  formatearFechaHoraLocal,
+  calcularJuevesProximaSemana
 };

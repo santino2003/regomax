@@ -301,13 +301,16 @@ class OrdenCompraService {
                 await ordenCompraRepository.actualizarCantidadRecibida(itemId, cantidadRecibida);
                 
                 // Registrar pago por la cantidad recibida
-                const pagoResult = await pagosService.registrarPagoPorRecepcion(ordenId, itemId, diferencia, username);
-                
-                // Si hay advertencia de pago, guardarla para informar al usuario
-                if (pagoResult && pagoResult.warning) {
-                    warningMessage = pagoResult.message;
-                }
-                
+                const esContrafactura = await ordenCompraRepository.esContraFactura(ordenId); // Verificar si es contrafactura para el registro de pago
+                if (esContrafactura) {
+                    console.log(`La orden ${orden.codigo} es una contrafactura. No se registrará el pago automáticamente.`);
+                }else {
+                    
+                    const pagoResult = await pagosService.registrarPagoPorRecepcion(ordenId, itemId, diferencia, username);
+                    if (pagoResult && pagoResult.warning) {
+                        warningMessage = pagoResult.message;
+                    }
+                }   
                 // Si hay un incremento, actualizar el stock del bien
                 if (diferencia > 0) {
                     // Obtener el bien para actualizar su stock

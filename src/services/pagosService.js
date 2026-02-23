@@ -1,6 +1,6 @@
 const bienProveedorRepository = require('../repositories/bienProveedorRepository');
 const ordenCompraRepository = require('../repositories/ordenCompraRepository');
-const { formatMySQLLocal } = require('../utils/fecha');
+const { calcularJuevesProximaSemana } = require('../utils/fecha');
 
 class PagosService {
     async registrarPagoPorRecepcion(ordenId, itemId, cantidadRecibida, username) {
@@ -79,7 +79,7 @@ class PagosService {
                 precioUnitario: precioUnitario,
                 montoTotal: montoTotal,
                 registradoPor: username,
-                fecha: formatMySQLLocal(new Date())
+                fecha: calcularJuevesProximaSemana(new Date())
             };
 
             console.log('✅ [PAGOS] Pago calculado:', {
@@ -87,7 +87,8 @@ class PagosService {
                 proveedor: infoPago.proveedorNombre,
                 cantidad: infoPago.cantidadRecibida,
                 precioUnitario: `$${infoPago.precioUnitario.toFixed(2)}`,
-                montoTotal: `$${infoPago.montoTotal.toFixed(2)}`
+                montoTotal: `$${infoPago.montoTotal.toFixed(2)}`,
+                fecha: infoPago.fecha
             });
 
             // TODO: Aquí registrar el pago en la base de datos
