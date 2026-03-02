@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagos - Regomax</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/assets/css/home.css">
+    <style>
+        .badge-tipo-pago {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.6rem;
+        }
+        .tipo-recepcion {
+            background-color: #0d6efd;
+        }
+        .tipo-adelanto {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .tipo-saldo {
+            background-color: #198754;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .monto-destacado {
+            font-weight: 600;
+            color: #198754;
+        }
+        .resumen-card {
+            border-left: 4px solid #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/home">
+                <img src="/assets/img/regomax.png" alt="Regomax Logo" class="bg-white rounded p-1">
+                <span class="ms-2 fw-bold">Regomax S.A.</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item user-welcome me-3">
+                        <span class="text-light">BIENVENIDO/A, <b><%= username %></b></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-globe me-1"></i> Ver sitio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout-link"><i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container-fluid my-4">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="menu-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="menu-heading mb-0">
+                            <i class="bi bi-cash-coin me-2"></i>Gestión de Pagos
+                        </h4>
+                        <div>
+                            <a href="/pagos/exportar<%= Object.keys(filtros).length > 0 ? '?' + new URLSearchParams(filtros).toString() : '' %>" 
+                               class="btn btn-success" 
+                               target="_blank">
+                                <i class="bi bi-file-earmark-excel me-2"></i>Exportar
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Resumen de totales -->
+                    <% 
+                    let totalGeneral = 0;
+                    let totalRecepcion = 0;
+                    let totalAdelanto = 0;
+                    let totalSaldo = 0;
+                    
+                    pagos.forEach(pago => {
+                        const monto = parseFloat(pago.monto_pago) || 0;
+                        totalGeneral += monto;
+                        
+                        if (pago.tipo_pago === 'RECEPCION') totalRecepcion += monto;
+                        if (pago.tipo_pago === 'ADELANTO') totalAdelanto += monto;
+                        if (pago.tipo_pago === 'SALDO_COMPLETO') totalSaldo += monto;
+                    });
+                    %>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card resumen-card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Total General</h6>
+                                    <h4 class="card-title mb-0 monto-destacado">$<%= totalGeneral.toFixed(2) %></h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Por Recepción</h6>
+                                    <h5 class="card-title mb-0">$<%= totalRecepcion.toFixed(2) %></h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Adelantos</h6>
+                                    <h5 class="card-title mb-0">$<%= totalAdelanto.toFixed(2) %></h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Saldos Completos</h6>
+                                    <h5 class="card-title mb-0">$<%= totalSaldo.toFixed(2) %></h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-funnel me-2"></i>Filtros
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="filtrosForm" method="GET" action="/pagos/listar">
+                                <div class="row g-3">
+                                    <div class="col-md-6 col-lg-2">
+                                        <label for="orden_codigo" class="form-label">Orden de Compra</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="orden_codigo" 
+                                               name="orden_codigo" 
+                                               value="<%= filtros.orden_codigo %>" 
+                                               placeholder="Código">
+                                    </div>
+                                    <div class="col-md-6 col-lg-2">
+                                        <label for="proveedor" class="form-label">Proveedor</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="proveedor" 
+                                               name="proveedor" 
+                                               value="<%= filtros.proveedor %>" 
+                                               placeholder="Nombre">
+                                    </div>
+                                    <div class="col-md-6 col-lg-2">
+                                        <label for="bien_nombre" class="form-label">Bien</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="bien_nombre" 
+                                               name="bien_nombre" 
+                                               value="<%= filtros.bien_nombre %>" 
+                                               placeholder="Nombre del bien">
+                                    </div>
+                                    <div class="col-md-6 col-lg-2">
+                                        <label for="tipo_pago" class="form-label">Tipo de Pago</label>
+                                        <select class="form-select" id="tipo_pago" name="tipo_pago">
+                                            <option value="">Todos</option>
+                                            <option value="RECEPCION" <%= filtros.tipo_pago === 'RECEPCION' ? 'selected' : '' %>>Recepción</option>
+                                            <option value="ADELANTO" <%= filtros.tipo_pago === 'ADELANTO' ? 'selected' : '' %>>Adelanto</option>
+                                            <option value="SALDO_COMPLETO" <%= filtros.tipo_pago === 'SALDO_COMPLETO' ? 'selected' : '' %>>Saldo Completo</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 col-lg-2">
+                                        <label for="fecha_desde" class="form-label">Desde</label>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               id="fecha_desde" 
+                                               name="fecha_desde" 
+                                               value="<%= filtros.fecha_desde %>">
+                                    </div>
+                                    <div class="col-md-6 col-lg-2">
+                                        <label for="fecha_hasta" class="form-label">Hasta</label>
+                                        <input type="date" 
+                                               class="form-control" 
+                                               id="fecha_hasta" 
+                                               name="fecha_hasta" 
+                                               value="<%= filtros.fecha_hasta %>">
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-search me-1"></i>Buscar
+                                        </button>
+                                        <a href="/pagos/listar" class="btn btn-outline-secondary ms-2">
+                                            <i class="bi bi-x-circle me-1"></i>Limpiar
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Información de resultados -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <p class="mb-0 text-muted">
+                                Mostrando <%= pagos.length %> de <%= paginacion.totalItems %> pagos
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de pagos -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Orden</th>
+                                    <th>Proveedor</th>
+                                    <th>Tipo</th>
+                                    <th>Bien</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unit.</th>
+                                    <th>Monto</th>
+                                    <th>Fecha Pago</th>
+                                    <th>Registrado Por</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (pagos.length === 0) { %>
+                                    <tr>
+                                        <td colspan="11" class="text-center py-4">
+                                            <i class="bi bi-inbox fs-1 text-muted"></i>
+                                            <p class="text-muted mt-2">No se encontraron pagos con los filtros aplicados</p>
+                                        </td>
+                                    </tr>
+                                <% } else { %>
+                                    <% pagos.forEach(pago => { %>
+                                        <tr>
+                                            <td><%= pago.id %></td>
+                                            <td>
+                                                <a href="/ordenes-compra/<%= pago.orden_compra_id %>" 
+                                                   class="text-decoration-none">
+                                                    <%= pago.orden_codigo %>
+                                                </a>
+                                            </td>
+                                            <td><%= pago.proveedor_nombre %></td>
+                                            <td>
+                                                <% if (pago.tipo_pago === 'RECEPCION') { %>
+                                                    <span class="badge tipo-recepcion badge-tipo-pago">
+                                                        <i class="bi bi-box-seam me-1"></i>Recepción
+                                                    </span>
+                                                <% } else if (pago.tipo_pago === 'ADELANTO') { %>
+                                                    <span class="badge tipo-adelanto badge-tipo-pago">
+                                                        <i class="bi bi-wallet2 me-1"></i>Adelanto
+                                                    </span>
+                                                <% } else if (pago.tipo_pago === 'SALDO_COMPLETO') { %>
+                                                    <span class="badge tipo-saldo badge-tipo-pago">
+                                                        <i class="bi bi-check-circle me-1"></i>Saldo Completo
+                                                    </span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (pago.bien_nombre) { %>
+                                                    <%= pago.bien_nombre %>
+                                                    <% if (pago.bien_codigo) { %>
+                                                        <small class="text-muted d-block">(<%= pago.bien_codigo %>)</small>
+                                                    <% } %>
+                                                <% } else { %>
+                                                    <span class="text-muted">-</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (pago.cantidad_recibida) { %>
+                                                    <%= parseFloat(pago.cantidad_recibida).toFixed(2) %>
+                                                <% } else { %>
+                                                    <span class="text-muted">-</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (pago.precio_unitario) { %>
+                                                    $<%= parseFloat(pago.precio_unitario).toFixed(2) %>
+                                                <% } else { %>
+                                                    <span class="text-muted">-</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="monto-destacado">
+                                                $<%= parseFloat(pago.monto_pago).toFixed(2) %>
+                                                <% if (pago.tipo_pago === 'SALDO_COMPLETO' && pago.monto_total) { %>
+                                                    <small class="text-muted d-block">
+                                                        Total: $<%= parseFloat(pago.monto_total).toFixed(2) %>
+                                                    </small>
+                                                    <% if (pago.monto_adelanto) { %>
+                                                        <small class="text-muted d-block">
+                                                            Adelanto: $<%= parseFloat(pago.monto_adelanto).toFixed(2) %>
+                                                        </small>
+                                                    <% } %>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <%= new Date(pago.fecha_pago).toLocaleDateString('es-AR') %>
+                                            </td>
+                                            <td><%= pago.registrado_por %></td>
+                                            <td>
+                                                <% if (pago.observaciones) { %>
+                                                    <span class="d-inline-block text-truncate" 
+                                                          style="max-width: 200px;" 
+                                                          title="<%= pago.observaciones %>">
+                                                        <%= pago.observaciones %>
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="text-muted">-</span>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    <% if (paginacion.totalPages > 1) { %>
+                        <nav aria-label="Paginación de pagos">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item <%= !paginacion.hasPrev ? 'disabled' : '' %>">
+                                    <a class="page-link" 
+                                       href="?page=<%= paginacion.currentPage - 1 %><%= Object.keys(filtros).map(k => filtros[k] ? '&' + k + '=' + encodeURIComponent(filtros[k]) : '').join('') %>">
+                                        Anterior
+                                    </a>
+                                </li>
+                                
+                                <% 
+                                const maxPagesToShow = 5;
+                                let startPage = Math.max(1, paginacion.currentPage - Math.floor(maxPagesToShow / 2));
+                                let endPage = Math.min(paginacion.totalPages, startPage + maxPagesToShow - 1);
+                                
+                                if (endPage - startPage < maxPagesToShow - 1) {
+                                    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                                }
+                                
+                                for (let i = startPage; i <= endPage; i++) { 
+                                %>
+                                    <li class="page-item <%= i === paginacion.currentPage ? 'active' : '' %>">
+                                        <a class="page-link" 
+                                           href="?page=<%= i %><%= Object.keys(filtros).map(k => filtros[k] ? '&' + k + '=' + encodeURIComponent(filtros[k]) : '').join('') %>">
+                                            <%= i %>
+                                        </a>
+                                    </li>
+                                <% } %>
+                                
+                                <li class="page-item <%= !paginacion.hasNext ? 'disabled' : '' %>">
+                                    <a class="page-link" 
+                                       href="?page=<%= paginacion.currentPage + 1 %><%= Object.keys(filtros).map(k => filtros[k] ? '&' + k + '=' + encodeURIComponent(filtros[k]) : '').join('') %>">
+                                        Siguiente
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <% } %>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Logout script -->
+    <script>
+        document.getElementById('logout-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('¿Está seguro que desea cerrar sesión?')) {
+                fetch('/auth/logout', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(() => {
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    window.location.href = '/login';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+const express = require('express');
+const router = express.Router();
+const pagoController = require('../controllers/pagoController');
+const authMiddleware = require('../middleware/auth');
+
+// Todas las rutas requieren autenticación
+router.use(authMiddleware.verifyToken);
+
+// Ruta para mostrar el listado de pagos
+router.get('/listar', pagoController.mostrarListado);
+
+// Ruta para obtener resumen de pagos (API)
+router.get('/api/resumen', pagoController.obtenerResumen);
+
+// Ruta para exportar pagos
+router.get('/exportar', pagoController.exportarExcel);
+
+module.exports = router;

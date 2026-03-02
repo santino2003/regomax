@@ -427,7 +427,7 @@ class OrdenCompraRepository {
     async obtenerPorId(id) {
         try {
             // Obtener la orden
-            const [orden] = await db.query(
+            const ordenes = await db.query(
                 `SELECT 
                     oc.*,
                     p.nombre as proveedor_nombre,
@@ -439,9 +439,11 @@ class OrdenCompraRepository {
                 [id]
             );
 
-            if (!orden) {
+            if (!ordenes || ordenes.length === 0) {
                 return null;
             }
+
+            const orden = ordenes[0];
 
             // Obtener los items
             const items = await db.query(
