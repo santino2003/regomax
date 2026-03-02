@@ -566,6 +566,282 @@ class PagosService {
             throw error;
         }
     }
+
+    /**
+     * Actualizar o crear adelanto para una orden
+     * Solo actualiza si los valores realmente cambiaron
+     */
+    async actualizarOCrearAdelanto(adelantoData) {
+        try {
+            const { ordenId, montoAdelanto, fechaPago, username } = adelantoData;
+
+            console.log('🔄 [PAGOS] Verificando adelantos existentes para orden:', ordenId);
+
+            // Obtener todos los pagos de contrafactura en una sola consulta (optimizado)
+            const pagosExistentes = await pagoRepository.obtenerPagosContrafacturaPorOrden(ordenId);
+            const adelantosExistentes = pagosExistentes.adelantos;
+
+            // Si hay adelantos existentes, verificar si necesitan actualización
+            if (adelantosExistentes && adelantosExistentes.length > 0) {
+                console.log(`📋 [PAGOS] Encontrados ${adelantosExistentes.length} adelanto(s) existente(s)`);
+
+                // Verificar si cambió el monto total o la fecha
+                const montoTotalExistente = adelantosExistentes.reduce((sum, a) => sum + parseFloat(a.monto_pago), 0);
+                const fechaExistente = adelantosExistentes[0].fecha_pago;
+                
+                const cambioMonto = Math.abs(montoTotalExistente - parseFloat(montoAdelanto)) > 0.01;
+                const cambioFecha = fechaExistente !== fechaPago;
+
+                if (!cambioMonto && !cambioFecha) {
+                    console.log('✓ [PAGOS] Adelantos sin cambios - No se requiere actualización');
+                    return {
+                        success: true,
+                        message: 'Adelantos sin cambios',
+                        updated: false
+                    };
+                }
+
+                console.log('🔄 [PAGOS] Detectados cambios en adelantos');
+            }
+
+            // Registrar nuevo adelanto (la eliminación se hace una sola vez en actualizarPagosContrafactura)
+            console.log('📝 [PAGOS] Preparando nuevo adelanto');
+            const result = await this.registrarAdelanto(adelantoData);
+            
+            return {
+                ...result,
+                updated: true,
+                shouldDelete: adelantosExistentes && adelantosExistentes.length > 0
+            };
+        } catch (error) {
+            console.error('❌ [PAGOS] Error en actualizarOCrearAdelanto:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Actualizar o crear pago de saldo completo para una orden
+     * Solo actualiza si los valores realmente cambiaron
+     */
+    async actualizarOCrearSaldoCompleto(pagoData) {
+        try {
+            const { ordenId, montoTotal, montoAdelanto, fechaPago, username } = pagoData;
+
+            console.log('🔄 [PAGOS] Verificando saldos completos existentes para orden:', ordenId);
+
+            // Obtener todos los pagos de contrafactura en una sola consulta (optimizado)
+            const pagosExistentes = await pagoRepository.obtenerPagosContrafacturaPorOrden(ordenId);
+            const saldosExistentes = pagosExistentes.saldos;
+
+            // Si hay saldos existentes, verificar si necesitan actualización
+            if (saldosExistentes && saldosExistentes.length > 0) {
+                console.log(`📋 [PAGOS] Encontrados ${saldosExistentes.length} saldo(s) completo(s) existente(s)`);
+
+                // Sumar todos los montos totales y adelantos
+                const montoTotalExistente = saldosExistentes.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
+                const montoAdelantoExistente = saldosExistentes.reduce((sum, s) => sum + parseFloat(s.monto_adelanto || 0), 0);
+                const fechaExistente = saldosExistentes[0].fecha_pago;
+
+                const cambioMontoTotal = Math.abs(montoTotalExistente - parseFloat(montoTotal)) > 0.01;
+                const cambioMontoAdelanto = Math.abs(montoAdelantoExistente - parseFloat(montoAdelanto)) > 0.01;
+                const cambioFecha = fechaExistente !== fechaPago;
+
+                if (!cambioMontoTotal && !cambioMontoAdelanto && !cambioFecha) {
+                    console.log('✓ [PAGOS] Saldos completos sin cambios - No se requiere actualización');
+                    return {
+                        success: true,
+                        message: 'Saldos completos sin cambios',
+                        updated: false
+                    };
+                }
+
+                console.log('🔄 [PAGOS] Detectados cambios en saldos completos');
+            }
+
+            // Registrar nuevo saldo completo (la eliminación se hace una sola vez en actualizarPagosContrafactura)
+            console.log('📝 [PAGOS] Preparando nuevo saldo completo');
+            const result = await this.registrarPagoSaldoCompleto(pagoData);
+            
+            return {
+                ...result,
+                updated: true,
+                shouldDelete: saldosExistentes && saldosExistentes.length > 0
+            };
+        } catch (error) {
+            console.error('❌ [PAGOS] Error en actualizarOCrearSaldoCompleto:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Actualizar pagos de contrafactura (adelanto + saldo completo) de forma optimizada
+     * Hace una sola consulta de verificación y una sola eliminación si es necesario
+     */
+    async actualizarPagosContrafactura(ordenId, montoTotal, montoAdelanto, fechaPago, username) {
+        try {
+            console.log('🔄 [PAGOS] Verificando pagos de contrafactura para orden:', ordenId);
+
+            // Una sola consulta para obtener todos los pagos de contrafactura
+            const pagosExistentes = await pagoRepository.obtenerPagosContrafacturaPorOrden(ordenId);
+            
+            let necesitaActualizacion = false;
+
+            // Normalizar la fecha para comparación (convertir Date a string YYYY-MM-DD)
+            const normalizarFecha = (fecha) => {
+                if (!fecha) return null;
+                if (typeof fecha === 'string') return fecha.split(' ')[0]; // Por si viene con hora
+                if (fecha instanceof Date) {
+                    return fecha.toISOString().split('T')[0];
+                }
+                return null;
+            };
+
+            const fechaPagoNormalizada = normalizarFecha(fechaPago);
+            console.log('📅 [PAGOS] Fecha de pago a usar:', fechaPagoNormalizada);
+
+            // Verificar adelantos
+            let cambioEnAdelantos = false;
+            if (montoAdelanto && parseFloat(montoAdelanto) > 0) {
+                if (pagosExistentes.adelantos.length > 0) {
+                    const montoAdelantoExistente = pagosExistentes.adelantos.reduce((sum, a) => sum + parseFloat(a.monto_pago), 0);
+                    const fechaAdelantoExistente = normalizarFecha(pagosExistentes.adelantos[0].fecha_pago);
+                    
+                    console.log('💰 [PAGOS] Adelanto existente:', {
+                        monto: montoAdelantoExistente,
+                        fecha: fechaAdelantoExistente,
+                        registros: pagosExistentes.adelantos.length
+                    });
+                    console.log('💰 [PAGOS] Adelanto nuevo:', {
+                        monto: parseFloat(montoAdelanto),
+                        fecha: fechaPagoNormalizada
+                    });
+
+                    const diferenciaMonto = Math.abs(montoAdelantoExistente - parseFloat(montoAdelanto));
+                    const cambioFecha = fechaAdelantoExistente !== fechaPagoNormalizada;
+                    
+                    console.log('🔍 [PAGOS] Comparación adelantos:', {
+                        diferenciaMonto: diferenciaMonto.toFixed(2),
+                        cambioFecha: cambioFecha,
+                        tolerancia: 0.01
+                    });
+
+                    if (diferenciaMonto > 0.01 || cambioFecha) {
+                        console.log('⚠️ [PAGOS] Detectado cambio en adelantos');
+                        cambioEnAdelantos = true;
+                        necesitaActualizacion = true;
+                    } else {
+                        console.log('✓ [PAGOS] Adelantos sin cambios');
+                    }
+                } else {
+                    console.log('📝 [PAGOS] No hay adelantos existentes - se crearán nuevos');
+                    cambioEnAdelantos = true;
+                    necesitaActualizacion = true;
+                }
+            } else {
+                // Si no hay monto de adelanto pero existen adelantos, hay que eliminarlos
+                if (pagosExistentes.adelantos.length > 0) {
+                    console.log('🗑️ [PAGOS] Monto de adelanto es 0 pero existen adelantos - se eliminarán');
+                    necesitaActualizacion = true;
+                }
+            }
+
+            // Verificar saldos completos
+            let cambioEnSaldos = false;
+            if (pagosExistentes.saldos.length > 0) {
+                const montoTotalExistente = pagosExistentes.saldos.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
+                const montoAdelantoExistenteEnSaldo = pagosExistentes.saldos.reduce((sum, s) => sum + parseFloat(s.monto_adelanto || 0), 0);
+                const fechaSaldoExistente = normalizarFecha(pagosExistentes.saldos[0].fecha_pago);
+
+                console.log('💰 [PAGOS] Saldo existente:', {
+                    montoTotal: montoTotalExistente,
+                    montoAdelanto: montoAdelantoExistenteEnSaldo,
+                    fecha: fechaSaldoExistente,
+                    registros: pagosExistentes.saldos.length
+                });
+                console.log('💰 [PAGOS] Saldo nuevo:', {
+                    montoTotal: parseFloat(montoTotal),
+                    montoAdelanto: parseFloat(montoAdelanto || 0),
+                    fecha: fechaPagoNormalizada
+                });
+
+                const diferenciaMontoTotal = Math.abs(montoTotalExistente - parseFloat(montoTotal));
+                const diferenciaMontoAdelanto = Math.abs(montoAdelantoExistenteEnSaldo - parseFloat(montoAdelanto || 0));
+                const cambioFecha = fechaSaldoExistente !== fechaPagoNormalizada;
+
+                console.log('🔍 [PAGOS] Comparación saldos:', {
+                    diferenciaMontoTotal: diferenciaMontoTotal.toFixed(2),
+                    diferenciaMontoAdelanto: diferenciaMontoAdelanto.toFixed(2),
+                    cambioFecha: cambioFecha,
+                    tolerancia: 0.01
+                });
+
+                if (diferenciaMontoTotal > 0.01 || diferenciaMontoAdelanto > 0.01 || cambioFecha) {
+                    console.log('⚠️ [PAGOS] Detectado cambio en saldos completos');
+                    cambioEnSaldos = true;
+                    necesitaActualizacion = true;
+                } else {
+                    console.log('✓ [PAGOS] Saldos completos sin cambios');
+                }
+            } else {
+                console.log('📝 [PAGOS] No hay saldos completos existentes - se crearán nuevos');
+                cambioEnSaldos = true;
+                necesitaActualizacion = true;
+            }
+
+            // Si no necesita actualización, retornar sin hacer nada
+            if (!necesitaActualizacion) {
+                console.log('✅ [PAGOS] Pagos de contrafactura sin cambios - No se requiere actualización');
+                return {
+                    success: true,
+                    message: 'Pagos sin cambios',
+                    updated: false
+                };
+            }
+
+            // Si necesita actualización, eliminar todos los pagos de contrafactura una sola vez
+            if (pagosExistentes.todos.length > 0) {
+                console.log(`🗑️ [PAGOS] Eliminando ${pagosExistentes.todos.length} pago(s) antiguo(s) de contrafactura...`);
+                await pagoRepository.eliminarPagosContrafactura(ordenId);
+            }
+
+            const results = [];
+
+            // Registrar adelanto si corresponde
+            if (montoAdelanto && parseFloat(montoAdelanto) > 0) {
+                console.log('📝 [PAGOS] Registrando adelanto...');
+                const adelantoResult = await this.registrarAdelanto({
+                    ordenId,
+                    montoAdelanto,
+                    fechaPago,
+                    username
+                });
+                results.push(adelantoResult);
+            }
+
+            // Registrar saldo completo
+            console.log('📝 [PAGOS] Registrando saldo completo...');
+            const saldoResult = await this.registrarPagoSaldoCompleto({
+                ordenId,
+                montoTotal,
+                montoAdelanto: montoAdelanto || 0,
+                fechaPago,
+                username
+            });
+            results.push(saldoResult);
+
+            console.log('✅ [PAGOS] Pagos de contrafactura actualizados exitosamente');
+
+            return {
+                success: true,
+                message: 'Pagos actualizados exitosamente',
+                updated: true,
+                results
+            };
+        } catch (error) {
+            console.error('❌ [PAGOS] Error en actualizarPagosContrafactura:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new PagosService();

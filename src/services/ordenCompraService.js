@@ -282,9 +282,16 @@ class OrdenCompraService {
             if (datosActualizados.contrafactura && datosActualizados.fecha_pago && 
                 (cambioAContrafactura || cambioFechaPago || cambioMontoAdelanto)) {
                 try {
+                    console.log(`📋 [ORDEN] Calculando monto total de ${items.length} item(s) en la orden`);
+                    
                     // Calcular el monto total de la orden consultando precios de bienes_proveedores
                     let montoTotal = 0;
+                    let itemsContabilizados = 0;
+                    let itemsOmitidos = 0;
+                    
                     for (const item of items) {
+                        console.log(`📦 [ORDEN] Item: ${item.bien_nombre || item.bien_id} - Proveedor sugerido: ${item.proveedor_sugerido_id || 'NO ASIGNADO'} - Cantidad: ${item.cantidad}`);
+                        
                         if (item.bien_id && item.proveedor_sugerido_id && item.cantidad) {
                             try {
                                 // Obtener el precio del proveedor para ese bien
@@ -297,40 +304,38 @@ class OrdenCompraService {
                                     const precio = parseFloat(precioInfo.precio);
                                     const cantidad = parseFloat(item.cantidad);
                                     montoTotal += precio * cantidad;
+                                    itemsContabilizados++;
                                     console.log(`💰 Item ${item.bien_id}: ${cantidad} × $${precio} = $${(precio * cantidad).toFixed(2)}`);
+                                } else {
+                                    itemsOmitidos++;
+                                    console.warn(`⚠️ Item ${item.bien_id} - Proveedor ${item.proveedor_sugerido_id} no tiene precio configurado`);
                                 }
                             } catch (error) {
-                                console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}`);
+                                itemsOmitidos++;
+                                console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}:`, error.message);
                             }
+                        } else {
+                            itemsOmitidos++;
+                            const razon = !item.bien_id ? 'sin bien_id' : !item.proveedor_sugerido_id ? 'sin proveedor sugerido' : 'sin cantidad';
+                            console.warn(`⚠️ Item omitido (${razon}): ${item.bien_nombre || item.bien_id || 'desconocido'}`);
                         }
                     }
 
-                    console.log(`💰 Monto total calculado: $${montoTotal.toFixed(2)}`);
+                    console.log(`💰 Monto total calculado: $${montoTotal.toFixed(2)} (${itemsContabilizados} items contabilizados, ${itemsOmitidos} omitidos)`);
 
                     // Solo proceder si hay un monto total válido
                     if (montoTotal > 0) {
-                        // Si hay monto de adelanto, registrarlo
-                        if (ordenData.monto_adelanto && parseFloat(ordenData.monto_adelanto) > 0) {
-                            console.log('📝 Registrando/actualizando adelanto de pago...');
-                            await pagosService.registrarAdelanto({
-                                ordenId: id,
-                                montoAdelanto: ordenData.monto_adelanto,
-                                fechaPago: datosActualizados.fecha_pago,
-                                username: ordenActual.creado_por
-                            });
-                        }
+                        // Método optimizado: una sola consulta de verificación y una sola eliminación
+                        console.log('📝 Verificando/actualizando pagos de contrafactura...');
+                        await pagosService.actualizarPagosContrafactura(
+                            id,
+                            montoTotal,
+                            ordenData.monto_adelanto || 0,
+                            datosActualizados.fecha_pago,
+                            ordenActual.creado_por
+                        );
 
-                        // Registrar el pago del saldo completo para la fecha indicada
-                        console.log('📝 Registrando/actualizando pago de saldo completo...');
-                        await pagosService.registrarPagoSaldoCompleto({
-                            ordenId: id,
-                            montoTotal: montoTotal,
-                            montoAdelanto: ordenData.monto_adelanto || 0,
-                            fechaPago: datosActualizados.fecha_pago,
-                            username: ordenActual.creado_por
-                        });
-
-                        console.log('✅ Pagos actualizados exitosamente');
+                        console.log('✅ Pagos verificados/actualizados exitosamente');
                     } else {
                         console.warn('⚠️ No se pudo calcular el monto total. Verifica que los items tengan proveedor sugerido y precios configurados.');
                     }

@@ -270,6 +270,132 @@ class PagoRepository {
     }
 
     /**
+     * Eliminar pagos de contrafactura (ADELANTO y SALDO_COMPLETO) de una orden
+     * Esto se usa cuando se edita una orden a contrafactura para evitar duplicados
+     */
+    async eliminarPagosContrafactura(ordenCompraId) {
+        try {
+            const result = await db.query(
+                `DELETE FROM pagos 
+                WHERE orden_compra_id = ? 
+                AND tipo_pago IN ('ADELANTO', 'SALDO_COMPLETO')`,
+                [ordenCompraId]
+            );
+            
+            console.log(`🗑️ Eliminados ${result.affectedRows || 0} pagos de contrafactura de la orden ${ordenCompraId}`);
+            return { success: true, deletedCount: result.affectedRows || 0 };
+        } catch (error) {
+            console.error('Error en PagoRepository.eliminarPagosContrafactura:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener todos los pagos de contrafactura (ADELANTO y SALDO_COMPLETO) de una orden
+     * Método optimizado que obtiene todos los pagos en una sola consulta
+     */
+    async obtenerPagosContrafacturaPorOrden(ordenCompraId) {
+        try {
+            const pagos = await db.query(
+                `SELECT * FROM pagos 
+                WHERE orden_compra_id = ? 
+                AND tipo_pago IN ('ADELANTO', 'SALDO_COMPLETO')
+                ORDER BY tipo_pago, fecha_registro DESC`,
+                [ordenCompraId]
+            );
+            
+            // Separar por tipo para facilitar el procesamiento
+            return {
+                adelantos: pagos.filter(p => p.tipo_pago === 'ADELANTO'),
+                saldos: pagos.filter(p => p.tipo_pago === 'SALDO_COMPLETO'),
+                todos: pagos
+            };
+        } catch (error) {
+            console.error('Error en PagoRepository.obtenerPagosContrafacturaPorOrden:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener pagos de adelanto de una orden
+     */
+    async obtenerAdelantosPorOrden(ordenCompraId) {
+        try {
+            const pagos = await db.query(
+                `SELECT * FROM pagos 
+                WHERE orden_compra_id = ? 
+                AND tipo_pago = 'ADELANTO'
+                ORDER BY fecha_registro DESC`,
+                [ordenCompraId]
+            );
+            return pagos;
+        } catch (error) {
+            console.error('Error en PagoRepository.obtenerAdelantosPorOrden:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener pagos de saldo completo de una orden
+     */
+    async obtenerSaldosCompletosPorOrden(ordenCompraId) {
+        try {
+            const pagos = await db.query(
+                `SELECT * FROM pagos 
+                WHERE orden_compra_id = ? 
+                AND tipo_pago = 'SALDO_COMPLETO'
+                ORDER BY fecha_registro DESC`,
+                [ordenCompraId]
+            );
+            return pagos;
+        } catch (error) {
+            console.error('Error en PagoRepository.obtenerSaldosCompletosPorOrden:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Actualizar un adelanto existente
+     */
+    async actualizarAdelanto(pagoId, montoAdelanto, fechaPago) {
+        try {
+            await db.query(
+                `UPDATE pagos 
+                SET monto_pago = ?,
+                    monto_adelanto = ?,
+                    fecha_pago = ?
+                WHERE id = ? AND tipo_pago = 'ADELANTO'`,
+                [montoAdelanto, montoAdelanto, fechaPago, pagoId]
+            );
+            return { success: true };
+        } catch (error) {
+            console.error('Error en PagoRepository.actualizarAdelanto:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Actualizar un pago de saldo completo existente
+     */
+    async actualizarSaldoCompleto(pagoId, montoTotal, montoAdelanto, saldoAPagar, fechaPago) {
+        try {
+            await db.query(
+                `UPDATE pagos 
+                SET monto_pago = ?,
+                    monto_total = ?,
+                    monto_adelanto = ?,
+                    fecha_pago = ?
+                WHERE id = ? AND tipo_pago = 'SALDO_COMPLETO'`,
+                [saldoAPagar, montoTotal, montoAdelanto, fechaPago, pagoId]
+            );
+            return { success: true };
+        } catch (error) {
+            console.error('Error en PagoRepository.actualizarSaldoCompleto:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Obtener un pago por ID
      */
     async obtenerPorId(pagoId) {
