@@ -8,6 +8,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
     <style>
@@ -144,34 +147,19 @@
                         <div class="card-body">
                             <form id="filtrosForm" method="GET" action="/pagos/listar">
                                 <div class="row g-3">
-                                    <div class="col-md-6 col-lg-2">
-                                        <label for="orden_codigo" class="form-label">Orden de Compra</label>
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="orden_codigo" 
-                                               name="orden_codigo" 
-                                               value="<%= filtros.orden_codigo %>" 
-                                               placeholder="Código">
+                                    <div class="col-md-6 col-lg-3">
+                                        <label for="proveedor_id" class="form-label">Proveedor</label>
+                                        <select class="form-select" id="proveedor_id" name="proveedor_id">
+                                            <option value="">Todos los proveedores</option>
+                                            <% proveedores.forEach(proveedor => { %>
+                                                <option value="<%= proveedor.id %>" 
+                                                        <%= filtros.proveedor_id == proveedor.id ? 'selected' : '' %>>
+                                                    <%= proveedor.nombre %>
+                                                </option>
+                                            <% }) %>
+                                        </select>
                                     </div>
-                                    <div class="col-md-6 col-lg-2">
-                                        <label for="proveedor" class="form-label">Proveedor</label>
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="proveedor" 
-                                               name="proveedor" 
-                                               value="<%= filtros.proveedor %>" 
-                                               placeholder="Nombre">
-                                    </div>
-                                    <div class="col-md-6 col-lg-2">
-                                        <label for="bien_nombre" class="form-label">Bien</label>
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="bien_nombre" 
-                                               name="bien_nombre" 
-                                               value="<%= filtros.bien_nombre %>" 
-                                               placeholder="Nombre del bien">
-                                    </div>
-                                    <div class="col-md-6 col-lg-2">
+                                    <div class="col-md-6 col-lg-3">
                                         <label for="tipo_pago" class="form-label">Tipo de Pago</label>
                                         <select class="form-select" id="tipo_pago" name="tipo_pago">
                                             <option value="">Todos</option>
@@ -180,7 +168,7 @@
                                             <option value="SALDO_COMPLETO" <%= filtros.tipo_pago === 'SALDO_COMPLETO' ? 'selected' : '' %>>Saldo Completo</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-6 col-lg-2">
+                                    <div class="col-md-6 col-lg-3">
                                         <label for="fecha_desde" class="form-label">Desde</label>
                                         <input type="date" 
                                                class="form-control" 
@@ -188,7 +176,7 @@
                                                name="fecha_desde" 
                                                value="<%= filtros.fecha_desde %>">
                                     </div>
-                                    <div class="col-md-6 col-lg-2">
+                                    <div class="col-md-6 col-lg-3">
                                         <label for="fecha_hasta" class="form-label">Hasta</label>
                                         <input type="date" 
                                                class="form-control" 
@@ -225,23 +213,19 @@
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>ID</th>
                                     <th>Orden</th>
                                     <th>Proveedor</th>
                                     <th>Tipo</th>
                                     <th>Bien</th>
-                                    <th>Cantidad</th>
-                                    <th>Precio Unit.</th>
                                     <th>Monto</th>
                                     <th>Fecha Pago</th>
-                                    <th>Registrado Por</th>
-                                    <th>Observaciones</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <% if (pagos.length === 0) { %>
                                     <tr>
-                                        <td colspan="11" class="text-center py-4">
+                                        <td colspan="7" class="text-center py-4">
                                             <i class="bi bi-inbox fs-1 text-muted"></i>
                                             <p class="text-muted mt-2">No se encontraron pagos con los filtros aplicados</p>
                                         </td>
@@ -249,7 +233,6 @@
                                 <% } else { %>
                                     <% pagos.forEach(pago => { %>
                                         <tr>
-                                            <td><%= pago.id %></td>
                                             <td>
                                                 <a href="/ordenes-compra/<%= pago.orden_compra_id %>" 
                                                    class="text-decoration-none">
@@ -282,20 +265,6 @@
                                                     <span class="text-muted">-</span>
                                                 <% } %>
                                             </td>
-                                            <td>
-                                                <% if (pago.cantidad_recibida) { %>
-                                                    <%= parseFloat(pago.cantidad_recibida).toFixed(2) %>
-                                                <% } else { %>
-                                                    <span class="text-muted">-</span>
-                                                <% } %>
-                                            </td>
-                                            <td>
-                                                <% if (pago.precio_unitario) { %>
-                                                    $<%= parseFloat(pago.precio_unitario).toFixed(2) %>
-                                                <% } else { %>
-                                                    <span class="text-muted">-</span>
-                                                <% } %>
-                                            </td>
                                             <td class="monto-destacado">
                                                 $<%= parseFloat(pago.monto_pago).toFixed(2) %>
                                                 <% if (pago.tipo_pago === 'SALDO_COMPLETO' && pago.monto_total) { %>
@@ -312,17 +281,12 @@
                                             <td>
                                                 <%= new Date(pago.fecha_pago).toLocaleDateString('es-AR') %>
                                             </td>
-                                            <td><%= pago.registrado_por %></td>
                                             <td>
-                                                <% if (pago.observaciones) { %>
-                                                    <span class="d-inline-block text-truncate" 
-                                                          style="max-width: 200px;" 
-                                                          title="<%= pago.observaciones %>">
-                                                        <%= pago.observaciones %>
-                                                    </span>
-                                                <% } else { %>
-                                                    <span class="text-muted">-</span>
-                                                <% } %>
+                                                <a href="/pagos/<%= pago.id %>" 
+                                                   class="btn btn-sm btn-info" 
+                                                   title="Ver detalles">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
                                             </td>
                                         </tr>
                                     <% }); %>
@@ -378,6 +342,29 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery (requerido para Select2) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Inicializar Select2 -->
+    <script>
+        $(document).ready(function() {
+            $('#proveedor_id').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Todos los proveedores',
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                }
+            });
+        });
+    </script>
     
     <!-- Logout script -->
     <script>

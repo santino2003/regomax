@@ -677,7 +677,7 @@ class PagosService {
      * Actualizar pagos de contrafactura (adelanto + saldo completo) de forma optimizada
      * Hace una sola consulta de verificación y una sola eliminación si es necesario
      */
-    async actualizarPagosContrafactura(ordenId, montoTotal, montoAdelanto, fechaPago, username) {
+    async actualizarPagosContrafactura(ordenId, montoTotal, montoAdelanto, fechaPago, fechaAdelanto, username) {
         try {
             console.log('🔄 [PAGOS] Verificando pagos de contrafactura para orden:', ordenId);
 
@@ -697,7 +697,11 @@ class PagosService {
             };
 
             const fechaPagoNormalizada = normalizarFecha(fechaPago);
-            console.log('📅 [PAGOS] Fecha de pago a usar:', fechaPagoNormalizada);
+            const fechaAdelantoNormalizada = normalizarFecha(fechaAdelanto || fechaPago);
+            console.log('📅 [PAGOS] Fechas a usar:', {
+                fechaSaldo: fechaPagoNormalizada,
+                fechaAdelanto: fechaAdelantoNormalizada
+            });
 
             // Verificar adelantos
             let cambioEnAdelantos = false;
@@ -713,11 +717,11 @@ class PagosService {
                     });
                     console.log('💰 [PAGOS] Adelanto nuevo:', {
                         monto: parseFloat(montoAdelanto),
-                        fecha: fechaPagoNormalizada
+                        fecha: fechaAdelantoNormalizada
                     });
 
                     const diferenciaMonto = Math.abs(montoAdelantoExistente - parseFloat(montoAdelanto));
-                    const cambioFecha = fechaAdelantoExistente !== fechaPagoNormalizada;
+                    const cambioFecha = fechaAdelantoExistente !== fechaAdelantoNormalizada;
                     
                     console.log('🔍 [PAGOS] Comparación adelantos:', {
                         diferenciaMonto: diferenciaMonto.toFixed(2),
@@ -806,25 +810,25 @@ class PagosService {
 
             const results = [];
 
-            // Registrar adelanto si corresponde
+            // Registrar adelanto si corresponde, usando su fecha específica
             if (montoAdelanto && parseFloat(montoAdelanto) > 0) {
                 console.log('📝 [PAGOS] Registrando adelanto...');
                 const adelantoResult = await this.registrarAdelanto({
                     ordenId,
                     montoAdelanto,
-                    fechaPago,
+                    fechaPago: fechaAdelantoNormalizada, // Usar fecha específica del adelanto
                     username
                 });
                 results.push(adelantoResult);
             }
 
-            // Registrar saldo completo
+            // Registrar saldo completo, usando su fecha específica
             console.log('📝 [PAGOS] Registrando saldo completo...');
             const saldoResult = await this.registrarPagoSaldoCompleto({
                 ordenId,
                 montoTotal,
                 montoAdelanto: montoAdelanto || 0,
-                fechaPago,
+                fechaPago: fechaPagoNormalizada, // Usar fecha específica del saldo
                 username
             });
             results.push(saldoResult);

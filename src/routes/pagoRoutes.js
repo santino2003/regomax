@@ -9,6 +9,9 @@ router.use(authMiddleware.verifyToken);
 // Ruta para mostrar el listado de pagos
 router.get('/listar', pagoController.mostrarListado);
 
+// Ruta para mostrar detalle de un pago
+router.get('/:id', pagoController.mostrarDetalle);
+
 // Ruta para obtener resumen de pagos (API)
 router.get('/api/resumen', pagoController.obtenerResumen);
 

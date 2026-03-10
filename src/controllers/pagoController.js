@@ -1,5 +1,6 @@
 const pagosService = require('../services/pagosService');
 const pagoRepository = require('../repositories/pagoRepository');
+const proveedorRepository = require('../repositories/proveedorRepository');
 
 class PagoController {
     /**
@@ -14,13 +15,15 @@ class PagoController {
 
             // Obtener filtros de la query string
             const filtros = {
-                orden_codigo: req.query.orden_codigo || '',
-                proveedor: req.query.proveedor || '',
+                proveedor_id: req.query.proveedor_id || '',
                 tipo_pago: req.query.tipo_pago || '',
                 fecha_desde: req.query.fecha_desde || '',
-                fecha_hasta: req.query.fecha_hasta || '',
-                bien_nombre: req.query.bien_nombre || ''
+                fecha_hasta: req.query.fecha_hasta || ''
             };
+
+            // Obtener lista de proveedores para el filtro
+            const proveedoresResult = await proveedorRepository.obtenerTodos({}, 1, 1000);
+            const proveedores = proveedoresResult.data || [];
 
             // Obtener pagos con paginación y filtros
             const resultado = await pagoRepository.obtenerPagosConFiltros(filtros, limit, offset);
@@ -32,6 +35,7 @@ class PagoController {
                 username,
                 pagos: resultado.pagos,
                 filtros,
+                proveedores,
                 paginacion: {
                     currentPage: page,
                     totalPages,
@@ -45,6 +49,37 @@ class PagoController {
             console.error('Error en PagoController.mostrarListado:', error);
             res.status(500).render('error', {
                 message: 'Error al obtener el listado de pagos',
+                error: error
+            });
+        }
+    }
+
+    /**
+     * Mostrar detalle de un pago
+     */
+    async mostrarDetalle(req, res) {
+        try {
+            const { id } = req.params;
+            const username = req.user.username;
+
+            // Obtener el pago por ID
+            const pago = await pagoRepository.obtenerPorId(id);
+
+            if (!pago) {
+                return res.status(404).render('error', {
+                    message: 'Pago no encontrado',
+                    error: { status: 404 }
+                });
+            }
+
+            res.render('pagoDetalle', {
+                username,
+                pago
+            });
+        } catch (error) {
+            console.error('Error en PagoController.mostrarDetalle:', error);
+            res.status(500).render('error', {
+                message: 'Error al obtener el detalle del pago',
                 error: error
             });
         }

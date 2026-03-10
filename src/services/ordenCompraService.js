@@ -91,6 +91,47 @@ class OrdenCompraService {
             console.log('Crear Orden - Contrafactura en datosOrden:', datosOrden.contrafactura);
             console.log('Crear Orden - Fecha de pago:', datosOrden.fecha_pago);
 
+            // Si es contrafactura, validar los datos de pago ANTES de crear la orden
+            if (ordenData.contrafactura && ordenData.fecha_pago) {
+                // Calcular el monto total de la orden consultando precios de bienes_proveedores
+                let montoTotal = 0;
+                for (const item of ordenData.items) {
+                    if (item.bien_id && item.proveedor_sugerido_id && item.cantidad) {
+                        try {
+                            // Obtener el precio del proveedor para ese bien
+                            const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
+                                item.bien_id,
+                                item.proveedor_sugerido_id
+                            );
+                            
+                            if (precioInfo && precioInfo.precio) {
+                                const precio = parseFloat(precioInfo.precio);
+                                const cantidad = parseFloat(item.cantidad);
+                                montoTotal += precio * cantidad;
+                                console.log(`💰 Item ${item.bien_id}: ${cantidad} × $${precio} = $${(precio * cantidad).toFixed(2)}`);
+                            }
+                        } catch (error) {
+                            console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}`);
+                        }
+                    }
+                }
+
+                console.log(`💰 Monto total calculado: $${montoTotal.toFixed(2)}`);
+
+                // Validar que el adelanto no sea mayor al monto total
+                if (ordenData.monto_adelanto && parseFloat(ordenData.monto_adelanto) > 0) {
+                    const montoAdelanto = parseFloat(ordenData.monto_adelanto);
+                    if (montoAdelanto > montoTotal) {
+                        throw new Error(`El adelanto ($${montoAdelanto.toFixed(2)}) no puede ser mayor al monto total de la orden ($${montoTotal.toFixed(2)})`);
+                    }
+                }
+
+                // Validar que haya un monto total válido
+                if (montoTotal <= 0) {
+                    throw new Error('No se pudo calcular el monto total de la orden. Verifica que los items tengan proveedor sugerido y precios configurados.');
+                }
+            }
+
             // Crear la orden con sus items
             const result = await ordenCompraRepository.crearOrdenCompra(datosOrden, ordenData.items);
             
@@ -99,63 +140,50 @@ class OrdenCompraService {
 
             // Si es contrafactura, registrar los pagos correspondientes
             if (ordenData.contrafactura && ordenData.fecha_pago) {
-                try {
-                    // Calcular el monto total de la orden consultando precios de bienes_proveedores
-                    let montoTotal = 0;
-                    for (const item of ordenData.items) {
-                        if (item.bien_id && item.proveedor_sugerido_id && item.cantidad) {
-                            try {
-                                // Obtener el precio del proveedor para ese bien
-                                const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
-                                    item.bien_id,
-                                    item.proveedor_sugerido_id
-                                );
-                                
-                                if (precioInfo && precioInfo.precio) {
-                                    const precio = parseFloat(precioInfo.precio);
-                                    const cantidad = parseFloat(item.cantidad);
-                                    montoTotal += precio * cantidad;
-                                    console.log(`💰 Item ${item.bien_id}: ${cantidad} × $${precio} = $${(precio * cantidad).toFixed(2)}`);
-                                }
-                            } catch (error) {
-                                console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}`);
+                // Calcular el monto total de la orden consultando precios de bienes_proveedores
+                let montoTotal = 0;
+                for (const item of ordenData.items) {
+                    if (item.bien_id && item.proveedor_sugerido_id && item.cantidad) {
+                        try {
+                            // Obtener el precio del proveedor para ese bien
+                            const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
+                                item.bien_id,
+                                item.proveedor_sugerido_id
+                            );
+                            
+                            if (precioInfo && precioInfo.precio) {
+                                const precio = parseFloat(precioInfo.precio);
+                                const cantidad = parseFloat(item.cantidad);
+                                montoTotal += precio * cantidad;
                             }
+                        } catch (error) {
+                            console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}`);
                         }
                     }
-
-                    console.log(`💰 Monto total calculado: $${montoTotal.toFixed(2)}`);
-
-                    // Solo proceder si hay un monto total válido
-                    if (montoTotal > 0) {
-                        // Si hay monto de adelanto, registrarlo
-                        if (ordenData.monto_adelanto && parseFloat(ordenData.monto_adelanto) > 0) {
-                            console.log('📝 Registrando adelanto de pago...');
-                            await pagosService.registrarAdelanto({
-                                ordenId: result.id,
-                                montoAdelanto: ordenData.monto_adelanto,
-                                fechaPago: ordenData.fecha_pago,
-                                username: usuario
-                            });
-                        }
-
-                        // Registrar el pago del saldo completo para la fecha indicada
-                        console.log('📝 Registrando pago de saldo completo...');
-                        await pagosService.registrarPagoSaldoCompleto({
-                            ordenId: result.id,
-                            montoTotal: montoTotal,
-                            montoAdelanto: ordenData.monto_adelanto || 0,
-                            fechaPago: ordenData.fecha_pago,
-                            username: usuario
-                        });
-
-                        console.log('✅ Pagos registrados exitosamente');
-                    } else {
-                        console.warn('⚠️ No se pudo calcular el monto total. Verifica que los items tengan proveedor sugerido y precios configurados.');
-                    }
-                } catch (pagoError) {
-                    console.error('⚠️ Error al registrar pagos (la orden se creó correctamente):', pagoError);
-                    // No lanzamos el error para no fallar la creación de la orden
                 }
+
+                // Si hay monto de adelanto, registrarlo con su fecha específica
+                if (ordenData.monto_adelanto && parseFloat(ordenData.monto_adelanto) > 0) {
+                    console.log('📝 Registrando adelanto de pago...');
+                    await pagosService.registrarAdelanto({
+                        ordenId: result.id,
+                        montoAdelanto: ordenData.monto_adelanto,
+                        fechaPago: ordenData.fecha_adelanto || ordenData.fecha_pago, // Usar fecha_adelanto si existe
+                        username: usuario
+                    });
+                }
+
+                // Registrar el pago del saldo completo para la fecha indicada
+                console.log('📝 Registrando pago de saldo completo...');
+                await pagosService.registrarPagoSaldoCompleto({
+                    ordenId: result.id,
+                    montoTotal: montoTotal,
+                    montoAdelanto: ordenData.monto_adelanto || 0,
+                    fechaPago: ordenData.fecha_pago,
+                    username: usuario
+                });
+
+                console.log('✅ Pagos registrados exitosamente');
             }
 
             return {
@@ -323,6 +351,19 @@ class OrdenCompraService {
 
                     console.log(`💰 Monto total calculado: $${montoTotal.toFixed(2)} (${itemsContabilizados} items contabilizados, ${itemsOmitidos} omitidos)`);
 
+                    // Validar que el adelanto no sea mayor al monto total
+                    if (ordenData.monto_adelanto && parseFloat(ordenData.monto_adelanto) > 0) {
+                        const montoAdelanto = parseFloat(ordenData.monto_adelanto);
+                        if (montoAdelanto > montoTotal) {
+                            throw new Error(`El adelanto ($${montoAdelanto.toFixed(2)}) no puede ser mayor al monto total de la orden ($${montoTotal.toFixed(2)})`);
+                        }
+                    }
+
+                    // Validar que haya un monto total válido
+                    if (montoTotal <= 0) {
+                        throw new Error('No se pudo calcular el monto total de la orden. Verifica que los items tengan proveedor sugerido y precios configurados.');
+                    }
+
                     // Solo proceder si hay un monto total válido
                     if (montoTotal > 0) {
                         // Método optimizado: una sola consulta de verificación y una sola eliminación
@@ -332,16 +373,16 @@ class OrdenCompraService {
                             montoTotal,
                             ordenData.monto_adelanto || 0,
                             datosActualizados.fecha_pago,
+                            ordenData.fecha_adelanto || datosActualizados.fecha_pago, // Usar fecha_adelanto si existe, sino fecha_pago
                             ordenActual.creado_por
                         );
 
                         console.log('✅ Pagos verificados/actualizados exitosamente');
-                    } else {
-                        console.warn('⚠️ No se pudo calcular el monto total. Verifica que los items tengan proveedor sugerido y precios configurados.');
                     }
                 } catch (pagoError) {
-                    console.error('⚠️ Error al actualizar pagos (la orden se modificó correctamente):', pagoError);
-                    // No lanzamos el error para no fallar la modificación de la orden
+                    console.error('❌ Error al actualizar pagos:', pagoError);
+                    // Lanzar el error para evitar la modificación de la orden
+                    throw pagoError;
                 }
             }
 

@@ -445,14 +445,9 @@ class PagoRepository {
             const params = [];
 
             // Aplicar filtros
-            if (filtros.orden_codigo) {
-                query += ' AND oc.codigo LIKE ?';
-                params.push(`%${filtros.orden_codigo}%`);
-            }
-
-            if (filtros.proveedor) {
-                query += ' AND pr.nombre LIKE ?';
-                params.push(`%${filtros.proveedor}%`);
+            if (filtros.proveedor_id) {
+                query += ' AND p.proveedor_id = ?';
+                params.push(filtros.proveedor_id);
             }
 
             if (filtros.tipo_pago) {
@@ -468,11 +463,6 @@ class PagoRepository {
             if (filtros.fecha_hasta) {
                 query += ' AND p.fecha_pago <= ?';
                 params.push(filtros.fecha_hasta);
-            }
-
-            if (filtros.bien_nombre) {
-                query += ' AND b.nombre LIKE ?';
-                params.push(`%${filtros.bien_nombre}%`);
             }
 
             // Ordenar por fecha más reciente
