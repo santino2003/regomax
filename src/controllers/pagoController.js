@@ -18,7 +18,8 @@ class PagoController {
                 proveedor_id: req.query.proveedor_id || '',
                 tipo_pago: req.query.tipo_pago || '',
                 fecha_desde: req.query.fecha_desde || '',
-                fecha_hasta: req.query.fecha_hasta || ''
+                fecha_hasta: req.query.fecha_hasta || '',
+                pagado: req.query.pagado // Filtro de estado pagado
             };
 
             // Obtener lista de proveedores para el filtro
@@ -145,6 +146,31 @@ class PagoController {
             res.status(500).json({
                 success: false,
                 message: 'Error al exportar pagos',
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Marcar un pago como pagado
+     */
+    async marcarComoPagado(req, res) {
+        try {
+            const { id } = req.params;
+            const { detalle } = req.body;
+            const username = req.user.username;
+
+            await pagoRepository.marcarComoPagado(id, username, detalle);
+
+            res.json({
+                success: true,
+                message: 'Pago marcado como pagado exitosamente'
+            });
+        } catch (error) {
+            console.error('Error en PagoController.marcarComoPagado:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al marcar pago como pagado',
                 error: error.message
             });
         }

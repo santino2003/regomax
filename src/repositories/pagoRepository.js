@@ -444,6 +444,17 @@ class PagoRepository {
 
             const params = [];
 
+            // Filtro de estado pagado (por defecto solo mostrar pendientes)
+            // Si filtros.pagado es undefined, mostrar solo pendientes (FALSE)
+            // Si filtros.pagado es 'true', mostrar solo pagados
+            // Si filtros.pagado es 'all', mostrar todos
+            if (filtros.pagado === undefined || filtros.pagado === '' || filtros.pagado === 'false') {
+                query += ' AND p.pagado = FALSE';
+            } else if (filtros.pagado === 'true') {
+                query += ' AND p.pagado = TRUE';
+            }
+            // Si es 'all', no agregamos filtro
+
             // Aplicar filtros
             if (filtros.proveedor_id) {
                 query += ' AND p.proveedor_id = ?';
@@ -468,8 +479,8 @@ class PagoRepository {
             // Ordenar por fecha más reciente
             query += ' ORDER BY p.fecha_pago DESC, p.fecha_registro DESC';
 
-            // Obtener total de registros
-            const countQuery = `
+            // Obtener total de registros con los mismos filtros
+            let countQuery = `
                 SELECT COUNT(*) as total
                 FROM pagos p
                 LEFT JOIN bienes b ON p.bien_id = b.id
@@ -477,19 +488,21 @@ class PagoRepository {
                 JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
                 WHERE 1=1
             `;
+
+            // Aplicar el mismo filtro de pagado al conteo
+            if (filtros.pagado === undefined || filtros.pagado === '' || filtros.pagado === 'false') {
+                countQuery += ' AND p.pagado = FALSE';
+            } else if (filtros.pagado === 'true') {
+                countQuery += ' AND p.pagado = TRUE';
+            }
             
             // Reconstruir los filtros para el count
             let countQueryWithFilters = countQuery;
             const countParams = [];
 
-            if (filtros.orden_codigo) {
-                countQueryWithFilters += ' AND oc.codigo LIKE ?';
-                countParams.push(`%${filtros.orden_codigo}%`);
-            }
-
-            if (filtros.proveedor) {
-                countQueryWithFilters += ' AND pr.nombre LIKE ?';
-                countParams.push(`%${filtros.proveedor}%`);
+            if (filtros.proveedor_id) {
+                countQueryWithFilters += ' AND p.proveedor_id = ?';
+                countParams.push(filtros.proveedor_id);
             }
 
             if (filtros.tipo_pago) {
@@ -505,11 +518,6 @@ class PagoRepository {
             if (filtros.fecha_hasta) {
                 countQueryWithFilters += ' AND p.fecha_pago <= ?';
                 countParams.push(filtros.fecha_hasta);
-            }
-
-            if (filtros.bien_nombre) {
-                countQueryWithFilters += ' AND b.nombre LIKE ?';
-                countParams.push(`%${filtros.bien_nombre}%`);
             }
 
             const countResult = await db.query(countQueryWithFilters, countParams);
@@ -529,6 +537,27 @@ class PagoRepository {
             };
         } catch (error) {
             console.error('Error en PagoRepository.obtenerPagosConFiltros:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Marcar un pago como pagado
+     */
+    async marcarComoPagado(pagoId, username, detalle = null) {
+        try {
+            await db.query(
+                `UPDATE pagos 
+                SET pagado = TRUE,
+                    fecha_marcado_pagado = NOW(),
+                    marcado_pagado_por = ?,
+                    detalle_pago = ?
+                WHERE id = ?`,
+                [username, detalle, pagoId]
+            );
+            return { success: true };
+        } catch (error) {
+            console.error('Error en PagoRepository.marcarComoPagado:', error);
             throw error;
         }
     }

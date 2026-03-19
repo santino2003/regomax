@@ -9,6 +9,9 @@ router.use(authMiddleware.verifyToken);
 // Ruta para mostrar el listado de pagos
 router.get('/listar', pagoController.mostrarListado);
 
+// Ruta para marcar un pago como pagado
+router.post('/:id/marcar-pagado', pagoController.marcarComoPagado);
+
 // Ruta para mostrar detalle de un pago
 router.get('/:id', pagoController.mostrarDetalle);
 

@@ -147,10 +147,18 @@
                         <div class="card-body">
                             <form id="filtrosForm" method="GET" action="/pagos/listar">
                                 <div class="row g-3">
-                                    <div class="col-md-6 col-lg-3">
+                                    <div class="col-md-6 col-lg-2">
+                                        <label for="pagado" class="form-label">Estado</label>
+                                        <select class="form-select" id="pagado" name="pagado">
+                                            <option value="" <%= !filtros.pagado || filtros.pagado === '' || filtros.pagado === 'false' ? 'selected' : '' %>>Pendientes</option>
+                                            <option value="true" <%= filtros.pagado === 'true' ? 'selected' : '' %>>Pagados</option>
+                                            <option value="all" <%= filtros.pagado === 'all' ? 'selected' : '' %>>Todos</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 col-lg-2">
                                         <label for="proveedor_id" class="form-label">Proveedor</label>
                                         <select class="form-select" id="proveedor_id" name="proveedor_id">
-                                            <option value="">Todos los proveedores</option>
+                                            <option value="">Todos</option>
                                             <% proveedores.forEach(proveedor => { %>
                                                 <option value="<%= proveedor.id %>" 
                                                         <%= filtros.proveedor_id == proveedor.id ? 'selected' : '' %>>
@@ -159,7 +167,7 @@
                                             <% }) %>
                                         </select>
                                     </div>
-                                    <div class="col-md-6 col-lg-3">
+                                    <div class="col-md-6 col-lg-2">
                                         <label for="tipo_pago" class="form-label">Tipo de Pago</label>
                                         <select class="form-select" id="tipo_pago" name="tipo_pago">
                                             <option value="">Todos</option>
@@ -168,7 +176,7 @@
                                             <option value="SALDO_COMPLETO" <%= filtros.tipo_pago === 'SALDO_COMPLETO' ? 'selected' : '' %>>Saldo Completo</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-6 col-lg-3">
+                                    <div class="col-md-6 col-lg-2">
                                         <label for="fecha_desde" class="form-label">Desde</label>
                                         <input type="date" 
                                                class="form-control" 
@@ -176,7 +184,7 @@
                                                name="fecha_desde" 
                                                value="<%= filtros.fecha_desde %>">
                                     </div>
-                                    <div class="col-md-6 col-lg-3">
+                                    <div class="col-md-6 col-lg-2">
                                         <label for="fecha_hasta" class="form-label">Hasta</label>
                                         <input type="date" 
                                                class="form-control" 
@@ -282,11 +290,20 @@
                                                 <%= new Date(pago.fecha_pago).toLocaleDateString('es-AR') %>
                                             </td>
                                             <td>
-                                                <a href="/pagos/<%= pago.id %>" 
-                                                   class="btn btn-sm btn-info" 
-                                                   title="Ver detalles">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
+                                                <div class="btn-group" role="group">
+                                                    <a href="/pagos/<%= pago.id %>" 
+                                                       class="btn btn-sm btn-info" 
+                                                       title="Ver detalles">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <% if (!pago.pagado) { %>
+                                                        <button class="btn btn-sm btn-success" 
+                                                                onclick="marcarPagado(<%= pago.id %>)"
+                                                                title="Marcar como pagado">
+                                                            <i class="bi bi-check-circle"></i>
+                                                        </button>
+                                                    <% } %>
+                                                </div>
                                             </td>
                                         </tr>
                                     <% }); %>
@@ -340,6 +357,38 @@
         </div>
     </div>
 
+    <!-- Modal para marcar como pagado -->
+    <div class="modal fade" id="modalMarcarPagado" tabindex="-1" aria-labelledby="modalMarcarPagadoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalMarcarPagadoLabel">
+                        <i class="bi bi-check-circle me-2"></i>Marcar Pago como Pagado
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="detallePago" class="form-label">Detalle del Pago (Opcional)</label>
+                        <textarea class="form-control" 
+                                  id="detallePago" 
+                                  rows="3" 
+                                  placeholder="Ingrese información adicional sobre el pago (ej: número de transferencia, banco, etc.)"></textarea>
+                        <div class="form-text">
+                            Este campo es opcional. Puede agregar información relevante sobre cómo se realizó el pago.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="confirmarMarcarPagado()">
+                        <i class="bi bi-check-circle me-2"></i>Marcar como Pagado
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery (requerido para Select2) -->
@@ -364,6 +413,48 @@
                 }
             });
         });
+
+        // Variable global para almacenar el ID del pago a marcar
+        let pagoIdSeleccionado = null;
+
+        // Función para abrir el modal de marcar como pagado
+        function marcarPagado(pagoId) {
+            pagoIdSeleccionado = pagoId;
+            document.getElementById('detallePago').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('modalMarcarPagado'));
+            modal.show();
+        }
+
+        // Función para confirmar y marcar el pago como pagado
+        async function confirmarMarcarPagado() {
+            if (!pagoIdSeleccionado) return;
+
+            const detalle = document.getElementById('detallePago').value.trim();
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/pagos/${pagoIdSeleccionado}/marcar-pagado`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ detalle: detalle || null })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Pago marcado como pagado exitosamente');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al marcar el pago como pagado');
+            }
+        }
     </script>
     
     <!-- Logout script -->

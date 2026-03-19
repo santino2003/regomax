@@ -256,6 +256,36 @@
                                 </div>
                             </div>
                         <% } %>
+
+                        <!-- Detalle del Pago (si fue marcado como pagado) -->
+                        <% if (pago.pagado && pago.detalle_pago) { %>
+                            <div class="col-12">
+                                <div class="card info-card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0">
+                                            <i class="bi bi-check-circle me-2"></i>Detalle del Pago
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-2">
+                                            <span class="detail-label">Marcado como pagado por:</span>
+                                            <span class="detail-value"><%= pago.marcado_pagado_por || 'N/A' %></span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <span class="detail-label">Fecha:</span>
+                                            <span class="detail-value">
+                                                <%= pago.fecha_marcado_pagado ? new Date(pago.fecha_marcado_pagado).toLocaleString('es-AR') : 'N/A' %>
+                                            </span>
+                                        </div>
+                                        <hr>
+                                        <div>
+                                            <span class="detail-label">Detalle:</span>
+                                            <p class="mb-0 detail-value mt-2"><%= pago.detalle_pago %></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
                     </div>
                 </div>
             </div>
