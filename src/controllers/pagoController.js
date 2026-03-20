@@ -175,6 +175,39 @@ class PagoController {
             });
         }
     }
+
+    /**
+     * Refinanciar un pago
+     */
+    async refinanciarPago(req, res) {
+        try {
+            const { id } = req.params;
+            const { cuotas, observacionesGenerales } = req.body;
+            const username = req.user.username;
+
+            // Llamar al servicio para realizar la refinanciación
+            const resultado = await pagosService.refinanciarPago(
+                id,
+                cuotas,
+                username,
+                observacionesGenerales
+            );
+
+            if (resultado.success) {
+                res.json(resultado);
+            } else {
+                res.status(400).json(resultado);
+            }
+
+        } catch (error) {
+            console.error('Error en PagoController.refinanciarPago:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al refinanciar el pago',
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = new PagoController();

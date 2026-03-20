@@ -38,6 +38,21 @@
         .resumen-card {
             border-left: 4px solid #0d6efd;
         }
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        #tablaCuotasEditable input {
+            font-size: 0.9rem;
+        }
+        .fecha-atrasada {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        .fecha-atrasada i {
+            margin-left: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -287,7 +302,21 @@
                                                 <% } %>
                                             </td>
                                             <td>
-                                                <%= new Date(pago.fecha_pago).toLocaleDateString('es-AR') %>
+                                                <% 
+                                                // Comparar fecha de pago con la fecha actual
+                                                const fechaPago = new Date(pago.fecha_pago);
+                                                const fechaActual = new Date();
+                                                // Normalizar las fechas a medianoche para comparar solo días
+                                                fechaPago.setHours(0, 0, 0, 0);
+                                                fechaActual.setHours(0, 0, 0, 0);
+                                                const estaAtrasada = !pago.pagado && fechaPago < fechaActual;
+                                                %>
+                                                <span class="<%= estaAtrasada ? 'fecha-atrasada' : '' %>">
+                                                    <%= new Date(pago.fecha_pago).toLocaleDateString('es-AR') %>
+                                                    <% if (estaAtrasada) { %>
+                                                        <i class="bi bi-exclamation-triangle-fill" title="Pago atrasado"></i>
+                                                    <% } %>
+                                                </span>
                                             </td>
                                             <td>
                                                 <div class="btn-group" role="group">
@@ -301,6 +330,11 @@
                                                                 onclick="marcarPagado(<%= pago.id %>)"
                                                                 title="Marcar como pagado">
                                                             <i class="bi bi-check-circle"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-warning" 
+                                                                onclick="abrirModalRefinanciar(<%= pago.id %>, '<%= pago.proveedor_nombre %>', <%= pago.monto_pago %>)"
+                                                                title="Refinanciar pago">
+                                                            <i class="bi bi-calendar-event"></i>
                                                         </button>
                                                     <% } %>
                                                 </div>
@@ -389,6 +423,148 @@
         </div>
     </div>
 
+    <!-- Modal para refinanciar pago -->
+    <div class="modal fade" id="modalRefinanciar" tabindex="-1" aria-labelledby="modalRefinanciarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="modalRefinanciarLabel">
+                        <i class="bi bi-calendar-event me-2"></i>Refinanciar Pago
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info py-2">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>La refinanciación creará nuevos pagos en cuotas y eliminará el pago original. Puede personalizar el monto y fecha de cada cuota.</small>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <small class="text-muted">Proveedor:</small>
+                            <div id="refinanciarProveedor" class="fw-bold"></div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Monto Original:</small>
+                            <div id="refinanciarMontoOriginal" class="text-success fw-bold fs-5"></div>
+                        </div>
+                    </div>
+
+                    <hr class="my-2">
+
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <label for="cantidadCuotas" class="form-label mb-1">Cantidad de Cuotas *</label>
+                            <input type="number" 
+                                   class="form-control form-control-sm" 
+                                   id="cantidadCuotas" 
+                                   min="2" 
+                                   max="60"
+                                   value="3"
+                                   onchange="generarCuotas()"
+                                   required>
+                            <small class="form-text text-muted">Entre 2 y 60 cuotas</small>
+                        </div>
+                    </div>
+
+                    <h6 class="mb-2 mt-2">
+                        <i class="bi bi-list-ol me-2"></i>Detalle de Cuotas
+                        <span class="badge bg-primary" id="badgeTotalCuotas">0</span>
+                    </h6>
+
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-bordered table-sm mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 100px;">#</th>
+                                    <th style="width: 200px;">Fecha *</th>
+                                    <th>Monto *</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaCuotasEditable">
+                                <!-- Las cuotas se generarán dinámicamente aquí -->
+                            </tbody>
+                            <tfoot class="table-secondary">
+                                <tr>
+                                    <td class="text-end"><strong>Total:</strong></td>
+                                    <td><strong id="totalCuotas">$0.00</strong></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <small class="text-muted">Total Refinanciado:</small>
+                            <div id="totalRefinanciado" class="text-primary fw-bold">$0.00</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Diferencia:</small>
+                            <div id="diferenciaRefinanciado" class="fw-bold">$0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <label for="observacionesRefinanciar" class="form-label mb-1">Observaciones Generales</label>
+                        <textarea class="form-control form-control-sm" 
+                                  id="observacionesRefinanciar" 
+                                  rows="2" 
+                                  placeholder="Motivo de la refinanciación, acuerdos, etc."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" onclick="confirmarRefinanciar()">
+                        <i class="bi bi-calendar-event me-2"></i>Refinanciar Pago
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Mensajes -->
+    <div class="modal fade" id="modalMensaje" tabindex="-1" aria-labelledby="modalMensajeLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" id="modalMensajeHeader">
+                    <h5 class="modal-title" id="modalMensajeLabel">
+                        <i class="bi bi-info-circle me-2" id="modalMensajeIcon"></i>
+                        <span id="modalMensajeTitulo">Información</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalMensajeCuerpo">
+                    <!-- El mensaje se insertará aquí -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="modalConfirmacionLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Confirmación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalConfirmacionCuerpo">
+                    <!-- El mensaje de confirmación se insertará aquí -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" id="btnConfirmarAccion">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery (requerido para Select2) -->
@@ -396,87 +572,7 @@
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
-    <!-- Inicializar Select2 -->
-    <script>
-        $(document).ready(function() {
-            $('#proveedor_id').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Todos los proveedores',
-                allowClear: true,
-                language: {
-                    noResults: function() {
-                        return "No se encontraron resultados";
-                    },
-                    searching: function() {
-                        return "Buscando...";
-                    }
-                }
-            });
-        });
-
-        // Variable global para almacenar el ID del pago a marcar
-        let pagoIdSeleccionado = null;
-
-        // Función para abrir el modal de marcar como pagado
-        function marcarPagado(pagoId) {
-            pagoIdSeleccionado = pagoId;
-            document.getElementById('detallePago').value = '';
-            const modal = new bootstrap.Modal(document.getElementById('modalMarcarPagado'));
-            modal.show();
-        }
-
-        // Función para confirmar y marcar el pago como pagado
-        async function confirmarMarcarPagado() {
-            if (!pagoIdSeleccionado) return;
-
-            const detalle = document.getElementById('detallePago').value.trim();
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`/pagos/${pagoIdSeleccionado}/marcar-pagado`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ detalle: detalle || null })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Pago marcado como pagado exitosamente');
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al marcar el pago como pagado');
-            }
-        }
-    </script>
-    
-    <!-- Logout script -->
-    <script>
-        document.getElementById('logout-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            if (confirm('¿Está seguro que desea cerrar sesión?')) {
-                fetch('/auth/logout', { 
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(() => {
-                    window.location.href = '/login';
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    window.location.href = '/login';
-                });
-            }
-        });
-    </script>
+    <!-- Script de Pagos -->
+    <script src="/assets/js/pagos.js"></script>
 </body>
 </html>

@@ -12,6 +12,9 @@ router.get('/listar', pagoController.mostrarListado);
 // Ruta para marcar un pago como pagado
 router.post('/:id/marcar-pagado', pagoController.marcarComoPagado);
 
+// Ruta para refinanciar un pago
+router.post('/:id/refinanciar', pagoController.refinanciarPago);
+
 // Ruta para mostrar detalle de un pago
 router.get('/:id', pagoController.mostrarDetalle);
 

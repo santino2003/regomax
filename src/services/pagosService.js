@@ -846,6 +846,122 @@ class PagosService {
             throw error;
         }
     }
+
+    /**
+     * Refinanciar un pago existente
+     * Crea nuevas cuotas con montos y fechas personalizadas y elimina el pago original
+     */
+    async refinanciarPago(pagoId, cuotas, username, observacionesGenerales = null) {
+        try {
+            console.log('🔄 [PAGOS] Iniciando refinanciación:', { 
+                pagoId, 
+                cantidadCuotas: cuotas.length, 
+                usuario: username 
+            });
+
+            // 1. Obtener el pago original
+            const pagoOriginal = await pagoRepository.obtenerPorId(pagoId);
+            
+            if (!pagoOriginal) {
+                console.error('❌ [PAGOS] Pago no encontrado:', pagoId);
+                return {
+                    success: false,
+                    message: 'Pago no encontrado'
+                };
+            }
+
+            // 2. Validar que el pago no esté marcado como pagado
+            if (pagoOriginal.pagado) {
+                console.warn('⚠️ [PAGOS] Intento de refinanciar pago ya pagado:', pagoId);
+                return {
+                    success: false,
+                    message: 'No se puede refinanciar un pago que ya fue marcado como pagado'
+                };
+            }
+
+            // 3. Validar cantidad de cuotas
+            if (!cuotas || cuotas.length < 2 || cuotas.length > 60) {
+                console.error('❌ [PAGOS] Cantidad de cuotas inválida:', cuotas?.length);
+                return {
+                    success: false,
+                    message: 'La cantidad de cuotas debe estar entre 2 y 60'
+                };
+            }
+
+            // 4. Validar cada cuota
+            for (let i = 0; i < cuotas.length; i++) {
+                const cuota = cuotas[i];
+                
+                if (!cuota.fecha) {
+                    console.error('❌ [PAGOS] Cuota sin fecha:', i + 1);
+                    return {
+                        success: false,
+                        message: `La cuota ${i + 1} debe tener una fecha`
+                    };
+                }
+
+                if (!cuota.monto || cuota.monto <= 0) {
+                    console.error('❌ [PAGOS] Cuota con monto inválido:', i + 1);
+                    return {
+                        success: false,
+                        message: `La cuota ${i + 1} debe tener un monto mayor a 0`
+                    };
+                }
+            }
+
+            // 5. Calcular totales
+            const montoOriginal = parseFloat(pagoOriginal.monto_pago);
+            const totalRefinanciado = cuotas.reduce((sum, c) => sum + parseFloat(c.monto), 0);
+            const diferencia = totalRefinanciado - montoOriginal;
+
+            // 6. Validar que el total no sea mayor al monto original
+            if (diferencia > 0.01) {
+                console.warn('⚠️ [PAGOS] Total refinanciado mayor al original:', {
+                    original: montoOriginal,
+                    refinanciado: totalRefinanciado,
+                    diferencia
+                });
+                return {
+                    success: false,
+                    message: `El total refinanciado ($${totalRefinanciado.toFixed(2)}) no puede ser mayor al monto original ($${montoOriginal.toFixed(2)})`
+                };
+            }
+
+            console.log('✓ [PAGOS] Validaciones exitosas:', {
+                montoOriginal: `$${montoOriginal.toFixed(2)}`,
+                totalRefinanciado: `$${totalRefinanciado.toFixed(2)}`,
+                diferencia: `$${diferencia.toFixed(2)}`
+            });
+
+            // 7. Realizar la refinanciación en el repositorio (transacción)
+            const resultado = await pagoRepository.refinanciarPagoVariable(
+                pagoId,
+                pagoOriginal,
+                cuotas,
+                username,
+                observacionesGenerales
+            );
+
+            console.log('✅ [PAGOS] Refinanciación completada:', {
+                pagoOriginalEliminado: resultado.pagoOriginalEliminado,
+                cuotasCreadas: resultado.cuotasCreadas.length,
+                totalRefinanciado: `$${resultado.totalRefinanciado.toFixed(2)}`
+            });
+
+            return {
+                success: true,
+                message: `Pago refinanciado exitosamente en ${cuotas.length} cuotas`,
+                data: resultado
+            };
+
+        } catch (error) {
+            console.error('❌ [PAGOS] Error en refinanciarPago:', error);
+            throw error;
+        }
+    }
 }
+
+module.exports = new PagosService();
+
 
 module.exports = new PagosService();

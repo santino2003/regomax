@@ -561,6 +561,89 @@ class PagoRepository {
             throw error;
         }
     }
+
+    /**
+     * Refinanciar un pago existente con cuotas variables
+     * Elimina el pago original y crea nuevos pagos con montos y fechas personalizadas
+     */
+    async refinanciarPagoVariable(pagoId, pagoOriginal, cuotas, username, observacionesGenerales = null) {
+        const connection = await db.pool.getConnection();
+        
+        try {
+            await connection.beginTransaction();
+
+            // Calcular total refinanciado
+            const totalRefinanciado = cuotas.reduce((sum, c) => sum + parseFloat(c.monto), 0);
+
+            // Construir observaciones base
+            const observacionesBase = `REFINANCIACIÓN - Pago original ID: ${pagoId}, Monto original: $${parseFloat(pagoOriginal.monto_pago).toFixed(2)}, Total refinanciado: $${totalRefinanciado.toFixed(2)}. ${observacionesGenerales || ''}`.trim();
+
+            // Crear las nuevas cuotas con montos y fechas personalizadas
+            const cuotasCreadas = [];
+
+            for (let i = 0; i < cuotas.length; i++) {
+                const cuota = cuotas[i];
+                
+                // Combinar observaciones
+                const observacionesCuota = `${observacionesBase} - Cuota ${cuota.numeroCuota || i + 1}/${cuotas.length}${cuota.observacion ? '. ' + cuota.observacion : ''}`;
+
+                const [result] = await connection.execute(
+                    `INSERT INTO pagos (
+                        orden_compra_id,
+                        bien_id,
+                        proveedor_id,
+                        tipo_pago,
+                        cantidad_recibida,
+                        precio_unitario,
+                        monto_pago,
+                        fecha_pago,
+                        registrado_por,
+                        observaciones
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        pagoOriginal.orden_compra_id,
+                        pagoOriginal.bien_id || null,
+                        pagoOriginal.proveedor_id,
+                        pagoOriginal.tipo_pago,
+                        pagoOriginal.cantidad_recibida || null,
+                        pagoOriginal.precio_unitario || null,
+                        parseFloat(cuota.monto),
+                        cuota.fecha,
+                        username,
+                        observacionesCuota
+                    ]
+                );
+
+                cuotasCreadas.push({
+                    id: result.insertId,
+                    cuota: cuota.numeroCuota || i + 1,
+                    fecha: cuota.fecha,
+                    monto: parseFloat(cuota.monto)
+                });
+            }
+
+            // Eliminar el pago original
+            await connection.execute(
+                'DELETE FROM pagos WHERE id = ?',
+                [pagoId]
+            );
+
+            await connection.commit();
+
+            return {
+                success: true,
+                cuotasCreadas,
+                pagoOriginalEliminado: pagoId,
+                totalRefinanciado
+            };
+        } catch (error) {
+            await connection.rollback();
+            console.error('Error en PagoRepository.refinanciarPagoVariable:', error);
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
 }
 
 module.exports = new PagoRepository();
