@@ -11,6 +11,24 @@
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
     <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #reciboPago, #reciboPago * {
+                visibility: visible;
+            }
+            #reciboPago {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+        #reciboPago {
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+        }
         .info-card {
             transition: transform 0.2s;
         }
@@ -79,7 +97,7 @@
     <div class="container-fluid my-4">
         <div class="row">
             <div class="col-12">
-                        <div class="menu-container p-4">
+                <div class="menu-container p-4">
                     <!-- Header -->
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="menu-heading mb-0">
@@ -303,8 +321,7 @@
                                             <div class="col-md-6">
                                                 <h6 class="fw-bold">REGOMAX S.A.</h6>
                                                 <p class="mb-1">Recibo de Pago</p>
-                                                <p class="mb-1"><small>Fecha: <%= new Date().toLocaleDateString('es-AR') %></small></p>
-                                                <p class="mb-0"><small>Hora: <%= new Date().toLocaleTimeString('es-AR') %></small></p>
+                                                <p class="mb-0"><small>Fecha: <%= new Date(pago.fecha_marcado_pagado || pago.fecha_pago).toLocaleDateString('es-AR') %></small></p>
                                             </div>
                                             <div class="col-md-6 text-md-end mt-3 mt-md-0">
                                                 <p class="mb-1"><small>ID de Pago: #<%= pago.id %></small></p>
@@ -317,7 +334,7 @@
 
                                         <p>He recibido de <strong>REGOMAX S.A.</strong> la suma de:</p>
                                         <p class="monto-destacado mb-1">
-                                            $<%= parseFloat(pago.monto_pago).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                            <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_pago).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                                         </p>
                                         <p class="mb-3">
                                             <% if (pago.tipo_pago === 'RECEPCION') { %>

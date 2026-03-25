@@ -87,7 +87,7 @@ $(document).ready(function() {
                     <td>${bien.categoria_nombre || '-'}</td>
                     <td>${familiasDisplay}</td>
                     <td class="text-end ${stockClass}">${formatearCantidad(bien.cantidad_stock)}</td>
-                    <td class="text-end">$${parseFloat(bien.precio || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                    <td>${bien.ubicacion || '-'}</td>
                     <td class="text-center">
                         <a href="/bienes/${bien.id}" class="btn btn-sm btn-outline-info" title="Ver">
                             <i class="bi bi-eye"></i>
