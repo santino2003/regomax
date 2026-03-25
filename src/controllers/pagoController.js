@@ -236,7 +236,10 @@ class PagoController {
 
             await pagoRepository.marcarComoPagado(id, username, detalle);
             // Si la petición espera JSON (llamada desde JS), respondemos con JSON
-            if (req.xhr || req.headers.accept?.includes('application/json')) {
+            const acceptHeader = req.headers.accept || '';
+            const isJsonRequest = req.xhr || acceptHeader.includes('application/json') || acceptHeader.includes('*/*');
+
+            if (isJsonRequest) {
                 return res.json({
                     success: true,
                     message: 'Pago marcado como pagado exitosamente',
