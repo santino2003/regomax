@@ -148,6 +148,15 @@ const PERMISSIONS = {
     VIEW: 'configuracion:view',
     EDIT: 'configuracion:edit',
   },
+
+  // Permisos para pagos
+  PAGOS: {
+    VIEW: 'pagos:view',           // Ver listado y detalle de pagos
+    MARK_PAID: 'pagos:mark_paid', // Marcar pagos como pagados
+    EDIT: 'pagos:edit',           // Refinanciar / modificar pagos
+    EXPORT: 'pagos:export',       // Exportar pagos (Excel, etc.)
+    SUMMARY: 'pagos:summary',     // Acceder a APIs de resumen de pagos
+  },
 };
 
 // Función para obtener un array plano con todos los permisos

@@ -116,6 +116,10 @@
                 new Date(orden.fecha_entrega_solicitada).toLocaleDateString('es-AR') : '-';
             const fechaProveedor = orden.fecha_entrega_proveedor ? 
                 new Date(orden.fecha_entrega_proveedor).toLocaleDateString('es-AR') : '-';
+            const fechaPago = orden.fecha_pago ? 
+                new Date(orden.fecha_pago).toLocaleDateString('es-AR') : '-';
+            const fechaAdelanto = orden.fecha_adelanto ? 
+                new Date(orden.fecha_adelanto).toLocaleDateString('es-AR') : '-';
             const fechaCreacion = new Date(orden.created_at).toLocaleDateString('es-AR');
 
             let itemsHtml = '';
@@ -156,14 +160,48 @@
                             <div class="col-md-6">
                                 <p><strong>Proveedor:</strong> ${orden.proveedor_nombre || '-'}</p>
                                 <p><strong>Condición:</strong> <span class="badge bg-warning text-dark">${orden.condicion}</span></p>
+                                <p><strong>Contrafactura:</strong> 
+                                    ${orden.contrafactura ? 
+                                        '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Sí</span>' : 
+                                        '<span class="badge bg-secondary"><i class="bi bi-x-circle"></i> No</span>'}
+                                </p>
                                 <p><strong>Creado por:</strong> ${orden.creado_por}</p>
                             </div>
                             <div class="col-md-6">
                                 <p><strong>F. Entrega Solicitada:</strong> ${fechaSolicitada}</p>
                                 <p><strong>F. Entrega Proveedor:</strong> ${fechaProveedor}</p>
+                                ${orden.contrafactura && orden.fecha_pago ? `
+                                <p><strong>Fecha de Pago:</strong> ${fechaPago}</p>
+                                ` : ''}
                                 <p><strong>Fecha Creación:</strong> ${fechaCreacion}</p>
                             </div>
                         </div>
+                        ${orden.contrafactura && (orden.monto_adelanto || orden.fecha_adelanto) ? `
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading"><i class="bi bi-cash-coin me-2"></i>Información de Adelanto/Seña</h6>
+                                    <div class="row">
+                                        ${orden.monto_adelanto ? `
+                                        <div class="col-md-4">
+                                            <strong>Monto:</strong> ${parseFloat(orden.monto_adelanto).toFixed(2)} ${orden.moneda_adelanto || 'ARS'}
+                                        </div>
+                                        ` : ''}
+                                        ${orden.moneda_adelanto && orden.monto_adelanto ? `
+                                        <div class="col-md-4">
+                                            <strong>Moneda:</strong> ${orden.moneda_adelanto}
+                                        </div>
+                                        ` : ''}
+                                        ${orden.fecha_adelanto ? `
+                                        <div class="col-md-4">
+                                            <strong>Fecha Seña:</strong> ${fechaAdelanto}
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
                         ${orden.asunto ? `
                         <div class="row mb-3">
                             <div class="col-12">
@@ -209,7 +247,7 @@
                         </div>
                         ${orden.estado === 'En Proceso' ? `
                         <div class="text-end mt-3">
-                            <button class="btn btn-primary" onclick="guardarCantidadesRecibidas()">
+                            <button class="btn btn-primary" id="btnGuardarCantidades" onclick="guardarCantidadesRecibidas()">
                                 <i class="bi bi-save me-1"></i>Guardar Cantidades Recibidas
                             </button>
                         </div>
@@ -280,6 +318,12 @@
         }
 
         function guardarCantidadesRecibidas() {
+            const $btn = $('#btnGuardarCantidades');
+            const originalHtml = $btn.html();
+            
+            // Deshabilitar botón y mostrar spinner
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Procesando...');
+            
             const updates = [];
             $('.cantidad-recibida').each(function() {
                 const itemId = $(this).data('item-id');
@@ -288,6 +332,9 @@
             });
 
             let completadas = 0;
+            let warnings = [];
+            let hasError = false;
+            
             updates.forEach(update => {
                 $.ajax({
                     url: `/api/ordenes-compra/${ordenId}/items/${update.itemId}/cantidad-recibida`,
@@ -297,14 +344,41 @@
                         'Content-Type': 'application/json'
                     },
                     data: JSON.stringify({ cantidad_recibida: update.cantidad }),
-                    success: function() {
+                    success: function(response) {
                         completadas++;
+                        
+                        // Guardar warnings si existen
+                        if (response.warning) {
+                            warnings.push(response.warning);
+                        }
+                        
                         if (completadas === updates.length) {
-                            mostrarAlerta('Cantidades actualizadas exitosamente', 'success');
-                            cargarOrden();
+                            // Restaurar botón
+                            $btn.prop('disabled', false).html(originalHtml);
+                            
+                            if (!hasError) {
+                                // Primero mostrar mensaje de éxito
+                                mostrarAlerta('Cantidades actualizadas exitosamente', 'success');
+                                
+                                // Luego mostrar warnings debajo si existen
+                                if (warnings.length > 0) {
+                                    warnings.forEach(warning => {
+                                        mostrarAlerta(warning, 'warning', true);
+                                    });
+                                }
+                                
+                                // Recargar orden
+                                cargarOrden();
+                            }
                         }
                     },
                     error: function(xhr) {
+                        completadas++;
+                        hasError = true;
+                        
+                        // Restaurar botón
+                        $btn.prop('disabled', false).html(originalHtml);
+                        
                         const error = xhr.responseJSON?.error || 'Error al actualizar cantidad';
                         mostrarAlerta(error, 'danger');
                     }
@@ -312,14 +386,20 @@
             });
         }
 
-        function mostrarAlerta(mensaje, tipo) {
+        function mostrarAlerta(mensaje, tipo, append = false) {
             const alerta = `
                 <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
                     ${mensaje}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             `;
-            $('#alertPlaceholder').html(alerta);
+            
+            if (append) {
+                $('#alertPlaceholder').append(alerta);
+            } else {
+                $('#alertPlaceholder').html(alerta);
+            }
+            
             setTimeout(() => $('.alert').alert('close'), 5000);
         }
 

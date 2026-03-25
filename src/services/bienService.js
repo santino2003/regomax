@@ -6,6 +6,7 @@ const almacenRepository = require('../repositories/almacenRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
 const configAlertasStockRepository = require('../repositories/configAlertasStockRepository');
 const emailService = require('../utils/emailService');
+const bienProveedorService = require('./bienProveedorService');
 
 class BienService {
     /**
@@ -49,19 +50,26 @@ class BienService {
                 bienData.codigo = await this.generarCodigoUnico();
             }
             
-            // Procesar proveedores
-            const proveedoresIds = bienData.proveedores || [];
+            // Procesar proveedores - array de tuplas [(id, precio, moneda)]
+            const proveedoresData = bienData.proveedores || [];
             
             // Procesar familias
             const familiasIds = bienData.familias || [];
             
             // Crear el bien
-            const result = await bienRepository.crearBien(bienData, proveedoresIds, familiasIds);
+            const result = await bienRepository.crearBien(bienData, familiasIds);
+            
+            // Pasar el ID del bien creado y las tuplas de proveedores
+            const resultInserProveedor = await bienProveedorService.crearAsociacionesProveedores(
+                result.id, 
+                proveedoresData
+            );
             
             return {
                 success: true,
                 message: 'Bien creado exitosamente',
-                data: result
+                data: result,
+                dataProveedor: resultInserProveedor
             };
         } catch (error) {
             console.error('Error en BienService.crearBien:', error);
@@ -83,17 +91,25 @@ class BienService {
                 throw new Error('El tipo de bien debe ser "Uso" o "Consumo"');
             }
             
-            // Procesar proveedores
-            const proveedoresIds = bienData.proveedores || [];
+            // Procesar proveedores - array de tuplas [(id, precio, moneda)]
+            const proveedoresData = bienData.proveedores || [];
             
             // Procesar familias
             const familiasIds = bienData.familias || [];
             
-            await bienRepository.modificarBien(id, bienData, proveedoresIds, familiasIds);
+            // Modificar el bien (sin tocar proveedores en el repository)
+            await bienRepository.modificarBien(id, bienData, familiasIds);
+            
+            // Editar asociaciones de proveedores (elimina las viejas y crea las nuevas)
+            const resultEditarProveedor = await bienProveedorService.editarAsociacionesProveedores(
+                id,
+                proveedoresData
+            );
             
             return {
                 success: true,
                 message: 'Bien modificado exitosamente',
+                dataProveedor: resultEditarProveedor
             };
         } catch (error) {
             console.error('Error en BienService.modificarBien:', error);

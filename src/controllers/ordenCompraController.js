@@ -1,9 +1,5 @@
 const ordenCompraService = require('../services/ordenCompraService');
 const pdfOrdenCompraService = require('../services/pdfOrdenCompraService');
-const bienRepository = require('../repositories/bienRepository');
-const proveedorRepository = require('../repositories/proveedorRepository');
-const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
-const centroCostoRepository = require('../repositories/centroCostoRepository');
 const { getUploadPath } = require('../config/uploads');
 const path = require('path');
 const fs = require('fs').promises;
@@ -14,18 +10,14 @@ const ordenCompraController = {
      */
     async vistaNuevaOrden(req, res) {
         try {
-            // Obtener datos necesarios para el formulario
-            const bienesResult = await bienRepository.obtenerTodos(1, 10000, {});
-            const proveedoresResult = await proveedorRepository.obtenerTodos({}, 1, 10000);
-            const unidadesMedidaResult = await unidadMedidaRepository.obtenerTodas(1, 10000);
-            const centrosCosto = await centroCostoRepository.obtenerActivos();
+            // Obtener datos necesarios para el formulario desde el service
+            const datosFormulario = await ordenCompraService.obtenerDatosFormulario();
 
             return res.render('ordenesCompraNueva', {
                 username: req.user.username,
-                bienes: bienesResult.data || [],
-                proveedores: proveedoresResult.data || [],
-                unidadesMedida: unidadesMedidaResult.data || [],
-                centrosCosto: centrosCosto || []
+                bienes: datosFormulario.bienes,
+                unidadesMedida: datosFormulario.unidadesMedida,
+                centrosCosto: datosFormulario.centrosCosto
             });
         } catch (error) {
             console.error('Error al renderizar vista de nueva orden:', error);
@@ -51,19 +43,57 @@ const ordenCompraController = {
                 });
             }
 
-            // Obtener datos necesarios para el formulario
-            const bienesResult = await bienRepository.obtenerTodos(1, 10000, {});
-            const proveedoresResult = await proveedorRepository.obtenerTodos({}, 1, 10000);
-            const unidadesMedidaResult = await unidadMedidaRepository.obtenerTodas(1, 10000);
-            const centrosCosto = await centroCostoRepository.obtenerActivos();
+            // Obtener datos necesarios para el formulario desde el service
+            const datosFormulario = await ordenCompraService.obtenerDatosFormulario();
+
+            // Si es contrafactura, obtener los pagos asociados para mostrar las cuotas
+            let cuotasExistentes = [];
+            let adelantoExistente = null;
+            if (orden.contrafactura) {
+                // Cuotas en formato simplificado para el formulario (solo saldos)
+                cuotasExistentes = await ordenCompraService.obtenerCuotasOrden(id);
+
+                // Obtener también el adelanto desde pagos para prellenar el formulario
+                try {
+                    const pagoRepository = require('../repositories/pagoRepository');
+                    const pagosData = await pagoRepository.obtenerPagosContrafacturaPorOrden(id);
+
+                    if (pagosData && pagosData.adelantos && pagosData.adelantos.length > 0) {
+                        const adelanto = pagosData.adelantos[0];
+
+                        // Convertir fecha a YYYY-MM-DD
+                        let fechaFormato = '';
+                        if (adelanto.fecha_pago) {
+                            const fecha = new Date(adelanto.fecha_pago);
+                            const año = fecha.getFullYear();
+                            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+                            const día = String(fecha.getDate()).padStart(2, '0');
+                            fechaFormato = `${año}-${mes}-${día}`;
+                        }
+
+                        adelantoExistente = {
+                            monto: parseFloat(adelanto.monto_adelanto || adelanto.monto_pago || 0),
+                            fecha: fechaFormato,
+                            moneda: adelanto.moneda || 'ARS'
+                        };
+
+                        // También inyectar en el objeto orden para que la vista lo use en value="<%= orden.monto_adelanto %>"
+                        orden.monto_adelanto = adelantoExistente.monto;
+                        orden.fecha_adelanto = adelantoExistente.fecha;
+                    }
+                } catch (pagoError) {
+                    console.warn('⚠️ No se pudo obtener adelanto existente para la orden:', pagoError.message);
+                }
+            }
 
             return res.render('ordenesCompraEditar', {
                 username: req.user.username,
                 orden: orden,
-                bienes: bienesResult.data || [],
-                proveedores: proveedoresResult.data || [],
-                unidadesMedida: unidadesMedidaResult.data || [],
-                centrosCosto: centrosCosto || []
+                bienes: datosFormulario.bienes,
+                unidadesMedida: datosFormulario.unidadesMedida,
+                centrosCosto: datosFormulario.centrosCosto,
+                cuotasExistentes: cuotasExistentes,
+                adelantoExistente: adelantoExistente
             });
         } catch (error) {
             console.error('Error al renderizar vista de editar orden:', error);
@@ -85,6 +115,19 @@ const ordenCompraController = {
             // Procesar items si vienen como JSON string
             if (typeof ordenData.items === 'string') {
                 ordenData.items = JSON.parse(ordenData.items);
+            }
+
+            // Procesar cuotas si vienen como JSON string
+            if (typeof ordenData.cuotas === 'string') {
+                ordenData.cuotas = JSON.parse(ordenData.cuotas);
+            }
+
+            // Procesar contrafactura como booleano
+            // Maneja: 'true', 'false', true, false, undefined
+            if (ordenData.contrafactura !== undefined) {
+                ordenData.contrafactura = ordenData.contrafactura === 'true' || ordenData.contrafactura === true;
+            } else {
+                ordenData.contrafactura = false;
             }
 
             // Si hay archivos adjuntos (múltiples archivos)
@@ -123,6 +166,23 @@ const ordenCompraController = {
                 }
             }
 
+            // Procesar cuotas si vienen como JSON string
+            if (ordenData.cuotas) {
+                if (typeof ordenData.cuotas === 'string') {
+                    ordenData.cuotas = JSON.parse(ordenData.cuotas);
+                }
+            }
+
+            // Procesar contrafactura como booleano
+            // Maneja: 'true', 'false', true, false, undefined
+            console.log('Contrafactura recibida (antes):', ordenData.contrafactura, 'Tipo:', typeof ordenData.contrafactura);
+            if (ordenData.contrafactura !== undefined && ordenData.contrafactura !== null) {
+                ordenData.contrafactura = ordenData.contrafactura === 'true' || ordenData.contrafactura === true;
+            } else {
+                ordenData.contrafactura = false;
+            }
+            console.log('Contrafactura procesada (después):', ordenData.contrafactura, 'Tipo:', typeof ordenData.contrafactura);
+
             // Archivos a eliminar
             if (ordenData.archivos_eliminar) {
                 if (typeof ordenData.archivos_eliminar === 'string') {
@@ -135,7 +195,7 @@ const ordenCompraController = {
                 ordenData.archivos_adjuntos = req.files.map(file => file.filename);
             }
 
-            await ordenCompraService.modificarOrdenCompra(id, ordenData);
+            await ordenCompraService.modificarOrdenCompra(id, ordenData, req.user.username);
             
             return res.status(200).json({
                 success: true,
@@ -281,7 +341,8 @@ const ordenCompraController = {
             
             return res.status(200).json({
                 success: true,
-                message: result.message
+                message: result.message,
+                warning: result.warning || undefined
             });
         } catch (error) {
             console.error('Error al actualizar cantidad recibida:', error);
@@ -387,17 +448,14 @@ const ordenCompraController = {
      */
     async obtenerDatosFormulario(req, res) {
         try {
-            // Obtener todos los registros sin paginación (límite alto)
-            const bienesResult = await bienRepository.obtenerTodos(1, 10000, {});
-            const proveedoresResult = await proveedorRepository.obtenerTodos({}, 1, 10000);
-            const unidadesMedidaResult = await unidadMedidaRepository.obtenerTodas(1, 10000);
+            const datosFormulario = await ordenCompraService.obtenerDatosFormulario();
 
             return res.status(200).json({
                 success: true,
                 data: {
-                    bienes: bienesResult.data || [],
-                    proveedores: proveedoresResult.data || [],
-                    unidades_medida: unidadesMedidaResult.data || [],
+                    bienes: datosFormulario.bienes,
+                    proveedores: datosFormulario.proveedores,
+                    unidades_medida: datosFormulario.unidadesMedida,
                     estados: ['Abierta', 'Revision', 'Aprobada', 'En Proceso', 'Entregado', 'Cerrada'],
                     condiciones: ['No Critica', 'Semi Critica', 'Muy Critica']
                 }
@@ -407,6 +465,35 @@ const ordenCompraController = {
             return res.status(500).json({
                 success: false,
                 error: error.message || 'Error al obtener datos del formulario'
+            });
+        }
+    },
+
+    /**
+     * Obtener proveedores asociados a un bien específico
+     */
+    async obtenerProveedoresPorBien(req, res) {
+        try {
+            const { bienId } = req.params;
+            
+            if (!bienId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'El ID del bien es requerido'
+                });
+            }
+
+            const proveedores = await ordenCompraService.obtenerProveedoresPorBien(bienId);
+            
+            return res.status(200).json({
+                success: true,
+                data: proveedores
+            });
+        } catch (error) {
+            console.error('Error al obtener proveedores del bien:', error);
+            return res.status(500).json({
+                success: false,
+                error: error.message || 'Error al obtener proveedores del bien'
             });
         }
     },

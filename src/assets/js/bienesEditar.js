@@ -5,6 +5,7 @@ let modalArchivo;
 let modalEliminarArchivo;
 let archivoIdToDelete = null;
 let familiasSeleccionadasArray = [];
+let proveedorCounter = 0;
 
 // Función global para eliminar archivo (llamada desde onclick en HTML)
 function eliminarArchivo(id, nombre) {
@@ -18,6 +19,16 @@ function eliminarFamilia(id) {
     familiasSeleccionadasArray = familiasSeleccionadasArray.filter(f => f.id !== id);
     actualizarFamiliasUI();
 }
+
+// Función global para eliminar proveedor
+window.eliminarProveedor = function(proveedorId) {
+    $(`[data-proveedor="${proveedorId}"]`).remove();
+    
+    // Si no quedan proveedores, mostrar mensaje
+    if ($('#proveedoresContainer .proveedor-row').length === 0) {
+        $('#proveedoresContainer').html('<p class="text-muted text-center py-3">No hay proveedores agregados. Haga clic en "Agregar Proveedor" para añadir uno.</p>');
+    }
+};
 
 function actualizarFamiliasUI() {
     const container = $('#familiasSeleccionadas');
@@ -52,6 +63,125 @@ function actualizarFamiliasUI() {
     });
 }
 
+// ===== GESTIÓN DE PROVEEDORES =====
+function agregarProveedorVacio() {
+    proveedorCounter++;
+    const proveedores = window.proveedoresDisponibles || [];
+    
+    const proveedorHtml = `
+        <div class="proveedor-row" data-proveedor="${proveedorCounter}">
+            <button type="button" class="btn btn-danger btn-sm btn-remove-proveedor" onclick="eliminarProveedor(${proveedorCounter})">
+                <i class="bi bi-x-lg"></i> Eliminar
+            </button>
+            
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+                    <select class="form-select select2-proveedor" data-proveedor-id="${proveedorCounter}" required>
+                        <option value="">Seleccionar proveedor...</option>
+                        ${proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Precio <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control proveedor-precio" data-proveedor-id="${proveedorCounter}" 
+                           step="0.01" min="0" placeholder="0.00" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Moneda <span class="text-danger">*</span></label>
+                    <select class="form-select proveedor-moneda" data-proveedor-id="${proveedorCounter}" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="ARS">ARS ($)</option>
+                        <option value="USD">USD (US$)</option>
+                        <option value="EUR">EUR (€)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#proveedoresContainer').append(proveedorHtml);
+    
+    // Inicializar Select2 para el nuevo proveedor
+    $(`[data-proveedor="${proveedorCounter}"] .select2-proveedor`).select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Buscar proveedor...'
+    });
+}
+
+function agregarProveedorConDatos(proveedorId, precio, moneda) {
+    proveedorCounter++;
+    const proveedores = window.proveedoresDisponibles || [];
+    
+    // Asegurar valores por defecto
+    const precioValue = precio != null && precio !== undefined ? parseFloat(precio) : 0;
+    const monedaValue = moneda || 'ARS';
+    
+    console.log('Agregando proveedor con datos:', {
+        proveedorId,
+        precio: precioValue,
+        moneda: monedaValue,
+        counter: proveedorCounter
+    });
+    
+    const proveedorHtml = `
+        <div class="proveedor-row" data-proveedor="${proveedorCounter}">
+            <button type="button" class="btn btn-danger btn-sm btn-remove-proveedor" onclick="eliminarProveedor(${proveedorCounter})">
+                <i class="bi bi-x-lg"></i> Eliminar
+            </button>
+            
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+                    <select class="form-select select2-proveedor" data-proveedor-id="${proveedorCounter}" required>
+                        <option value="">Seleccionar proveedor...</option>
+                        ${proveedores.map(p => `<option value="${p.id}" ${p.id === proveedorId ? 'selected' : ''}>${p.nombre}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Precio <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control proveedor-precio" data-proveedor-id="${proveedorCounter}" 
+                           step="0.01" min="0" value="${precioValue}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Moneda <span class="text-danger">*</span></label>
+                    <select class="form-select proveedor-moneda" data-proveedor-id="${proveedorCounter}" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="ARS" ${monedaValue === 'ARS' ? 'selected' : ''}>ARS ($)</option>
+                        <option value="USD" ${monedaValue === 'USD' ? 'selected' : ''}>USD (US$)</option>
+                        <option value="EUR" ${monedaValue === 'EUR' ? 'selected' : ''}>EUR (€)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#proveedoresContainer').append(proveedorHtml);
+    
+    // Inicializar Select2 para el nuevo proveedor
+    $(`[data-proveedor="${proveedorCounter}"] .select2-proveedor`).select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Buscar proveedor...'
+    });
+}
+
+function recopilarProveedores() {
+    const proveedores = [];
+    $('#proveedoresContainer .proveedor-row').each(function() {
+        const proveedorId = $(this).find('.select2-proveedor').val();
+        const precio = parseFloat($(this).find('.proveedor-precio').val());
+        const moneda = $(this).find('.proveedor-moneda').val();
+        
+        if (proveedorId && !isNaN(precio) && moneda) {
+            proveedores.push([parseInt(proveedorId), precio, moneda]);
+        }
+    });
+    return proveedores;
+}
+// ===== FIN GESTIÓN DE PROVEEDORES =====
+
 $(document).ready(function() {
     // Obtener el bienId del atributo data
     bienId = $('#formEditarBien').data('bien-id');
@@ -60,12 +190,28 @@ $(document).ready(function() {
     modalArchivo = new bootstrap.Modal('#modalArchivo');
     modalEliminarArchivo = new bootstrap.Modal('#modalEliminarArchivo');
     
-    // Inicializar Select2 para selección múltiple de proveedores
-    $('#proveedores').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Seleccionar proveedores...',
-        allowClear: true
+    // ===== INICIALIZAR PROVEEDORES EXISTENTES =====
+    const proveedoresActuales = window.proveedoresActuales || [];
+    console.log('Proveedores actuales recibidos:', proveedoresActuales);
+    
+    if (proveedoresActuales.length > 0) {
+        proveedoresActuales.forEach(prov => {
+            console.log('Procesando proveedor:', prov);
+            // El proveedor tiene la estructura: {id, nombre, email, telefono, precio, moneda, ...}
+            agregarProveedorConDatos(prov.id, prov.precio, prov.moneda);
+        });
+    } else {
+        $('#proveedoresContainer').html('<p class="text-muted text-center py-3">No hay proveedores agregados. Haga clic en "Agregar Proveedor" para añadir uno.</p>');
+    }
+    
+    $('#btnAgregarProveedor').on('click', function() {
+        // Limpiar mensaje si existe
+        if ($('#proveedoresContainer p.text-muted').length > 0) {
+            $('#proveedoresContainer').empty();
+        }
+        agregarProveedorVacio();
     });
+    // ===== FIN INICIALIZAR PROVEEDORES =====
     
     // ===== GESTIÓN DE FAMILIAS =====
     // Cargar familias existentes desde badges pre-renderizados
@@ -142,19 +288,23 @@ $(document).ready(function() {
         const originalText = submitBtn.html();
         submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...').prop('disabled', true);
         
+        // Recopilar proveedores como array de tuplas
+        const proveedoresTuplas = recopilarProveedores();
+        
         const formData = {
             nombre: $('#nombre').val().trim(),
             descripcion: $('#descripcion').val().trim() || null,
             tipo: $('#tipo').val(),
             categoria_id: $('#categoria_id').val() || null,
-            familias: $('#familias').val() || [],
+            familias: $('#familias').val() ? $('#familias').val().split(',').map(id => parseInt(id)) : [],
             unidad_medida_id: $('#unidad_medida_id').val() || null,
-            precio: parseFloat($('#precio').val()) || 0,
             cantidad_critica: $('#cantidad_critica').val() !== '' ? parseInt($('#cantidad_critica').val()) : null,
             ubicacion: $('#ubicacion').val().trim() || null,
             almacen_defecto_id: $('#almacen_defecto_id').val() || null,
-            proveedores: $('#proveedores').val() || []
+            proveedores: proveedoresTuplas // Array de tuplas: [[id, precio, moneda], ...]
         };
+        
+        console.log('Datos a enviar:', formData);
         
         fetch(`/api/bienes/${bienId}`, {
             method: 'PUT',
@@ -166,7 +316,10 @@ $(document).ready(function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.href = `/bienes/${bienId}`;
+                showAlert('Bien actualizado correctamente', 'success');
+                setTimeout(() => {
+                    window.location.href = `/bienes/${bienId}`;
+                }, 1000);
             } else {
                 showAlert(data.error || 'Error al actualizar el bien', 'danger');
                 submitBtn.html(originalText).prop('disabled', false);

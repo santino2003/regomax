@@ -139,18 +139,12 @@
                         </div>
                         <div class="card-body bg-light">
                             <div class="row g-3">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label class="text-muted small">Unidad de Medida</label>
                                     <div class="fw-semibold"><%= bien.unidad_medida_nombre_lindo || bien.unidad_medida_nombre || 'No especificado' %></div>
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="text-muted small">Precio Unitario</label>
-                                    <div class="fs-5 text-info fw-bold">
-                                        $<%= parseFloat(bien.precio || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
-                                    </div>
-                                </div>
                                 <% if (bien.cantidad_critica !== null && bien.cantidad_critica !== undefined) { %>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label class="text-muted small">Stock Crítico</label>
                                     <div class="text-warning fw-bold">
                                         <i class="bi bi-exclamation-circle me-1"></i><%= bien.cantidad_critica %> unidades
@@ -187,22 +181,56 @@
                         </div>
                         <div class="card-body bg-light">
                             <% if (bien.proveedores && bien.proveedores.length > 0) { %>
-                            <div class="list-group list-group-flush">
-                                <% bien.proveedores.forEach(prov => { %>
-                                <div class="list-group-item px-0 bg-transparent">
-                                    <div class="fw-semibold"><%= prov.nombre %></div>
-                                    <% if (prov.telefono || prov.email) { %>
-                                    <small class="text-muted">
-                                        <% if (prov.telefono) { %>
-                                        <i class="bi bi-telephone me-1"></i><%= prov.telefono %>
-                                        <% } %>
-                                        <% if (prov.email) { %>
-                                        <i class="bi bi-envelope ms-2 me-1"></i><%= prov.email %>
-                                        <% } %>
-                                    </small>
-                                    <% } %>
-                                </div>
-                                <% }) %>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Proveedor</th>
+                                            <th>Contacto</th>
+                                            <th class="text-end">Precio</th>
+                                            <th class="text-center">Moneda</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% bien.proveedores.forEach(prov => { %>
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold"><%= prov.nombre %></div>
+                                            </td>
+                                            <td>
+                                                <% if (prov.telefono || prov.email) { %>
+                                                <small class="text-muted">
+                                                    <% if (prov.telefono) { %>
+                                                    <i class="bi bi-telephone me-1"></i><%= prov.telefono %><br>
+                                                    <% } %>
+                                                    <% if (prov.email) { %>
+                                                    <i class="bi bi-envelope me-1"></i><%= prov.email %>
+                                                    <% } %>
+                                                </small>
+                                                <% } else { %>
+                                                <small class="text-muted">-</small>
+                                                <% } %>
+                                            </td>
+                                            <td class="text-end">
+                                                <% if (prov.precio != null) { %>
+                                                <span class="fw-semibold">
+                                                    <%= parseFloat(prov.precio).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                                </span>
+                                                <% } else { %>
+                                                <span class="text-muted">-</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="text-center">
+                                                <% if (prov.moneda) { %>
+                                                <span class="badge bg-secondary"><%= prov.moneda %></span>
+                                                <% } else { %>
+                                                <span class="text-muted">-</span>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
                             </div>
                             <% } else { %>
                             <p class="text-muted text-center mb-0 py-3">

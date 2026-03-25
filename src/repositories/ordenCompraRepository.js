@@ -32,8 +32,9 @@ class OrdenCompraRepository {
             const [result] = await connection.query(
                 `INSERT INTO ordenes_compra (
                     codigo, estado, fecha_entrega_solicitada, fecha_entrega_proveedor,
-                    condicion, asunto, archivo_adjunto, proveedor_id, creado_por
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    condicion, asunto, archivo_adjunto, proveedor_id, creado_por, contrafactura, 
+                    fecha_pago, monto_adelanto, moneda_adelanto, fecha_adelanto
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     ordenData.codigo,
                     ordenData.estado || 'Abierta',
@@ -43,7 +44,12 @@ class OrdenCompraRepository {
                     ordenData.asunto || null,
                     archivoAdjunto,
                     ordenData.proveedor_id || null,
-                    ordenData.creado_por
+                    ordenData.creado_por,
+                    ordenData.contrafactura || false,
+                    ordenData.fecha_pago || null,
+                    ordenData.monto_adelanto || null,
+                    ordenData.moneda_adelanto || 'ARS',
+                    ordenData.fecha_adelanto || null
                 ]
             );
             
@@ -99,7 +105,12 @@ class OrdenCompraRepository {
                 fecha_entrega_proveedor = ?,
                 condicion = ?, 
                 asunto = ?, 
-                proveedor_id = ?
+                proveedor_id = ?,
+                contrafactura = ?,
+                fecha_pago = ?,
+                monto_adelanto = ?,
+                moneda_adelanto = ?,
+                fecha_adelanto = ?
             `;
             let updateValues = [
                 ordenData.estado,
@@ -107,8 +118,16 @@ class OrdenCompraRepository {
                 ordenData.fecha_entrega_proveedor || null,
                 ordenData.condicion,
                 ordenData.asunto || null,
-                ordenData.proveedor_id || null
+                ordenData.proveedor_id || null,
+                ordenData.contrafactura || false,
+                ordenData.fecha_pago || null,
+                ordenData.monto_adelanto || null,
+                ordenData.moneda_adelanto || 'ARS',
+                ordenData.fecha_adelanto || null
             ];
+            
+            console.log('Valor de contrafactura en Repository:', ordenData.contrafactura, 'Tipo:', typeof ordenData.contrafactura);
+            console.log('UpdateValues:', updateValues);
             
             // Si hay nuevos archivos o archivos a eliminar, actualizar
             if ((ordenData.archivos_adjuntos && ordenData.archivos_adjuntos.length > 0) || 
@@ -408,7 +427,7 @@ class OrdenCompraRepository {
     async obtenerPorId(id) {
         try {
             // Obtener la orden
-            const [orden] = await db.query(
+            const ordenes = await db.query(
                 `SELECT 
                     oc.*,
                     p.nombre as proveedor_nombre,
@@ -420,9 +439,11 @@ class OrdenCompraRepository {
                 [id]
             );
 
-            if (!orden) {
+            if (!ordenes || ordenes.length === 0) {
                 return null;
             }
+
+            const orden = ordenes[0];
 
             // Obtener los items
             const items = await db.query(
@@ -528,6 +549,41 @@ class OrdenCompraRepository {
         }
     }
 
+
+    async obtenerProveedorDeItem(ordenId, itemId) {
+        const query = `
+            SELECT 
+                oci.id as item_id,
+                oci.orden_compra_id,
+                oci.bien_id,
+                oci.proveedor_sugerido_id,
+                oci.cantidad,
+                oci.cantidad_recibida,
+                oci.precio_unitario as item_precio_unitario,
+                b.nombre as bien_nombre,
+                b.codigo as bien_codigo,
+                p.id as proveedor_id,
+                p.nombre as proveedor_nombre,
+                p.contacto as proveedor_contacto,
+                p.telefono as proveedor_telefono,
+                p.email as proveedor_email
+            FROM ordenes_compra_items oci
+            INNER JOIN bienes b ON oci.bien_id = b.id
+            LEFT JOIN proveedores p ON oci.proveedor_sugerido_id = p.id
+            WHERE oci.orden_compra_id = ?
+            AND oci.id = ?
+        `;
+
+        const result = await db.query(query, [ordenId, itemId]);
+        
+        // db.query puede devolver [rows, fields] o solo rows dependiendo de la configuración
+        const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : 
+                     Array.isArray(result) ? result : [result];
+        
+        return rows[0] || null;
+    }
+
+
     /**
      * Obtener archivos de una orden de compra
      */
@@ -556,6 +612,31 @@ class OrdenCompraRepository {
             return [];
         } catch (error) {
             console.error('Error en OrdenCompraRepository.obtenerArchivos:', error);
+            throw error;
+        }
+        
+    }
+
+    /**
+     * Obtener si una orden de compra es a contra factura
+     * @param {number} ordenId - ID de la orden de compra
+     * @returns {Promise<boolean>} - true si es contra factura, false en caso contrario
+     */
+    async esContraFactura(ordenId) {
+        try {
+            const [result] = await db.query(
+                'SELECT contrafactura FROM ordenes_compra WHERE id = ?',
+                [ordenId]
+            );
+            
+            if (!result) {
+                return false;
+            }
+            
+            // Convertir a boolean (puede venir como tinyint 0 o 1)
+            return Boolean(result.contrafactura);
+        } catch (error) {
+            console.error('Error en OrdenCompraRepository.esContraFactura:', error);
             throw error;
         }
     }
