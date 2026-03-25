@@ -1,8 +1,82 @@
 const pagosService = require('../services/pagosService');
+const ordenCompraService = require('../services/ordenCompraService');
 const pagoRepository = require('../repositories/pagoRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
 
 class PagoController {
+    /**
+     * Obtener cuotas de contrafactura de una orden de compra
+     */
+    async obtenerCuotasOrdenCompra(req, res) {
+        try {
+            const { ordenId } = req.params;
+            
+            console.log(`📋 [CONTROLLER] Obteniendo cuotas de contrafactura para orden: ${ordenId}`);
+            
+            // Obtener cuotas usando el servicio (que transforma las fechas correctamente)
+            const cuotas = await ordenCompraService.obtenerCuotasOrden(ordenId);
+            
+            console.log(`📊 [CONTROLLER] Cuotas obtenidas del servicio: ${cuotas ? cuotas.length : 0}`);
+            
+            // También obtener adelanto si existe
+            let adelanto = null;
+            const pagosData = await pagoRepository.obtenerPagosContrafacturaPorOrden(ordenId);
+            if (pagosData && pagosData.adelantos && pagosData.adelantos.length > 0) {
+                const adelantoData = pagosData.adelantos[0];
+
+                // Convertir fecha a formato YYYY-MM-DD
+                let fechaFormato = '';
+                if (adelantoData.fecha_pago) {
+                    const fecha = new Date(adelantoData.fecha_pago);
+                    const año = fecha.getFullYear();
+                    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+                    const día = String(fecha.getDate()).padStart(2, '0');
+                    fechaFormato = `${año}-${mes}-${día}`;
+                }
+
+                // Tomar el monto real del adelanto desde los campos correctos
+                const montoAdelantoRaw =
+                    adelantoData.monto_adelanto != null
+                        ? adelantoData.monto_adelanto
+                        : (adelantoData.monto_pago != null ? adelantoData.monto_pago : null);
+
+                const montoAdelanto =
+                    montoAdelantoRaw != null && montoAdelantoRaw !== ''
+                        ? parseFloat(montoAdelantoRaw)
+                        : null;
+
+                adelanto = {
+                    monto: montoAdelanto,
+                    fecha: fechaFormato,
+                    moneda: adelantoData.moneda || 'ARS'
+                };
+
+                console.log('💰 [CONTROLLER] Adelanto construido para respuesta de cuotas:', adelanto);
+            }
+            
+            console.log(`✅ [CONTROLLER] Se encontraron ${cuotas ? cuotas.length : 0} cuota(s)`);
+            if (cuotas && cuotas.length > 0) {
+                cuotas.forEach((c, i) => {
+                    console.log(`   Cuota ${i+1}: ${c.fecha} - $${c.monto}`);
+                });
+            }
+            
+            return res.json({
+                success: true,
+                data: {
+                    cuotas: cuotas || [],
+                    adelanto: adelanto
+                }
+            });
+        } catch (error) {
+            console.error('❌ [CONTROLLER] Error al obtener cuotas de orden de compra:', error);
+            return res.status(500).json({
+                success: false,
+                error: error.message || 'Error al obtener cuotas'
+            });
+        }
+    }
+
     /**
      * Mostrar la vista de listado de pagos
      */

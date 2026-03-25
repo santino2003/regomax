@@ -6,6 +6,9 @@ const authMiddleware = require('../middleware/auth');
 // Todas las rutas requieren autenticación
 router.use(authMiddleware.verifyToken);
 
+// Ruta para obtener cuotas de contrafactura de una orden de compra
+router.get('/orden/:ordenId/cuotas-contrafactura', pagoController.obtenerCuotasOrdenCompra);
+
 // Ruta para mostrar el listado de pagos
 router.get('/listar', pagoController.mostrarListado);
 

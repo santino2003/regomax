@@ -22,6 +22,14 @@
             top: 10px;
             right: 10px;
         }
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        #tablaCuotasOC input {
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -94,37 +102,121 @@
                                     </div>
                                 </div>
 
-                                <!-- Fecha de Pago (solo visible si es contrafactura) -->
-                                <div class="row mb-3" id="fechaPagoContainer" style="display: <%= orden.contrafactura ? 'flex' : 'none' %>;">
-                                    <div class="col-md-4">
-                                        <label for="fecha_pago" class="form-label">
-                                            <i class="bi bi-calendar-event me-1"></i>Fecha de Pago <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="date" class="form-control" id="fecha_pago" name="fecha_pago" value="<%= orden.fecha_pago ? new Date(orden.fecha_pago).toISOString().split('T')[0] : '' %>" <%= orden.contrafactura ? 'required' : '' %>>
-                                        <div class="invalid-feedback">La fecha de pago es obligatoria cuando es contrafactura</div>
+                                <!-- Cuotas (solo visible si es contrafactura) -->
+                                <div id="contrafacturaContainer" style="display: <%= orden.contrafactura ? 'block' : 'none' %>;">
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <label for="monto_adelanto" class="form-label">
+                                                <i class="bi bi-cash-coin me-1"></i>Monto de Adelanto (Opcional)
+                                            </label>
+                          <input type="number" class="form-control" id="monto_adelanto" name="monto_adelanto" 
+                              step="0.01" min="0" placeholder="0.00" value="<%= typeof orden.monto_adelanto !== 'undefined' && orden.monto_adelanto !== null ? orden.monto_adelanto : (adelantoExistente ? adelantoExistente.monto : '') %>" onchange="actualizarMontoDisponible()">
+                                            <small class="text-muted">Dejar en blanco si no hay adelanto</small>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="moneda_adelanto" class="form-label">Moneda</label>
+                                            <select class="form-select" id="moneda_adelanto" name="moneda_adelanto">
+                                                <option value="ARS" <%= (orden.moneda_adelanto || 'ARS') === 'ARS' ? 'selected' : '' %>>ARS</option>
+                                                <option value="USD" <%= orden.moneda_adelanto === 'USD' ? 'selected' : '' %>>USD</option>
+                                                <option value="EUR" <%= orden.moneda_adelanto === 'EUR' ? 'selected' : '' %>>EUR</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="fecha_adelanto" class="form-label">
+                                                <i class="bi bi-calendar-check me-1"></i>Fecha Seña
+                                            </label>
+                                            <input type="date" class="form-control" id="fecha_adelanto" name="fecha_adelanto" value="<%= orden.fecha_adelanto ? new Date(orden.fecha_adelanto).toISOString().split('T')[0] : '' %>">
+                                            <small class="text-muted">Fecha del adelanto</small>
+                                        </div>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="monto_adelanto" class="form-label">
-                                            <i class="bi bi-cash-coin me-1"></i>Monto de Adelanto (Opcional)
-                                        </label>
-                                        <input type="number" class="form-control" id="monto_adelanto" name="monto_adelanto" 
-                                               step="0.01" min="0" placeholder="0.00" value="<%= orden.monto_adelanto || '' %>">
-                                        <small class="text-muted">Dejar en blanco si no hay adelanto</small>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label for="moneda_adelanto" class="form-label">Moneda</label>
-                                        <select class="form-select" id="moneda_adelanto" name="moneda_adelanto">
-                                            <option value="ARS" <%= orden.moneda_adelanto === 'ARS' ? 'selected' : '' %>>ARS</option>
-                                            <option value="USD" <%= orden.moneda_adelanto === 'USD' ? 'selected' : '' %>>USD</option>
-                                            <option value="EUR" <%= orden.moneda_adelanto === 'EUR' ? 'selected' : '' %>>EUR</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label for="fecha_adelanto" class="form-label">
-                                            <i class="bi bi-calendar-check me-1"></i>Fecha Seña
-                                        </label>
-                                        <input type="date" class="form-control" id="fecha_adelanto" name="fecha_adelanto" value="<%= orden.fecha_adelanto ? new Date(orden.fecha_adelanto).toISOString().split('T')[0] : '' %>">
-                                        <small class="text-muted">Fecha del adelanto</small>
+
+                                    <!-- Sección de Cuotas -->
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0">
+                                                <i class="bi bi-calendar-event me-2"></i>Plan de Cuotas
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="alert alert-info py-2 mb-3">
+                                                <i class="bi bi-info-circle me-2"></i>
+                                                <small>Configure las cuotas de pago. El monto total se calcula automáticamente según los bienes seleccionados. Puede personalizar el monto y fecha de cada cuota.</small>
+                                            </div>
+
+                                            <div class="row mb-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">
+                                                        <i class="bi bi-calculator me-1"></i>Monto Total de Bienes
+                                                    </label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="text" class="form-control fw-bold text-success" id="montoTotalBienes" readonly value="0.00">
+                                                    </div>
+                                                    <small class="text-muted">Calculado de los bienes seleccionados</small>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">
+                                                        <i class="bi bi-cash-stack me-1"></i>Monto Disponible para Cuotas
+                                                    </label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="text" class="form-control fw-bold text-primary" id="montoDisponibleCuotas" readonly value="0.00">
+                                                    </div>
+                                                    <small class="text-muted">Total - Adelanto</small>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="cantidadCuotasOC" class="form-label">
+                                                        <i class="bi bi-list-ol me-1"></i>Cantidad de Cuotas <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="number" 
+                                                           class="form-control" 
+                                                           id="cantidadCuotasOC" 
+                                                           min="1" 
+                                                           max="60"
+                                                           value="1"
+                                                           onchange="generarCuotasOC()"
+                                                           required>
+                                                    <small class="text-muted">Entre 1 y 60 cuotas</small>
+                                                </div>
+                                            </div>
+
+                                            <h6 class="mb-2">
+                                                <i class="bi bi-list-check me-2"></i>Detalle de Cuotas
+                                                <span class="badge bg-primary" id="badgeTotalCuotasOC">1</span>
+                                            </h6>
+
+                                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                                <table class="table table-bordered table-sm mb-0">
+                                                    <thead class="table-light sticky-top">
+                                                        <tr>
+                                                            <th style="width: 100px;">#</th>
+                                                            <th style="width: 200px;">Fecha <span class="text-danger">*</span></th>
+                                                            <th>Monto <span class="text-danger">*</span></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tablaCuotasOC">
+                                                        <!-- Las cuotas se generarán dinámicamente aquí -->
+                                                    </tbody>
+                                                    <tfoot class="table-secondary">
+                                                        <tr>
+                                                            <td colspan="2" class="text-end"><strong>Total Cuotas:</strong></td>
+                                                            <td><strong id="totalCuotasOC">$0.00</strong></td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+
+                                            <div class="row mt-3">
+                                                <div class="col-md-6">
+                                                    <small class="text-muted">Total a Pagar (Cuotas):</small>
+                                                    <div id="totalPagarCuotas" class="text-primary fw-bold fs-5">$0.00</div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <small class="text-muted">Diferencia:</small>
+                                                    <div id="diferenciaCuotas" class="fw-bold">$0.00</div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -248,6 +340,8 @@
         let itemCounter = 0;
         let archivosNuevos = []; // Array para nuevos archivos a agregar
         let archivosEliminar = []; // Array para archivos del servidor a eliminar
+        let preciosBienes = {}; // Almacena los precios de los bienes seleccionados
+        let cuotasExistentesServidor = <%- JSON.stringify(cuotasExistentes || []) %>; // Cuotas desde el servidor
 
         $(document).ready(function() {
             // Cargar items existentes
@@ -255,21 +349,28 @@
                 agregarItemExistente(item);
             });
 
+            // Calcular el monto total después de cargar los items
+            setTimeout(() => {
+                calcularMontoTotal();
+            }, 500);
+
+            // Si es contrafactura, cargar cuotas desde la API de pagos
+            if ($('#contrafactura').is(':checked')) {
+                cargarCuotasDesdeAPI();
+            }
+
             $('#btnAgregarItem').on('click', agregarItemVacio);
             
-            // Manejar el checkbox de contrafactura para mostrar/ocultar fecha de pago
+            // Manejar el checkbox de contrafactura para mostrar/ocultar cuotas
             $('#contrafactura').on('change', function() {
                 const isChecked = $(this).is(':checked');
-                const $fechaPagoContainer = $('#fechaPagoContainer');
-                const $fechaPagoInput = $('#fecha_pago');
+                const $contrafacturaContainer = $('#contrafacturaContainer');
                 
                 if (isChecked) {
-                    $fechaPagoContainer.slideDown();
-                    $fechaPagoInput.prop('required', true);
+                    $contrafacturaContainer.slideDown();
+                    generarCuotasOC();
                 } else {
-                    $fechaPagoContainer.slideUp();
-                    $fechaPagoInput.prop('required', false);
-                    $fechaPagoInput.val(''); // Limpiar el valor
+                    $contrafacturaContainer.slideUp();
                 }
             });
             
@@ -351,18 +452,22 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">CANTIDAD <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="items[${itemCounter}][cantidad]" step="0.01" value="${item.cantidad}" required>
+                            <input type="number" class="form-control item-cantidad" name="items[${itemCounter}][cantidad]" step="0.01" value="${item.cantidad}" required data-item="${itemCounter}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">UNIDAD DE MEDIDA</label>
                             <select class="form-select" name="items[${itemCounter}][unidad_medida_id]">
                                 <option value="">---------</option>
                                 ${unidadesMedida.map(um => `<option value="${um.id}" ${um.id === item.unidad_medida_id ? 'selected' : ''}>${um.nombre}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label class="form-label">PRECIO UNITARIO</label>
+                            <input type="number" class="form-control item-precio" name="items[${itemCounter}][precio_unitario]" step="0.01" min="0" placeholder="0.00" value="${item.precio_unitario || ''}" data-item="${itemCounter}" readonly>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label">PROVEEDOR SUGERIDO</label>
                             <select class="form-select proveedor-select" name="items[${itemCounter}][proveedor_sugerido_id]" data-selected="${item.proveedor_sugerido_id || ''}">
                                 <option value="">Cargando...</option>
@@ -402,6 +507,25 @@
                 
                 cargarProveedoresPorBien(nuevoBienId, $provSelect);
             });
+
+            // Event listeners para calcular total en tiempo real
+            $(`[data-item="${itemCounter}"] .item-cantidad`).on('input change', calcularMontoTotal);
+            $(`[data-item="${itemCounter}"] .item-precio`).on('input change', calcularMontoTotal);
+            
+            // Event listener para cuando se selecciona un proveedor (auto-completar precio)
+            $(`[data-item="${itemCounter}"] .proveedor-select`).on('change', function() {
+                const $selected = $(this).find('option:selected');
+                const precio = $selected.data('precio');
+                const itemId = $(this).closest('[data-item]').data('item');
+                
+                if (precio && precio > 0) {
+                    $(`[data-item="${itemId}"] .item-precio`).val(precio);
+                    calcularMontoTotal();
+                }
+            });
+            
+            // Calcular monto inicial
+            calcularMontoTotal();
         }
 
         function agregarItemVacio() {
@@ -437,20 +561,24 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">CANTIDAD <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="items[${itemCounter}][cantidad]" step="0.01" required>
+                            <input type="number" class="form-control item-cantidad" name="items[${itemCounter}][cantidad]" step="0.01" required data-item="${itemCounter}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">UNIDAD DE MEDIDA</label>
                             <select class="form-select" name="items[${itemCounter}][unidad_medida_id]">
                                 <option value="">---------</option>
                                 ${unidadesMedida.map(um => `<option value="${um.id}">${um.nombre}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label class="form-label">PRECIO UNITARIO</label>
+                            <input type="number" class="form-control item-precio" name="items[${itemCounter}][precio_unitario]" step="0.01" min="0" placeholder="0.00" data-item="${itemCounter}" readonly>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label">PROVEEDOR SUGERIDO</label>
-                            <select class="form-select proveedor-select" name="items[${itemCounter}][proveedor_sugerido_id]">
+                            <select class="form-select" name="items[${itemCounter}][proveedor_sugerido_id]">
                                 <option value="">Seleccione un bien primero</option>
                             </select>
                         </div>
@@ -470,7 +598,7 @@
             // Event listener para cargar proveedores cuando se selecciona un bien
             $(`[data-item="${itemCounter}"] .select2-bien`).on('change', function() {
                 const bienId = $(this).val();
-                const $proveedorSelect = $(this).closest('[data-item]').find('.proveedor-select');
+                const $proveedorSelect = $(this).closest('[data-item]').find('[name*="[proveedor_sugerido_id]"]');
                 
                 if (!bienId) {
                     $proveedorSelect.html('<option value="">Seleccione un bien primero</option>');
@@ -478,6 +606,22 @@
                 }
                 
                 cargarProveedoresPorBien(bienId, $proveedorSelect);
+            });
+
+            // Event listeners para calcular total en tiempo real
+            $(`[data-item="${itemCounter}"] .item-cantidad`).on('input change', calcularMontoTotal);
+            $(`[data-item="${itemCounter}"] .item-precio`).on('input change', calcularMontoTotal);
+            
+            // Event listener para cuando se selecciona un proveedor (auto-completar precio)
+            $(`[data-item="${itemCounter}"] [name*="[proveedor_sugerido_id]"]`).on('change', function() {
+                const $selected = $(this).find('option:selected');
+                const precio = $selected.data('precio');
+                const itemId = $(this).closest('[data-item]').data('item');
+                
+                if (precio && precio > 0) {
+                    $(`[data-item="${itemId}"] .item-precio`).val(precio);
+                    calcularMontoTotal();
+                }
             });
         }
 
@@ -493,13 +637,28 @@
                 success: function(response) {
                     if (response.success && response.data && response.data.length > 0) {
                         let options = '<option value="">---------</option>';
+                        let precioSeleccionado = null;
+                        
                         response.data.forEach(proveedor => {
                             const nombre = proveedor.nombre || 'Sin nombre';
                             const precio = proveedor.precio ? ` - ${proveedor.moneda} ${proveedor.precio}` : '';
                             const selected = proveedorSeleccionado && proveedor.id == proveedorSeleccionado ? 'selected' : '';
-                            options += `<option value="${proveedor.id}" ${selected}>${nombre}${precio}</option>`;
+                            options += `<option value="${proveedor.id}" data-precio="${proveedor.precio || 0}" ${selected}>${nombre}${precio}</option>`;
+                            
+                            // Guardar el precio del proveedor seleccionado
+                            if (selected && proveedor.precio) {
+                                precioSeleccionado = proveedor.precio;
+                            }
                         });
+                        
                         $select.html(options);
+                        
+                        // Si hay un proveedor seleccionado con precio, establecerlo automáticamente
+                        if (precioSeleccionado) {
+                            const itemId = $select.closest('[data-item]').data('item');
+                            $(`[data-item="${itemId}"] .item-precio`).val(precioSeleccionado);
+                            calcularMontoTotal();
+                        }
                     } else {
                         $select.html('<option value="">Sin proveedores asociados</option>');
                     }
@@ -589,9 +748,303 @@
                 return;
             }
             $(`[data-item="${itemId}"]`).remove();
+            calcularMontoTotal(); // Recalcular cuando se elimina un item
         }
 
+    // ==================== FUNCIONES DE CUOTAS ====================
+        
+    // Indica si ya se cargaron cuotas guardadas desde el servidor (para no pisarlas)
+    let cuotasCargadasDesdeServidor = false;
+
+    function calcularMontoTotal() {
+            let total = 0;
+            
+            $('.item-row').each(function() {
+                const cantidad = parseFloat($(this).find('.item-cantidad').val()) || 0;
+                const precio = parseFloat($(this).find('.item-precio').val()) || 0;
+                total += cantidad * precio;
+            });
+
+            $('#montoTotalBienes').val(total.toFixed(2));
+            actualizarMontoDisponible();
+        }
+
+        /**
+         * Actualizar el monto disponible para cuotas (Total - Adelanto)
+         */
+        function actualizarMontoDisponible() {
+            const montoTotal = parseFloat($('#montoTotalBienes').val()) || 0;
+            const adelanto = parseFloat($('#monto_adelanto').val()) || 0;
+            const disponible = montoTotal - adelanto;
+            
+            $('#montoDisponibleCuotas').val(disponible > 0 ? disponible.toFixed(2) : '0.00');
+            
+            // Si las cuotas vienen desde el servidor, no las regeneramos automáticamente
+            // para no pisar montos/fechas ya guardados.
+            if (cuotasCargadasDesdeServidor) {
+                console.log('ℹ️ [CUOTAS] actualizarMontoDisponible no regenera cuotas porque vienen del servidor');
+                return;
+            }
+
+            // Solo regenerar si no hay cuotas del servidor y ya hay filas
+            if ($('#contrafactura').is(':checked') && $('#tablaCuotasOC tr').length > 0) {
+                generarCuotasOC();
+            }
+        }
+
+        /**
+         * Generar las filas de cuotas editables para Orden de Compra
+         */
+        // ==================== FUNCIONES DE CUOTAS ====================
+        
+        function cargarCuotasDesdeAPI() {
+            console.log(`📋 Cargando cuotas desde API para orden: ${ordenId}`);
+            
+            $.ajax({
+                url: `/pagos/orden/${ordenId}/cuotas-contrafactura`,
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                success: function(response) {
+                    console.log('✅ Respuesta de cuotas:', response);
+                    
+                    // Verificar si hay cuotas en la respuesta
+                    const cuotas = response.data && response.data.cuotas ? response.data.cuotas : 
+                                   (response.cuotas ? response.cuotas : []);
+                    
+                    console.log('📊 Cuotas encontradas:', cuotas);
+                    
+                    if (cuotas && cuotas.length > 0) {
+                        // Cargar cuotas existentes
+                        cuotasExistentesServidor = cuotas;
+                        cuotasCargadasDesdeServidor = true;
+                        console.log('🔄 Llamando a cargarCuotasExistentes con:', cuotasExistentesServidor);
+                        cargarCuotasExistentes();
+                        
+                        // Cargar adelanto si existe
+                        if (response.data && response.data.adelanto) {
+                            const adelanto = response.data.adelanto;
+                            console.log('💰 Adelanto desde API:', adelanto);
+                            
+                            // Usar los IDs correctos que están en la vista
+                            $('#monto_adelanto').val(adelanto.monto).trigger('change');
+                            $('#fecha_adelanto').val(adelanto.fecha);
+                            
+                            console.log('✅ Adelanto cargado en los inputs');
+                            console.log('   Monto:', $('#monto_adelanto').val());
+                            console.log('   Fecha:', $('#fecha_adelanto').val());
+                        } else {
+                            console.log('⚠️ No hay adelanto en la respuesta');
+                        }
+                    } else {
+                        console.log('⚠️ No hay cuotas existentes, inicializando vacío');
+                        cuotasCargadasDesdeServidor = false;
+                        generarCuotasOC();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error al cargar cuotas desde API:', error);
+                    console.error('Respuesta:', xhr.responseJSON);
+                    console.error('Status:', xhr.status);
+                    console.error('URL intentada:', `/pagos/orden/${ordenId}/cuotas-contrafactura`);
+                // Si falla, inicializar vacío
+                cuotasCargadasDesdeServidor = false;
+                generarCuotasOC();
+                }
+            });
+        }
+        
+        function cargarCuotasExistentes() {
+            console.log('📥 cargarCuotasExistentes llamada con:', cuotasExistentesServidor);
+            console.log('📥 Cantidad de cuotas:', cuotasExistentesServidor ? cuotasExistentesServidor.length : 0);
+            
+            if (!cuotasExistentesServidor || cuotasExistentesServidor.length === 0) {
+                console.log('⚠️ No hay cuotas existentes para cargar');
+                generarCuotasOC(); // Inicializar vacío
+                return;
+            }
+
+            console.log(`📊 Procesando ${cuotasExistentesServidor.length} cuotas existentes`);
+            
+            // Establecer la cantidad de cuotas
+            $('#cantidadCuotasOC').val(cuotasExistentesServidor.length);
+            $('#badgeTotalCuotasOC').text(cuotasExistentesServidor.length);
+            
+            // Calcular el total de las cuotas
+            let montoTotal = 0;
+            cuotasExistentesServidor.forEach(cuota => {
+                montoTotal += parseFloat(cuota.monto || 0);
+            });
+            
+            console.log('💰 Monto total calculado:', montoTotal);
+            $('#montoDisponibleCuotas').val(montoTotal.toFixed(2));
+            
+            // Construir HTML de las cuotas
+            let html = '';
+            for (let index = 0; index < cuotasExistentesServidor.length; index++) {
+                const cuota = cuotasExistentesServidor[index];
+                const numCuota = index + 1;
+                
+                // Convertir fecha al formato correcto (YYYY-MM-DD)
+                let fechaFormato = cuota.fecha || '';
+                if (fechaFormato && typeof fechaFormato === 'string') {
+                    // Si viene en formato ISO (2026-03-24T00:00:00Z), extraer solo la fecha
+                    if (fechaFormato.includes('T')) {
+                        fechaFormato = fechaFormato.split('T')[0];
+                    }
+                }
+                
+                console.log(`  🔹 Cuota ${numCuota}: fecha=${fechaFormato}, monto=${cuota.monto}`);
+                
+                html += '<tr>';
+                html += `  <td class="text-center fw-bold">${numCuota}</td>`;
+                html += `  <td><input type="date" class="form-control form-control-sm fecha-cuota-oc" name="cuotasOC[${index}][fecha]" value="${fechaFormato || ''}" required></td>`;
+                html += `  <td><div class="input-group input-group-sm"><span class="input-group-text">$</span><input type="number" class="form-control monto-cuota-oc" name="cuotasOC[${index}][monto]" value="${parseFloat(cuota.monto || 0).toFixed(2)}" step="0.01" min="0.01" oninput="actualizarTotalesCuotasOC()" required></div></td>`;
+                html += '</tr>';
+            }
+            
+            console.log('📝 HTML generado con', cuotasExistentesServidor.length, 'filas');
+            console.log('📝 HTML:', html);
+            
+            // Limpiar la tabla primero
+            $('#tablaCuotasOC').empty();
+            
+            // Insertar el HTML
+            $('#tablaCuotasOC').html(html);
+            
+            // Verificar que se insertó
+            const rowCount = $('#tablaCuotasOC tr').length;
+            console.log(`✅ Se insertaron ${rowCount} filas en la tabla`);
+            
+            actualizarTotalesCuotasOC();
+            
+            console.log(`✅ ${cuotasExistentesServidor.length} cuotas cargadas exitosamente en el DOM`);
+        }
+
+        function generarCuotasOC() {
+            const cantidadCuotas = parseInt($('#cantidadCuotasOC').val()) || 0;
+            
+            if (cantidadCuotas < 1 || cantidadCuotas > 60) {
+                $('#tablaCuotasOC').html('<tr><td colspan="3" class="text-center text-muted">Ingrese una cantidad válida de cuotas (1-60)</td></tr>');
+                $('#badgeTotalCuotasOC').text('0');
+                actualizarTotalesCuotasOC();
+                return;
+            }
+
+            $('#badgeTotalCuotasOC').text(cantidadCuotas);
+
+            const montoDisponible = parseFloat($('#montoDisponibleCuotas').val()) || 0;
+            
+            // Calcular fecha base (mañana)
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            // Calcular monto equitativo como sugerencia
+            const montoCuota = (montoDisponible / cantidadCuotas).toFixed(2);
+
+            const tbody = $('#tablaCuotasOC');
+            tbody.empty();
+
+            for (let i = 0; i < cantidadCuotas; i++) {
+                const fechaCuota = new Date(tomorrow);
+                fechaCuota.setMonth(fechaCuota.getMonth() + i);
+                const fechaFormatted = fechaCuota.toISOString().split('T')[0];
+
+                const row = $(`
+                    <tr>
+                        <td class="align-middle text-center">
+                            <strong>Cuota ${i + 1}</strong>
+                        </td>
+                        <td>
+                            <input type="date" 
+                                   class="form-control form-control-sm" 
+                                   id="fechaCuota_${i}" 
+                                   value="${fechaFormatted}"
+                                   onchange="actualizarTotalesCuotasOC()"
+                                   required>
+                        </td>
+                        <td>
+                            <input type="number" 
+                                   class="form-control form-control-sm" 
+                                   id="montoCuota_${i}" 
+                                   step="0.01"
+                                   min="0.01"
+                                   value="${montoCuota}"
+                                   onchange="actualizarTotalesCuotasOC()"
+                                   required>
+                        </td>
+                    </tr>
+                `);
+                tbody.append(row);
+            }
+
+            actualizarTotalesCuotasOC();
+        }
+
+        /**
+         * Actualizar totales de cuotas de Orden de Compra
+         */
+        function actualizarTotalesCuotasOC() {
+            const cantidadCuotas = parseInt($('#cantidadCuotasOC').val()) || 0;
+            const montoDisponible = parseFloat($('#montoDisponibleCuotas').val()) || 0;
+            let totalCuotas = 0;
+
+            for (let i = 0; i < cantidadCuotas; i++) {
+                const inputMonto = $(`#montoCuota_${i}`);
+                if (inputMonto.length) {
+                    const monto = parseFloat(inputMonto.val()) || 0;
+                    totalCuotas += monto;
+                }
+            }
+
+            const diferencia = totalCuotas - montoDisponible;
+
+            $('#totalCuotasOC').text('$' + totalCuotas.toFixed(2));
+            $('#totalPagarCuotas').text('$' + totalCuotas.toFixed(2));
+            
+            const $diferenciaElement = $('#diferenciaCuotas');
+            
+            if (diferencia > 0.01) {
+                $diferenciaElement.text('+$' + diferencia.toFixed(2));
+                $diferenciaElement.removeClass('text-success text-muted').addClass('text-danger');
+            } else if (diferencia < -0.01) {
+                $diferenciaElement.text('$' + diferencia.toFixed(2));
+                $diferenciaElement.removeClass('text-danger text-muted').addClass('text-success');
+            } else {
+                $diferenciaElement.text('$0.00');
+                $diferenciaElement.removeClass('text-danger text-success').addClass('text-muted');
+            }
+        }
+
+        // ==================== FIN FUNCIONES DE CUOTAS ====================
+
         function guardarOrden() {
+            // Validar cuotas si es contrafactura
+            if ($('#contrafactura').is(':checked')) {
+                const cantidadCuotas = parseInt($('#cantidadCuotasOC').val()) || 0;
+                
+                if (cantidadCuotas < 1) {
+                    mostrarAlerta('Debe configurar al menos una cuota para órdenes a contrafactura', 'warning');
+                    return;
+                }
+                
+                // Validar que todas las cuotas tengan fecha y monto
+                let cuotasValidas = true;
+                $('.fecha-cuota-oc').each(function(index) {
+                    const fecha = $(this).val();
+                    const monto = parseFloat($('.monto-cuota-oc').eq(index).val()) || 0;
+                    
+                    if (!fecha || monto <= 0) {
+                        mostrarAlerta(`La cuota ${index + 1} debe tener fecha y monto válidos`, 'warning');
+                        cuotasValidas = false;
+                        return false;
+                    }
+                });
+                
+                if (!cuotasValidas) return;
+            }
+
             const formData = new FormData();
             
             // Campos generales
@@ -600,17 +1053,31 @@
             formData.append('fecha_entrega_proveedor', $('#fecha_entrega_proveedor').val());
             formData.append('asunto', $('#asunto').val());
             formData.append('contrafactura', $('#contrafactura').is(':checked') ? 'true' : 'false');
-            formData.append('fecha_pago', $('#fecha_pago').val() || '');
-            formData.append('monto_adelanto', $('#monto_adelanto').val() || '');
-            formData.append('moneda_adelanto', $('#moneda_adelanto').val() || 'ARS');
-            formData.append('fecha_adelanto', $('#fecha_adelanto').val() || '');
             
-            console.log('Contrafactura checkbox:', $('#contrafactura').is(':checked'));
-            console.log('Valor enviado:', $('#contrafactura').is(':checked') ? 'true' : 'false');
-            console.log('Fecha de pago:', $('#fecha_pago').val());
-            console.log('Monto de adelanto:', $('#monto_adelanto').val());
-            console.log('Moneda adelanto:', $('#moneda_adelanto').val());
-            console.log('Fecha adelanto:', $('#fecha_adelanto').val());
+            // Si es contrafactura, incluir adelanto y cuotas
+            if ($('#contrafactura').is(':checked')) {
+                formData.append('monto_adelanto', $('#monto_adelanto').val() || '');
+                formData.append('moneda_adelanto', $('#moneda_adelanto').val() || 'ARS');
+                formData.append('fecha_adelanto', $('#fecha_adelanto').val() || '');
+                
+                // Recopilar cuotas desde la tabla
+                const cuotas = [];
+                $('.fecha-cuota-oc').each(function(index) {
+                    const fecha = $(this).val();
+                    const monto = parseFloat($('.monto-cuota-oc').eq(index).val()) || 0;
+                    
+                    cuotas.push({
+                        fecha: fecha,
+                        monto: monto,
+                        moneda: 'ARS' // Por ahora todas en ARS
+                    });
+                });
+                
+                if (cuotas.length > 0) {
+                    formData.append('cuotas', JSON.stringify(cuotas));
+                    console.log('📋 Cuotas a guardar:', cuotas);
+                }
+            }
             
             // Archivos nuevos a agregar
             if (archivosNuevos.length > 0) {

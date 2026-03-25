@@ -644,6 +644,62 @@ class PagoRepository {
             connection.release();
         }
     }
+
+    /**
+     * Obtener cuotas de contrafactura de una orden de compra
+     * @param {number} ordenId - ID de la orden de compra
+     * @returns {Promise<Object>} - Cuotas y adelanto de la orden
+     */
+    async obtenerCuotasOrdenCompra(ordenId) {
+        try {
+            console.log(`📋 [REPOSITORY] Obteniendo cuotas para orden: ${ordenId}`);
+            
+            // Obtener todos los pagos de contrafactura para esta orden
+            const [cuotas] = await db.query(
+                `SELECT 
+                    id,
+                    monto_pago as monto,
+                    fecha_pago as fecha,
+                    tipo_pago,
+                    observaciones,
+                    pagado,
+                    fecha_pago_realizado
+                FROM pagos 
+                WHERE orden_compra_id = ? AND tipo_pago IN ('SALDO_COMPLETO', 'ADELANTO')
+                ORDER BY fecha_pago ASC`,
+                [ordenId]
+            );
+
+            console.log(`📊 [REPOSITORY] Resultados de la BD:`, cuotas);
+            console.log(`💳 [REPOSITORY] Total registros: ${cuotas ? cuotas.length : 0}`);
+
+            if (!cuotas || cuotas.length === 0) {
+                console.log(`⚠️ [REPOSITORY] Sin cuotas encontradas`);
+                return {
+                    cuotas: [],
+                    adelanto: null
+                };
+            }
+
+            // Separar adelanto de cuotas
+            const adelanto = cuotas.find(c => c.tipo_pago === 'ADELANTO');
+            const cuotasContrafactura = cuotas.filter(c => c.tipo_pago === 'SALDO_COMPLETO');
+
+            console.log(`✅ [REPOSITORY] Adelanto encontrado:`, adelanto);
+            console.log(`✅ [REPOSITORY] Cuotas de saldo encontradas: ${cuotasContrafactura.length}`);
+            cuotasContrafactura.forEach((c, i) => {
+                console.log(`   Cuota ${i+1}: ${c.fecha} - $${c.monto}`);
+            });
+
+            return {
+                cuotas: cuotasContrafactura,
+                adelanto: adelanto || null
+            };
+        } catch (error) {
+            console.error('❌ [REPOSITORY] Error en PagoRepository.obtenerCuotasOrdenCompra:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new PagoRepository();

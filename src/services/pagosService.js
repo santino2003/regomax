@@ -512,6 +512,206 @@ class PagosService {
     }
 
     /**
+     * Registrar una cuota de pago para una orden de compra a contrafactura
+     * @param {Object} cuotaData - Datos de la cuota
+     * @param {number} cuotaData.ordenId - ID de la orden de compra
+     * @param {number} cuotaData.numeroCuota - Número de la cuota
+     * @param {number} cuotaData.monto - Monto de la cuota
+     * @param {string} cuotaData.fechaPago - Fecha de pago de la cuota
+     * @param {string} cuotaData.observaciones - Observaciones de la cuota
+     * @param {string} cuotaData.username - Usuario que registra
+     * @returns {Promise<Object>} - Resultado del registro
+     */
+    async registrarCuotaOrdenCompra(cuotaData) {
+        try {
+            const { ordenId, numeroCuota, monto, fechaPago, observaciones, username } = cuotaData;
+
+            console.log('💰 [PAGOS] Registrando cuota de orden de compra:', { 
+                ordenId, 
+                numeroCuota,
+                monto, 
+                fechaPago, 
+                usuario: username 
+            });
+
+            // Validar datos
+            if (!ordenId || !numeroCuota || !monto || !fechaPago) {
+                throw new Error('Faltan datos requeridos para registrar la cuota');
+            }
+
+            if (monto <= 0) {
+                throw new Error('El monto de la cuota debe ser mayor a 0');
+            }
+
+            // Obtener información de la orden
+            const orden = await ordenCompraRepository.obtenerPorId(ordenId);
+            if (!orden) {
+                throw new Error('Orden de compra no encontrada');
+            }
+
+            // Verificar que sea contrafactura
+            if (!orden.contrafactura) {
+                throw new Error('Solo se pueden registrar cuotas para órdenes a contrafactura');
+            }
+
+            // Agrupar items por proveedor para crear cuotas separadas
+            const itemsPorProveedor = new Map();
+            
+            // Si la orden tiene un proveedor principal y no hay items con proveedores específicos
+            if (orden.proveedor_id && (!orden.items || orden.items.length === 0)) {
+                itemsPorProveedor.set(orden.proveedor_id, {
+                    proveedorId: orden.proveedor_id,
+                    proveedorNombre: orden.proveedor_nombre,
+                    items: [],
+                    montoItems: parseFloat(monto)
+                });
+            } else {
+                // Agrupar items por proveedor sugerido
+                if (orden.items && orden.items.length > 0) {
+                    for (const item of orden.items) {
+                        const provId = item.proveedor_sugerido_id || orden.proveedor_id;
+                        const provNombre = item.proveedor_sugerido_nombre || orden.proveedor_nombre;
+                        
+                        if (!provId) {
+                            console.warn(`⚠️ [PAGOS] Item ${item.bien_nombre} sin proveedor - se omitirá`);
+                            continue;
+                        }
+
+                        if (!itemsPorProveedor.has(provId)) {
+                            itemsPorProveedor.set(provId, {
+                                proveedorId: provId,
+                                proveedorNombre: provNombre,
+                                items: [],
+                                montoItems: 0
+                            });
+                        }
+
+                        const grupoProveedor = itemsPorProveedor.get(provId);
+                        grupoProveedor.items.push(item);
+                        
+                        // Obtener precio del proveedor para ese bien
+                        try {
+                            const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
+                                item.bien_id,
+                                provId
+                            );
+                            
+                            if (precioInfo && precioInfo.precio) {
+                                const precioUnitario = parseFloat(precioInfo.precio);
+                                const montoItem = precioUnitario * parseFloat(item.cantidad);
+                                grupoProveedor.montoItems += montoItem;
+                            }
+                        } catch (error) {
+                            console.warn(`⚠️ [PAGOS] Error al obtener precio para "${item.bien_nombre}":`, error.message);
+                        }
+                    }
+                }
+            }
+
+            // Validar que tengamos al menos un proveedor
+            if (itemsPorProveedor.size === 0) {
+                throw new Error('La orden no tiene proveedores asignados. Asigne un proveedor a la orden o a sus items para registrar la cuota.');
+            }
+
+            console.log(`✓ [PAGOS] Identificados ${itemsPorProveedor.size} proveedor(es) en la orden`);
+
+            // Calcular el total real de la orden basado en items
+            const totalRealOrden = Array.from(itemsPorProveedor.values())
+                .reduce((sum, grupo) => sum + grupo.montoItems, 0);
+            
+            // Si el total calculado es 0, distribuir el monto equitativamente
+            if (totalRealOrden === 0) {
+                console.warn(`⚠️ [PAGOS] Total calculado es $0. Distribuyendo cuota equitativamente`);
+                const montoPorProveedor = parseFloat(monto) / itemsPorProveedor.size;
+                for (const grupo of itemsPorProveedor.values()) {
+                    grupo.montoItems = montoPorProveedor;
+                }
+            }
+
+            const cuotasRegistradas = [];
+
+            // Recalcular total después del ajuste
+            const totalFinalOrden = Array.from(itemsPorProveedor.values())
+                .reduce((sum, grupo) => sum + grupo.montoItems, 0);
+
+            // Registrar una cuota para cada proveedor
+            for (const [proveedorId, grupo] of itemsPorProveedor.entries()) {
+                // Calcular cuota proporcional para este proveedor basado en el valor de sus items
+                const montoCuotaProveedor = totalFinalOrden > 0
+                    ? (grupo.montoItems / totalFinalOrden) * parseFloat(monto)
+                    : parseFloat(monto) / itemsPorProveedor.size;
+
+                console.log(`📝 [PAGOS] Registrando cuota ${numeroCuota} para ${grupo.proveedorNombre}:`, {
+                    montoItems: `$${grupo.montoItems.toFixed(2)}`,
+                    cuota: `$${montoCuotaProveedor.toFixed(2)}`
+                });
+
+                const pagoRegistrado = await pagoRepository.registrarPagoSaldoCompleto({
+                    ordenCompraId: ordenId,
+                    proveedorId: grupo.proveedorId,
+                    montoTotal: montoCuotaProveedor,
+                    montoAdelanto: 0,
+                    saldoAPagar: montoCuotaProveedor,
+                    fechaPago: fechaPago,
+                    registradoPor: username,
+                    observaciones: observaciones || `Cuota ${numeroCuota} - ${grupo.proveedorNombre}`
+                });
+
+                cuotasRegistradas.push({
+                    pagoId: pagoRegistrado.id,
+                    proveedorNombre: grupo.proveedorNombre,
+                    montoCuota: montoCuotaProveedor
+                });
+
+                console.log(`💾 [PAGOS] Cuota ${numeroCuota} registrada con ID ${pagoRegistrado.id} para ${grupo.proveedorNombre}`);
+            }
+
+            console.log(`✅ [PAGOS] ${cuotasRegistradas.length} cuota(s) registrada(s) exitosamente`);
+
+            return {
+                success: true,
+                message: `✓ Cuota ${numeroCuota} registrada: $${monto} para la fecha ${fechaPago}`,
+                data: {
+                    ordenCodigo: orden.codigo,
+                    numeroCuota: numeroCuota,
+                    totalCuotas: cuotasRegistradas.length,
+                    montoTotal: parseFloat(monto),
+                    fechaPago: fechaPago,
+                    cuotas: cuotasRegistradas
+                }
+            };
+
+        } catch (error) {
+            console.error('❌ [PAGOS] Error en registrarCuotaOrdenCompra:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Eliminar pagos de contrafactura para una orden de compra
+     * @param {number} ordenId - ID de la orden de compra
+     * @returns {Promise<Object>} - Resultado de la eliminación
+     */
+    async eliminarPagosContrafactura(ordenId) {
+        try {
+            console.log(`🗑️ [PAGOS] Eliminando pagos de contrafactura para orden ${ordenId}`);
+            
+            const resultado = await pagoRepository.eliminarPagosContrafactura(ordenId);
+            
+            console.log(`✅ [PAGOS] Pagos de contrafactura eliminados exitosamente`);
+            
+            return {
+                success: true,
+                message: 'Pagos de contrafactura eliminados exitosamente',
+                data: resultado
+            };
+        } catch (error) {
+            console.error('❌ [PAGOS] Error en eliminarPagosContrafactura:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Obtener todos los pagos de una orden de compra
      * @param {number} ordenId - ID de la orden de compra
      * @returns {Promise<Array>} - Lista de pagos

@@ -46,12 +46,54 @@ const ordenCompraController = {
             // Obtener datos necesarios para el formulario desde el service
             const datosFormulario = await ordenCompraService.obtenerDatosFormulario();
 
+            // Si es contrafactura, obtener los pagos asociados para mostrar las cuotas
+            let cuotasExistentes = [];
+            let adelantoExistente = null;
+            if (orden.contrafactura) {
+                // Cuotas en formato simplificado para el formulario (solo saldos)
+                cuotasExistentes = await ordenCompraService.obtenerCuotasOrden(id);
+
+                // Obtener también el adelanto desde pagos para prellenar el formulario
+                try {
+                    const pagoRepository = require('../repositories/pagoRepository');
+                    const pagosData = await pagoRepository.obtenerPagosContrafacturaPorOrden(id);
+
+                    if (pagosData && pagosData.adelantos && pagosData.adelantos.length > 0) {
+                        const adelanto = pagosData.adelantos[0];
+
+                        // Convertir fecha a YYYY-MM-DD
+                        let fechaFormato = '';
+                        if (adelanto.fecha_pago) {
+                            const fecha = new Date(adelanto.fecha_pago);
+                            const año = fecha.getFullYear();
+                            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+                            const día = String(fecha.getDate()).padStart(2, '0');
+                            fechaFormato = `${año}-${mes}-${día}`;
+                        }
+
+                        adelantoExistente = {
+                            monto: parseFloat(adelanto.monto_adelanto || adelanto.monto_pago || 0),
+                            fecha: fechaFormato,
+                            moneda: adelanto.moneda || 'ARS'
+                        };
+
+                        // También inyectar en el objeto orden para que la vista lo use en value="<%= orden.monto_adelanto %>"
+                        orden.monto_adelanto = adelantoExistente.monto;
+                        orden.fecha_adelanto = adelantoExistente.fecha;
+                    }
+                } catch (pagoError) {
+                    console.warn('⚠️ No se pudo obtener adelanto existente para la orden:', pagoError.message);
+                }
+            }
+
             return res.render('ordenesCompraEditar', {
                 username: req.user.username,
                 orden: orden,
                 bienes: datosFormulario.bienes,
                 unidadesMedida: datosFormulario.unidadesMedida,
-                centrosCosto: datosFormulario.centrosCosto
+                centrosCosto: datosFormulario.centrosCosto,
+                cuotasExistentes: cuotasExistentes,
+                adelantoExistente: adelantoExistente
             });
         } catch (error) {
             console.error('Error al renderizar vista de editar orden:', error);
@@ -73,6 +115,11 @@ const ordenCompraController = {
             // Procesar items si vienen como JSON string
             if (typeof ordenData.items === 'string') {
                 ordenData.items = JSON.parse(ordenData.items);
+            }
+
+            // Procesar cuotas si vienen como JSON string
+            if (typeof ordenData.cuotas === 'string') {
+                ordenData.cuotas = JSON.parse(ordenData.cuotas);
             }
 
             // Procesar contrafactura como booleano
@@ -119,6 +166,13 @@ const ordenCompraController = {
                 }
             }
 
+            // Procesar cuotas si vienen como JSON string
+            if (ordenData.cuotas) {
+                if (typeof ordenData.cuotas === 'string') {
+                    ordenData.cuotas = JSON.parse(ordenData.cuotas);
+                }
+            }
+
             // Procesar contrafactura como booleano
             // Maneja: 'true', 'false', true, false, undefined
             console.log('Contrafactura recibida (antes):', ordenData.contrafactura, 'Tipo:', typeof ordenData.contrafactura);
@@ -141,7 +195,7 @@ const ordenCompraController = {
                 ordenData.archivos_adjuntos = req.files.map(file => file.filename);
             }
 
-            await ordenCompraService.modificarOrdenCompra(id, ordenData);
+            await ordenCompraService.modificarOrdenCompra(id, ordenData, req.user.username);
             
             return res.status(200).json({
                 success: true,
