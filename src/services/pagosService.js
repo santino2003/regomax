@@ -43,6 +43,12 @@ class PagosService {
                     itemInfo.bien_id,
                     itemInfo.proveedor_sugerido_id
                 );
+                console.log('💱 [PAGOS] Precio proveedor recibido:', {
+                    bienId: itemInfo.bien_id,
+                    proveedorId: itemInfo.proveedor_sugerido_id,
+                    precio: precioInfo && precioInfo.precio,
+                    moneda: precioInfo && precioInfo.moneda
+                });
             } catch (error) {
                 console.warn(`⚠️ [PAGOS] Error al consultar precio:`, error.message);
                 return {
@@ -79,6 +85,7 @@ class PagosService {
             });
 
             // 5. Registrar el pago en la base de datos
+            console.log('💾 [PAGOS] Registrando pago recepción con moneda:', precioInfo && precioInfo.moneda);
             const pagoRegistrado = await pagoRepository.registrarPagoRecepcion({
                 ordenCompraId: ordenId,
                 bienId: itemInfo.bien_id,
@@ -88,7 +95,8 @@ class PagosService {
                 montoPago: montoTotal,
                 fechaPago: fechaPago,
                 registradoPor: username,
-                observaciones: `Pago por recepción de ${cantidadRecibida} unidades de "${itemInfo.bien_nombre}"`
+                observaciones: `Pago por recepción de ${cantidadRecibida} unidades de "${itemInfo.bien_nombre}"`,
+                moneda: precioInfo.moneda || 'ARS'
             });
 
             console.log('💾 [PAGOS] Pago registrado con ID:', pagoRegistrado.id);
@@ -162,7 +170,8 @@ class PagosService {
                     proveedorId: orden.proveedor_id,
                     proveedorNombre: orden.proveedor_nombre,
                     items: [],
-                    montoItems: parseFloat(montoAdelanto)
+                    montoItems: parseFloat(montoAdelanto),
+                    moneda: null
                 });
             } else {
                 // Agrupar items por proveedor sugerido
@@ -181,7 +190,8 @@ class PagosService {
                                 proveedorId: provId,
                                 proveedorNombre: provNombre,
                                 items: [],
-                                montoItems: 0
+                                montoItems: 0,
+                                moneda: null
                             });
                         }
 
@@ -194,11 +204,21 @@ class PagosService {
                                 item.bien_id,
                                 provId
                             );
+                            console.log('💱 [PAGOS] Adelanto - precio proveedor:', {
+                                bienId: item.bien_id,
+                                proveedorId: provId,
+                                precio: precioInfo && precioInfo.precio,
+                                moneda: precioInfo && precioInfo.moneda
+                            });
                             
                             if (precioInfo && precioInfo.precio) {
                                 const precioUnitario = parseFloat(precioInfo.precio);
                                 const montoItem = precioUnitario * parseFloat(item.cantidad);
                                 grupoProveedor.montoItems += montoItem;
+                                // guardar moneda del bien-proveedor
+                                if (precioInfo.moneda && !grupoProveedor.moneda) {
+                                    grupoProveedor.moneda = precioInfo.moneda;
+                                }
                                 console.log(`💰 [PAGOS] Item "${item.bien_nombre}": ${item.cantidad} × $${precioUnitario.toFixed(2)} = $${montoItem.toFixed(2)}`);
                             } else {
                                 console.warn(`⚠️ [PAGOS] Item "${item.bien_nombre}" - No hay precio configurado para el proveedor`);
@@ -258,13 +278,21 @@ class PagosService {
                     items: grupo.items.length
                 });
 
+                const monedaProveedor = grupo.moneda || 'ARS';
+                console.log('💾 [PAGOS] Registrando adelanto por proveedor:', {
+                    proveedorId: grupo.proveedorId,
+                    proveedorNombre: grupo.proveedorNombre,
+                    montoAdelanto: montoAdelantoProveedor,
+                    moneda: monedaProveedor
+                });
                 const pagoRegistrado = await pagoRepository.registrarAdelanto({
                     ordenCompraId: ordenId,
                     proveedorId: grupo.proveedorId,
                     montoAdelanto: montoAdelantoProveedor,
                     fechaPago: fechaPago,
                     registradoPor: username,
-                    observaciones: `Adelanto para orden ${orden.codigo} - Proveedor: ${grupo.proveedorNombre} (${grupo.items.length} item(s), Total items: $${grupo.montoItems.toFixed(2)}) - Contrafactura`
+                    observaciones: `Adelanto para orden ${orden.codigo} - Proveedor: ${grupo.proveedorNombre} (${grupo.items.length} item(s), Total items: $${grupo.montoItems.toFixed(2)}) - Contrafactura`,
+                    moneda: monedaProveedor
                 });
 
                 adelantosRegistrados.push({
@@ -358,7 +386,8 @@ class PagosService {
                     proveedorId: orden.proveedor_id,
                     proveedorNombre: orden.proveedor_nombre,
                     items: [],
-                    montoItems: parseFloat(montoTotal) // Usar el monto total del parámetro
+                    montoItems: parseFloat(montoTotal),
+                    moneda: null
                 });
             } else {
                 // Agrupar items por proveedor sugerido
@@ -377,7 +406,8 @@ class PagosService {
                                 proveedorId: provId,
                                 proveedorNombre: provNombre,
                                 items: [],
-                                montoItems: 0
+                                montoItems: 0,
+                                moneda: null
                             });
                         }
 
@@ -390,11 +420,19 @@ class PagosService {
                                 item.bien_id,
                                 provId
                             );
-                            
+                            console.log('💱 [PAGOS] Saldo completo - precio proveedor:', {
+                                bienId: item.bien_id,
+                                proveedorId: provId,
+                                precio: precioInfo && precioInfo.precio,
+                                moneda: precioInfo && precioInfo.moneda
+                            });
                             if (precioInfo && precioInfo.precio) {
                                 const precioUnitario = parseFloat(precioInfo.precio);
                                 const montoItem = precioUnitario * parseFloat(item.cantidad);
                                 grupoProveedor.montoItems += montoItem;
+                                if (precioInfo.moneda && !grupoProveedor.moneda) {
+                                    grupoProveedor.moneda = precioInfo.moneda;
+                                }
                                 console.log(`💰 [PAGOS] Item "${item.bien_nombre}": ${item.cantidad} × $${precioUnitario.toFixed(2)} = $${montoItem.toFixed(2)}`);
                             } else {
                                 console.warn(`⚠️ [PAGOS] Item "${item.bien_nombre}" - No hay precio configurado para el proveedor`);
@@ -461,6 +499,15 @@ class PagosService {
                     items: grupo.items.length
                 });
 
+                const monedaProveedor = grupo.moneda || 'ARS';
+                console.log('💾 [PAGOS] Registrando saldo completo por proveedor:', {
+                    proveedorId: grupo.proveedorId,
+                    proveedorNombre: grupo.proveedorNombre,
+                    montoTotalProveedor,
+                    montoAdelantoProveedor,
+                    montoPagoProveedor,
+                    moneda: monedaProveedor
+                });
                 const pagoRegistrado = await pagoRepository.registrarPagoSaldoCompleto({
                     ordenCompraId: ordenId,
                     proveedorId: grupo.proveedorId,
@@ -469,7 +516,8 @@ class PagosService {
                     saldoAPagar: montoPagoProveedor,
                     fechaPago: fechaPago,
                     registradoPor: username,
-                    observaciones: `Pago para orden ${orden.codigo} - Proveedor: ${grupo.proveedorNombre} (${grupo.items.length} item(s)) - Contrafactura`
+                    observaciones: `Pago para orden ${orden.codigo} - Proveedor: ${grupo.proveedorNombre} (${grupo.items.length} item(s)) - Contrafactura`,
+                    moneda: monedaProveedor
                 });
 
                 pagosRegistrados.push({
@@ -563,7 +611,8 @@ class PagosService {
                     proveedorId: orden.proveedor_id,
                     proveedorNombre: orden.proveedor_nombre,
                     items: [],
-                    montoItems: parseFloat(monto)
+                    montoItems: parseFloat(monto),
+                    moneda: null
                 });
             } else {
                 // Agrupar items por proveedor sugerido
@@ -571,35 +620,42 @@ class PagosService {
                     for (const item of orden.items) {
                         const provId = item.proveedor_sugerido_id || orden.proveedor_id;
                         const provNombre = item.proveedor_sugerido_nombre || orden.proveedor_nombre;
-                        
                         if (!provId) {
                             console.warn(`⚠️ [PAGOS] Item ${item.bien_nombre} sin proveedor - se omitirá`);
                             continue;
                         }
-
                         if (!itemsPorProveedor.has(provId)) {
                             itemsPorProveedor.set(provId, {
                                 proveedorId: provId,
                                 proveedorNombre: provNombre,
                                 items: [],
-                                montoItems: 0
+                                montoItems: 0,
+                                moneda: null
                             });
                         }
-
                         const grupoProveedor = itemsPorProveedor.get(provId);
                         grupoProveedor.items.push(item);
-                        
-                        // Obtener precio del proveedor para ese bien
                         try {
                             const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
                                 item.bien_id,
                                 provId
                             );
-                            
+                            console.log('💱 [PAGOS] Cuota - precio proveedor:', {
+                                bienId: item.bien_id,
+                                proveedorId: provId,
+                                precio: precioInfo && precioInfo.precio,
+                                moneda: precioInfo && precioInfo.moneda
+                            });
                             if (precioInfo && precioInfo.precio) {
                                 const precioUnitario = parseFloat(precioInfo.precio);
                                 const montoItem = precioUnitario * parseFloat(item.cantidad);
                                 grupoProveedor.montoItems += montoItem;
+                                if (precioInfo.moneda && !grupoProveedor.moneda) {
+                                    grupoProveedor.moneda = precioInfo.moneda;
+                                }
+                                console.log(`💰 [PAGOS] Item "${item.bien_nombre}": ${item.cantidad} × $${precioUnitario.toFixed(2)} = $${montoItem.toFixed(2)}`);
+                            } else {
+                                console.warn(`⚠️ [PAGOS] Item "${item.bien_nombre}" - No hay precio configurado para el proveedor`);
                             }
                         } catch (error) {
                             console.warn(`⚠️ [PAGOS] Error al obtener precio para "${item.bien_nombre}":`, error.message);
@@ -646,6 +702,13 @@ class PagosService {
                     cuota: `$${montoCuotaProveedor.toFixed(2)}`
                 });
 
+                const monedaProveedor = grupo.moneda || 'ARS';
+                console.log(`💾 [PAGOS] Registrando cuota ${numeroCuota} con moneda:`, {
+                    proveedorId: grupo.proveedorId,
+                    proveedorNombre: grupo.proveedorNombre,
+                    montoCuotaProveedor,
+                    moneda: monedaProveedor
+                });
                 const pagoRegistrado = await pagoRepository.registrarPagoSaldoCompleto({
                     ordenCompraId: ordenId,
                     proveedorId: grupo.proveedorId,
@@ -654,7 +717,8 @@ class PagosService {
                     saldoAPagar: montoCuotaProveedor,
                     fechaPago: fechaPago,
                     registradoPor: username,
-                    observaciones: observaciones || `Cuota ${numeroCuota} - ${grupo.proveedorNombre}`
+                    observaciones: observaciones || `Cuota ${numeroCuota} - ${grupo.proveedorNombre}`,
+                    moneda: monedaProveedor
                 });
 
                 cuotasRegistradas.push({
@@ -1160,8 +1224,5 @@ class PagosService {
         }
     }
 }
-
-module.exports = new PagosService();
-
 
 module.exports = new PagosService();

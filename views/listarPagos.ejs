@@ -122,7 +122,10 @@
                             <div class="card resumen-card">
                                 <div class="card-body">
                                     <h6 class="card-subtitle mb-2 text-muted">Total General</h6>
-                                    <h4 class="card-title mb-0 monto-destacado">$<%= totalGeneral.toFixed(2) %></h4>
+                                    <h4 class="card-title mb-0 monto-destacado">
+                                        <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
+                                        <%= totalGeneral.toFixed(2) %>
+                                    </h4>
                                 </div>
                             </div>
                         </div>
@@ -130,7 +133,10 @@
                             <div class="card">
                                 <div class="card-body">
                                     <h6 class="card-subtitle mb-2 text-muted">Por Recepción</h6>
-                                    <h5 class="card-title mb-0">$<%= totalRecepcion.toFixed(2) %></h5>
+                                    <h5 class="card-title mb-0">
+                                        <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
+                                        <%= totalRecepcion.toFixed(2) %>
+                                    </h5>
                                 </div>
                             </div>
                         </div>
@@ -138,7 +144,10 @@
                             <div class="card">
                                 <div class="card-body">
                                     <h6 class="card-subtitle mb-2 text-muted">Adelantos</h6>
-                                    <h5 class="card-title mb-0">$<%= totalAdelanto.toFixed(2) %></h5>
+                                    <h5 class="card-title mb-0">
+                                        <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
+                                        <%= totalAdelanto.toFixed(2) %>
+                                    </h5>
                                 </div>
                             </div>
                         </div>
@@ -146,7 +155,10 @@
                             <div class="card">
                                 <div class="card-body">
                                     <h6 class="card-subtitle mb-2 text-muted">Saldos Completos</h6>
-                                    <h5 class="card-title mb-0">$<%= totalSaldo.toFixed(2) %></h5>
+                                    <h5 class="card-title mb-0">
+                                        <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
+                                        <%= totalSaldo.toFixed(2) %>
+                                    </h5>
                                 </div>
                             </div>
                         </div>
@@ -289,14 +301,15 @@
                                                 <% } %>
                                             </td>
                                             <td class="monto-destacado">
-                                                $<%= parseFloat(pago.monto_pago).toFixed(2) %>
+                                                <%= pago.moneda || 'ARS' %>
+                                                <%= parseFloat(pago.monto_pago).toFixed(2) %>
                                                 <% if (pago.tipo_pago === 'SALDO_COMPLETO' && pago.monto_total) { %>
                                                     <small class="text-muted d-block">
-                                                        Total: $<%= parseFloat(pago.monto_total).toFixed(2) %>
+                                                        Total: <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_total).toFixed(2) %>
                                                     </small>
                                                     <% if (pago.monto_adelanto) { %>
                                                         <small class="text-muted d-block">
-                                                            Adelanto: $<%= parseFloat(pago.monto_adelanto).toFixed(2) %>
+                                                            Adelanto: <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_adelanto).toFixed(2) %>
                                                         </small>
                                                     <% } %>
                                                 <% } %>

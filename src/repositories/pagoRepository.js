@@ -15,7 +15,8 @@ class PagoRepository {
                 montoPago,
                 fechaPago,
                 registradoPor,
-                observaciones
+                observaciones,
+                moneda
             } = pagoData;
 
             const result = await db.query(
@@ -27,10 +28,11 @@ class PagoRepository {
                     cantidad_recibida,
                     precio_unitario,
                     monto_pago,
+                    moneda,
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, ?, ?, 'RECEPCION', ?, ?, ?, ?, ?, ?)`,
+                ) VALUES (?, ?, ?, 'RECEPCION', ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     ordenCompraId,
                     bienId,
@@ -38,6 +40,7 @@ class PagoRepository {
                     cantidadRecibida,
                     precioUnitario,
                     montoPago,
+                    moneda || 'ARS',
                     fechaPago,
                     registradoPor,
                     observaciones || null
@@ -62,7 +65,8 @@ class PagoRepository {
                 montoAdelanto,
                 fechaPago,
                 registradoPor,
-                observaciones
+                observaciones,
+                moneda
             } = pagoData;
 
             const result = await db.query(
@@ -72,15 +76,17 @@ class PagoRepository {
                     tipo_pago,
                     monto_pago,
                     monto_adelanto,
+                    moneda,
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, ?, 'ADELANTO', ?, ?, ?, ?, ?)`,
+                ) VALUES (?, ?, 'ADELANTO', ?, ?, ?, ?, ?, ?)`,
                 [
                     ordenCompraId,
                     proveedorId,
                     montoAdelanto,
                     montoAdelanto,
+                    moneda || 'ARS',
                     fechaPago,
                     registradoPor,
                     observaciones || null
@@ -107,7 +113,8 @@ class PagoRepository {
                 saldoAPagar,
                 fechaPago,
                 registradoPor,
-                observaciones
+                observaciones,
+                moneda
             } = pagoData;
 
             const result = await db.query(
@@ -118,16 +125,18 @@ class PagoRepository {
                     monto_pago,
                     monto_total,
                     monto_adelanto,
+                    moneda,
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, ?, 'SALDO_COMPLETO', ?, ?, ?, ?, ?, ?)`,
+                ) VALUES (?, ?, 'SALDO_COMPLETO', ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     ordenCompraId,
                     proveedorId,
                     saldoAPagar,
                     montoTotal,
                     montoAdelanto,
+                    moneda || 'ARS',
                     fechaPago,
                     registradoPor,
                     observaciones || null
@@ -596,10 +605,11 @@ class PagoRepository {
                         cantidad_recibida,
                         precio_unitario,
                         monto_pago,
+                        moneda,
                         fecha_pago,
                         registrado_por,
                         observaciones
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         pagoOriginal.orden_compra_id,
                         pagoOriginal.bien_id || null,
@@ -608,6 +618,7 @@ class PagoRepository {
                         pagoOriginal.cantidad_recibida || null,
                         pagoOriginal.precio_unitario || null,
                         parseFloat(cuota.monto),
+                        pagoOriginal.moneda || 'ARS',
                         cuota.fecha,
                         username,
                         observacionesCuota

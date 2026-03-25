@@ -949,6 +949,124 @@ const ordenCompra = {
     eliminarArchivo: () => registrarHistorial('eliminar_archivo', 'orden_compra', ordenCompraDetalles.eliminarArchivo)
 };
 
+/**
+ * Funciones específicas para extraer detalles de pagos
+ */
+const pagoDetalles = {
+    marcarPagado: (req, res, body) => {
+        const pagoId = req.params?.id;
+        const username = req.user?.username || 'sistema';
+
+        // Intentar leer algunos datos clave de la respuesta si es JSON
+        let resultado = undefined;
+        if (body) {
+            try {
+                const data = typeof body === 'string' ? JSON.parse(body) : body;
+                resultado = {
+                    success: data.success,
+                    message: data.message
+                };
+            } catch (e) {
+                // Si no se puede parsear, lo ignoramos
+            }
+        }
+
+        return {
+            pago_id: pagoId,
+            accion: 'marcar_pagado',
+            detalle: req.body?.detalle || null,
+            usuario: username,
+            resultado
+        };
+    },
+
+    refinanciar: (req, res, body) => {
+        const pagoId = req.params?.id;
+        const username = req.user?.username || 'sistema';
+
+        // Cuotas puede venir como JSON string o array
+        let cuotas = req.body?.cuotas;
+        if (typeof cuotas === 'string') {
+            try {
+                cuotas = JSON.parse(cuotas);
+            } catch (e) {
+                // dejamos el string original si falla el parseo
+            }
+        }
+
+        const detallesRefinanciacion = {
+            pago_original_id: pagoId,
+            cuotas_nuevas: Array.isArray(cuotas)
+                ? cuotas.map((c, index) => ({
+                    numero: c.numeroCuota || index + 1,
+                    fecha: c.fecha,
+                    monto: c.monto,
+                    moneda: c.moneda
+                }))
+                : cuotas,
+            observaciones_generales: req.body?.observacionesGenerales || null,
+            usuario: username
+        };
+
+        // Intentar extraer info de lo que generó la refinanciación
+        if (body) {
+            try {
+                const data = typeof body === 'string' ? JSON.parse(body) : body;
+
+                // Estado anterior / actual del pago original
+                if (data.data && data.data.pagoOriginal) {
+                    const po = data.data.pagoOriginal;
+                    detallesRefinanciacion.estado_anterior = {
+                        pagado: !!po.pagado,
+                        monto_original: po.monto_pago,
+                        fecha_pago_original: po.fecha_pago,
+                        tipo_pago_original: po.tipo_pago
+                    };
+                }
+
+                if (data.data && data.data.resumen) {
+                    detallesRefinanciacion.estado_refinanciacion = {
+                        total_original: data.data.resumen.montoOriginal,
+                        total_refinanciado: data.data.resumen.totalRefinanciado,
+                        diferencia: data.data.resumen.diferencia
+                    };
+                }
+
+                // Pagos/cuotas generadas por la refinanciación
+                if (data.data && data.data.cuotasCreadas) {
+                    detallesRefinanciacion.cuotas_generadas = data.data.cuotasCreadas.map(c => ({
+                        orden_venta: c.orden_codigo || c.orden_id || undefined,
+                        fecha: c.fecha_pago,
+                        monto: c.monto_pago,
+                        tipo_pago: c.tipo_pago,
+                        pagado: !!c.pagado
+                    }));
+                } else if (data.data && (data.data.pagosGenerados || data.data.pagos)) {
+                    const lista = data.data.pagosGenerados || data.data.pagos;
+                    detallesRefinanciacion.cuotas_generadas = Array.isArray(lista) ? lista : [lista];
+                }
+
+                detallesRefinanciacion.resultado = {
+                    success: data.success,
+                    message: data.message
+                };
+            } catch (e) {
+                // si no se puede parsear, igual guardamos los detalles de entrada
+            }
+        }
+
+        return detallesRefinanciacion;
+    }
+};
+
+/**
+ * Funciones para registrar acciones de pagos
+ */
+const pago = {
+    marcarPagado: () => registrarHistorial('marcar_pagado', 'pago', pagoDetalles.marcarPagado),
+    refinanciar: () => registrarHistorial('refinanciar', 'pago', pagoDetalles.refinanciar)
+};
+
 module.exports = { 
     registrarHistorial,
     registrarLogin,
@@ -965,5 +1083,6 @@ module.exports = {
     unidadMedida,
     almacen,
     bien,
-    ordenCompra
+    ordenCompra,
+    pago
 };
