@@ -958,7 +958,7 @@
                         </td>
                         <td>
                             <input type="date" 
-                                   class="form-control form-control-sm" 
+                                   class="form-control form-control-sm fecha-cuota-oc" 
                                    id="fechaCuota_${i}" 
                                    value="${fechaFormatted}"
                                    onchange="actualizarTotalesCuotasOC()"
@@ -966,7 +966,7 @@
                         </td>
                         <td>
                             <input type="number" 
-                                   class="form-control form-control-sm" 
+                                   class="form-control form-control-sm monto-cuota-oc" 
                                    id="montoCuota_${i}" 
                                    step="0.01"
                                    min="0.01"
@@ -990,13 +990,11 @@
             const montoDisponible = parseFloat($('#montoDisponibleCuotas').val()) || 0;
             let totalCuotas = 0;
 
-            for (let i = 0; i < cantidadCuotas; i++) {
-                const inputMonto = $(`#montoCuota_${i}`);
-                if (inputMonto.length) {
-                    const monto = parseFloat(inputMonto.val()) || 0;
-                    totalCuotas += monto;
-                }
-            }
+            // Sumar montos de todas las cuotas visibles (independientemente de cómo se generaron)
+            $('.monto-cuota-oc').each(function() {
+                const monto = parseFloat($(this).val()) || 0;
+                totalCuotas += monto;
+            });
 
             const diferencia = totalCuotas - montoDisponible;
 

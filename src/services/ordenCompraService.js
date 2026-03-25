@@ -700,11 +700,22 @@ class OrdenCompraService {
                     const día = String(fecha.getDate()).padStart(2, '0');
                     fechaFormato = `${año}-${mes}-${día}`;
                 }
+
+                // Tomar el monto real de la cuota: primero monto_total, si no, monto_pago
+                const montoRaw =
+                    pago.monto_total != null
+                        ? pago.monto_total
+                        : (pago.monto_pago != null ? pago.monto_pago : null);
+
+                const montoCuota =
+                    montoRaw != null && montoRaw !== ''
+                        ? parseFloat(montoRaw)
+                        : 0; // Evitar NaN en la vista
                 
                 return {
                     id: index + 1,
                     fecha: fechaFormato,
-                    monto: parseFloat(pago.monto_total),
+                    monto: montoCuota,
                     moneda: pago.moneda || 'ARS',
                     observaciones: pago.observaciones || '',
                     estado: pago.pagado ? 'Pagado' : 'Pendiente'
