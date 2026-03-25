@@ -235,11 +235,17 @@ class PagoController {
             const username = req.user.username;
 
             await pagoRepository.marcarComoPagado(id, username, detalle);
+            // Si la petición espera JSON (llamada desde JS), respondemos con JSON
+            if (req.xhr || req.headers.accept?.includes('application/json')) {
+                return res.json({
+                    success: true,
+                    message: 'Pago marcado como pagado exitosamente',
+                    redirectUrl: `/pagos/${id}`
+                });
+            }
 
-            res.json({
-                success: true,
-                message: 'Pago marcado como pagado exitosamente'
-            });
+            // Si viene de un form normal, redirigimos directo al detalle del pago
+            return res.redirect(`/pagos/${id}`);
         } catch (error) {
             console.error('Error en PagoController.marcarComoPagado:', error);
             res.status(500).json({

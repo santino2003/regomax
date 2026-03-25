@@ -11,6 +11,24 @@
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
     <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #reciboPago, #reciboPago * {
+                visibility: visible;
+            }
+            #reciboPago {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+        #reciboPago {
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+        }
         .info-card {
             transition: transform 0.2s;
         }
@@ -178,7 +196,7 @@
                                     <div class="mb-4 text-center py-3 bg-light rounded">
                                         <div class="detail-label">Monto de Pago</div>
                                         <div class="monto-destacado">
-                                            $<%= parseFloat(pago.monto_pago).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                            <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_pago).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                                         </div>
                                     </div>
 
@@ -186,7 +204,7 @@
                                         <div class="mb-3">
                                             <div class="detail-label">Monto Total</div>
                                             <div class="detail-value">
-                                                $<%= parseFloat(pago.monto_total).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                                <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_total).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                                             </div>
                                         </div>
                                     <% } %>
@@ -195,7 +213,7 @@
                                         <div class="mb-3">
                                             <div class="detail-label">Monto Adelanto</div>
                                             <div class="detail-value">
-                                                $<%= parseFloat(pago.monto_adelanto).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                                <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_adelanto).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                                             </div>
                                         </div>
                                     <% } %>
@@ -281,6 +299,74 @@
                                         <div>
                                             <span class="detail-label">Detalle:</span>
                                             <p class="mb-0 detail-value mt-2"><%= pago.detalle_pago %></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+
+                        <!-- Recibo imprimible para firma (solo si está pagado) -->
+                        <% if (pago.pagado) { %>
+                            <div class="col-12 mt-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Recibo de Pago</h5>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.print()">
+                                        <i class="bi bi-printer me-1"></i>Imprimir recibo
+                                    </button>
+                                </div>
+
+                                <div class="card border-dark" id="reciboPago">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="fw-bold">REGOMAX S.A.</h6>
+                                                <p class="mb-1">Recibo de Pago</p>
+                                                <p class="mb-0"><small>Fecha: <%= new Date(pago.fecha_marcado_pagado || pago.fecha_pago).toLocaleDateString('es-AR') %></small></p>
+                                            </div>
+                                            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                                                <p class="mb-1"><small>ID de Pago: #<%= pago.id %></small></p>
+                                                <p class="mb-1"><small>Orden de Compra: <%= pago.orden_codigo %></small></p>
+                                                <p class="mb-0"><small>Proveedor: <%= pago.proveedor_nombre %></small></p>
+                                            </div>
+                                        </div>
+
+                                        <hr>
+
+                                        <p>He recibido de <strong>REGOMAX S.A.</strong> la suma de:</p>
+                                        <p class="monto-destacado mb-1">
+                                            <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_pago).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                        </p>
+                                        <p class="mb-3">
+                                            <% if (pago.tipo_pago === 'RECEPCION') { %>
+                                                en concepto de pago por recepción de bienes vinculados a la Orden de Compra <strong><%= pago.orden_codigo %></strong>.
+                                            <% } else if (pago.tipo_pago === 'ADELANTO') { %>
+                                                en concepto de <strong>adelanto</strong> correspondiente a la Orden de Compra <strong><%= pago.orden_codigo %></strong>.
+                                            <% } else if (pago.tipo_pago === 'SALDO_COMPLETO') { %>
+                                                en concepto de <strong>saldo completo</strong> de la Orden de Compra <strong><%= pago.orden_codigo %></strong>.
+                                            <% } else { %>
+                                                en concepto de pago correspondiente a la Orden de Compra <strong><%= pago.orden_codigo %></strong>.
+                                            <% } %>
+                                        </p>
+
+                                        <% if (pago.detalle_pago) { %>
+                                            <p class="mb-3"><strong>Detalle / Observaciones:</strong> <%= pago.detalle_pago %></p>
+                                        <% } else if (pago.observaciones) { %>
+                                            <p class="mb-3"><strong>Detalle / Observaciones:</strong> <%= pago.observaciones %></p>
+                                        <% } %>
+
+                                        <div class="row mt-4">
+                                            <div class="col-md-6 text-center">
+                                                <div style="border-top: 1px solid #000; padding-top: 0.5rem; margin-top: 2.5rem;">
+                                                    <strong>Firma y Aclaración</strong><br>
+                                                    <small>Proveedor / Responsable</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 text-center mt-4 mt-md-0">
+                                                <div style="border-top: 1px solid #000; padding-top: 0.5rem; margin-top: 2.5rem;">
+                                                    <strong>Aclaración</strong><br>
+                                                    <small>Documento</small>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

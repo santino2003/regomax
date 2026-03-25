@@ -146,6 +146,12 @@ async function confirmarMarcarPagado() {
         const data = await response.json();
 
         if (data.success) {
+            // Si el backend envía una URL de redirección, vamos directo al detalle del pago
+            if (data.redirectUrl) {
+                window.location.href = data.redirectUrl;
+                return;
+            }
+
             mostrarMensaje('Éxito', 'Pago marcado como pagado exitosamente', 'success');
             setTimeout(() => location.reload(), 1500);
         } else {

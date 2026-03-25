@@ -4,6 +4,7 @@ const pagoController = require('../controllers/pagoController');
 const authMiddleware = require('../middleware/auth');
 const permissionsMiddleware = require('../middleware/permissions');
 const { PERMISSIONS } = require('../config/permissionsConfig');
+const { pago: historialPago } = require('../middleware/historialMiddleware');
 
 // Todas las rutas requieren autenticación
 router.use(authMiddleware.verifyToken);
@@ -26,6 +27,7 @@ router.get(
 router.post(
 	'/:id/marcar-pagado',
 	permissionsMiddleware.hasPermission(PERMISSIONS.PAGOS.MARK_PAID),
+	historialPago.marcarPagado(),
 	pagoController.marcarComoPagado
 );
 
@@ -33,6 +35,7 @@ router.post(
 router.post(
 	'/:id/refinanciar',
 	permissionsMiddleware.hasPermission(PERMISSIONS.PAGOS.EDIT),
+	historialPago.refinanciar(),
 	pagoController.refinanciarPago
 );
 

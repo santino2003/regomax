@@ -189,7 +189,7 @@
                                                 <% if (item.detalles) { %>
                                                     <button type="button" class="btn btn-sm btn-outline-info btnVerDetalles" 
                                                             data-bs-toggle="modal" data-bs-target="#detallesModal"
-                                                            data-detalles="<%= JSON.stringify(item.detalles).replace(/"/g, '&quot;') %>">
+                                                            data-detalles='<%- JSON.stringify(item.detalles) %>'>
                                                         <i class="bi bi-eye"></i>
                                                     </button>
                                                 <% } else { %>
