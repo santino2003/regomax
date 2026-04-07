@@ -102,6 +102,15 @@
 
                     <!-- Resumen de totales -->
                     <% 
+                    // Helper para formatear montos con miles separados por punto y decimales por coma
+                    function formatoMoneda(monto) {
+                        const num = Number(monto) || 0;
+                        return new Intl.NumberFormat('es-AR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }).format(num);
+                    }
+
                     let totalGeneral = 0;
                     let totalRecepcion = 0;
                     let totalAdelanto = 0;
@@ -124,7 +133,7 @@
                                     <h6 class="card-subtitle mb-2 text-muted">Total General</h6>
                                     <h4 class="card-title mb-0 monto-destacado">
                                         <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
-                                        <%= totalGeneral.toFixed(2) %>
+                                        <%= formatoMoneda(totalGeneral) %>
                                     </h4>
                                 </div>
                             </div>
@@ -135,7 +144,7 @@
                                     <h6 class="card-subtitle mb-2 text-muted">Por Recepción</h6>
                                     <h5 class="card-title mb-0">
                                         <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
-                                        <%= totalRecepcion.toFixed(2) %>
+                                        <%= formatoMoneda(totalRecepcion) %>
                                     </h5>
                                 </div>
                             </div>
@@ -146,7 +155,7 @@
                                     <h6 class="card-subtitle mb-2 text-muted">Adelantos</h6>
                                     <h5 class="card-title mb-0">
                                         <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
-                                        <%= totalAdelanto.toFixed(2) %>
+                                        <%= formatoMoneda(totalAdelanto) %>
                                     </h5>
                                 </div>
                             </div>
@@ -157,7 +166,7 @@
                                     <h6 class="card-subtitle mb-2 text-muted">Saldos Completos</h6>
                                     <h5 class="card-title mb-0">
                                         <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
-                                        <%= totalSaldo.toFixed(2) %>
+                                        <%= formatoMoneda(totalSaldo) %>
                                     </h5>
                                 </div>
                             </div>
@@ -254,6 +263,7 @@
                                     <th>Bien</th>
                                     <th>Monto</th>
                                     <th>Fecha Pago</th>
+                                    <th>Observación</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -302,14 +312,14 @@
                                             </td>
                                             <td class="monto-destacado">
                                                 <%= pago.moneda || 'ARS' %>
-                                                <%= parseFloat(pago.monto_pago).toFixed(2) %>
+                                                <%= formatoMoneda(pago.monto_pago) %>
                                                 <% if (pago.tipo_pago === 'SALDO_COMPLETO' && pago.monto_total) { %>
                                                     <small class="text-muted d-block">
-                                                        Total: <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_total).toFixed(2) %>
+                                                        Total: <%= pago.moneda || 'ARS' %> <%= formatoMoneda(pago.monto_total) %>
                                                     </small>
                                                     <% if (pago.monto_adelanto) { %>
                                                         <small class="text-muted d-block">
-                                                            Adelanto: <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_adelanto).toFixed(2) %>
+                                                            Adelanto: <%= pago.moneda || 'ARS' %> <%= formatoMoneda(pago.monto_adelanto) %>
                                                         </small>
                                                     <% } %>
                                                 <% } %>
@@ -332,6 +342,13 @@
                                                 </span>
                                             </td>
                                             <td>
+                                                <% if (pago.observaciones) { %>
+                                                    <span><%= pago.observaciones %></span>
+                                                <% } else { %>
+                                                    <span class="text-muted">Sin observaciones</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
                                                 <div class="btn-group" role="group">
                                                     <a href="/pagos/<%= pago.id %>" 
                                                        class="btn btn-sm btn-info" 
@@ -339,7 +356,7 @@
                                                         <i class="bi bi-eye"></i>
                                                     </a>
                                                     <% if (!pago.pagado) { %>
-                                                        <button class="btn btn-sm btn-success" 
+                                                        <button class="btn btn-sm btn-danger" 
                                                                 onclick="marcarPagado(<%= pago.id %>)"
                                                                 title="Marcar como pagado">
                                                             <i class="bi bi-check-circle"></i>
@@ -428,7 +445,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-success" onclick="confirmarMarcarPagado()">
+                    <button type="button" class="btn btn-danger" onclick="confirmarMarcarPagado()">
                         <i class="bi bi-check-circle me-2"></i>Marcar como Pagado
                     </button>
                 </div>
