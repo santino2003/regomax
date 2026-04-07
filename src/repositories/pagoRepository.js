@@ -485,8 +485,8 @@ class PagoRepository {
                 params.push(filtros.fecha_hasta);
             }
 
-            // Ordenar por fecha más reciente
-            query += ' ORDER BY p.fecha_pago DESC, p.fecha_registro DESC';
+            // Ordenar por fecha más vieja primero (lo más antiguo arriba)
+            query += ' ORDER BY p.fecha_pago ASC, p.fecha_registro ASC';
 
             // Obtener total de registros con los mismos filtros
             let countQuery = `

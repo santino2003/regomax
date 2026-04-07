@@ -1144,11 +1144,11 @@ class PagosService {
             }
 
             // 3. Validar cantidad de cuotas
-            if (!cuotas || cuotas.length < 2 || cuotas.length > 60) {
+            if (!cuotas || cuotas.length < 1 || cuotas.length > 60) {
                 console.error('❌ [PAGOS] Cantidad de cuotas inválida:', cuotas?.length);
                 return {
                     success: false,
-                    message: 'La cantidad de cuotas debe estar entre 2 y 60'
+                    message: 'La cantidad de cuotas debe estar entre 1 y 60'
                 };
             }
 

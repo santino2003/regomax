@@ -189,8 +189,8 @@ function abrirModalRefinanciar(pagoId, proveedorNombre, montoOriginal) {
 function generarCuotas() {
     const cantidadCuotas = parseInt(document.getElementById('cantidadCuotas').value) || 0;
     
-    if (cantidadCuotas < 2 || cantidadCuotas > 60) {
-        document.getElementById('tablaCuotasEditable').innerHTML = '<tr><td colspan="3" class="text-center text-muted">Ingrese una cantidad válida de cuotas (2-60)</td></tr>';
+    if (cantidadCuotas < 1 || cantidadCuotas > 60) {
+        document.getElementById('tablaCuotasEditable').innerHTML = '<tr><td colspan="3" class="text-center text-muted">Ingrese una cantidad válida de cuotas (1-60)</td></tr>';
         document.getElementById('badgeTotalCuotas').textContent = '0';
         actualizarTotales();
         return;
@@ -285,8 +285,8 @@ async function confirmarRefinanciar() {
     const observacionesGenerales = document.getElementById('observacionesRefinanciar').value.trim();
     
     // Validaciones
-    if (!cantidadCuotas || cantidadCuotas < 2 || cantidadCuotas > 60) {
-        mostrarMensaje('Validación', 'La cantidad de cuotas debe estar entre 2 y 60', 'warning');
+    if (!cantidadCuotas || cantidadCuotas < 1 || cantidadCuotas > 60) {
+        mostrarMensaje('Validación', 'La cantidad de cuotas debe estar entre 1 y 60', 'warning');
         return;
     }
 
