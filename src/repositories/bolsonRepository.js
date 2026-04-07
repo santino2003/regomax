@@ -157,12 +157,15 @@ class BolsonRepository {
     const safeSortBy = allowedSortBy.has(sortBy) ? sortBy : 'id';
     const safeSortOrder = allowedSortOrder.has((sortOrder || '').toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
   
-    const where = ['despachado = 0'];
-    const filterParams = [];
+  const where = ['despachado = 0'];
+  const filterParams = [];
   
-    if (filtros.producto) { where.push('producto LIKE ?'); filterParams.push(`%${filtros.producto}%`); }
-    if (filtros.codigo)   { where.push('codigo LIKE ?');   filterParams.push(`%${filtros.codigo}%`); }
-    if (filtros.precinto) { where.push('precinto LIKE ?'); filterParams.push(`%${filtros.precinto}%`); }
+  if (filtros.producto) { where.push('producto LIKE ?'); filterParams.push(`%${filtros.producto}%`); }
+  if (filtros.codigo)   { where.push('codigo LIKE ?');   filterParams.push(`%${filtros.codigo}%`); }
+  if (filtros.precinto) { where.push('precinto LIKE ?'); filterParams.push(`%${filtros.precinto}%`); }
+  // Filtros de rango de fechas
+  if (filtros.fechaDesde) { where.push('fecha >= ?'); filterParams.push(filtros.fechaDesde); }
+  if (filtros.fechaHasta) { where.push('fecha <= ?'); filterParams.push(filtros.fechaHasta); }
   
     const whereClause = where.join(' AND ');
   
