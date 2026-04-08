@@ -319,7 +319,6 @@
                                     <div class="card-body">
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <h6 class="fw-bold">REGOMAX S.A.</h6>
                                                 <p class="mb-1">Recibo de Pago</p>
                                                 <p class="mb-0"><small>Fecha: <%= new Date(pago.fecha_marcado_pagado || pago.fecha_pago).toLocaleDateString('es-AR') %></small></p>
                                             </div>
@@ -332,7 +331,7 @@
 
                                         <hr>
 
-                                        <p>He recibido de <strong>REGOMAX S.A.</strong> la suma de:</p>
+                                        <p>He recibido la suma de:</p>
                                         <p class="monto-destacado mb-1">
                                             <%= pago.moneda || 'ARS' %> <%= parseFloat(pago.monto_pago).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                                         </p>
