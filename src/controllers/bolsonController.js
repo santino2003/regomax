@@ -115,7 +115,9 @@ const bolsonController = {
             const filtros = {
                 producto: req.query.producto || '',
                 codigo: req.query.codigo || '',
-                precinto: req.query.precinto || ''
+                precinto: req.query.precinto || '',
+                fechaDesde: req.query.fechaDesde || '',
+                fechaHasta: req.query.fechaHasta || ''
             };
             
             // Solo mostrar bolsones no despachados
@@ -302,7 +304,9 @@ const bolsonController = {
             const filtros = {
                 producto: req.query.producto || '',
                 codigo: req.query.codigo || '',
-                precinto: req.query.precinto || ''
+                precinto: req.query.precinto || '',
+                fechaDesde: req.query.fechaDesde || '',
+                fechaHasta: req.query.fechaHasta || ''
             };
             
             console.log('Filtros aplicados para exportación:', filtros);
@@ -351,6 +355,16 @@ const bolsonController = {
             if (filtros.precinto) {
                 query += ' AND precinto LIKE ?';
                 queryParams.push(`%${filtros.precinto}%`);
+            }
+
+            if (filtros.fechaDesde) {
+                query += ' AND fecha >= ?';
+                queryParams.push(filtros.fechaDesde);
+            }
+
+            if (filtros.fechaHasta) {
+                query += ' AND fecha <= ?';
+                queryParams.push(filtros.fechaHasta);
             }
             
             // Ordenar por ID descendente

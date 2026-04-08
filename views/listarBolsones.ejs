@@ -98,8 +98,22 @@
                                         <input type="text" class="form-control" id="precinto" name="precinto" 
                                                value="<%= filtros && filtros.precinto || '' %>" placeholder="Buscar por precinto">
                                     </div>
-                                    
-                                    <div class="col-md-6 col-lg-3 d-flex align-items-end">
+                                </div>
+
+                                <div class="row g-3 mt-2">
+                                    <div class="col-md-6 col-lg-3">
+                                        <label for="fechaDesde" class="form-label">Desde</label>
+                                        <input type="date" class="form-control" id="fechaDesde" name="fechaDesde" 
+                                               value="<%= filtros && filtros.fechaDesde || '' %>">
+                                    </div>
+
+                                    <div class="col-md-6 col-lg-3">
+                                        <label for="fechaHasta" class="form-label">Hasta</label>
+                                        <input type="date" class="form-control" id="fechaHasta" name="fechaHasta" 
+                                               value="<%= filtros && filtros.fechaHasta || '' %>">
+                                    </div>
+
+                                    <div class="col-md-12 col-lg-6 d-flex align-items-end">
                                         <button type="submit" class="btn btn-primary me-2">
                                             <i class="bi bi-search me-1"></i>Buscar
                                         </button>
@@ -160,14 +174,14 @@
                                 <ul class="pagination justify-content-center">
                                     <!-- Botón Primera Página -->
                                     <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/bolsones?page=1&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %>" aria-label="Primera">
+                                        <a class="page-link" href="/bolsones?page=1&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>" aria-label="Primera">
                                             <span aria-hidden="true">&laquo;&laquo;</span>
                                         </a>
                                     </li>
                                     
                                     <!-- Botón Anterior -->
                                     <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/bolsones?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %>" aria-label="Anterior">
+                                        <a class="page-link" href="/bolsones?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>" aria-label="Anterior">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
                                     </li>
@@ -190,7 +204,7 @@
                                     if (startPage > 1) { 
                                     %>
                                         <li class="page-item">
-                                            <a class="page-link" href="/bolsones?page=1&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %>">1</a>
+                                            <a class="page-link" href="/bolsones?page=1&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>">1</a>
                                         </li>
                                         <% if (startPage > 2) { %>
                                             <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -200,7 +214,7 @@
                                     <!-- Páginas numéricas -->
                                     <% for (let i = startPage; i <= endPage; i++) { %>
                                         <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                                            <a class="page-link" href="/bolsones?page=<%= i %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %>"><%= i %></a>
+                                            <a class="page-link" href="/bolsones?page=<%= i %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>"><%= i %></a>
                                         </li>
                                     <% } %>
                                     
@@ -210,20 +224,20 @@
                                             <li class="page-item disabled"><span class="page-link">...</span></li>
                                         <% } %>
                                         <li class="page-item">
-                                            <a class="page-link" href="/bolsones?page=<%= totalPages %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %>"><%= totalPages %></a>
+                                            <a class="page-link" href="/bolsones?page=<%= totalPages %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>"><%= totalPages %></a>
                                         </li>
                                     <% } %>
                                     
                                     <!-- Botón Siguiente -->
                                     <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/bolsones?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %>" aria-label="Siguiente">
+                                        <a class="page-link" href="/bolsones?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>" aria-label="Siguiente">
                                             <span aria-hidden="true">&raquo;</span>
                                         </a>
                                     </li>
                                     
                                     <!-- Botón Última Página -->
                                     <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/bolsones?page=<%= pagination.totalPages %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %>" aria-label="Última">
+                                        <a class="page-link" href="/bolsones?page=<%= pagination.totalPages %>&limit=<%= pagination.limit %><%= filtros && filtros.producto ? '&producto=' + filtros.producto : '' %><%= filtros && filtros.codigo ? '&codigo=' + filtros.codigo : '' %><%= filtros && filtros.precinto ? '&precinto=' + filtros.precinto : '' %><%= filtros && filtros.fechaDesde ? '&fechaDesde=' + filtros.fechaDesde : '' %><%= filtros && filtros.fechaHasta ? '&fechaHasta=' + filtros.fechaHasta : '' %>" aria-label="Última">
                                             <span aria-hidden="true">&raquo;&raquo;</span>
                                         </a>
                                     </li>

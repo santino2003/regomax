@@ -6,11 +6,19 @@ $(document).ready(function() {
     const producto = urlParams.get('producto') || '';
     const codigo = urlParams.get('codigo') || '';
     const precinto = urlParams.get('precinto') || '';
+    const fechaDesde = urlParams.get('fechaDesde') || '';
+    const fechaHasta = urlParams.get('fechaHasta') || '';
     
     // Establecer los valores en los campos del formulario
     document.getElementById('producto').value = producto;
     document.getElementById('codigo').value = codigo;
     document.getElementById('precinto').value = precinto;
+    if (document.getElementById('fechaDesde')) {
+        document.getElementById('fechaDesde').value = fechaDesde;
+    }
+    if (document.getElementById('fechaHasta')) {
+        document.getElementById('fechaHasta').value = fechaHasta;
+    }
     
     // Manejar exportación de bolsones
     $('#exportar-bolsones').on('click', function() {
@@ -21,17 +29,21 @@ $(document).ready(function() {
                .html('<i class="bi bi-hourglass-split me-2"></i>Exportando...');
         
         // Obtener los valores actuales de los filtros
-        const producto = document.getElementById('producto').value;
-        const codigo = document.getElementById('codigo').value;
-        const precinto = document.getElementById('precinto').value;
+    const producto = document.getElementById('producto').value;
+    const codigo = document.getElementById('codigo').value;
+    const precinto = document.getElementById('precinto').value;
+    const fechaDesde = document.getElementById('fechaDesde') ? document.getElementById('fechaDesde').value : '';
+    const fechaHasta = document.getElementById('fechaHasta') ? document.getElementById('fechaHasta').value : '';
         
         // Construir URL con los filtros actuales
         let exportUrl = '/bolsones/exportar';
         const params = new URLSearchParams();
         
-        if (producto) params.append('producto', producto);
-        if (codigo) params.append('codigo', codigo);
-        if (precinto) params.append('precinto', precinto);
+    if (producto) params.append('producto', producto);
+    if (codigo) params.append('codigo', codigo);
+    if (precinto) params.append('precinto', precinto);
+    if (fechaDesde) params.append('fechaDesde', fechaDesde);
+    if (fechaHasta) params.append('fechaHasta', fechaHasta);
         
         // Añadir los parámetros a la URL si hay algún filtro
         if (params.toString()) {
@@ -97,9 +109,11 @@ $(document).ready(function() {
     // Asegurarse de que los parámetros de filtro estén en todas las URLs de paginación
     const actualizarEnlacesPaginacion = () => {
         // Obtener los valores actuales de filtros
-        const producto = document.getElementById('producto').value;
-        const codigo = document.getElementById('codigo').value;
-        const precinto = document.getElementById('precinto').value;
+    const producto = document.getElementById('producto').value;
+    const codigo = document.getElementById('codigo').value;
+    const precinto = document.getElementById('precinto').value;
+    const fechaDesde = document.getElementById('fechaDesde') ? document.getElementById('fechaDesde').value : '';
+    const fechaHasta = document.getElementById('fechaHasta') ? document.getElementById('fechaHasta').value : '';
         
         // Seleccionar todos los enlaces de paginación
         const enlacesPaginacion = document.querySelectorAll('.pagination .page-link');
@@ -112,11 +126,15 @@ $(document).ready(function() {
             url.searchParams.delete('producto');
             url.searchParams.delete('codigo');
             url.searchParams.delete('precinto');
+            url.searchParams.delete('fechaDesde');
+            url.searchParams.delete('fechaHasta');
             
             // Añadir solo los filtros que tengan valor
             if (producto) url.searchParams.append('producto', producto);
             if (codigo) url.searchParams.append('codigo', codigo);
             if (precinto) url.searchParams.append('precinto', precinto);
+            if (fechaDesde) url.searchParams.append('fechaDesde', fechaDesde);
+            if (fechaHasta) url.searchParams.append('fechaHasta', fechaHasta);
             
             // Actualizar el href del enlace
             enlace.href = url.toString();
@@ -124,7 +142,7 @@ $(document).ready(function() {
     };
     
     // Cuando cambie cualquier campo de filtro, actualizar enlaces de paginación
-    $('#producto, #codigo, #precinto').on('change', actualizarEnlacesPaginacion);
+    $('#producto, #codigo, #precinto, #fechaDesde, #fechaHasta').on('change', actualizarEnlacesPaginacion);
     
     // Cuando se envíe el formulario, actualizar enlaces antes de enviarlo
     $('#filtrosForm').on('submit', function() {
@@ -143,15 +161,17 @@ $(document).ready(function() {
     // Actualizar también los enlaces del selector de límite de página
     $('select[name="limit"]').on('change', function() {
         // Obtener los filtros actuales
-        const producto = document.getElementById('producto').value;
-        const codigo = document.getElementById('codigo').value;
-        const precinto = document.getElementById('precinto').value;
+    const producto = document.getElementById('producto').value;
+    const codigo = document.getElementById('codigo').value;
+    const precinto = document.getElementById('precinto').value;
+    const fechaDesde = document.getElementById('fechaDesde') ? document.getElementById('fechaDesde').value : '';
+    const fechaHasta = document.getElementById('fechaHasta') ? document.getElementById('fechaHasta').value : '';
         
         // Obtener el formulario y añadir los filtros como campos ocultos
         const form = $(this).closest('form');
         
         // Eliminar filtros existentes para evitar duplicados
-        form.find('input[name="producto"], input[name="codigo"], input[name="precinto"]').remove();
+    form.find('input[name="producto"], input[name="codigo"], input[name="precinto"], input[name="fechaDesde"], input[name="fechaHasta"]').remove();
         
         // Añadir los filtros como campos ocultos
         if (producto) {
@@ -162,6 +182,12 @@ $(document).ready(function() {
         }
         if (precinto) {
             form.append(`<input type="hidden" name="precinto" value="${precinto}">`);
+        }
+        if (fechaDesde) {
+            form.append(`<input type="hidden" name="fechaDesde" value="${fechaDesde}">`);
+        }
+        if (fechaHasta) {
+            form.append(`<input type="hidden" name="fechaHasta" value="${fechaHasta}">`);
         }
     });
 });
