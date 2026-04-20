@@ -35,6 +35,49 @@ class OrdenCompraService {
     }
 
     /**
+     * Normalizar cuotas recibidas (array o JSON string)
+     */
+    normalizarCuotas(cuotas) {
+        if (!cuotas) return [];
+        if (typeof cuotas === 'string') {
+            return JSON.parse(cuotas);
+        }
+        return Array.isArray(cuotas) ? cuotas : [];
+    }
+
+    /**
+     * Calcular monto total de la orden en base a precios de proveedor por bien
+     */
+    async calcularMontoTotalOrden(items = [], logDetalle = false) {
+        let montoTotal = 0;
+        let monedasUtilizadas = new Set();
+        for (const item of items) {
+            if (item.bien_id && item.proveedor_sugerido_id && item.cantidad) {
+                try {
+                    const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
+                        item.bien_id,
+                        item.proveedor_sugerido_id
+                    );
+                    
+                    if (precioInfo && precioInfo.precio) {
+                        const precio = parseFloat(precioInfo.precio);
+                        const cantidad = parseFloat(item.cantidad);
+                        montoTotal += precio * cantidad;
+
+                        if (logDetalle) {
+                            console.log(`💰 Item ${item.bien_id}: ${cantidad} × $${precio} = $${(precio * cantidad).toFixed(2)}`);
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}`);
+                }
+            }
+        }
+
+        return montoTotal;
+    }
+
+    /**
      * Crear una nueva orden de compra
      */
     async crearOrdenCompra(ordenData, usuario) {
@@ -91,53 +134,36 @@ class OrdenCompraService {
             console.log('Crear Orden - Contrafactura en datosOrden:', datosOrden.contrafactura);
             console.log('Crear Orden - Cuotas:', ordenData.cuotas);
 
+            let cuotasNormalizadas = [];
+            let montoTotalContrafactura = 0;
+
             // Si es contrafactura, validar los datos de pago ANTES de crear la orden
             if (ordenData.contrafactura && ordenData.cuotas && ordenData.cuotas.length > 0) {
-                // Calcular el monto total de la orden consultando precios de bienes_proveedores
-                let montoTotal = 0;
-                for (const item of ordenData.items) {
-                    if (item.bien_id && item.proveedor_sugerido_id && item.cantidad) {
-                        try {
-                            // Obtener el precio del proveedor para ese bien
-                            const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
-                                item.bien_id,
-                                item.proveedor_sugerido_id
-                            );
-                            
-                            if (precioInfo && precioInfo.precio) {
-                                const precio = parseFloat(precioInfo.precio);
-                                const cantidad = parseFloat(item.cantidad);
-                                montoTotal += precio * cantidad;
-                                console.log(`💰 Item ${item.bien_id}: ${cantidad} × $${precio} = $${(precio * cantidad).toFixed(2)}`);
-                            }
-                        } catch (error) {
-                            console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}`);
-                        }
-                    }
-                }
+                cuotasNormalizadas = this.normalizarCuotas(ordenData.cuotas);
+                ordenData.cuotas = cuotasNormalizadas;
 
-                console.log(`💰 Monto total calculado: $${montoTotal.toFixed(2)}`);
+                montoTotalContrafactura = await this.calcularMontoTotalOrden(ordenData.items, true);
+                console.log(`💰 Monto total calculado: $${montoTotalContrafactura.toFixed(2)}`);
 
                 // Validar que el adelanto no sea mayor al monto total
                 if (ordenData.monto_adelanto && parseFloat(ordenData.monto_adelanto) > 0) {
                     const montoAdelanto = parseFloat(ordenData.monto_adelanto);
-                    if (montoAdelanto > montoTotal) {
-                        throw new Error(`El adelanto ($${montoAdelanto.toFixed(2)}) no puede ser mayor al monto total de la orden ($${montoTotal.toFixed(2)})`);
+                    if (montoAdelanto > montoTotalContrafactura) {
+                        throw new Error(`El adelanto ($${montoAdelanto.toFixed(2)}) no puede ser mayor al monto total de la orden ($${montoTotalContrafactura.toFixed(2)})`);
                     }
                 }
 
                 // Validar que el total de cuotas no supere el monto disponible
-                const cuotas = typeof ordenData.cuotas === 'string' ? JSON.parse(ordenData.cuotas) : ordenData.cuotas;
-                const totalCuotas = cuotas.reduce((sum, c) => sum + parseFloat(c.monto), 0);
+                const totalCuotas = cuotasNormalizadas.reduce((sum, c) => sum + parseFloat(c.monto), 0);
                 const adelanto = parseFloat(ordenData.monto_adelanto) || 0;
-                const montoDisponible = montoTotal - adelanto;
+                const montoDisponible = montoTotalContrafactura - adelanto;
                 
                 if (totalCuotas > montoDisponible + 0.01) { // Tolerancia de 1 centavo
-                    throw new Error(`El total de cuotas ($${totalCuotas.toFixed(2)}) no puede ser mayor al monto disponible ($${montoDisponible.toFixed(2)}). Monto total: $${montoTotal.toFixed(2)}, Adelanto: $${adelanto.toFixed(2)}`);
+                    throw new Error(`El total de cuotas ($${totalCuotas.toFixed(2)}) no puede ser mayor al monto disponible ($${montoDisponible.toFixed(2)}). Monto total: $${montoTotalContrafactura.toFixed(2)}, Adelanto: $${adelanto.toFixed(2)}`);
                 }
 
                 // Validar que haya un monto total válido
-                if (montoTotal <= 0) {
+                if (montoTotalContrafactura <= 0) {
                     throw new Error('No se pudo calcular el monto total de la orden. Verifica que los items tengan proveedor sugerido y precios configurados.');
                 }
             }
@@ -149,32 +175,9 @@ class OrdenCompraService {
             result.codigo = codigoFinal;
 
             // Si es contrafactura, registrar los pagos correspondientes (cuotas)
-            if (ordenData.contrafactura && ordenData.cuotas && ordenData.cuotas.length > 0) {
+            if (ordenData.contrafactura && cuotasNormalizadas.length > 0) {
                 console.log('📝 Procesando cuotas de pago...');
-                
-                // Calcular el monto total de la orden consultando precios de bienes_proveedores
-                let montoTotal = 0;
-                for (const item of ordenData.items) {
-                    if (item.bien_id && item.proveedor_sugerido_id && item.cantidad) {
-                        try {
-                            // Obtener el precio del proveedor para ese bien
-                            const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
-                                item.bien_id,
-                                item.proveedor_sugerido_id
-                            );
-                            
-                            if (precioInfo && precioInfo.precio) {
-                                const precio = parseFloat(precioInfo.precio);
-                                const cantidad = parseFloat(item.cantidad);
-                                montoTotal += precio * cantidad;
-                            }
-                        } catch (error) {
-                            console.warn(`⚠️ No se pudo obtener precio para bien ${item.bien_id} con proveedor ${item.proveedor_sugerido_id}`);
-                        }
-                    }
-                }
-
-                console.log(`💰 Monto total calculado: $${montoTotal.toFixed(2)}`);
+                console.log(`💰 Monto total calculado: $${montoTotalContrafactura.toFixed(2)}`);
 
                 // Si hay monto de adelanto, registrarlo con su fecha específica
                 if (ordenData.monto_adelanto && parseFloat(ordenData.monto_adelanto) > 0) {
@@ -188,9 +191,7 @@ class OrdenCompraService {
                 }
 
                 // Registrar cada cuota como un pago separado
-                const cuotas = typeof ordenData.cuotas === 'string' ? JSON.parse(ordenData.cuotas) : ordenData.cuotas;
-                
-                for (const cuota of cuotas) {
+                for (const cuota of cuotasNormalizadas) {
                     console.log(`📝 Registrando cuota ${cuota.numeroCuota}: $${cuota.monto} - Fecha: ${cuota.fecha}`);
                     
                     await pagosService.registrarCuotaOrdenCompra({
@@ -198,12 +199,12 @@ class OrdenCompraService {
                         numeroCuota: cuota.numeroCuota,
                         monto: cuota.monto,
                         fechaPago: cuota.fecha,
-                        observaciones: cuota.observacion || `Cuota ${cuota.numeroCuota} de ${cuotas.length}`,
+                        observaciones: cuota.observacion || `Cuota ${cuota.numeroCuota} de ${cuotasNormalizadas.length}`,
                         username: usuario
                     });
                 }
 
-                console.log(`✅ ${cuotas.length} cuota(s) registradas exitosamente`);
+                console.log(`✅ ${cuotasNormalizadas.length} cuota(s) registradas exitosamente`);
             }
 
             return {

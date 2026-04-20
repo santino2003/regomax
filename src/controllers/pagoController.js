@@ -84,7 +84,7 @@ class PagoController {
         try {
             const username = req.user.username;
             const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 50;
+            const limit = parseInt(req.query.limit || req.query.limite) || 20;
             const offset = (page - 1) * limit;
 
             // Obtener filtros de la query string

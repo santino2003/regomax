@@ -2,10 +2,13 @@
 const token = localStorage.getItem('token');
 let currentPage = 1;
 let currentLimit = 10;
-let currentFilters = {};
+let currentFilters = {
+    estado: 'En Proceso,Aprobada'
+};
 
 $(document).ready(function() {
     cargarBienes();
+    $('#filtroEstado').val(currentFilters.estado);
     cargarOrdenes();
     
     $('#filtrosForm').on('submit', function(e) {
