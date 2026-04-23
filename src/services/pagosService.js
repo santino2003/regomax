@@ -132,13 +132,14 @@ class PagosService {
      */
     async registrarAdelanto(adelantoData) {
         try {
-            const { ordenId, montoAdelanto, fechaPago, username } = adelantoData;
+            const { ordenId, montoAdelanto, fechaPago, username, monedaObjetivo } = adelantoData;
 
             console.log('💰 [PAGOS] Registrando adelanto:', { 
                 ordenId, 
                 montoAdelanto, 
                 fechaPago, 
-                usuario: username 
+                usuario: username,
+                monedaObjetivo: monedaObjetivo || null
             });
 
             // Validar datos
@@ -212,6 +213,13 @@ class PagosService {
                             });
                             
                             if (precioInfo && precioInfo.precio) {
+                                const monedaItem = (precioInfo.moneda || 'ARS').toUpperCase();
+
+                                // Si se indicó moneda objetivo, ignorar items de otra moneda
+                                if (monedaObjetivo && monedaItem !== String(monedaObjetivo).toUpperCase()) {
+                                    continue;
+                                }
+
                                 const precioUnitario = parseFloat(precioInfo.precio);
                                 const montoItem = precioUnitario * parseFloat(item.cantidad);
                                 grupoProveedor.montoItems += montoItem;
@@ -233,6 +241,18 @@ class PagosService {
             // Validar que tengamos al menos un proveedor
             if (itemsPorProveedor.size === 0) {
                 throw new Error('La orden no tiene proveedores asignados. Asigne un proveedor a la orden o a sus items para registrar el adelanto.');
+            }
+
+            if (monedaObjetivo) {
+                for (const [provId, grupo] of itemsPorProveedor.entries()) {
+                    if ((grupo.montoItems || 0) <= 0) {
+                        itemsPorProveedor.delete(provId);
+                    }
+                }
+
+                if (itemsPorProveedor.size === 0) {
+                    throw new Error(`No se encontraron items con moneda ${monedaObjetivo} para registrar el adelanto`);
+                }
             }
 
             console.log(`✓ [PAGOS] Identificados ${itemsPorProveedor.size} proveedor(es) en la orden`);
@@ -572,14 +592,15 @@ class PagosService {
      */
     async registrarCuotaOrdenCompra(cuotaData) {
         try {
-            const { ordenId, numeroCuota, monto, fechaPago, observaciones, username } = cuotaData;
+            const { ordenId, numeroCuota, monto, fechaPago, observaciones, username, monedaObjetivo } = cuotaData;
 
             console.log('💰 [PAGOS] Registrando cuota de orden de compra:', { 
                 ordenId, 
                 numeroCuota,
                 monto, 
                 fechaPago, 
-                usuario: username 
+                usuario: username,
+                monedaObjetivo: monedaObjetivo || null
             });
 
             // Validar datos
@@ -647,6 +668,13 @@ class PagosService {
                                 moneda: precioInfo && precioInfo.moneda
                             });
                             if (precioInfo && precioInfo.precio) {
+                                const monedaItem = (precioInfo.moneda || 'ARS').toUpperCase();
+
+                                // Si se indicó moneda objetivo, ignorar items de otra moneda
+                                if (monedaObjetivo && monedaItem !== String(monedaObjetivo).toUpperCase()) {
+                                    continue;
+                                }
+
                                 const precioUnitario = parseFloat(precioInfo.precio);
                                 const montoItem = precioUnitario * parseFloat(item.cantidad);
                                 grupoProveedor.montoItems += montoItem;
@@ -667,6 +695,18 @@ class PagosService {
             // Validar que tengamos al menos un proveedor
             if (itemsPorProveedor.size === 0) {
                 throw new Error('La orden no tiene proveedores asignados. Asigne un proveedor a la orden o a sus items para registrar la cuota.');
+            }
+
+            if (monedaObjetivo) {
+                for (const [provId, grupo] of itemsPorProveedor.entries()) {
+                    if ((grupo.montoItems || 0) <= 0) {
+                        itemsPorProveedor.delete(provId);
+                    }
+                }
+
+                if (itemsPorProveedor.size === 0) {
+                    throw new Error(`No se encontraron items con moneda ${monedaObjetivo} para registrar la cuota`);
+                }
             }
 
             console.log(`✓ [PAGOS] Identificados ${itemsPorProveedor.size} proveedor(es) en la orden`);

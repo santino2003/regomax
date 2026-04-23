@@ -122,6 +122,11 @@ const ordenCompraController = {
                 ordenData.cuotas = JSON.parse(ordenData.cuotas);
             }
 
+            // Procesar adelantos por moneda si vienen como JSON string
+            if (typeof ordenData.adelantos_por_moneda === 'string') {
+                ordenData.adelantos_por_moneda = JSON.parse(ordenData.adelantos_por_moneda);
+            }
+
             // Procesar contrafactura como booleano
             // Maneja: 'true', 'false', true, false, undefined
             if (ordenData.contrafactura !== undefined) {
@@ -170,6 +175,13 @@ const ordenCompraController = {
             if (ordenData.cuotas) {
                 if (typeof ordenData.cuotas === 'string') {
                     ordenData.cuotas = JSON.parse(ordenData.cuotas);
+                }
+            }
+
+            // Procesar adelantos por moneda si vienen como JSON string
+            if (ordenData.adelantos_por_moneda) {
+                if (typeof ordenData.adelantos_por_moneda === 'string') {
+                    ordenData.adelantos_por_moneda = JSON.parse(ordenData.adelantos_por_moneda);
                 }
             }
 
