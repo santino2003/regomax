@@ -148,12 +148,22 @@ const listarNFU = async (req, res) => {
       fechaDesde: req.query.fechaDesde || '',
       fechaHasta: req.query.fechaHasta || '',
       categoria: req.query.categoria || '',
-      tipo: req.query.tipo || ''
+      tipo: req.query.tipo || '',
+      clienteId: req.query.clienteId || ''
     };
     
     // Obtener registros de NFU
     const registros = await nfuService.obtenerRegistrosNFU(page, limit, filtros);
     
+    // Obtener lista de clientes NFU para el selector en el listado
+    let clientes = [];
+    try {
+      clientes = await clienteNFUService.obtenerTodos();
+    } catch (err) {
+      console.error('Error al obtener clientes NFU para listado:', err);
+      clientes = [];
+    }
+
     // Calcular total acumulado
     let totalKg = 0;
     if (registros && registros.data) {
@@ -174,6 +184,7 @@ const listarNFU = async (req, res) => {
       registros: registros.data || [],
       pagination: registros.pagination || {},
       filtros: filtros,
+      clientes: clientes || [],
       totalKg: totalKg.toFixed(2),
       fechaActual: formatearFechaLocal(fechaActual())
     });
@@ -193,7 +204,8 @@ const exportarCSV = async (req, res) => {
       fechaDesde: req.query.fechaDesde || '',
       fechaHasta: req.query.fechaHasta || '',
       categoria: req.query.categoria || '',
-      tipo: req.query.tipo || ''
+      tipo: req.query.tipo || '',
+      clienteId: req.query.clienteId || ''
     };
 
     // Obtener registros con los filtros aplicados

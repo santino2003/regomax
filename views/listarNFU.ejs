@@ -27,28 +27,43 @@
                     </div>
                     <div class="card-body">
                         <form id="filtrosForm" method="GET">
-                            <div class="row g-3">
-                                <div class="col-md-3">
-                                    <label for="fechaDesde" class="form-label">Desde:</label>
-                                    <input type="date" class="form-control" id="fechaDesde" name="fechaDesde"
+                            <div class="row g-2 align-items-end">
+                                <div class="col-lg-2 col-md-3">
+                                    <label for="fechaDesde" class="form-label small mb-1">Desde:</label>
+                                    <input type="date" class="form-control form-control-sm" id="fechaDesde" name="fechaDesde"
                                         value="<%= filtros && filtros.fechaDesde || '' %>">
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="fechaHasta" class="form-label">Hasta:</label>
-                                    <input type="date" class="form-control" id="fechaHasta" name="fechaHasta"
+
+                                <div class="col-lg-2 col-md-3">
+                                    <label for="fechaHasta" class="form-label small mb-1">Hasta:</label>
+                                    <input type="date" class="form-control form-control-sm" id="fechaHasta" name="fechaHasta"
                                         value="<%= filtros && filtros.fechaHasta || '' %>">
                                 </div>
-                                <div class="col-md-2">
-                                    <label for="categoria" class="form-label">Categoría:</label>
-                                    <select class="form-select" id="categoria" name="categoria">
+
+                                <div class="col-lg-2 col-md-3">
+                                    <label for="clienteId" class="form-label small mb-1">Cliente:</label>
+                                    <select class="form-select form-select-sm" id="clienteId" name="clienteId">
+                                        <option value="">Todos</option>
+                                        <% if (clientes && clientes.length > 0) { %>
+                                            <% clientes.forEach(function(cliente) { %>
+                                                <option value="<%= cliente.id %>" <%= filtros && String(filtros.clienteId) === String(cliente.id) ? 'selected' : '' %>><%= cliente.empresa %></option>
+                                            <% }); %>
+                                        <% } %>
+                                    </select>
+                                </div>
+
+                                <div class="col-lg-2 col-md-3">
+                                    <label for="categoria" class="form-label small mb-1">Categoría:</label>
+                                    <select class="form-select form-select-sm" id="categoria" name="categoria">
                                         <option value="">Todas</option>
                                         <option value="NFU" <%= filtros && filtros.categoria === 'NFU' ? 'selected' : '' %>>NFU</option>
                                         <option value="CNFU" <%= filtros && filtros.categoria === 'CNFU' ? 'selected' : '' %>>CNFU</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
-                                    <label for="tipo" class="form-label">Tipo:</label>
-                                    <select class="form-select" id="tipo" name="tipo">
+
+                                <div class="col-lg-2 col-md-3">
+                                    <label for="tipo" class="form-label small mb-1">Tipo:</label>
+                                    <select class="form-select form-select-sm" id="tipo" name="tipo">
                                         <option value="">Todos</option>
                                         <option value="Auto" <%= filtros && filtros.tipo === 'Auto' ? 'selected' : '' %>>Auto</option>
                                         <option value="Camion" <%= filtros && filtros.tipo === 'Camion' ? 'selected' : '' %>>Camión</option>
@@ -56,12 +71,13 @@
                                         <option value="Otros" <%= filtros && filtros.tipo === 'Otros' ? 'selected' : '' %>>Otros</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary me-2">
+
+                                <div class="col-lg-2 col-md-3 d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
                                         <i class="bi bi-search me-1"></i>Buscar
                                     </button>
-                                    <a href="/nfu" class="btn btn-outline-secondary">
-                                        <i class="bi bi-x-circle me-1"></i>Limpiar
+                                    <a href="/nfu" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-x-circle"></i>
                                     </a>
                                 </div>
                             </div>
@@ -138,6 +154,7 @@
                                 if (filtros.fechaHasta) params += '&fechaHasta=' + filtros.fechaHasta;
                                 if (filtros.categoria) params += '&categoria=' + encodeURIComponent(filtros.categoria);
                                 if (filtros.tipo) params += '&tipo=' + encodeURIComponent(filtros.tipo);
+                                if (filtros.clienteId) params += '&clienteId=' + encodeURIComponent(filtros.clienteId);
                             }
                             return params;
                         };
@@ -243,6 +260,9 @@
                             <% if (filtros && filtros.tipo) { %>
                                 <input type="hidden" name="tipo" value="<%= filtros.tipo %>">
                             <% } %>
+                            <% if (filtros && filtros.clienteId) { %>
+                                <input type="hidden" name="clienteId" value="<%= filtros.clienteId %>">
+                            <% } %>
                         </form>
                     </div>
                 </div>
@@ -297,6 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const fechaHasta = document.getElementById('fechaHasta').value || '';
             const categoria = document.getElementById('categoria').value || '';
             const tipo = document.getElementById('tipo').value || '';
+            const clienteId = document.getElementById('clienteId') ? document.getElementById('clienteId').value || '' : '';
             
             console.log('Filtros:', { fechaDesde, fechaHasta, categoria, tipo });
             
@@ -308,6 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (fechaHasta) params.push(`fechaHasta=${encodeURIComponent(fechaHasta)}`);
             if (categoria) params.push(`categoria=${encodeURIComponent(categoria)}`);
             if (tipo) params.push(`tipo=${encodeURIComponent(tipo)}`);
+            if (clienteId) params.push(`clienteId=${encodeURIComponent(clienteId)}`);
             
             url += params.join('&');
             

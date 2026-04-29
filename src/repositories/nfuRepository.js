@@ -149,6 +149,12 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
       query += ' AND nfu.tipo = ?';
       queryParams.push(filtros.tipo);
     }
+
+    // Filtrar por cliente (clienteId) si se entrega
+    if (filtros.clienteId && String(filtros.clienteId).trim() !== '') {
+      query += ' AND nfu.cliente_id = ?';
+      queryParams.push(filtros.clienteId);
+    }
     
     // Ordenar por fecha descendente
     query += ' ORDER BY nfu.fecha DESC';
@@ -183,6 +189,11 @@ const obtenerRegistrosNFU = async (page = 1, limit = 10, filtros = {}) => {
     if (filtros.tipo && filtros.tipo.trim() !== '') {
       countQuery += ' AND tipo = ?';
       countParams.push(filtros.tipo);
+    }
+
+    if (filtros.clienteId && String(filtros.clienteId).trim() !== '') {
+      countQuery += ' AND cliente_id = ?';
+      countParams.push(filtros.clienteId);
     }
     
     const countResult = await db.query(countQuery, countParams);
