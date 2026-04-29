@@ -17,10 +17,13 @@ class OrdenCompraRepository {
     /**
      * Crear una nueva orden de compra con sus items
      */
-    async crearOrdenCompra(ordenData, items = []) {
-        const connection = await db.pool.getConnection();
+    async crearOrdenCompra(ordenData, items = [], connectionExterna = null) {
+        const connection = connectionExterna || await db.pool.getConnection();
+        const manejaTransaccion = !connectionExterna;
         try {
-            await connection.beginTransaction();
+            if (manejaTransaccion) {
+                await connection.beginTransaction();
+            }
             
             // Si hay múltiples archivos, guardarlos como JSON
             let archivoAdjunto = ordenData.archivo_adjunto || null;
@@ -79,24 +82,33 @@ class OrdenCompraRepository {
                 }
             }
             
-            await connection.commit();
+            if (manejaTransaccion) {
+                await connection.commit();
+            }
             return { id: ordenId, codigo: ordenData.codigo };
         } catch (error) {
-            await connection.rollback();
+            if (manejaTransaccion) {
+                await connection.rollback();
+            }
             console.error('Error en OrdenCompraRepository.crearOrdenCompra:', error);
             throw error;
         } finally {
-            connection.release();
+            if (manejaTransaccion) {
+                connection.release();
+            }
         }
     }
 
     /**
      * Modificar una orden de compra existente
      */
-    async modificarOrdenCompra(id, ordenData, items = []) {
-        const connection = await db.pool.getConnection();
+    async modificarOrdenCompra(id, ordenData, items = [], connectionExterna = null) {
+        const connection = connectionExterna || await db.pool.getConnection();
+        const manejaTransaccion = !connectionExterna;
         try {
-            await connection.beginTransaction();
+            if (manejaTransaccion) {
+                await connection.beginTransaction();
+            }
             
             // Preparar datos de actualización
             let updateFields = `
@@ -203,14 +215,20 @@ class OrdenCompraRepository {
                 }
             }
             
-            await connection.commit();
+            if (manejaTransaccion) {
+                await connection.commit();
+            }
             return true;
         } catch (error) {
-            await connection.rollback();
+            if (manejaTransaccion) {
+                await connection.rollback();
+            }
             console.error('Error en OrdenCompraRepository.modificarOrdenCompra:', error);
             throw error;
         } finally {
-            connection.release();
+            if (manejaTransaccion) {
+                connection.release();
+            }
         }
     }
 

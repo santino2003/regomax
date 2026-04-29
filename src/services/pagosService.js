@@ -132,7 +132,15 @@ class PagosService {
      */
     async registrarAdelanto(adelantoData) {
         try {
-            const { ordenId, montoAdelanto, fechaPago, username, monedaObjetivo } = adelantoData;
+            const {
+                ordenId,
+                montoAdelanto,
+                fechaPago,
+                username,
+                monedaObjetivo,
+                ordenContext,
+                transactionConnection
+            } = adelantoData;
 
             console.log('💰 [PAGOS] Registrando adelanto:', { 
                 ordenId, 
@@ -152,7 +160,7 @@ class PagosService {
             }
 
             // Obtener información de la orden
-            const orden = await ordenCompraRepository.obtenerPorId(ordenId);
+            const orden = ordenContext || await ordenCompraRepository.obtenerPorId(ordenId);
             if (!orden) {
                 throw new Error('Orden de compra no encontrada');
             }
@@ -312,7 +320,8 @@ class PagosService {
                     fechaPago: fechaPago,
                     registradoPor: username,
                     observaciones: `Adelanto para orden ${orden.codigo} - Proveedor: ${grupo.proveedorNombre} (${grupo.items.length} item(s), Total items: $${grupo.montoItems.toFixed(2)}) - Contrafactura`,
-                    moneda: monedaProveedor
+                    moneda: monedaProveedor,
+                    connection: transactionConnection
                 });
 
                 adelantosRegistrados.push({
@@ -592,7 +601,17 @@ class PagosService {
      */
     async registrarCuotaOrdenCompra(cuotaData) {
         try {
-            const { ordenId, numeroCuota, monto, fechaPago, observaciones, username, monedaObjetivo } = cuotaData;
+            const {
+                ordenId,
+                numeroCuota,
+                monto,
+                fechaPago,
+                observaciones,
+                username,
+                monedaObjetivo,
+                ordenContext,
+                transactionConnection
+            } = cuotaData;
 
             console.log('💰 [PAGOS] Registrando cuota de orden de compra:', { 
                 ordenId, 
@@ -613,7 +632,7 @@ class PagosService {
             }
 
             // Obtener información de la orden
-            const orden = await ordenCompraRepository.obtenerPorId(ordenId);
+            const orden = ordenContext || await ordenCompraRepository.obtenerPorId(ordenId);
             if (!orden) {
                 throw new Error('Orden de compra no encontrada');
             }
@@ -758,7 +777,8 @@ class PagosService {
                     fechaPago: fechaPago,
                     registradoPor: username,
                     observaciones: observaciones || `Cuota ${numeroCuota} - ${grupo.proveedorNombre}`,
-                    moneda: monedaProveedor
+                    moneda: monedaProveedor,
+                    connection: transactionConnection
                 });
 
                 cuotasRegistradas.push({
@@ -796,11 +816,11 @@ class PagosService {
      * @param {number} ordenId - ID de la orden de compra
      * @returns {Promise<Object>} - Resultado de la eliminación
      */
-    async eliminarPagosContrafactura(ordenId) {
+    async eliminarPagosContrafactura(ordenId, transactionConnection = null) {
         try {
             console.log(`🗑️ [PAGOS] Eliminando pagos de contrafactura para orden ${ordenId}`);
             
-            const resultado = await pagoRepository.eliminarPagosContrafactura(ordenId);
+            const resultado = await pagoRepository.eliminarPagosContrafactura(ordenId, transactionConnection);
             
             console.log(`✅ [PAGOS] Pagos de contrafactura eliminados exitosamente`);
             

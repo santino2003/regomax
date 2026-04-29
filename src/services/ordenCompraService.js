@@ -6,6 +6,7 @@ const userRepository = require('../repositories/userRepository');
 const unidadMedidaRepository = require('../repositories/unidadMedidaRepository');
 const centroCostoRepository = require('../repositories/centroCostoRepository');
 const bienProveedorRepository = require('../repositories/bienProveedorRepository');
+const db = require('../config/db');
 
 class OrdenCompraService {
     /**
@@ -126,6 +127,7 @@ class OrdenCompraService {
      * Crear una nueva orden de compra
      */
     async crearOrdenCompra(ordenData, usuario) {
+        let connection;
         try {
             // Validaciones
             if (!ordenData.condicion || !this.validarCondicion(ordenData.condicion)) {
@@ -252,8 +254,11 @@ class OrdenCompraService {
                 datosOrden.fecha_adelanto = adelantoLegacy ? (adelantoLegacy.fecha || null) : null;
             }
 
-            // Crear la orden con sus items
-            const result = await ordenCompraRepository.crearOrdenCompra(datosOrden, ordenData.items);
+            connection = await db.pool.getConnection();
+            await connection.beginTransaction();
+
+            // Crear la orden con sus items dentro de la transacción compartida
+            const result = await ordenCompraRepository.crearOrdenCompra(datosOrden, ordenData.items, connection);
             
             // Actualizar el código en el resultado
             result.codigo = codigoFinal;
@@ -263,6 +268,15 @@ class OrdenCompraService {
                 console.log('📝 Procesando cuotas de pago...');
                 console.log(`💰 Monto total calculado: $${montoTotalContrafactura.toFixed(2)}`);
 
+                const ordenContext = {
+                    id: result.id,
+                    codigo: result.codigo,
+                    contrafactura: true,
+                    proveedor_id: datosOrden.proveedor_id || null,
+                    proveedor_nombre: null,
+                    items: ordenData.items || []
+                };
+
                 // Registrar adelantos por moneda
                 for (const adelanto of adelantosPorMoneda) {
                     console.log(`📝 Registrando adelanto en ${adelanto.moneda}: ${adelanto.monto}`);
@@ -271,7 +285,9 @@ class OrdenCompraService {
                         montoAdelanto: adelanto.monto,
                         fechaPago: adelanto.fecha || new Date().toISOString().split('T')[0],
                         username: usuario,
-                        monedaObjetivo: adelanto.moneda
+                        monedaObjetivo: adelanto.moneda,
+                        ordenContext,
+                        transactionConnection: connection
                     });
                 }
 
@@ -286,12 +302,16 @@ class OrdenCompraService {
                         fechaPago: cuota.fecha,
                         observaciones: cuota.observacion || `Cuota ${cuota.numeroCuota} de ${cuotasNormalizadas.length}`,
                         username: usuario,
-                        monedaObjetivo: cuota.moneda
+                        monedaObjetivo: cuota.moneda,
+                        ordenContext,
+                        transactionConnection: connection
                     });
                 }
 
                 console.log(`✅ ${cuotasNormalizadas.length} cuota(s) registradas exitosamente`);
             }
+
+            await connection.commit();
 
             return {
                 success: true,
@@ -299,8 +319,19 @@ class OrdenCompraService {
                 data: result
             };
         } catch (error) {
+            if (connection) {
+                try {
+                    await connection.rollback();
+                } catch (rollbackError) {
+                    console.error('Error al hacer rollback en crearOrdenCompra:', rollbackError);
+                }
+            }
             console.error('Error en OrdenCompraService.crearOrdenCompra:', error);
             throw error;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     }
 
@@ -308,6 +339,7 @@ class OrdenCompraService {
      * Modificar una orden de compra existente
      */
     async modificarOrdenCompra(id, ordenData, username) {
+        let connection;
         try {
             console.log('🛠️ [ORDEN] Iniciando modificarOrdenCompra', { id, username });
             console.log('📥 [ORDEN] Datos recibidos para modificar (raw):', {
@@ -455,13 +487,24 @@ class OrdenCompraService {
 
             // Si se proporcionan items, usarlos; sino mantener los actuales
             const items = ordenData.items || ordenActual.items;
+            const ordenContext = {
+                id: parseInt(id, 10) || id,
+                codigo: ordenActual.codigo,
+                contrafactura: !!datosActualizados.contrafactura,
+                proveedor_id: datosActualizados.proveedor_id || ordenActual.proveedor_id || null,
+                proveedor_nombre: ordenActual.proveedor_nombre || null,
+                items: items || []
+            };
+
+            connection = await db.pool.getConnection();
+            await connection.beginTransaction();
 
             console.log('💾 [ORDEN] Llamando a modificarOrdenCompra en repository con datos:', {
                 datosActualizados,
                 itemsCount: items ? items.length : 0
             });
 
-            await ordenCompraRepository.modificarOrdenCompra(id, datosActualizados, items);
+            await ordenCompraRepository.modificarOrdenCompra(id, datosActualizados, items, connection);
 
             // Si es contrafactura y se proporcionaron cuotas, registrar adelanto + cuotas
             if (datosActualizados.contrafactura && ordenData.cuotas && ordenData.cuotas.length > 0) {
@@ -474,7 +517,7 @@ class OrdenCompraService {
                     });
 
                     // Eliminar pagos existentes de tipo "contrafactura" para esta orden
-                    await pagosService.eliminarPagosContrafactura(id);
+                    await pagosService.eliminarPagosContrafactura(id, connection);
                     console.log('🗑️ [ORDEN] Pagos de contrafactura anteriores eliminados');
 
                     // Registrar adelantos por moneda (o fallback legacy)
@@ -502,7 +545,9 @@ class OrdenCompraService {
                                 montoAdelanto: parseFloat(adelanto.monto),
                                 fechaPago: adelanto.fecha || new Date().toISOString().split('T')[0],
                                 username: username || ordenActual.creado_por,
-                                monedaObjetivo: adelanto.moneda
+                                monedaObjetivo: adelanto.moneda,
+                                ordenContext,
+                                transactionConnection: connection
                             });
                             console.log('✅ [ORDEN] Adelanto registrado correctamente desde modificación:', adelantoResult && adelantoResult.data);
                         } catch (adelantoError) {
@@ -531,7 +576,9 @@ class OrdenCompraService {
                             fechaPago: cuota.fecha,
                             observaciones: `Cuota ${i + 1} de ${ordenData.cuotas.length} (${cuota.moneda})`,
                             username: username || ordenActual.creado_por,
-                            monedaObjetivo: cuota.moneda
+                            monedaObjetivo: cuota.moneda,
+                            ordenContext,
+                            transactionConnection: connection
                         });
                     }
                     
@@ -542,21 +589,30 @@ class OrdenCompraService {
                 }
             } else if (!datosActualizados.contrafactura) {
                 // Si se desmarcó contrafactura, eliminar los pagos asociados
-                try {
-                    await pagosService.eliminarPagosContrafactura(id);
-                    console.log('🗑️ Pagos de contrafactura eliminados (se desmarcó contrafactura)');
-                } catch (error) {
-                    console.warn('⚠️ Error al eliminar pagos al desmarcar contrafactura:', error.message);
-                }
+                await pagosService.eliminarPagosContrafactura(id, connection);
+                console.log('🗑️ Pagos de contrafactura eliminados (se desmarcó contrafactura)');
             }
+
+            await connection.commit();
 
             return {
                 success: true,
                 message: 'Orden de compra modificada exitosamente'
             };
         } catch (error) {
+            if (connection) {
+                try {
+                    await connection.rollback();
+                } catch (rollbackError) {
+                    console.error('Error al hacer rollback en modificarOrdenCompra:', rollbackError);
+                }
+            }
             console.error('Error en OrdenCompraService.modificarOrdenCompra:', error);
             throw error;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
         }
     }
 
