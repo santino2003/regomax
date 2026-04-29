@@ -27,7 +27,7 @@
             top: 0;
             z-index: 10;
         }
-        #tablaCuotasOC input {
+        [id^="tablaCuotasOC_"] input {
             font-size: 0.9rem;
         }
     </style>
@@ -104,120 +104,8 @@
 
                                 <!-- Fecha de Pago y Cuotas (solo visible si es contrafactura) -->
                                 <div id="contrafacturaContainer" style="display: none;">
-                                    <div class="row mb-3">
-                                        <div class="col-md-4">
-                                            <label for="monto_adelanto" class="form-label">
-                                                <i class="bi bi-cash-coin me-1"></i>Monto de Adelanto (Opcional)
-                                            </label>
-                                            <input type="number" class="form-control" id="monto_adelanto" name="monto_adelanto" 
-                                                   step="0.01" min="0" placeholder="0.00" onchange="actualizarMontoDisponible()">
-                                            <small class="text-muted">Dejar en blanco si no hay adelanto</small>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label for="moneda_adelanto" class="form-label">Moneda</label>
-                                            <select class="form-select" id="moneda_adelanto" name="moneda_adelanto">
-                                                <option value="ARS">ARS</option>
-                                                <option value="USD">USD</option>
-                                                <option value="EUR">EUR</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label for="fecha_adelanto" class="form-label">
-                                                <i class="bi bi-calendar-check me-1"></i>Fecha Seña
-                                            </label>
-                                            <input type="date" class="form-control" id="fecha_adelanto" name="fecha_adelanto">
-                                            <small class="text-muted">Fecha del adelanto</small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Sección de Cuotas -->
-                                    <div class="card mb-3 shadow-sm">
-                                        <div class="card-header bg-info text-white">
-                                            <h6 class="mb-0">
-                                                <i class="bi bi-calendar-event me-2"></i>Plan de Cuotas
-                                            </h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="alert alert-info py-2 mb-3">
-                                                <i class="bi bi-info-circle me-2"></i>
-                                                <small>Configure las cuotas de pago. El monto total se calcula automáticamente según los bienes seleccionados. Puede personalizar el monto y fecha de cada cuota.</small>
-                                            </div>
-
-                                            <div class="row mb-3">
-                                                <div class="col-md-4">
-                                                    <label class="form-label">
-                                                        <i class="bi bi-calculator me-1"></i>Monto Total de Bienes
-                                                    </label>
-                                                    <div class="input-group">
-                                                        <span class="input-group-text">$</span>
-                                                        <input type="text" class="form-control fw-bold text-success" id="montoTotalBienes" readonly value="0.00">
-                                                    </div>
-                                                    <small class="text-muted">Calculado de los bienes seleccionados</small>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label">
-                                                        <i class="bi bi-cash-stack me-1"></i>Monto Disponible para Cuotas
-                                                    </label>
-                                                    <div class="input-group">
-                                                        <span class="input-group-text">$</span>
-                                                        <input type="text" class="form-control fw-bold text-primary" id="montoDisponibleCuotas" readonly value="0.00">
-                                                    </div>
-                                                    <small class="text-muted">Total - Adelanto</small>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label for="cantidadCuotasOC" class="form-label">
-                                                        <i class="bi bi-list-ol me-1"></i>Cantidad de Cuotas <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="number" 
-                                                           class="form-control" 
-                                                           id="cantidadCuotasOC" 
-                                                           min="1" 
-                                                           max="60"
-                                                           value="1"
-                                                           onchange="generarCuotasOC()"
-                                                           required>
-                                                    <small class="text-muted">Entre 1 y 60 cuotas</small>
-                                                </div>
-                                            </div>
-
-                                            <h6 class="mb-2">
-                                                <i class="bi bi-list-check me-2"></i>Detalle de Cuotas
-                                                <span class="badge bg-primary" id="badgeTotalCuotasOC">1</span>
-                                            </h6>
-
-                                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-                                                <table class="table table-bordered table-sm mb-0">
-                                                    <thead class="table-light sticky-top">
-                                                        <tr>
-                                                            <th style="width: 100px;">#</th>
-                                                            <th style="width: 200px;">Fecha <span class="text-danger">*</span></th>
-                                                            <th>Monto <span class="text-danger">*</span></th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="tablaCuotasOC">
-                                                        <!-- Las cuotas se generarán dinámicamente aquí -->
-                                                    </tbody>
-                                                    <tfoot class="table-secondary">
-                                                        <tr>
-                                                            <td colspan="2" class="text-end"><strong>Total Cuotas:</strong></td>
-                                                            <td><strong id="totalCuotasOC">$0.00</strong></td>
-                                                        </tr>
-                                                    </tfoot>
-                                                </table>
-                                            </div>
-
-                                            <div class="row mt-3">
-                                                <div class="col-md-6">
-                                                    <small class="text-muted">Total a Pagar (Cuotas):</small>
-                                                    <div id="totalPagarCuotas" class="text-primary fw-bold fs-5">$0.00</div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <small class="text-muted">Diferencia:</small>
-                                                    <div id="diferenciaCuotas" class="fw-bold">$0.00</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <!-- Sección de Cuotas por Moneda -->
+                                    <div id="planesCuotasContainer"></div>
                                 </div>
                                 
                                 <div class="row mb-3">
@@ -310,12 +198,25 @@
                 
                 if (isChecked) {
                     $contrafacturaContainer.slideDown();
-                    $('#cantidadCuotasOC').prop('required', true);
-                    generarCuotasOC();
+                    reconstruirPlanesCuotasPorMoneda();
                 } else {
                     $contrafacturaContainer.slideUp();
-                    $('#cantidadCuotasOC').prop('required', false);
+                    $('#planesCuotasContainer').empty();
                 }
+            });
+
+            $('#planesCuotasContainer').on('change', '.cantidad-cuotas-moneda', function() {
+                const moneda = $(this).data('moneda');
+                generarCuotasMoneda(moneda);
+            });
+
+            $('#planesCuotasContainer').on('input change', '.monto-cuota-moneda', function() {
+                const moneda = $(this).data('moneda');
+                actualizarTotalesCuotasMoneda(moneda);
+            });
+
+            $('#planesCuotasContainer').on('change', '.adelanto-moneda, .fecha-adelanto-moneda', function() {
+                reconstruirPlanesCuotasPorMoneda();
             });
             
             // Manejar el botón de agregar archivo
@@ -394,22 +295,26 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label">CANTIDAD <span class="text-danger">*</span></label>
                             <input type="number" class="form-control item-cantidad" name="items[${itemCounter}][cantidad]" step="0.01" required data-item="${itemCounter}">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label">UNIDAD DE MEDIDA</label>
                             <select class="form-select" name="items[${itemCounter}][unidad_medida_id]">
                                 <option value="">---------</option>
                                 ${unidadesMedida.map(um => `<option value="${um.id}">${um.nombre}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label">PRECIO UNITARIO</label>
                             <input type="number" class="form-control item-precio" name="items[${itemCounter}][precio_unitario]" step="0.01" min="0" placeholder="0.00" data-item="${itemCounter}" readonly>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
+                            <label class="form-label">MONEDA</label>
+                            <input type="text" class="form-control item-moneda" value="" placeholder="---" readonly>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label">PROVEEDOR SUGERIDO</label>
                             <select class="form-select" name="items[${itemCounter}][proveedor_sugerido_id]">
                                 <option value="">Seleccione un bien primero</option>
@@ -431,11 +336,17 @@
             // Event listener para cargar proveedores cuando se selecciona un bien
             $(`[data-item="${itemCounter}"] .select2-bien`).on('change', function() {
                 const bienId = $(this).val();
-                const $proveedorSelect = $(this).closest('[data-item]').find('[name*="[proveedor_sugerido_id]"]');
+                const $itemRow = $(this).closest('[data-item]');
+                const $proveedorSelect = $itemRow.find('[name*="[proveedor_sugerido_id]"]');
+                const $precioInput = $itemRow.find('.item-precio');
+                const $monedaInput = $itemRow.find('.item-moneda');
                 
                 if (!bienId) {
                     // Si no hay bien seleccionado, mostrar mensaje
                     $proveedorSelect.html('<option value="">Seleccione un bien primero</option>');
+                    $precioInput.val('');
+                    $monedaInput.val('');
+                    calcularMontoTotal();
                     return;
                 }
                 
@@ -449,16 +360,24 @@
                             response.data.forEach(proveedor => {
                                 const nombre = proveedor.nombre || 'Sin nombre';
                                 const precio = proveedor.precio ? ` - ${proveedor.moneda} ${proveedor.precio}` : '';
-                                options += `<option value="${proveedor.id}" data-precio="${proveedor.precio || 0}">${nombre}${precio}</option>`;
+                                options += `<option value="${proveedor.id}" data-precio="${proveedor.precio || 0}" data-moneda="${proveedor.moneda || ''}">${nombre}${precio}</option>`;
                             });
                             $proveedorSelect.html(options);
+                            $precioInput.val('');
+                            $monedaInput.val('');
                         } else {
                             $proveedorSelect.html('<option value="">Sin proveedores asociados</option>');
+                            $precioInput.val('');
+                            $monedaInput.val('');
                         }
+                        calcularMontoTotal();
                     },
                     error: function(xhr, status, error) {
                         console.error('Error al cargar proveedores:', error);
                         $proveedorSelect.html('<option value="">Error al cargar proveedores</option>');
+                        $precioInput.val('');
+                        $monedaInput.val('');
+                        calcularMontoTotal();
                     }
                 });
             });
@@ -471,12 +390,18 @@
             $(`[data-item="${itemCounter}"] [name*="[proveedor_sugerido_id]"]`).on('change', function() {
                 const $selected = $(this).find('option:selected');
                 const precio = $selected.data('precio');
+                const moneda = $selected.data('moneda') || '';
                 const itemId = $(this).closest('[data-item]').data('item');
+                const $itemRow = $(`[data-item="${itemId}"]`);
                 
                 if (precio && precio > 0) {
-                    $(`[data-item="${itemId}"] .item-precio`).val(precio);
-                    calcularMontoTotal();
+                    $itemRow.find('.item-precio').val(precio);
+                } else {
+                    $itemRow.find('.item-precio').val('');
                 }
+
+                $itemRow.find('.item-moneda').val(moneda);
+                calcularMontoTotal();
             });
         }
 
@@ -544,133 +469,242 @@
             calcularMontoTotal();
         }
 
-        /**
-         * Calcular el monto total de los bienes seleccionados
-         */
-        function calcularMontoTotal() {
-            let total = 0;
-            
+        function obtenerClaveMoneda(moneda) {
+            return String(moneda || 'SIN_MONEDA').replace(/[^a-zA-Z0-9_-]/g, '_').toUpperCase();
+        }
+
+        function obtenerTotalesPorMonedaItems() {
+            const totales = {};
+
             $('.item-row').each(function() {
                 const cantidad = parseFloat($(this).find('.item-cantidad').val()) || 0;
                 const precio = parseFloat($(this).find('.item-precio').val()) || 0;
-                total += cantidad * precio;
+                const moneda = ($(this).find('.item-moneda').val() || '').trim().toUpperCase();
+
+                if (!moneda || cantidad <= 0 || precio <= 0) return;
+
+                if (!totales[moneda]) totales[moneda] = 0;
+                totales[moneda] += (cantidad * precio);
             });
 
-            $('#montoTotalBienes').val(total.toFixed(2));
-            actualizarMontoDisponible();
+            return totales;
         }
 
-        /**
-         * Actualizar el monto disponible para cuotas (Total - Adelanto)
-         */
-        function actualizarMontoDisponible() {
-            const montoTotal = parseFloat($('#montoTotalBienes').val()) || 0;
-            const adelanto = parseFloat($('#monto_adelanto').val()) || 0;
-            const disponible = montoTotal - adelanto;
-            
-            $('#montoDisponibleCuotas').val(disponible > 0 ? disponible.toFixed(2) : '0.00');
-            
-            // Regenerar cuotas si ya están generadas
-            if ($('#contrafactura').is(':checked') && $('#tablaCuotasOC tr').length > 0) {
-                generarCuotasOC();
-            }
+        function calcularMontoTotal() {
+            reconstruirPlanesCuotasPorMoneda();
         }
 
-        /**
-         * Generar las filas de cuotas editables para Orden de Compra
-         */
-        function generarCuotasOC() {
-            const cantidadCuotas = parseInt($('#cantidadCuotasOC').val()) || 0;
-            
-            if (cantidadCuotas < 1 || cantidadCuotas > 60) {
-                $('#tablaCuotasOC').html('<tr><td colspan="3" class="text-center text-muted">Ingrese una cantidad válida de cuotas (1-60)</td></tr>');
-                $('#badgeTotalCuotasOC').text('0');
-                actualizarTotalesCuotasOC();
+        function reconstruirPlanesCuotasPorMoneda() {
+            if (!$('#contrafactura').is(':checked')) return;
+
+            const totalesPorMoneda = obtenerTotalesPorMonedaItems();
+            const $container = $('#planesCuotasContainer');
+
+            const estadoActualPlanes = {};
+            $container.find('.plan-cuotas-moneda').each(function() {
+                const moneda = ($(this).data('moneda') || '').toString().toUpperCase();
+                if (!moneda) return;
+
+                estadoActualPlanes[moneda] = {
+                    adelanto: $(this).find('.adelanto-moneda').val() || '',
+                    fechaAdelanto: $(this).find('.fecha-adelanto-moneda').val() || '',
+                    cantidadCuotas: $(this).find('.cantidad-cuotas-moneda').val() || '1'
+                };
+            });
+
+            $container.empty();
+
+            const monedas = Object.keys(totalesPorMoneda).filter(m => totalesPorMoneda[m] > 0);
+
+            if (monedas.length === 0) {
+                $container.html(`
+                    <div class="alert alert-info py-2 mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>Seleccione bienes/proveedores con precio para generar planes de cuotas por moneda.</small>
+                    </div>
+                `);
                 return;
             }
 
-            $('#badgeTotalCuotasOC').text(cantidadCuotas);
+            monedas.forEach(moneda => {
+                const clave = obtenerClaveMoneda(moneda);
+                const montoTotal = totalesPorMoneda[moneda] || 0;
+                const estadoMoneda = estadoActualPlanes[moneda] || {};
+                const adelantoIngresado = parseFloat(estadoMoneda.adelanto) || 0;
+                const adelantoAplicado = Math.min(adelantoIngresado, montoTotal);
+                const montoDisponible = Math.max(montoTotal - adelantoAplicado, 0);
+                const mensajeAdelanto = (adelantoIngresado > montoTotal)
+                    ? `El adelanto supera el total de bienes en ${moneda}. Se toma el máximo posible.`
+                    : '';
 
-            const montoDisponible = parseFloat($('#montoDisponibleCuotas').val()) || 0;
-            
-            // Calcular fecha base (mañana)
+                const card = `
+                    <div class="card mb-3 shadow-sm plan-cuotas-moneda" data-moneda="${moneda}" data-clave="${clave}">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="bi bi-calendar-event me-2"></i>Plan de Cuotas - ${moneda}
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info py-2 mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <small>Configure las cuotas de pago para ${moneda}. Puede personalizar monto y fecha de cada cuota.</small>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label class="form-label"><i class="bi bi-calculator me-1"></i>Monto Total de Bienes (${moneda})</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">${moneda}</span>
+                                        <input type="text" class="form-control fw-bold text-success monto-total-moneda" readonly value="${montoTotal.toFixed(2)}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label"><i class="bi bi-cash-coin me-1"></i>Adelanto (${moneda})</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">${moneda}</span>
+                                        <input type="number" class="form-control adelanto-moneda" data-moneda="${moneda}" step="0.01" min="0" placeholder="0.00" value="${adelantoIngresado > 0 ? adelantoIngresado.toFixed(2) : ''}">
+                                    </div>
+                                    <small class="text-muted">Opcional</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label"><i class="bi bi-cash-stack me-1"></i>Monto Disponible (${moneda})</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">${moneda}</span>
+                                        <input type="text" class="form-control fw-bold text-primary monto-disponible-moneda" readonly value="${montoDisponible.toFixed(2)}">
+                                    </div>
+                                    ${mensajeAdelanto ? `<small class="text-warning">${mensajeAdelanto}</small>` : '<small class="text-muted">Total - Adelanto (si aplica)</small>'}
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label"><i class="bi bi-list-ol me-1"></i>Cantidad de Cuotas <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control cantidad-cuotas-moneda" data-moneda="${moneda}" min="1" max="60" value="${estadoMoneda.cantidadCuotas || '1'}" required>
+                                    <small class="text-muted">Entre 1 y 60 cuotas</small>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label"><i class="bi bi-calendar-check me-1"></i>Fecha Seña (${moneda})</label>
+                                    <input type="date" class="form-control fecha-adelanto-moneda" data-moneda="${moneda}" value="${estadoMoneda.fechaAdelanto || ''}">
+                                </div>
+                            </div>
+
+                            <h6 class="mb-2">
+                                <i class="bi bi-list-check me-2"></i>Detalle de Cuotas
+                                <span class="badge bg-primary badge-total-cuotas-moneda">1</span>
+                            </h6>
+
+                            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                <table class="table table-bordered table-sm mb-0">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th style="width: 100px;">#</th>
+                                            <th style="width: 200px;">Fecha <span class="text-danger">*</span></th>
+                                            <th>Monto <span class="text-danger">*</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaCuotasOC_${clave}"></tbody>
+                                    <tfoot class="table-secondary">
+                                        <tr>
+                                            <td colspan="2" class="text-end"><strong>Total Cuotas:</strong></td>
+                                            <td><strong class="total-cuotas-moneda">${moneda} 0.00</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Total a Pagar (${moneda}):</small>
+                                    <div class="text-primary fw-bold fs-5 total-pagar-moneda">${moneda} 0.00</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Diferencia:</small>
+                                    <div class="fw-bold diferencia-cuotas-moneda">${moneda} 0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                $container.append(card);
+                generarCuotasMoneda(moneda);
+            });
+        }
+
+        function generarCuotasMoneda(moneda) {
+            const clave = obtenerClaveMoneda(moneda);
+            const $card = $(`.plan-cuotas-moneda[data-clave="${clave}"]`);
+            if ($card.length === 0) return;
+
+            const $cantidadInput = $card.find('.cantidad-cuotas-moneda');
+            const cantidadCuotas = parseInt($cantidadInput.val()) || 0;
+
+            if (cantidadCuotas < 1 || cantidadCuotas > 60) {
+                $card.find(`#tablaCuotasOC_${clave}`).html('<tr><td colspan="3" class="text-center text-muted">Ingrese una cantidad válida de cuotas (1-60)</td></tr>');
+                $card.find('.badge-total-cuotas-moneda').text('0');
+                actualizarTotalesCuotasMoneda(moneda);
+                return;
+            }
+
+            $card.find('.badge-total-cuotas-moneda').text(cantidadCuotas);
+
+            const montoDisponible = parseFloat($card.find('.monto-disponible-moneda').val()) || 0;
+            const montoCuota = cantidadCuotas > 0 ? (montoDisponible / cantidadCuotas).toFixed(2) : '0.00';
+
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
 
-            // Calcular monto equitativo como sugerencia
-            const montoCuota = (montoDisponible / cantidadCuotas).toFixed(2);
-
-            const tbody = $('#tablaCuotasOC');
-            tbody.empty();
+            const $tbody = $card.find(`#tablaCuotasOC_${clave}`);
+            $tbody.empty();
 
             for (let i = 0; i < cantidadCuotas; i++) {
                 const fechaCuota = new Date(tomorrow);
                 fechaCuota.setMonth(fechaCuota.getMonth() + i);
                 const fechaFormatted = fechaCuota.toISOString().split('T')[0];
 
-                const row = $(`
+                $tbody.append(`
                     <tr>
-                        <td class="align-middle text-center">
-                            <strong>Cuota ${i + 1}</strong>
+                        <td class="align-middle text-center"><strong>Cuota ${i + 1}</strong></td>
+                        <td>
+                            <input type="date" class="form-control form-control-sm fecha-cuota-moneda" data-moneda="${moneda}" data-index="${i}" value="${fechaFormatted}" required>
                         </td>
                         <td>
-                            <input type="date" 
-                                   class="form-control form-control-sm" 
-                                   id="fechaCuota_${i}" 
-                                   value="${fechaFormatted}"
-                                   onchange="actualizarTotalesCuotasOC()"
-                                   required>
-                        </td>
-                        <td>
-                            <input type="number" 
-                                   class="form-control form-control-sm" 
-                                   id="montoCuota_${i}" 
-                                   step="0.01"
-                                   min="0.01"
-                                   value="${montoCuota}"
-                                   onchange="actualizarTotalesCuotasOC()"
-                                   required>
+                            <input type="number" class="form-control form-control-sm monto-cuota-moneda" data-moneda="${moneda}" data-index="${i}" step="0.01" min="0.01" value="${montoCuota}" required>
                         </td>
                     </tr>
                 `);
-                tbody.append(row);
             }
 
-            actualizarTotalesCuotasOC();
+            actualizarTotalesCuotasMoneda(moneda);
         }
 
-        /**
-         * Actualizar totales de cuotas de Orden de Compra
-         */
-        function actualizarTotalesCuotasOC() {
-            const cantidadCuotas = parseInt($('#cantidadCuotasOC').val()) || 0;
-            const montoDisponible = parseFloat($('#montoDisponibleCuotas').val()) || 0;
+        function actualizarTotalesCuotasMoneda(moneda) {
+            const clave = obtenerClaveMoneda(moneda);
+            const $card = $(`.plan-cuotas-moneda[data-clave="${clave}"]`);
+            if ($card.length === 0) return;
+
+            const montoDisponible = parseFloat($card.find('.monto-disponible-moneda').val()) || 0;
             let totalCuotas = 0;
 
-            for (let i = 0; i < cantidadCuotas; i++) {
-                const inputMonto = $(`#montoCuota_${i}`);
-                if (inputMonto.length) {
-                    const monto = parseFloat(inputMonto.val()) || 0;
-                    totalCuotas += monto;
-                }
-            }
+            $card.find('.monto-cuota-moneda').each(function() {
+                totalCuotas += parseFloat($(this).val()) || 0;
+            });
 
             const diferencia = totalCuotas - montoDisponible;
 
-            $('#totalCuotasOC').text('$' + totalCuotas.toFixed(2));
-            $('#totalPagarCuotas').text('$' + totalCuotas.toFixed(2));
-            
-            const $diferenciaElement = $('#diferenciaCuotas');
-            
+            $card.find('.total-cuotas-moneda').text(`${moneda} ${totalCuotas.toFixed(2)}`);
+            $card.find('.total-pagar-moneda').text(`${moneda} ${totalCuotas.toFixed(2)}`);
+
+            const $diferencia = $card.find('.diferencia-cuotas-moneda');
             if (diferencia > 0.01) {
-                $diferenciaElement.text('+$' + diferencia.toFixed(2));
-                $diferenciaElement.removeClass('text-success text-muted').addClass('text-danger');
+                $diferencia.text(`+${moneda} ${diferencia.toFixed(2)}`);
+                $diferencia.removeClass('text-success text-muted').addClass('text-danger');
             } else if (diferencia < -0.01) {
-                $diferenciaElement.text('$' + diferencia.toFixed(2));
-                $diferenciaElement.removeClass('text-danger text-muted').addClass('text-success');
+                $diferencia.text(`${moneda} ${diferencia.toFixed(2)}`);
+                $diferencia.removeClass('text-danger text-muted').addClass('text-success');
             } else {
-                $diferenciaElement.text('$0.00');
-                $diferenciaElement.removeClass('text-danger text-success').addClass('text-muted');
+                $diferencia.text(`${moneda} 0.00`);
+                $diferencia.removeClass('text-danger text-success').addClass('text-muted');
             }
         }
 
@@ -697,60 +731,105 @@
             
             // Si es contrafactura, incluir adelanto y cuotas
             if ($('#contrafactura').is(':checked')) {
-                formData.append('monto_adelanto', $('#monto_adelanto').val() || '');
-                formData.append('moneda_adelanto', $('#moneda_adelanto').val() || 'ARS');
-                formData.append('fecha_adelanto', $('#fecha_adelanto').val() || '');
-                
-                // Validar y recopilar cuotas
-                const cantidadCuotas = parseInt($('#cantidadCuotasOC').val()) || 0;
+                // Validar y recopilar cuotas de todos los planes por moneda
                 const cuotas = [];
+                const $planes = $('.plan-cuotas-moneda');
+                const adelantosPorMoneda = [];
+                let numeroCuotaGlobal = 1;
                 
-                if (cantidadCuotas > 0) {
-                    for (let i = 0; i < cantidadCuotas; i++) {
-                        const fecha = $(`#fechaCuota_${i}`).val();
-                        const monto = parseFloat($(`#montoCuota_${i}`).val());
+                if ($planes.length === 0) {
+                    mostrarAlerta('No hay planes de cuotas generados. Verifique que los items tengan precio y moneda.', 'warning');
+                    return;
+                }
+
+                for (const plan of $planes.toArray()) {
+                    const $plan = $(plan);
+                    const moneda = ($plan.data('moneda') || '').toString().toUpperCase();
+                    const montoDisponible = parseFloat($plan.find('.monto-disponible-moneda').val()) || 0;
+                    const montoTotalMoneda = parseFloat($plan.find('.monto-total-moneda').val()) || 0;
+                    const adelantoMoneda = parseFloat($plan.find('.adelanto-moneda').val()) || 0;
+                    const fechaAdelantoMoneda = $plan.find('.fecha-adelanto-moneda').val() || '';
+                    let totalCuotasPlan = 0;
+
+                    const $montos = $plan.find('.monto-cuota-moneda');
+                    const $fechas = $plan.find('.fecha-cuota-moneda');
+
+                    if (adelantoMoneda > montoTotalMoneda + 0.01) {
+                        mostrarAlerta(`El adelanto en ${moneda} no puede ser mayor al total de bienes (${moneda} ${montoTotalMoneda.toFixed(2)}).`, 'warning');
+                        return;
+                    }
+
+                    if (adelantoMoneda > 0) {
+                        adelantosPorMoneda.push({
+                            moneda,
+                            monto: adelantoMoneda,
+                            fecha: fechaAdelantoMoneda || null
+                        });
+                    }
+
+                    if ($montos.length === 0) {
+                        mostrarAlerta(`El plan de ${moneda} no tiene cuotas generadas.`, 'warning');
+                        return;
+                    }
+
+                    for (let i = 0; i < $montos.length; i++) {
+                        const fecha = $($fechas[i]).val();
+                        const monto = parseFloat($($montos[i]).val());
 
                         if (!fecha) {
-                            mostrarAlerta(`La cuota ${i + 1} debe tener una fecha`, 'warning');
+                            mostrarAlerta(`La cuota ${i + 1} del plan ${moneda} debe tener una fecha`, 'warning');
                             return;
                         }
 
                         if (!monto || monto <= 0) {
-                            mostrarAlerta(`La cuota ${i + 1} debe tener un monto mayor a 0`, 'warning');
+                            mostrarAlerta(`La cuota ${i + 1} del plan ${moneda} debe tener un monto mayor a 0`, 'warning');
                             return;
                         }
 
+                        totalCuotasPlan += monto;
                         cuotas.push({
-                            numeroCuota: i + 1,
-                            fecha: fecha,
-                            monto: monto
+                            numeroCuota: numeroCuotaGlobal++,
+                            fecha,
+                            monto,
+                            moneda,
+                            observacion: `Cuota ${i + 1} (${moneda})`
                         });
                     }
-                    
-                    // Validar que el total de cuotas no supere el disponible
-                    const totalCuotas = cuotas.reduce((sum, c) => sum + c.monto, 0);
-                    const montoDisponible = parseFloat($('#montoDisponibleCuotas').val()) || 0;
-                    const diferencia = totalCuotas - montoDisponible;
-                    
-                    if (diferencia > 0.01) {
-                        mostrarAlerta(`El total de cuotas ($${totalCuotas.toFixed(2)}) supera el monto disponible ($${montoDisponible.toFixed(2)}). Diferencia: +$${diferencia.toFixed(2)}`, 'warning');
+
+                    const diferenciaPlan = totalCuotasPlan - montoDisponible;
+                    if (diferenciaPlan > 0.01) {
+                        mostrarAlerta(
+                            `El total de cuotas del plan ${moneda} (${moneda} ${totalCuotasPlan.toFixed(2)}) supera el monto disponible (${moneda} ${montoDisponible.toFixed(2)}). Diferencia: +${moneda} ${diferenciaPlan.toFixed(2)}`,
+                            'warning'
+                        );
                         return;
                     }
-                    
-                    formData.append('cuotas', JSON.stringify(cuotas));
                 }
+
+                // Compatibilidad con backend actual (solo soporta un adelanto global)
+                if (adelantosPorMoneda.length === 1) {
+                    formData.append('monto_adelanto', adelantosPorMoneda[0].monto);
+                    formData.append('moneda_adelanto', adelantosPorMoneda[0].moneda);
+                    formData.append('fecha_adelanto', adelantosPorMoneda[0].fecha || '');
+                } else {
+                    formData.append('monto_adelanto', '');
+                    formData.append('moneda_adelanto', 'ARS');
+                    formData.append('fecha_adelanto', '');
+                }
+
+                formData.append('adelantos_por_moneda', JSON.stringify(adelantosPorMoneda));
+                formData.append('cuotas', JSON.stringify(cuotas));
             } else {
                 // Si no es contrafactura, limpiar campos relacionados
                 formData.append('monto_adelanto', '');
                 formData.append('moneda_adelanto', 'ARS');
                 formData.append('fecha_adelanto', '');
+                formData.append('adelantos_por_moneda', '[]');
             }
             
             console.log('Contrafactura checkbox:', $('#contrafactura').is(':checked'));
             console.log('Valor enviado:', $('#contrafactura').is(':checked') ? 'true' : 'false');
-            console.log('Monto de adelanto:', $('#monto_adelanto').val());
-            console.log('Moneda adelanto:', $('#moneda_adelanto').val());
-            console.log('Fecha adelanto:', $('#fecha_adelanto').val());
+            console.log('Adelantos por moneda:', formData.get('adelantos_por_moneda'));
             
             // Archivos adjuntos desde el array
             if (archivosSeleccionados.length > 0) {

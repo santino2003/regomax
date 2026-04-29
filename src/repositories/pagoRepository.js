@@ -16,10 +16,11 @@ class PagoRepository {
                 fechaPago,
                 registradoPor,
                 observaciones,
-                moneda
+                moneda,
+                connection
             } = pagoData;
 
-            const result = await db.query(
+            const sql =
                 `INSERT INTO pagos (
                     orden_compra_id,
                     bien_id,
@@ -32,20 +33,27 @@ class PagoRepository {
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, ?, ?, 'RECEPCION', ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    ordenCompraId,
-                    bienId,
-                    proveedorId,
-                    cantidadRecibida,
-                    precioUnitario,
-                    montoPago,
-                    moneda || 'ARS',
-                    fechaPago,
-                    registradoPor,
-                    observaciones || null
-                ]
-            );
+                ) VALUES (?, ?, ?, 'RECEPCION', ?, ?, ?, ?, ?, ?, ?)`;
+            const params = [
+                ordenCompraId,
+                bienId,
+                proveedorId,
+                cantidadRecibida,
+                precioUnitario,
+                montoPago,
+                moneda || 'ARS',
+                fechaPago,
+                registradoPor,
+                observaciones || null
+            ];
+
+            let result;
+            if (connection) {
+                const [insertResult] = await connection.query(sql, params);
+                result = insertResult;
+            } else {
+                result = await db.query(sql, params);
+            }
 
             return { id: result.insertId };
         } catch (error) {
@@ -66,10 +74,11 @@ class PagoRepository {
                 fechaPago,
                 registradoPor,
                 observaciones,
-                moneda
+                moneda,
+                connection
             } = pagoData;
 
-            const result = await db.query(
+            const sql =
                 `INSERT INTO pagos (
                     orden_compra_id,
                     proveedor_id,
@@ -80,18 +89,25 @@ class PagoRepository {
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, ?, 'ADELANTO', ?, ?, ?, ?, ?, ?)`,
-                [
-                    ordenCompraId,
-                    proveedorId,
-                    montoAdelanto,
-                    montoAdelanto,
-                    moneda || 'ARS',
-                    fechaPago,
-                    registradoPor,
-                    observaciones || null
-                ]
-            );
+                ) VALUES (?, ?, 'ADELANTO', ?, ?, ?, ?, ?, ?)`;
+            const params = [
+                ordenCompraId,
+                proveedorId,
+                montoAdelanto,
+                montoAdelanto,
+                moneda || 'ARS',
+                fechaPago,
+                registradoPor,
+                observaciones || null
+            ];
+
+            let result;
+            if (connection) {
+                const [insertResult] = await connection.query(sql, params);
+                result = insertResult;
+            } else {
+                result = await db.query(sql, params);
+            }
 
             return { id: result.insertId };
         } catch (error) {
@@ -114,10 +130,11 @@ class PagoRepository {
                 fechaPago,
                 registradoPor,
                 observaciones,
-                moneda
+                moneda,
+                connection
             } = pagoData;
 
-            const result = await db.query(
+            const sql =
                 `INSERT INTO pagos (
                     orden_compra_id,
                     proveedor_id,
@@ -129,19 +146,26 @@ class PagoRepository {
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, ?, 'SALDO_COMPLETO', ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    ordenCompraId,
-                    proveedorId,
-                    saldoAPagar,
-                    montoTotal,
-                    montoAdelanto,
-                    moneda || 'ARS',
-                    fechaPago,
-                    registradoPor,
-                    observaciones || null
-                ]
-            );
+                ) VALUES (?, ?, 'SALDO_COMPLETO', ?, ?, ?, ?, ?, ?, ?)`;
+            const params = [
+                ordenCompraId,
+                proveedorId,
+                saldoAPagar,
+                montoTotal,
+                montoAdelanto,
+                moneda || 'ARS',
+                fechaPago,
+                registradoPor,
+                observaciones || null
+            ];
+
+            let result;
+            if (connection) {
+                const [insertResult] = await connection.query(sql, params);
+                result = insertResult;
+            } else {
+                result = await db.query(sql, params);
+            }
 
             return { id: result.insertId };
         } catch (error) {
@@ -282,14 +306,20 @@ class PagoRepository {
      * Eliminar pagos de contrafactura (ADELANTO y SALDO_COMPLETO) de una orden
      * Esto se usa cuando se edita una orden a contrafactura para evitar duplicados
      */
-    async eliminarPagosContrafactura(ordenCompraId) {
+    async eliminarPagosContrafactura(ordenCompraId, connection = null) {
         try {
-            const result = await db.query(
-                `DELETE FROM pagos 
+            const sql = `DELETE FROM pagos 
                 WHERE orden_compra_id = ? 
-                AND tipo_pago IN ('ADELANTO', 'SALDO_COMPLETO')`,
-                [ordenCompraId]
-            );
+                AND tipo_pago IN ('ADELANTO', 'SALDO_COMPLETO')`;
+            const params = [ordenCompraId];
+
+            let result;
+            if (connection) {
+                const [deleteResult] = await connection.query(sql, params);
+                result = deleteResult;
+            } else {
+                result = await db.query(sql, params);
+            }
             
             console.log(`🗑️ Eliminados ${result.affectedRows || 0} pagos de contrafactura de la orden ${ordenCompraId}`);
             return { success: true, deletedCount: result.affectedRows || 0 };
