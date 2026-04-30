@@ -82,14 +82,19 @@ const obtenerCantidadNFUPorFecha = async (fecha) => {
  * Obtiene la cantidad total de NFU ingresados entre dos fechas (inclusive)
  */
 const obtenerCantidadNFUEntreFechas = async (fechaInicio, fechaFin) => {
+  // Restar un día a fechaFin manteniendo el formato YYYY-MM-DD
+  const [year, month, day] = fechaFin.split('-').map(Number);
+  const fechaFinDate = new Date(year, month - 1, day - 1);
+  const fechaFinAjustada = `${fechaFinDate.getFullYear()}-${String(fechaFinDate.getMonth() + 1).padStart(2, '0')}-${String(fechaFinDate.getDate()).padStart(2, '0')}`;
+  
   const query = 'SELECT SUM(cantidad) as cantidadTotal FROM nfu WHERE fecha BETWEEN ? AND ?';
-  const result = await db.query(query, [fechaInicio, fechaFin]);
-  console.log(`\x1b[31mCantidad NFU acumulada entre ${fechaInicio} y ${fechaFin}:\x1b[0m`, result[0]?.cantidadTotal);
+  const result = await db.query(query, [fechaInicio, fechaFinAjustada]);
+  console.log(`\x1b[31mCantidad NFU acumulada entre ${fechaInicio} y ${fechaFinAjustada}:\x1b[0m`, result[0]?.cantidadTotal);
   return result[0]?.cantidadTotal || 0;
 };
 
 /**
- * Obtiene la cantidad total de NFU ingresados hasta una fecha específica (inclusive)
+ * Obtiene la cantidad total Cantidad NFU acumuladade NFU ingresados hasta una fecha específica (inclusive)
  */
 const obtenerCantidadNFUHastaFecha = async (fecha) => {
   const query = 'SELECT SUM(cantidad) as cantidadTotal FROM nfu WHERE fecha <= ?';
