@@ -318,10 +318,19 @@ class BienRepository {
             const proveedores = await db.query(`
                 SELECT p.*, bp.precio, bp.moneda
                 FROM proveedores p
-                INNER JOIN bienes_proveedores bp ON p.id = bp.proveedor_id
+                INNER JOIN (
+                    SELECT bp1.*
+                    FROM bienes_proveedores bp1
+                    INNER JOIN (
+                        SELECT MAX(id) as id
+                        FROM bienes_proveedores
+                        WHERE bien_id = ?
+                        GROUP BY bien_id, proveedor_id
+                    ) latest ON bp1.id = latest.id
+                ) bp ON p.id = bp.proveedor_id
                 WHERE bp.bien_id = ?
                 ORDER BY p.nombre
-            `, [id]);
+            `, [id, id]);
             
             bien.proveedores = proveedores;
             

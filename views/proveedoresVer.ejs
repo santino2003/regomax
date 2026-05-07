@@ -182,6 +182,75 @@
                         </div>
                     </div>
                     
+                    <!-- Historial de Precios -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historial de Precios</h5>
+                        </div>
+                        <div class="card-body">
+                            <% if (!historialPrecios || !Array.isArray(historialPrecios) || historialPrecios.length === 0) { %>
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    No hay historial de precios para este proveedor.
+                                </div>
+                            <% } else { %>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Filtrar por bien</label>
+                                        <input type="text" class="form-control form-control-sm" id="historialBienFilter" placeholder="Buscar bien...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small text-muted">Moneda</label>
+                                        <select class="form-select form-select-sm" id="historialMonedaFilter">
+                                            <option value="">Todas</option>
+                                            <option value="ARS">ARS</option>
+                                            <option value="USD">USD</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table id="historialPreciosProveedorTable" class="table table-hover table-striped">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Bien</th>
+                                                <th class="text-end">Precio</th>
+                                                <th>Moneda</th>
+                                                <th>Fecha</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% historialPrecios.forEach(item => { %>
+                                                <tr data-bien="<%= ((item.bien_nombre || item.bien_codigo || '').toString().toLowerCase()) %>" data-moneda="<%= (item.moneda || '').toUpperCase() %>">
+                                                    <td>
+                                                        <strong><%= item.bien_codigo || item.bien_id %></strong>
+                                                        <div class="text-muted small"><%= item.bien_nombre || '-' %></div>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <% if (item.precio != null) { %>
+                                                            <strong><%= Number(item.precio).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></strong>
+                                                        <% } else { %>
+                                                            -
+                                                        <% } %>
+                                                    </td>
+                                                    <td>
+                                                        <% if (item.moneda) { %>
+                                                            <span class="badge bg-secondary"><%= item.moneda %></span>
+                                                        <% } else { %>
+                                                            -
+                                                        <% } %>
+                                                    </td>
+                                                    <td>
+                                                        <small class="text-muted"><%= item.fecha_asignacion ? new Date(item.fecha_asignacion).toLocaleString('es-AR') : '-' %></small>
+                                                    </td>
+                                                </tr>
+                                            <% }); %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
                     <div class="mt-4">
                         <a href="/proveedores" class="btn btn-secondary">
                             <i class="bi bi-arrow-left me-2"></i>Volver al Listado
@@ -275,6 +344,28 @@
                     btn.html(originalText).prop('disabled', false);
                 });
             });
+
+            const bienFilter = $('#historialBienFilter');
+            const monedaFilter = $('#historialMonedaFilter');
+
+            function filtrarHistorial() {
+                const bienValue = (bienFilter.val() || '').toLowerCase().trim();
+                const monedaValue = (monedaFilter.val() || '').toUpperCase().trim();
+
+                $('#historialPreciosProveedorTable tbody tr').each(function() {
+                    const row = $(this);
+                    const bien = row.data('bien') || '';
+                    const moneda = (row.data('moneda') || '').toString().toUpperCase();
+
+                    const matchBien = !bienValue || bien.includes(bienValue);
+                    const matchMoneda = !monedaValue || moneda === monedaValue;
+
+                    row.toggle(matchBien && matchMoneda);
+                });
+            }
+
+            bienFilter.on('input', filtrarHistorial);
+            monedaFilter.on('change', filtrarHistorial);
         });
     </script>
 </body>

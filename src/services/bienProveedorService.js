@@ -44,7 +44,7 @@ class BienProveedorService {
 
     /**
      * Editar asociaciones de proveedores para un bien existente
-     * Reemplaza todas las asociaciones existentes con las nuevas
+     * Registra nuevos precios sin borrar el historial existente
      */
     async editarAsociacionesProveedores(bienId, proveedores) {
         try {
@@ -53,12 +53,11 @@ class BienProveedorService {
                 throw new Error('Los proveedores deben ser un array');
             }
 
-            // Si el array está vacío, eliminar todas las asociaciones
+            // Si el array está vacío, no se eliminan asociaciones para preservar historial
             if (proveedores.length === 0) {
-                await bienProveedorRepository.eliminarAsociacionesPorBien(bienId);
                 return {
                     success: true,
-                    message: 'Se eliminaron todas las asociaciones de proveedores',
+                    message: 'No se informaron proveedores; se mantiene el historial existente',
                     data: []
                 };
             }
@@ -132,6 +131,48 @@ class BienProveedorService {
             };
         } catch (error) {
             console.error('❌ [bienProveedorService] Error en obtenerPrecioProveedorBien:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener historial completo de precios de un bien
+     */
+    async obtenerHistorialPorBien(bienId) {
+        try {
+            if (!bienId) {
+                throw new Error('El ID del bien es requerido');
+            }
+
+            const historial = await bienProveedorRepository.obtenerHistorialPorBien(bienId);
+
+            return {
+                success: true,
+                data: historial
+            };
+        } catch (error) {
+            console.error('Error en BienProveedorService.obtenerHistorialPorBien:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener historial completo de precios de un proveedor
+     */
+    async obtenerHistorialPorProveedor(proveedorId) {
+        try {
+            if (!proveedorId) {
+                throw new Error('El ID del proveedor es requerido');
+            }
+
+            const historial = await bienProveedorRepository.obtenerHistorialPorProveedor(proveedorId);
+
+            return {
+                success: true,
+                data: historial
+            };
+        } catch (error) {
+            console.error('Error en BienProveedorService.obtenerHistorialPorProveedor:', error);
             throw error;
         }
     }
