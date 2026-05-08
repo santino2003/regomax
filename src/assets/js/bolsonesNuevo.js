@@ -26,7 +26,7 @@ $(document).ready(function() {
     });
     
     // Función para mostrar alertas con imagen
-    function showAlert(message, type = 'success', imageData = null) {
+    function showAlert(message, type = 'success', imageData = null, productoNombre = '') {
         let alertContent = `
             <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                 <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
@@ -35,6 +35,7 @@ $(document).ready(function() {
         
         // Si hay imagen, agregarla
         if (imageData && type === 'success') {
+            const productoSeguro = (productoNombre || '').replace(/'/g, "\\'");
             alertContent += `
                 <div class="text-center mt-3" id="barcodeContainer">
                     <hr>
@@ -46,8 +47,10 @@ $(document).ready(function() {
                     <br>
                     <strong>Código: ${imageData.codigo}</strong>
                     <br>
+                    <div style="font-size: 10pt; margin-top: 2mm;">${productoNombre || ''}</div>
+                    <br>
                     <div class="mt-2">
-                        <button onclick="imprimirCodigo('${imageData.barcodeBase64}', '${imageData.codigo}')" 
+                        <button onclick="imprimirCodigo('${imageData.barcodeBase64}', '${imageData.codigo}', '${productoSeguro}')" 
                                 class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-printer me-1"></i>Imprimir
                         </button>
@@ -75,7 +78,7 @@ $(document).ready(function() {
     };
     
     // Función para imprimir código directo (sin ventana intermedia)
-    window.imprimirCodigo = function(base64Data, codigo) {
+    window.imprimirCodigo = function(base64Data, codigo, productoNombre = '') {
         // Crear iframe oculto para impresión
         const printFrame = document.createElement('iframe');
         printFrame.style.position = 'fixed';
@@ -114,6 +117,7 @@ $(document).ready(function() {
                     <body>
                         <img src="data:image/png;base64,${base64Data}" alt="Código de barras ${codigo}">
                         <div style="font-size: 10pt; margin-top: 2mm;">${codigo}</div>
+                        <div style="font-size: 8pt; margin-top: 1mm;">${productoNombre || ''}</div>
                     </body>
                 </html>
             `);
@@ -163,6 +167,7 @@ $(document).ready(function() {
             peso: parseFloat($('#peso').val()),
             precinto: $('#precinto').val().trim()
         };
+        const productoSeleccionado = formData.producto;
         
         // Deshabilitar botón durante la operación
         const $btnGuardar = $('#btnGuardar');
@@ -183,7 +188,8 @@ $(document).ready(function() {
                 showAlert(
                     `¡Bolsón creado exitosamente! Código: <strong>${data.data.codigo}</strong>`, 
                     'success', 
-                    data.data
+                    data.data,
+                    productoSeleccionado
                 );
                 
                 // Limpiar formulario
