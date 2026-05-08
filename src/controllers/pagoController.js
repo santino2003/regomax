@@ -260,6 +260,42 @@ class PagoController {
     }
 
     /**
+     * Registrar pago múltiple con comprobante único
+     */
+    async marcarPagosMultiples(req, res) {
+        try {
+            const { ids, detalle } = req.body;
+            const username = req.user.username;
+
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Debe seleccionar al menos un pago'
+                });
+            }
+
+            const resultado = await pagosService.registrarPagoMultiple(ids, username, detalle || null);
+
+            if (!resultado.success) {
+                return res.status(400).json(resultado);
+            }
+
+            return res.json({
+                success: true,
+                message: resultado.message,
+                redirectUrl: `/pagos/${resultado.pagoId}`
+            });
+        } catch (error) {
+            console.error('Error en PagoController.marcarPagosMultiples:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al registrar pago múltiple',
+                error: error.message
+            });
+        }
+    }
+
+    /**
      * Refinanciar un pago
      */
     async refinanciarPago(req, res) {

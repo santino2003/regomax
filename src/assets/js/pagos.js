@@ -13,6 +13,10 @@ let refinanciarData = {
     cuotas: []
 };
 
+// Variables para pago múltiple
+let pagosSeleccionados = new Map();
+let contextoSeleccion = null; // { ordenId, proveedorId, moneda }
+
 // Variable para almacenar la acción de confirmación
 let accionConfirmacion = null;
 
@@ -112,7 +116,178 @@ $(document).ready(function() {
             });
         });
     });
+
+    // Selección múltiple de pagos
+    const selectAllCheckbox = document.getElementById('selectAllPagos');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.pago-checkbox:not(:disabled)');
+            checkboxes.forEach(cb => {
+                cb.checked = selectAllCheckbox.checked;
+                manejarSeleccionPago(cb);
+            });
+        });
+    }
+
+    document.querySelectorAll('.pago-checkbox').forEach(cb => {
+        cb.addEventListener('change', function() {
+            manejarSeleccionPago(cb);
+        });
+    });
+
+    const btnPagarSeleccionados = document.getElementById('btnPagarSeleccionados');
+    if (btnPagarSeleccionados) {
+        btnPagarSeleccionados.addEventListener('click', abrirModalPagoMultiple);
+    }
 });
+
+function manejarSeleccionPago(checkbox) {
+    const pagoId = parseInt(checkbox.dataset.pagoId, 10);
+
+    if (!checkbox.checked) {
+        pagosSeleccionados.delete(pagoId);
+        if (pagosSeleccionados.size === 0) {
+            contextoSeleccion = null;
+        }
+        actualizarResumenSeleccion();
+        return;
+    }
+
+    const data = {
+        id: pagoId,
+        ordenId: parseInt(checkbox.dataset.ordenId, 10),
+        ordenCodigo: checkbox.dataset.ordenCodigo,
+        proveedorId: parseInt(checkbox.dataset.proveedorId, 10),
+        proveedorNombre: checkbox.dataset.proveedorNombre,
+        bienNombre: checkbox.dataset.bienNombre,
+        bienCodigo: checkbox.dataset.bienCodigo,
+        moneda: (checkbox.dataset.moneda || 'ARS').toUpperCase(),
+        monto: parseFloat(checkbox.dataset.monto || '0')
+    };
+
+    if (!contextoSeleccion) {
+        contextoSeleccion = {
+            ordenId: data.ordenId,
+            proveedorId: data.proveedorId,
+            moneda: data.moneda
+        };
+    }
+
+    const invalido = data.ordenId !== contextoSeleccion.ordenId ||
+        data.proveedorId !== contextoSeleccion.proveedorId ||
+        data.moneda !== contextoSeleccion.moneda;
+
+    if (invalido) {
+        checkbox.checked = false;
+        mostrarMensaje(
+            'Validación',
+            'Para un comprobante único, los pagos deben ser de la misma OC, proveedor y moneda.',
+            'warning'
+        );
+        return;
+    }
+
+    pagosSeleccionados.set(pagoId, data);
+    actualizarResumenSeleccion();
+}
+
+function actualizarResumenSeleccion() {
+    const total = Array.from(pagosSeleccionados.values())
+        .reduce((sum, p) => sum + (p.monto || 0), 0);
+    const moneda = contextoSeleccion?.moneda || 'ARS';
+
+    const countEl = document.getElementById('pagosSeleccionadosCount');
+    const totalEl = document.getElementById('pagosSeleccionadosTotal');
+    const btn = document.getElementById('btnPagarSeleccionados');
+
+    if (countEl) countEl.textContent = pagosSeleccionados.size;
+    if (totalEl) {
+        totalEl.textContent = `${moneda} ${total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    if (btn) btn.disabled = pagosSeleccionados.size === 0;
+
+    const selectAll = document.getElementById('selectAllPagos');
+    if (selectAll) {
+        const habilitados = document.querySelectorAll('.pago-checkbox:not(:disabled)');
+        const totalHabilitados = habilitados.length;
+        selectAll.checked = totalHabilitados > 0 && pagosSeleccionados.size === totalHabilitados;
+        selectAll.indeterminate = pagosSeleccionados.size > 0 && pagosSeleccionados.size < totalHabilitados;
+    }
+}
+
+function abrirModalPagoMultiple() {
+    if (pagosSeleccionados.size === 0) {
+        mostrarMensaje('Validación', 'Seleccione al menos un pago.', 'warning');
+        return;
+    }
+
+    const lista = document.getElementById('listaPagosSeleccionados');
+    const totalEl = document.getElementById('totalPagoMultiple');
+    const detalleInput = document.getElementById('detallePagoMultiple');
+    if (detalleInput) detalleInput.value = '';
+
+    const pagosArray = Array.from(pagosSeleccionados.values());
+    const moneda = contextoSeleccion?.moneda || 'ARS';
+    const total = pagosArray.reduce((sum, p) => sum + (p.monto || 0), 0);
+
+    if (lista) {
+        lista.innerHTML = pagosArray.map(p => {
+            const item = p.bienNombre
+                ? `${p.bienNombre}${p.bienCodigo ? ` (${p.bienCodigo})` : ''}`
+                : 'Sin bien';
+            const montoFmt = `${moneda} ${p.monto.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            return `
+                <tr>
+                    <td>${p.ordenCodigo}</td>
+                    <td>${item}</td>
+                    <td>${montoFmt}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    if (totalEl) {
+        totalEl.textContent = `${moneda} ${total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('modalPagoMultiple'));
+    modal.show();
+}
+
+async function confirmarPagoMultiple() {
+    if (pagosSeleccionados.size === 0) return;
+
+    const detalle = document.getElementById('detallePagoMultiple')?.value?.trim() || null;
+    const ids = Array.from(pagosSeleccionados.keys());
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/pagos/marcar-pagado-multiple', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ids, detalle })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (data.redirectUrl) {
+                window.location.href = data.redirectUrl;
+                return;
+            }
+            mostrarMensaje('Éxito', 'Pago múltiple registrado correctamente', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            mostrarMensaje('Error', data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarMensaje('Error', 'Error al registrar el pago múltiple', 'error');
+    }
+}
 
 /**
  * Abrir el modal para marcar un pago como pagado

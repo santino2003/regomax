@@ -210,6 +210,7 @@
                                             <option value="RECEPCION" <%= filtros.tipo_pago === 'RECEPCION' ? 'selected' : '' %>>Recepción</option>
                                             <option value="ADELANTO" <%= filtros.tipo_pago === 'ADELANTO' ? 'selected' : '' %>>Adelanto</option>
                                             <option value="SALDO_COMPLETO" <%= filtros.tipo_pago === 'SALDO_COMPLETO' ? 'selected' : '' %>>Saldo Completo</option>
+                                            <option value="MULTIPLE" <%= filtros.tipo_pago === 'MULTIPLE' ? 'selected' : '' %>>Pago Múltiple</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6 col-lg-2">
@@ -250,6 +251,15 @@
                                 Mostrando <%= pagos.length %> de <%= paginacion.totalItems %> pagos
                             </p>
                         </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="text-muted">
+                                Seleccionados: <span id="pagosSeleccionadosCount">0</span> | Total: 
+                                <span id="pagosSeleccionadosTotal">ARS 0,00</span>
+                            </small>
+                            <button type="button" class="btn btn-primary btn-sm" id="btnPagarSeleccionados" disabled>
+                                <i class="bi bi-cash-coin me-1"></i>Pagar seleccionados
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Tabla de pagos -->
@@ -257,6 +267,9 @@
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
+                                    <th>
+                                        <input class="form-check-input" type="checkbox" id="selectAllPagos" title="Seleccionar todos">
+                                    </th>
                                     <th>Orden</th>
                                     <th>Proveedor</th>
                                     <th>Tipo</th>
@@ -270,7 +283,7 @@
                             <tbody>
                                 <% if (pagos.length === 0) { %>
                                     <tr>
-                                        <td colspan="7" class="text-center py-4">
+                                        <td colspan="9" class="text-center py-4">
                                             <i class="bi bi-inbox fs-1 text-muted"></i>
                                             <p class="text-muted mt-2">No se encontraron pagos con los filtros aplicados</p>
                                         </td>
@@ -278,6 +291,21 @@
                                 <% } else { %>
                                     <% pagos.forEach(pago => { %>
                                         <tr>
+                                            <td>
+                                                <input class="form-check-input pago-checkbox" 
+                                                       type="checkbox"
+                                                       data-pago-id="<%= pago.id %>"
+                                                       data-orden-id="<%= pago.orden_compra_id %>"
+                                                       data-orden-codigo="<%= pago.orden_codigo %>"
+                                                       data-proveedor-id="<%= pago.proveedor_id %>"
+                                                       data-proveedor-nombre="<%= pago.proveedor_nombre %>"
+                                                       data-bien-nombre="<%= pago.bien_nombre || '' %>"
+                                                       data-bien-codigo="<%= pago.bien_codigo || '' %>"
+                                                       data-moneda="<%= pago.moneda || 'ARS' %>"
+                                                       data-monto="<%= pago.monto_pago %>"
+                                                       data-tipo-pago="<%= pago.tipo_pago %>"
+                                                       <%= pago.pagado ? 'disabled' : '' %>>
+                                            </td>
                                             <td>
                                                 <a href="/ordenes-compra/<%= pago.orden_compra_id %>" 
                                                    class="text-decoration-none">
@@ -297,6 +325,10 @@
                                                 <% } else if (pago.tipo_pago === 'SALDO_COMPLETO') { %>
                                                     <span class="badge tipo-saldo badge-tipo-pago">
                                                         <i class="bi bi-check-circle me-1"></i>Saldo Completo
+                                                    </span>
+                                                <% } else if (pago.tipo_pago === 'MULTIPLE') { %>
+                                                    <span class="badge bg-secondary badge-tipo-pago">
+                                                        <i class="bi bi-collection me-1"></i>Pago Múltiple
                                                     </span>
                                                 <% } %>
                                             </td>
@@ -447,6 +479,65 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger" onclick="confirmarMarcarPagado()">
                         <i class="bi bi-check-circle me-2"></i>Marcar como Pagado
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para pago múltiple (comprobante único) -->
+    <div class="modal fade" id="modalPagoMultiple" tabindex="-1" aria-labelledby="modalPagoMultipleLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalPagoMultipleLabel">
+                        <i class="bi bi-collection me-2"></i>Pago múltiple - Comprobante único
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info py-2">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>Se registrará un único pago y se vinculará a los ítems seleccionados.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Resumen de ítems seleccionados</label>
+                        <div class="table-responsive" style="max-height: 240px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Orden</th>
+                                        <th>Item</th>
+                                        <th>Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaPagosSeleccionados"></tbody>
+                                <tfoot class="table-secondary">
+                                    <tr>
+                                        <td colspan="2" class="text-end"><strong>Total:</strong></td>
+                                        <td><strong id="totalPagoMultiple">ARS 0,00</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="detallePagoMultiple" class="form-label">Detalle del Comprobante (Opcional)</label>
+                        <textarea class="form-control" 
+                                  id="detallePagoMultiple" 
+                                  rows="3" 
+                                  placeholder="Ej: Transferencia bancaria, número de comprobante, cuenta, etc."></textarea>
+                        <div class="form-text">
+                            Se agregará al detalle del pago junto con el listado de OC e ítems.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmarPagoMultiple()">
+                        <i class="bi bi-check-circle me-2"></i>Registrar pago único
                     </button>
                 </div>
             </div>

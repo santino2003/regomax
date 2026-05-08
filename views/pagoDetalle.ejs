@@ -152,6 +152,10 @@
                                                 <span class="badge tipo-saldo badge-tipo-pago">
                                                     <i class="bi bi-check-circle me-1"></i>Saldo Completo
                                                 </span>
+                                            <% } else if (pago.tipo_pago === 'MULTIPLE') { %>
+                                                <span class="badge bg-secondary badge-tipo-pago">
+                                                    <i class="bi bi-collection me-1"></i>Pago Múltiple
+                                                </span>
                                             <% } %>
                                         </div>
                                     </div>
@@ -298,7 +302,7 @@
                                         <hr>
                                         <div>
                                             <span class="detail-label">Detalle:</span>
-                                            <p class="mb-0 detail-value mt-2"><%= pago.detalle_pago %></p>
+                                            <p class="mb-0 detail-value mt-2"><%- (pago.detalle_pago || '').replace(/\n/g, '<br>') %></p>
                                         </div>
                                     </div>
                                 </div>
@@ -342,15 +346,17 @@
                                                 en concepto de <strong>adelanto</strong> correspondiente a la Orden de Compra <strong><%= pago.orden_codigo %></strong>.
                                             <% } else if (pago.tipo_pago === 'SALDO_COMPLETO') { %>
                                                 en concepto de <strong>saldo completo</strong> de la Orden de Compra <strong><%= pago.orden_codigo %></strong>.
+                                            <% } else if (pago.tipo_pago === 'MULTIPLE') { %>
+                                                en concepto de <strong>pago múltiple</strong> con comprobante único.
                                             <% } else { %>
                                                 en concepto de pago correspondiente a la Orden de Compra <strong><%= pago.orden_codigo %></strong>.
                                             <% } %>
                                         </p>
 
                                         <% if (pago.detalle_pago) { %>
-                                            <p class="mb-3"><strong>Detalle / Observaciones:</strong> <%= pago.detalle_pago %></p>
+                                            <p class="mb-3"><strong>Detalle / Observaciones:</strong> <%- (pago.detalle_pago || '').replace(/\n/g, '<br>') %></p>
                                         <% } else if (pago.observaciones) { %>
-                                            <p class="mb-3"><strong>Detalle / Observaciones:</strong> <%= pago.observaciones %></p>
+                                            <p class="mb-3"><strong>Detalle / Observaciones:</strong> <%- (pago.observaciones || '').replace(/\n/g, '<br>') %></p>
                                         <% } %>
 
                                         <div class="row mt-4">

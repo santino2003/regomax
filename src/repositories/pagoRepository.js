@@ -175,6 +175,59 @@ class PagoRepository {
     }
 
     /**
+     * Registrar un pago múltiple (comprobante único)
+     */
+    async registrarPagoMultiple(pagoData) {
+        try {
+            const {
+                ordenCompraId,
+                proveedorId,
+                montoPago,
+                fechaPago,
+                registradoPor,
+                observaciones,
+                moneda,
+                connection
+            } = pagoData;
+
+            const sql =
+                `INSERT INTO pagos (
+                    orden_compra_id,
+                    bien_id,
+                    proveedor_id,
+                    tipo_pago,
+                    monto_pago,
+                    moneda,
+                    fecha_pago,
+                    registrado_por,
+                    observaciones
+                ) VALUES (?, NULL, ?, 'MULTIPLE', ?, ?, ?, ?, ?)`;
+            const params = [
+                ordenCompraId,
+                proveedorId,
+                montoPago,
+                moneda || 'ARS',
+                fechaPago,
+                registradoPor,
+                observaciones || null
+            ];
+
+            let result;
+            if (connection) {
+                const [insertResult] = await connection.query(sql, params);
+                result = insertResult;
+            } else {
+                result = await db.query(sql, params);
+            }
+
+            return { id: result.insertId };
+        } catch (error) {
+            console.error('Error en PagoRepository.registrarPagoMultiple:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Obtener todos los pagos de una orden de compra
      */
     async obtenerPagosPorOrden(ordenCompraId) {
@@ -462,6 +515,38 @@ class PagoRepository {
     }
 
     /**
+     * Obtener pagos por IDs
+     */
+    async obtenerPagosPorIds(pagoIds) {
+        try {
+            if (!pagoIds || pagoIds.length === 0) {
+                return [];
+            }
+
+            const placeholders = pagoIds.map(() => '?').join(',');
+            const pagos = await db.query(
+                `SELECT 
+                    p.*,
+                    b.nombre AS bien_nombre,
+                    b.codigo AS bien_codigo,
+                    pr.nombre AS proveedor_nombre,
+                    oc.codigo AS orden_codigo
+                FROM pagos p
+                LEFT JOIN bienes b ON p.bien_id = b.id
+                JOIN proveedores pr ON p.proveedor_id = pr.id
+                JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
+                WHERE p.id IN (${placeholders})`,
+                pagoIds
+            );
+
+            return pagos;
+        } catch (error) {
+            console.error('Error en PagoRepository.obtenerPagosPorIds:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Obtener pagos con filtros y paginación
      */
     async obtenerPagosConFiltros(filtros = {}, limit = null, offset = null) {
@@ -493,6 +578,9 @@ class PagoRepository {
                 query += ' AND p.pagado = TRUE';
             }
             // Si es 'all', no agregamos filtro
+
+            // Ocultar pagos incluidos en un pago múltiple (evitar doble conteo)
+            query += " AND (p.detalle_pago IS NULL OR LOWER(p.detalle_pago) NOT LIKE '%incluido en pago%')";
 
             // Aplicar filtros
             if (filtros.proveedor_id) {
@@ -583,20 +671,56 @@ class PagoRepository {
     /**
      * Marcar un pago como pagado
      */
-    async marcarComoPagado(pagoId, username, detalle = null) {
+    async marcarComoPagado(pagoId, username, detalle = null, connection = null) {
         try {
-            await db.query(
-                `UPDATE pagos 
+            const sql = `UPDATE pagos 
                 SET pagado = TRUE,
                     fecha_marcado_pagado = NOW(),
                     marcado_pagado_por = ?,
                     detalle_pago = ?
-                WHERE id = ?`,
-                [username, detalle, pagoId]
-            );
+                WHERE id = ?`;
+            const params = [username, detalle, pagoId];
+
+            if (connection) {
+                await connection.execute(sql, params);
+            } else {
+                await db.query(sql, params);
+            }
+
             return { success: true };
         } catch (error) {
             console.error('Error en PagoRepository.marcarComoPagado:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Marcar múltiples pagos como pagados
+     */
+    async marcarComoPagadoMultiple(pagoIds, username, detalle = null, connection = null) {
+        try {
+            if (!pagoIds || pagoIds.length === 0) {
+                return { success: true };
+            }
+
+            const placeholders = pagoIds.map(() => '?').join(',');
+            const sql = `UPDATE pagos 
+                SET pagado = TRUE,
+                    fecha_marcado_pagado = NOW(),
+                    marcado_pagado_por = ?,
+                    detalle_pago = ?
+                WHERE id IN (${placeholders})`;
+            const params = [username, detalle, ...pagoIds];
+
+            if (connection) {
+                await connection.execute(sql, params);
+            } else {
+                await db.query(sql, params);
+            }
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error en PagoRepository.marcarComoPagadoMultiple:', error);
             throw error;
         }
     }
