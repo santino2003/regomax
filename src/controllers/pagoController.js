@@ -103,6 +103,10 @@ class PagoController {
             // Obtener pagos con paginación y filtros
             const resultado = await pagoRepository.obtenerPagosConFiltros(filtros, limit, offset);
 
+            // Obtener totales agregados (sin paginación) con los mismos filtros
+            const totales = await pagoRepository.obtenerTotalesConFiltros(filtros);
+            const totalesPorMoneda = await pagoRepository.obtenerTotalesPorMonedaConFiltros(filtros);
+
             // Calcular información de paginación
             const totalPages = Math.ceil(resultado.total / limit);
 
@@ -111,6 +115,8 @@ class PagoController {
                 pagos: resultado.pagos,
                 filtros,
                 proveedores,
+                totales,
+                totalesPorMoneda,
                 paginacion: {
                     currentPage: page,
                     totalPages,

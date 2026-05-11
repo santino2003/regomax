@@ -669,6 +669,120 @@ class PagoRepository {
     }
 
     /**
+     * Obtener totales agregados con los mismos filtros del listado
+     */
+    async obtenerTotalesConFiltros(filtros = {}) {
+        try {
+            let query = `
+                SELECT 
+                    COALESCE(SUM(p.monto_pago), 0) AS total_general,
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'RECEPCION' THEN p.monto_pago ELSE 0 END), 0) AS total_recepcion,
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'ADELANTO' THEN p.monto_pago ELSE 0 END), 0) AS total_adelanto,
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'SALDO_COMPLETO' THEN p.monto_pago ELSE 0 END), 0) AS total_saldo
+                FROM pagos p
+                WHERE 1=1
+            `;
+
+            const params = [];
+
+            if (filtros.pagado === undefined || filtros.pagado === '' || filtros.pagado === 'false') {
+                query += ' AND p.pagado = FALSE';
+            } else if (filtros.pagado === 'true') {
+                query += ' AND p.pagado = TRUE';
+            }
+
+            query += " AND (p.detalle_pago IS NULL OR LOWER(p.detalle_pago) NOT LIKE '%incluido en pago%')";
+
+            if (filtros.proveedor_id) {
+                query += ' AND p.proveedor_id = ?';
+                params.push(filtros.proveedor_id);
+            }
+
+            if (filtros.tipo_pago) {
+                query += ' AND p.tipo_pago = ?';
+                params.push(filtros.tipo_pago);
+            }
+
+            if (filtros.fecha_desde) {
+                query += ' AND p.fecha_pago >= ?';
+                params.push(filtros.fecha_desde);
+            }
+
+            if (filtros.fecha_hasta) {
+                query += ' AND p.fecha_pago <= ?';
+                params.push(filtros.fecha_hasta);
+            }
+
+            const result = await db.query(query, params);
+            return result && result.length > 0 ? result[0] : {
+                total_general: 0,
+                total_recepcion: 0,
+                total_adelanto: 0,
+                total_saldo: 0
+            };
+        } catch (error) {
+            console.error('Error en PagoRepository.obtenerTotalesConFiltros:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener totales agregados agrupados por moneda con los mismos filtros
+     */
+    async obtenerTotalesPorMonedaConFiltros(filtros = {}) {
+        try {
+            let query = `
+                SELECT 
+                    COALESCE(p.moneda, 'ARS') AS moneda,
+                    COALESCE(SUM(p.monto_pago), 0) AS total_general,
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'RECEPCION' THEN p.monto_pago ELSE 0 END), 0) AS total_recepcion,
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'ADELANTO' THEN p.monto_pago ELSE 0 END), 0) AS total_adelanto,
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'SALDO_COMPLETO' THEN p.monto_pago ELSE 0 END), 0) AS total_saldo
+                FROM pagos p
+                WHERE 1=1
+            `;
+
+            const params = [];
+
+            if (filtros.pagado === undefined || filtros.pagado === '' || filtros.pagado === 'false') {
+                query += ' AND p.pagado = FALSE';
+            } else if (filtros.pagado === 'true') {
+                query += ' AND p.pagado = TRUE';
+            }
+
+            query += " AND (p.detalle_pago IS NULL OR LOWER(p.detalle_pago) NOT LIKE '%incluido en pago%')";
+
+            if (filtros.proveedor_id) {
+                query += ' AND p.proveedor_id = ?';
+                params.push(filtros.proveedor_id);
+            }
+
+            if (filtros.tipo_pago) {
+                query += ' AND p.tipo_pago = ?';
+                params.push(filtros.tipo_pago);
+            }
+
+            if (filtros.fecha_desde) {
+                query += ' AND p.fecha_pago >= ?';
+                params.push(filtros.fecha_desde);
+            }
+
+            if (filtros.fecha_hasta) {
+                query += ' AND p.fecha_pago <= ?';
+                params.push(filtros.fecha_hasta);
+            }
+
+            query += ' GROUP BY COALESCE(p.moneda, \'ARS\') ORDER BY moneda ASC';
+
+            const result = await db.query(query, params);
+            return result || [];
+        } catch (error) {
+            console.error('Error en PagoRepository.obtenerTotalesPorMonedaConFiltros:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Marcar un pago como pagado
      */
     async marcarComoPagado(pagoId, username, detalle = null, connection = null) {

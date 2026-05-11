@@ -111,67 +111,70 @@
                         }).format(num);
                     }
 
-                    let totalGeneral = 0;
-                    let totalRecepcion = 0;
-                    let totalAdelanto = 0;
-                    let totalSaldo = 0;
-                    
-                    pagos.forEach(pago => {
-                        const monto = parseFloat(pago.monto_pago) || 0;
-                        totalGeneral += monto;
-                        
-                        if (pago.tipo_pago === 'RECEPCION') totalRecepcion += monto;
-                        if (pago.tipo_pago === 'ADELANTO') totalAdelanto += monto;
-                        if (pago.tipo_pago === 'SALDO_COMPLETO') totalSaldo += monto;
-                    });
+                    const totalGeneral = totales && totales.total_general ? totales.total_general : 0;
+                    const totalRecepcion = totales && totales.total_recepcion ? totales.total_recepcion : 0;
+                    const totalAdelanto = totales && totales.total_adelanto ? totales.total_adelanto : 0;
+                    const totalSaldo = totales && totales.total_saldo ? totales.total_saldo : 0;
+
+                    const resumenesPorMoneda = Array.isArray(totalesPorMoneda) && totalesPorMoneda.length > 0
+                        ? totalesPorMoneda
+                        : [{
+                            moneda: (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS',
+                            total_general: totalGeneral,
+                            total_recepcion: totalRecepcion,
+                            total_adelanto: totalAdelanto,
+                            total_saldo: totalSaldo
+                        }];
                     %>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card resumen-card">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Total General</h6>
-                                    <h4 class="card-title mb-0 monto-destacado">
-                                        <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
-                                        <%= formatoMoneda(totalGeneral) %>
-                                    </h4>
+
+                    <% resumenesPorMoneda.forEach(resumen => { %>
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card resumen-card">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Total General</h6>
+                                        <h4 class="card-title mb-0 monto-destacado">
+                                            <%= resumen.moneda || 'ARS' %>
+                                            <%= formatoMoneda(resumen.total_general) %>
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Por Recepción</h6>
+                                        <h5 class="card-title mb-0">
+                                            <%= resumen.moneda || 'ARS' %>
+                                            <%= formatoMoneda(resumen.total_recepcion) %>
+                                        </h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Adelantos</h6>
+                                        <h5 class="card-title mb-0">
+                                            <%= resumen.moneda || 'ARS' %>
+                                            <%= formatoMoneda(resumen.total_adelanto) %>
+                                        </h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Saldos Completos</h6>
+                                        <h5 class="card-title mb-0">
+                                            <%= resumen.moneda || 'ARS' %>
+                                            <%= formatoMoneda(resumen.total_saldo) %>
+                                        </h5>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Por Recepción</h6>
-                                    <h5 class="card-title mb-0">
-                                        <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
-                                        <%= formatoMoneda(totalRecepcion) %>
-                                    </h5>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Adelantos</h6>
-                                    <h5 class="card-title mb-0">
-                                        <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
-                                        <%= formatoMoneda(totalAdelanto) %>
-                                    </h5>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Saldos Completos</h6>
-                                    <h5 class="card-title mb-0">
-                                        <%= (pagos[0] && pagos[0].moneda) ? pagos[0].moneda : 'ARS' %>
-                                        <%= formatoMoneda(totalSaldo) %>
-                                    </h5>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <% }) %>
 
                     <!-- Filtros -->
                     <div class="card mb-4">
