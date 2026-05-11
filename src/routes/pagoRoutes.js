@@ -31,6 +31,13 @@ router.post(
 	pagoController.marcarComoPagado
 );
 
+// Ruta para marcar múltiples pagos con un comprobante único
+router.post(
+	'/marcar-pagado-multiple',
+	permissionsMiddleware.hasPermission(PERMISSIONS.PAGOS.MARK_PAID),
+	pagoController.marcarPagosMultiples
+);
+
 // Ruta para refinanciar un pago
 router.post(
 	'/:id/refinanciar',

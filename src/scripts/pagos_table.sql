@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS pagos (
     bien_id INT NULL,  -- NULL para pagos a contrafactura completos
     proveedor_id INT NOT NULL,
     
-    -- Tipo de pago: 'RECEPCION', 'ADELANTO', 'SALDO_COMPLETO'
-    tipo_pago ENUM('RECEPCION', 'ADELANTO', 'SALDO_COMPLETO') NOT NULL,
+    -- Tipo de pago: 'RECEPCION', 'ADELANTO', 'SALDO_COMPLETO', 'MULTIPLE'
+    tipo_pago ENUM('RECEPCION', 'ADELANTO', 'SALDO_COMPLETO', 'MULTIPLE') NOT NULL,
     
     -- Datos del bien (solo para tipo RECEPCION)
     cantidad_recibida DECIMAL(10, 2) NULL,

@@ -1,6 +1,7 @@
 const bienProveedorRepository = require('../repositories/bienProveedorRepository');
 const ordenCompraRepository = require('../repositories/ordenCompraRepository');
 const pagoRepository = require('../repositories/pagoRepository');
+const db = require('../config/db');
 const { calcularJuevesProximaSemana, formatMySQLLocal } = require('../utils/fecha');
 
 class PagosService {
@@ -1281,6 +1282,107 @@ class PagosService {
         } catch (error) {
             console.error('❌ [PAGOS] Error en refinanciarPago:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Registrar un pago múltiple con comprobante único
+     */
+    async registrarPagoMultiple(pagoIds, username, detalleManual = null) {
+        const connection = await db.pool.getConnection();
+
+        try {
+            if (!pagoIds || pagoIds.length === 0) {
+                return { success: false, message: 'Debe seleccionar al menos un pago' };
+            }
+
+            const pagos = await pagoRepository.obtenerPagosPorIds(pagoIds);
+
+            if (pagos.length !== pagoIds.length) {
+                return { success: false, message: 'Algunos pagos seleccionados no existen' };
+            }
+
+            const pagosYaPagados = pagos.filter(p => p.pagado);
+            if (pagosYaPagados.length > 0) {
+                return { success: false, message: 'Hay pagos seleccionados que ya están marcados como pagados' };
+            }
+
+            const ordenId = pagos[0].orden_compra_id;
+            const proveedorId = pagos[0].proveedor_id;
+            const moneda = (pagos[0].moneda || 'ARS').toUpperCase();
+
+            const pagosInvalidos = pagos.filter(p => 
+                p.orden_compra_id !== ordenId ||
+                p.proveedor_id !== proveedorId ||
+                (p.moneda || 'ARS').toUpperCase() !== moneda
+            );
+
+            if (pagosInvalidos.length > 0) {
+                return {
+                    success: false,
+                    message: 'Los pagos deben pertenecer a la misma OC, proveedor y moneda para un comprobante único'
+                };
+            }
+
+            const totalPago = pagos.reduce((sum, p) => sum + parseFloat(p.monto_pago || 0), 0);
+            const fechaPago = formatMySQLLocal(new Date()).split(' ')[0];
+
+            const detalleItems = pagos.map(p => {
+                const itemInfo = p.bien_nombre
+                    ? `${p.bien_nombre}${p.bien_codigo ? ` (${p.bien_codigo})` : ''}`
+                    : 'Sin bien';
+                return `OC ${p.orden_codigo} - ${itemInfo} - ${moneda} ${parseFloat(p.monto_pago).toFixed(2)}`;
+            }).join('\n');
+
+            const detalleFinal = [
+                'Pago múltiple con comprobante único.',
+                detalleItems,
+                detalleManual ? `Detalle comprobante: ${detalleManual}` : null
+            ].filter(Boolean).join('\n');
+
+            const observaciones = `Pago múltiple generado desde el listado. Items: ${pagos.length}`;
+
+            await connection.beginTransaction();
+
+            const pagoRegistrado = await pagoRepository.registrarPagoMultiple({
+                ordenCompraId: ordenId,
+                proveedorId,
+                montoPago: totalPago,
+                fechaPago,
+                registradoPor: username,
+                observaciones,
+                moneda,
+                connection
+            });
+
+            await pagoRepository.marcarComoPagado(
+                pagoRegistrado.id,
+                username,
+                detalleFinal,
+                connection
+            );
+
+            const detalleReferencia = `Incluido en pago múltiple #${pagoRegistrado.id}.`;
+            await pagoRepository.marcarComoPagadoMultiple(
+                pagoIds,
+                username,
+                detalleReferencia,
+                connection
+            );
+
+            await connection.commit();
+
+            return {
+                success: true,
+                message: 'Pago múltiple registrado exitosamente',
+                pagoId: pagoRegistrado.id
+            };
+        } catch (error) {
+            await connection.rollback();
+            console.error('❌ [PAGOS] Error en registrarPagoMultiple:', error);
+            throw error;
+        } finally {
+            connection.release();
         }
     }
 }

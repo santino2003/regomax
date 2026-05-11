@@ -87,10 +87,29 @@ const proveedoresController ={
                 // Si hay error, bienes queda como array vacío
             }
 
+            // Obtener historial de precios del proveedor
+            let historialPrecios = [];
+            try {
+                const resultadoHistorial = await bienProveedorService.obtenerHistorialPorProveedor(id);
+                historialPrecios = Array.isArray(resultadoHistorial.data) ? resultadoHistorial.data : [];
+                historialPrecios.sort((a, b) => {
+                    const bienA = (a.bien_nombre || a.bien_codigo || '').toString().toLowerCase();
+                    const bienB = (b.bien_nombre || b.bien_codigo || '').toString().toLowerCase();
+                    if (bienA < bienB) return -1;
+                    if (bienA > bienB) return 1;
+                    const fechaA = a.fecha_asignacion ? new Date(a.fecha_asignacion).getTime() : 0;
+                    const fechaB = b.fecha_asignacion ? new Date(b.fecha_asignacion).getTime() : 0;
+                    return fechaB - fechaA;
+                });
+            } catch (errorHistorial) {
+                console.error('Error al obtener historial de precios del proveedor:', errorHistorial);
+            }
+
             res.render('proveedoresVer', {
                 username: req.user.username,
                 proveedor,
-                bienes
+                bienes,
+                historialPrecios
             });
         } catch (error) {
             console.error('Error al ver proveedor:', error);

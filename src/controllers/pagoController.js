@@ -103,6 +103,10 @@ class PagoController {
             // Obtener pagos con paginación y filtros
             const resultado = await pagoRepository.obtenerPagosConFiltros(filtros, limit, offset);
 
+            // Obtener totales agregados (sin paginación) con los mismos filtros
+            const totales = await pagoRepository.obtenerTotalesConFiltros(filtros);
+            const totalesPorMoneda = await pagoRepository.obtenerTotalesPorMonedaConFiltros(filtros);
+
             // Calcular información de paginación
             const totalPages = Math.ceil(resultado.total / limit);
 
@@ -111,6 +115,8 @@ class PagoController {
                 pagos: resultado.pagos,
                 filtros,
                 proveedores,
+                totales,
+                totalesPorMoneda,
                 paginacion: {
                     currentPage: page,
                     totalPages,
@@ -254,6 +260,42 @@ class PagoController {
             res.status(500).json({
                 success: false,
                 message: 'Error al marcar pago como pagado',
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Registrar pago múltiple con comprobante único
+     */
+    async marcarPagosMultiples(req, res) {
+        try {
+            const { ids, detalle } = req.body;
+            const username = req.user.username;
+
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Debe seleccionar al menos un pago'
+                });
+            }
+
+            const resultado = await pagosService.registrarPagoMultiple(ids, username, detalle || null);
+
+            if (!resultado.success) {
+                return res.status(400).json(resultado);
+            }
+
+            return res.json({
+                success: true,
+                message: resultado.message,
+                redirectUrl: `/pagos/${resultado.pagoId}`
+            });
+        } catch (error) {
+            console.error('Error en PagoController.marcarPagosMultiples:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al registrar pago múltiple',
                 error: error.message
             });
         }

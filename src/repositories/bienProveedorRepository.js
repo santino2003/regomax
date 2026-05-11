@@ -1,6 +1,55 @@
 const db = require('../config/db');
 
 class BienProveedorRepository {
+    async registrarPrecioSiCambio(connection, bienId, proveedorId, precio, moneda) {
+        const [latestRows] = await connection.query(
+            `SELECT id, precio, moneda, fecha_asignacion
+             FROM bienes_proveedores
+             WHERE bien_id = ? AND proveedor_id = ?
+             ORDER BY id DESC
+             LIMIT 1`,
+            [bienId, proveedorId]
+        );
+
+        const ultimo = latestRows && latestRows[0] ? latestRows[0] : null;
+        const ultimoPrecio = ultimo && ultimo.precio !== null && ultimo.precio !== undefined
+            ? Number(ultimo.precio)
+            : null;
+        const nuevoPrecio = precio !== null && precio !== undefined ? Number(precio) : null;
+        const cambio = !ultimo || ultimoPrecio !== nuevoPrecio || ultimo.moneda !== moneda;
+
+        if (cambio) {
+            const [result] = await connection.query(
+                `INSERT INTO bienes_proveedores (bien_id, proveedor_id, precio, moneda)
+                 VALUES (?, ?, ?, ?)`,
+                [bienId, proveedorId, precio, moneda]
+            );
+
+            return {
+                inserted: true,
+                data: {
+                    id: result.insertId,
+                    bien_id: bienId,
+                    proveedor_id: proveedorId,
+                    precio: precio,
+                    moneda: moneda
+                }
+            };
+        }
+
+        return {
+            inserted: false,
+            data: {
+                id: ultimo.id,
+                bien_id: bienId,
+                proveedor_id: proveedorId,
+                precio: ultimo.precio,
+                moneda: ultimo.moneda,
+                fecha_asignacion: ultimo.fecha_asignacion
+            }
+        };
+    }
+
     /**
      * Crear múltiples asociaciones bien-proveedor en una transacción
      */
@@ -14,20 +63,16 @@ class BienProveedorRepository {
             // Iterar sobre cada tupla [proveedorId, precio, moneda]
             for (let i = 0; i < proveedores.length; i++) {
                 const [proveedorId, precio, moneda] = proveedores[i];
-                
-                const [result] = await connection.query(
-                    `INSERT INTO bienes_proveedores (bien_id, proveedor_id, precio, moneda) 
-                     VALUES (?, ?, ?, ?)`,
-                    [bienId, proveedorId, precio, moneda]
+
+                const resultado = await this.registrarPrecioSiCambio(
+                    connection,
+                    bienId,
+                    proveedorId,
+                    precio,
+                    moneda
                 );
-                
-                resultados.push({
-                    id: result.insertId,
-                    bien_id: bienId,
-                    proveedor_id: proveedorId,
-                    precio: precio,
-                    moneda: moneda
-                });
+
+                resultados.push(resultado.data);
             }
             
             await connection.commit();
@@ -56,6 +101,7 @@ class BienProveedorRepository {
             INNER JOIN bienes b ON bp.bien_id = b.id
             WHERE bp.bien_id = ?
             AND bp.proveedor_id = ?
+            ORDER BY bp.id DESC
             LIMIT 1
         `;
 
@@ -70,38 +116,28 @@ class BienProveedorRepository {
 
     /**
      * Editar/Actualizar asociaciones bien-proveedor en una transacción
-     * Elimina las asociaciones existentes y crea las nuevas
+     * Registra un nuevo precio solo si cambió, manteniendo historial
      */
     async editarAsociaciones(bienId, proveedores) {
         const connection = await db.pool.getConnection();
         try {
             await connection.beginTransaction();
             
-            // 1. Eliminar todas las asociaciones existentes del bien
-            await connection.query(
-                `DELETE FROM bienes_proveedores WHERE bien_id = ?`,
-                [bienId]
-            );
-            
             const resultados = [];
             
-            // 2. Insertar las nuevas asociaciones
+            // Registrar nuevos precios si hubo cambios
             for (let i = 0; i < proveedores.length; i++) {
                 const [proveedorId, precio, moneda] = proveedores[i];
-                
-                const [result] = await connection.query(
-                    `INSERT INTO bienes_proveedores (bien_id, proveedor_id, precio, moneda) 
-                     VALUES (?, ?, ?, ?)`,
-                    [bienId, proveedorId, precio, moneda]
+
+                const resultado = await this.registrarPrecioSiCambio(
+                    connection,
+                    bienId,
+                    proveedorId,
+                    precio,
+                    moneda
                 );
-                
-                resultados.push({
-                    id: result.insertId,
-                    bien_id: bienId,
-                    proveedor_id: proveedorId,
-                    precio: precio,
-                    moneda: moneda
-                });
+
+                resultados.push(resultado.data);
             }
             
             await connection.commit();
@@ -120,11 +156,11 @@ class BienProveedorRepository {
      */
     async eliminarAsociacionesPorBien(bienId) {
         try {
-            const result = await db.query(
-                `DELETE FROM bienes_proveedores WHERE bien_id = ?`,
-                [bienId]
+            console.warn(
+                'BienProveedorRepository.eliminarAsociacionesPorBien se omitió para preservar historial:',
+                { bienId }
             );
-            return result.affectedRows;
+            return 0;
         } catch (error) {
             console.error('Error en BienProveedorRepository.eliminarAsociacionesPorBien:', error);
             throw error;
@@ -146,13 +182,22 @@ class BienProveedorRepository {
                     um.nombre as unidad_medida,
                     bp.precio,
                     bp.moneda
-                FROM bienes_proveedores bp
+                FROM (
+                    SELECT bp1.*
+                    FROM bienes_proveedores bp1
+                    INNER JOIN (
+                        SELECT MAX(id) as id
+                        FROM bienes_proveedores
+                        WHERE proveedor_id = ?
+                        GROUP BY bien_id, proveedor_id
+                    ) latest ON bp1.id = latest.id
+                ) bp
                 INNER JOIN bienes b ON bp.bien_id = b.id
                 LEFT JOIN categorias c ON b.categoria_id = c.id
                 LEFT JOIN unidades_medida um ON b.unidad_medida_id = um.id
                 WHERE bp.proveedor_id = ?
                 ORDER BY b.nombre`,
-                [proveedorId]
+                [proveedorId, proveedorId]
             );
             return rows;
         } catch (error) {
@@ -175,15 +220,79 @@ class BienProveedorRepository {
                     p.email,
                     bp.precio,
                     bp.moneda
-                FROM bienes_proveedores bp
+                FROM (
+                    SELECT bp1.*
+                    FROM bienes_proveedores bp1
+                    INNER JOIN (
+                        SELECT MAX(id) as id
+                        FROM bienes_proveedores
+                        WHERE bien_id = ?
+                        GROUP BY bien_id, proveedor_id
+                    ) latest ON bp1.id = latest.id
+                ) bp
                 INNER JOIN proveedores p ON bp.proveedor_id = p.id
                 WHERE bp.bien_id = ?
                 ORDER BY p.nombre`,
-                [bienId]
+                [bienId, bienId]
             );
             return rows;
         } catch (error) {
             console.error('Error en BienProveedorRepository.obtenerProveedoresPorBien:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener historial completo de precios por bien
+     */
+    async obtenerHistorialPorBien(bienId) {
+        try {
+            const rows = await db.query(
+                `SELECT
+                    bp.id,
+                    bp.bien_id,
+                    bp.proveedor_id,
+                    bp.precio,
+                    bp.moneda,
+                    bp.fecha_asignacion,
+                    p.nombre as proveedor_nombre
+                FROM bienes_proveedores bp
+                INNER JOIN proveedores p ON bp.proveedor_id = p.id
+                WHERE bp.bien_id = ?
+                ORDER BY bp.fecha_asignacion DESC, bp.id DESC`,
+                [bienId]
+            );
+            return rows;
+        } catch (error) {
+            console.error('Error en BienProveedorRepository.obtenerHistorialPorBien:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener historial completo de precios por proveedor
+     */
+    async obtenerHistorialPorProveedor(proveedorId) {
+        try {
+            const rows = await db.query(
+                `SELECT
+                    bp.id,
+                    bp.bien_id,
+                    bp.proveedor_id,
+                    bp.precio,
+                    bp.moneda,
+                    bp.fecha_asignacion,
+                    b.nombre as bien_nombre,
+                    b.codigo as bien_codigo
+                FROM bienes_proveedores bp
+                INNER JOIN bienes b ON bp.bien_id = b.id
+                WHERE bp.proveedor_id = ?
+                ORDER BY bp.fecha_asignacion DESC, bp.id DESC`,
+                [proveedorId]
+            );
+            return rows;
+        } catch (error) {
+            console.error('Error en BienProveedorRepository.obtenerHistorialPorProveedor:', error);
             throw error;
         }
     }

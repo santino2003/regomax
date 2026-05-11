@@ -182,7 +182,7 @@
                         <div class="card-body bg-light">
                             <% if (bien.proveedores && bien.proveedores.length > 0) { %>
                             <div class="table-responsive">
-                                <table class="table table-hover table-sm align-middle mb-0">
+                                <table id="historialPreciosTable" class="table table-hover table-sm align-middle mb-0">
                                     <thead>
                                         <tr>
                                             <th>Proveedor</th>
@@ -235,6 +235,61 @@
                             <% } else { %>
                             <p class="text-muted text-center mb-0 py-3">
                                 <i class="bi bi-inbox me-2"></i>No hay proveedores asociados
+                            </p>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Historial de Precios -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header" style="background-color: #5bc0de; color: white;">
+                            <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historial de Precios</h6>
+                        </div>
+                        <div class="card-body bg-light">
+                            <% if (historialPrecios && historialPrecios.length > 0) { %>
+                            <div class="table-responsive">
+                                <table id="historialPreciosTable" class="table table-hover table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Proveedor</th>
+                                            <th class="text-end">Precio</th>
+                                            <th class="text-center">Moneda</th>
+                                            <th>Fecha</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% historialPrecios.forEach(item => { %>
+                                        <tr data-proveedor="<%= (item.proveedor_nombre || '').toLowerCase() %>" data-moneda="<%= (item.moneda || '').toUpperCase() %>">
+                                            <td class="fw-semibold"><%= item.proveedor_nombre %></td>
+                                            <td class="text-end">
+                                                <% if (item.precio != null) { %>
+                                                <span class="fw-semibold">
+                                                    <%= parseFloat(item.precio).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                                </span>
+                                                <% } else { %>
+                                                <span class="text-muted">-</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="text-center">
+                                                <% if (item.moneda) { %>
+                                                <span class="badge bg-secondary"><%= item.moneda %></span>
+                                                <% } else { %>
+                                                <span class="text-muted">-</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    <%= item.fecha_asignacion ? new Date(item.fecha_asignacion).toLocaleString('es-AR') : '-' %>
+                                                </small>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <% } else { %>
+                            <p class="text-muted text-center mb-0 py-3">
+                                <i class="bi bi-inbox me-2"></i>No hay historial de precios
                             </p>
                             <% } %>
                         </div>

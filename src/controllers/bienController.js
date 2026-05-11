@@ -1,4 +1,5 @@
 const bienService = require('../services/bienService');
+const bienProveedorService = require('../services/bienProveedorService');
 const { UPLOADS_BASE_PATH } = require('../config/uploads');
 const path = require('path');
 const fs = require('fs').promises;
@@ -333,9 +334,27 @@ const bienController = {
             // Generar código de barras
             bien.barcodeBase64 = await generarBarcodeBase64(bien.codigo);
 
+            let historialPrecios = [];
+            try {
+                const resultadoHistorial = await bienProveedorService.obtenerHistorialPorBien(id);
+                historialPrecios = Array.isArray(resultadoHistorial.data) ? resultadoHistorial.data : [];
+                historialPrecios.sort((a, b) => {
+                    const proveedorA = (a.proveedor_nombre || '').toString().toLowerCase();
+                    const proveedorB = (b.proveedor_nombre || '').toString().toLowerCase();
+                    if (proveedorA < proveedorB) return -1;
+                    if (proveedorA > proveedorB) return 1;
+                    const fechaA = a.fecha_asignacion ? new Date(a.fecha_asignacion).getTime() : 0;
+                    const fechaB = b.fecha_asignacion ? new Date(b.fecha_asignacion).getTime() : 0;
+                    return fechaB - fechaA;
+                });
+            } catch (errorHistorial) {
+                console.error('Error al obtener historial de precios del bien:', errorHistorial);
+            }
+
             res.render('bienesVer', {
                 username: req.user.username,
-                bien
+                bien,
+                historialPrecios
             });
         } catch (error) {
             console.error('Error al ver bien:', error);

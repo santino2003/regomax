@@ -1,16 +1,17 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+// Pool sizing can be overridden via environment variables DB_CONNECTION_LIMIT and DB_QUEUE_LIMIT
 const connectionOptions = {
   waitForConnections: true,
-  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '3'), // ⚠️ Reducido a 3
-  queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '0'),
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'), // 10 concurrent connections for production
+  queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '10'), // cap queue to prevent unbounded memory growth
   connectTimeout: parseInt(process.env.DB_CONNECT_TIMEOUT || '10000'),
   acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '10000'),
   timeout: parseInt(process.env.DB_TIMEOUT || '10000'),
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
-  idleTimeout: 30000,
+  idleTimeout: 15000, // release idle connections faster to free memory
   maxIdle: 2
 };
 
