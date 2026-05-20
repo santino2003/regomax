@@ -173,15 +173,14 @@ function manejarSeleccionPago(checkbox) {
         };
     }
 
-    const invalido = data.ordenId !== contextoSeleccion.ordenId ||
-        data.proveedorId !== contextoSeleccion.proveedorId ||
+    const invalido = data.proveedorId !== contextoSeleccion.proveedorId ||
         data.moneda !== contextoSeleccion.moneda;
 
     if (invalido) {
         checkbox.checked = false;
         mostrarMensaje(
             'Validación',
-            'Para un comprobante único, los pagos deben ser de la misma OC, proveedor y moneda.',
+            'Para un comprobante único, los pagos deben ser del proveedor y moneda.',
             'warning'
         );
         return;

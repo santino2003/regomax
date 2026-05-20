@@ -1312,15 +1312,14 @@ class PagosService {
             const moneda = (pagos[0].moneda || 'ARS').toUpperCase();
 
             const pagosInvalidos = pagos.filter(p => 
-                p.orden_compra_id !== ordenId ||
                 p.proveedor_id !== proveedorId ||
-                (p.moneda || 'ARS').toUpperCase() !== moneda
+                p.moneda.toUpperCase() !== moneda
             );
 
             if (pagosInvalidos.length > 0) {
                 return {
                     success: false,
-                    message: 'Los pagos deben pertenecer a la misma OC, proveedor y moneda para un comprobante único'
+                    message: 'Los pagos deben pertenecer al proveedor y moneda para un comprobante único'
                 };
             }
 
