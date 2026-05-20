@@ -101,7 +101,7 @@ const bienController = {
     async obtenerBienes(req, res) {
         try {
             const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
+            const limit = parseInt(req.query.limit) || 50;
             const critico = req.query.critico === '1' || req.query.critico === 'true';
             
             // Filtros opcionales
@@ -259,7 +259,7 @@ const bienController = {
     async vistaListarBienes(req, res) {
         try {
             const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
+            const limit = parseInt(req.query.limit) || 50;
             const critico = req.query.critico === '1' || req.query.critico === 'true';
             
             const filtros = {

@@ -1,7 +1,7 @@
 // listarOrdenesCompra.js
 const token = localStorage.getItem('token');
 let currentPage = 1;
-let currentLimit = 10;
+let currentLimit = 50;
 let currentFilters = {
     estado: 'En Proceso,Aprobada'
 };
@@ -85,7 +85,6 @@ function cargarOrdenes(page = 1) {
                 
                 renderizarTabla(response.data.ordenes || []);
                 renderizarPaginacion(pagination, currentFilters);
-                renderizarInfoRegistros(response.data.total || 0, pagination);
                 currentPage = page;
             }
         },
@@ -240,14 +239,6 @@ function renderizarPaginacion(pagination, filtros) {
     container.html(html);
 }
 
-function renderizarInfoRegistros(cantidadMostrada, pagination) {
-    const infoDiv = $('#infoRegistros');
-    if (pagination && pagination.totalRegistros) {
-        infoDiv.html(`Mostrando ${cantidadMostrada} de ${pagination.totalRegistros} órdenes de compra`);
-    } else {
-        infoDiv.html('');
-    }
-}
 
 window.abrirModalEstado = function(ordenId, estadoActual) {
     $('#ordenIdEstado').val(ordenId);
