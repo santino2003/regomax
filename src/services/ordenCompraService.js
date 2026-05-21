@@ -673,6 +673,91 @@ class OrdenCompraService {
     }
 
     /**
+     * Cambiar estado de múltiples órdenes de compra
+     * Valida que todas estén en el mismo estado actual
+     */
+    async cambiarEstadoMultiple(ordenIds, nuevoEstado, username) {
+        try {
+            if (!this.validarEstado(nuevoEstado)) {
+                throw new Error('Estado inválido');
+            }
+
+            if (!Array.isArray(ordenIds) || ordenIds.length === 0) {
+                throw new Error('Se requiere un array de órdenes válido');
+            }
+
+            // Obtener todas las órdenes
+            const ordenes = await Promise.all(
+                ordenIds.map(id => ordenCompraRepository.obtenerPorId(id))
+            );
+
+            // Validar que todas las órdenes existan
+            const ordenesInvalidas = ordenes.filter(o => !o);
+            if (ordenesInvalidas.length > 0) {
+                throw new Error(`Algunas órdenes no existen`);
+            }
+
+            // Verificar que todas estén en el mismo estado
+            const estadosUnicos = new Set(ordenes.map(o => o.estado));
+            if (estadosUnicos.size !== 1) {
+                throw new Error('Todas las órdenes deben estar en el mismo estado');
+            }
+
+            const estadoActual = ordenes[0].estado;
+
+            // Si el estado es el mismo, no hay nada que cambiar
+            if (estadoActual === nuevoEstado) {
+                return {
+                    exitosas: 0,
+                    fallidas: [],
+                    message: 'El estado ya es el solicitado para todas las órdenes'
+                };
+            }
+
+            // Verificar permisos de transición (solo si no es admin)
+            const usuario = await userRepository.findByUsername(username);
+            
+            if (usuario && usuario.role !== 'admin') {
+                let permisos = [];
+                if (usuario.permisos_transiciones_oc) {
+                    permisos = typeof usuario.permisos_transiciones_oc === 'string' 
+                        ? JSON.parse(usuario.permisos_transiciones_oc) 
+                        : usuario.permisos_transiciones_oc;
+                }
+                
+                const tienePermiso = permisos.some(p => p.desde === estadoActual && p.hacia === nuevoEstado);
+                
+                if (!tienePermiso) {
+                    throw new Error(`No tienes permiso para cambiar de "${estadoActual}" a "${nuevoEstado}"`);
+                }
+            }
+
+            // Actualizar todas las órdenes
+            const resultados = {
+                exitosas: 0,
+                fallidas: []
+            };
+
+            for (const ordenId of ordenIds) {
+                try {
+                    await ordenCompraRepository.actualizarEstado(ordenId, nuevoEstado);
+                    resultados.exitosas++;
+                } catch (error) {
+                    resultados.fallidas.push({
+                        orden_id: ordenId,
+                        error: error.message || 'Error desconocido'
+                    });
+                }
+            }
+
+            return resultados;
+        } catch (error) {
+            console.error('Error en OrdenCompraService.cambiarEstadoMultiple:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Actualizar cantidad recibida de un item
      * Solo permitido cuando la orden está en estado "En Proceso"
      */
