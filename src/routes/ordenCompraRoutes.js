@@ -135,6 +135,16 @@ router.patch(
     ordenCompraController.cambiarEstado
 );
 
+// Cambiar estado de múltiples órdenes de compra
+// NOTA: No se valida permiso aquí porque la validación de transiciones específicas
+// se hace en el servicio (ordenCompraService.cambiarEstadoMultiple)
+router.patch(
+    '/cambiar-estado-multiple',
+    auth.verifyToken,
+    historialMiddleware.ordenCompra?.cambiarEstadoMultiple() || ((req, res, next) => next()),
+    ordenCompraController.cambiarEstadoMultiple
+);
+
 // Actualizar cantidad recibida de un item
 router.patch(
     '/:id/items/:itemId/cantidad-recibida',

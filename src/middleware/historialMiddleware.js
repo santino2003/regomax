@@ -913,6 +913,14 @@ const ordenCompraDetalles = {
             usuario: req.user?.username
         };
     },
+    cambiarEstadoMultiple: (req, res, body) => {
+        return {
+            ordenes_ids: req.body?.ordenes,
+            nuevo_estado: req.body?.estado,
+            cantidad_ordenes: req.body?.ordenes?.length || 0,
+            usuario: req.user?.username
+        };
+    },
     actualizarCantidadRecibida: (req, res, body) => {
         return {
             orden_id: req.params?.id,
@@ -944,6 +952,7 @@ const ordenCompra = {
     editar: () => registrarHistorial('editar', 'orden_compra', ordenCompraDetalles.editar),
     eliminar: () => registrarHistorial('eliminar', 'orden_compra', ordenCompraDetalles.eliminar),
     cambiarEstado: () => registrarHistorial('cambiar_estado', 'orden_compra', ordenCompraDetalles.cambiarEstado),
+    cambiarEstadoMultiple: () => registrarHistorial('cambiar_estado_multiple', 'orden_compra', ordenCompraDetalles.cambiarEstadoMultiple),
     actualizarCantidadRecibida: () => registrarHistorial('actualizar_cantidad_recibida', 'orden_compra', ordenCompraDetalles.actualizarCantidadRecibida),
     subirArchivo: () => registrarHistorial('subir_archivo', 'orden_compra', ordenCompraDetalles.subirArchivo),
     eliminarArchivo: () => registrarHistorial('eliminar_archivo', 'orden_compra', ordenCompraDetalles.eliminarArchivo)

@@ -329,6 +329,45 @@ const ordenCompraController = {
     },
 
     /**
+     * Cambiar estado de múltiples órdenes de compra
+     * Valida que todas estén en el mismo estado actual
+     */
+    async cambiarEstadoMultiple(req, res) {
+        try {
+            const { ordenes, estado } = req.body;
+
+            if (!Array.isArray(ordenes) || ordenes.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Se requiere un array de órdenes válido'
+                });
+            }
+
+            if (!estado) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'El estado es requerido'
+                });
+            }
+
+            const username = req.user.username;
+            const result = await ordenCompraService.cambiarEstadoMultiple(ordenes, estado, username);
+            
+            return res.status(200).json({
+                success: true,
+                message: `${result.exitosas} orden(es) actualizada(s) exitosamente`,
+                data: result
+            });
+        } catch (error) {
+            console.error('Error al cambiar estado múltiple:', error);
+            return res.status(500).json({
+                success: false,
+                error: error.message || 'Error al cambiar estado'
+            });
+        }
+    },
+
+    /**
      * Actualizar cantidad recibida de un item
      * Solo permitido cuando la orden está en estado "En Proceso"
      */

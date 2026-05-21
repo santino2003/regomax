@@ -1,7 +1,7 @@
 // listarBienes.js
 $(document).ready(function() {
     let currentPage = 1;
-    let currentLimit = 10;
+    let currentLimit = 50;
     let currentFilters = {};
     let bienIdToDelete = null;
     const modalEliminar = new bootstrap.Modal('#modalEliminar');

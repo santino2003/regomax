@@ -107,22 +107,35 @@
                     </div>
 
                     <!-- Tabla de órdenes -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead class="table-primary">
-                                <tr>
-                                    <th>Código</th>
-                                    <th>F. Creación</th>
-                                    <th>F. Entrega Solicitada</th>
-                                    <th>F. Entrega Proveedor</th>
-                                    <th>Estado</th>
-                                    <th>Asunto</th>
-                                    <th>Responsable</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaOrdenesCompra"></tbody>
-                        </table>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Órdenes de Compra</h6>
+                                <button class="btn btn-warning btn-sm" id="btnCambiarEstadoMultiple" disabled>
+                                    <i class="bi bi-arrow-repeat me-1"></i>Cambiar Estado (Múltiple)
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th style="width: 40px;">
+                                                <input class="form-check-input" type="checkbox" id="selectTodos">
+                                            </th>
+                                            <th>Código</th>
+                                            <th>F. Creación</th>
+                                            <th>F. Entrega Solicitada</th>
+                                            <th>F. Entrega Proveedor</th>
+                                            <th>Estado</th>
+                                            <th>Asunto</th>
+                                            <th>Responsable</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaOrdenesCompra"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Paginación -->
@@ -132,14 +145,6 @@
                     <div class="d-flex justify-content-between align-items-center mt-3" id="paginacionInfo">
                         <div id="infoRegistros">
                             <!-- Se llenará dinámicamente -->
-                        </div>
-                        <div>
-                            <select class="form-select form-select-sm" id="limitSelector">
-                                <option value="10">10 por página</option>
-                                <option value="25">25 por página</option>
-                                <option value="50">50 por página</option>
-                                <option value="100">100 por página</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -174,6 +179,46 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="btnGuardarEstado">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para cambiar estado múltiple -->
+    <div class="modal fade" id="modalCambiarEstadoMultiple" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Cambiar Estado Múltiple</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Órdenes seleccionadas:</strong> <span id="cantidadOrdenesSeleccionadas">0</span>
+                    </div>
+                    <div class="alert alert-secondary mb-3">
+                        <strong>Estado actual:</strong> <span id="estadoActualMultiple">-</span>
+                    </div>
+                    <form id="formCambiarEstadoMultiple">
+                        <input type="hidden" id="ordenesIdEstadoMultiple">
+                        <div class="mb-3">
+                            <label for="nuevoEstadoMultiple" class="form-label">Nuevo Estado</label>
+                            <select class="form-select" id="nuevoEstadoMultiple" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Abierta">Abierta</option>
+                                <option value="Revision">Revisión</option>
+                                <option value="Aprobada">Aprobada</option>
+                                <option value="En Proceso">En Proceso</option>
+                                <option value="Entregado">Entregado</option>
+                                <option value="Cerrada">Cerrada</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" id="btnGuardarEstadoMultiple">Cambiar Estado</button>
                 </div>
             </div>
         </div>

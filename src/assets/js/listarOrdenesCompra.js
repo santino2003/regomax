@@ -1,7 +1,7 @@
 // listarOrdenesCompra.js
 const token = localStorage.getItem('token');
 let currentPage = 1;
-let currentLimit = 10;
+let currentLimit = 50;
 let currentFilters = {
     estado: 'En Proceso,Aprobada'
 };
@@ -29,6 +29,21 @@ $(document).ready(function() {
 
     $('#btnGuardarEstado').on('click', function() {
         cambiarEstado();
+    });
+
+    $('#btnGuardarEstadoMultiple').on('click', function() {
+        cambiarEstadoMultiple();
+    });
+
+    $('#btnCambiarEstadoMultiple').on('click', function() {
+        abrirModalEstadoMultiple();
+    });
+
+    // Event listener para "Seleccionar todos"
+    $(document).on('change', '#selectTodos', function() {
+        const isChecked = $(this).prop('checked');
+        $('.seleccionar-orden').prop('checked', isChecked);
+        actualizarEstadoBotonMultiple();
     });
 
     $('#logout-link').on('click', function(e) {
@@ -85,7 +100,6 @@ function cargarOrdenes(page = 1) {
                 
                 renderizarTabla(response.data.ordenes || []);
                 renderizarPaginacion(pagination, currentFilters);
-                renderizarInfoRegistros(response.data.total || 0, pagination);
                 currentPage = page;
             }
         },
@@ -100,11 +114,11 @@ function renderizarTabla(ordenes) {
     tbody.empty();
 
     if (ordenes.length === 0) {
-        tbody.html('<tr><td colspan="8" class="text-center">No hay órdenes de compra registradas</td></tr>');
+        tbody.html('<tr><td colspan="9" class="text-center">No hay órdenes de compra registradas</td></tr>');
         return;
     }
 
-    ordenes.forEach(orden => {
+    ordenes.forEach((orden, index) => {
         const estadoClass = orden.estado.replace(/\s/g, '');
         const fechaSolicitada = orden.fecha_entrega_solicitada ? 
             new Date(orden.fecha_entrega_solicitada).toLocaleDateString('es-AR') : '-';
@@ -116,6 +130,11 @@ function renderizarTabla(ordenes) {
         
         const row = `
             <tr>
+                <td>
+                    <input class="form-check-input seleccionar-orden" type="checkbox" 
+                           value="${orden.id}" data-estado="${orden.estado}" 
+                           id="orden_${orden.id}">
+                </td>
                 <td><strong>${orden.codigo}</strong></td>
                 <td>${fechaCreacion}</td>
                 <td>${fechaSolicitada}</td>
@@ -144,6 +163,9 @@ function renderizarTabla(ordenes) {
         `;
         tbody.append(row);
     });
+
+    // Agregar event listeners a los checkboxes
+    agregarEventListenersCheckboxes();
 }
 
 function renderizarPaginacion(pagination, filtros) {
@@ -240,14 +262,6 @@ function renderizarPaginacion(pagination, filtros) {
     container.html(html);
 }
 
-function renderizarInfoRegistros(cantidadMostrada, pagination) {
-    const infoDiv = $('#infoRegistros');
-    if (pagination && pagination.totalRegistros) {
-        infoDiv.html(`Mostrando ${cantidadMostrada} de ${pagination.totalRegistros} órdenes de compra`);
-    } else {
-        infoDiv.html('');
-    }
-}
 
 window.abrirModalEstado = function(ordenId, estadoActual) {
     $('#ordenIdEstado').val(ordenId);
@@ -276,9 +290,162 @@ function cambiarEstado() {
         },
         error: function(xhr) {
             const error = xhr.responseJSON?.error || 'Error al cambiar estado';
-            mostrarAlerta(error, 'danger');
+            
+            // Detectar si es error de permisos
+            if (error.includes('permiso') || error.includes('Permiso')) {
+                mostrarAlertaPermiso(error);
+            } else {
+                mostrarAlerta(error, 'danger');
+            }
         }
     });
+}
+
+// Función para agregar event listeners a los checkboxes
+function agregarEventListenersCheckboxes() {
+    $(document).on('change', '.seleccionar-orden', function() {
+        actualizarEstadoBotonMultiple();
+    });
+}
+
+// Función para actualizar el estado del botón de cambio múltiple
+function actualizarEstadoBotonMultiple() {
+    const seleccionados = $('.seleccionar-orden:checked');
+    const btnMultiple = $('#btnCambiarEstadoMultiple');
+    const btnGuardarMultiple = $('#btnGuardarEstadoMultiple');
+    
+    if (seleccionados.length === 0) {
+        btnMultiple.prop('disabled', true).addClass('opacity-50');
+        return;
+    }
+
+    // Verificar que todos estén en el mismo estado
+    const estados = new Set();
+    seleccionados.each(function() {
+        estados.add($(this).data('estado'));
+    });
+
+    if (estados.size === 1) {
+        btnMultiple.prop('disabled', false).removeClass('opacity-50');
+    } else {
+        btnMultiple.prop('disabled', true).addClass('opacity-50');
+        mostrarAlerta('Todas las órdenes deben estar en el mismo estado', 'warning');
+    }
+}
+
+window.abrirModalEstadoMultiple = function() {
+    const seleccionados = $('.seleccionar-orden:checked');
+    
+    if (seleccionados.length === 0) {
+        mostrarAlerta('Seleccione al menos una orden', 'warning');
+        return;
+    }
+
+    // Verificar que todos estén en el mismo estado
+    const estados = new Set();
+    seleccionados.each(function() {
+        estados.add($(this).data('estado'));
+    });
+
+    if (estados.size !== 1) {
+        mostrarAlerta('Todas las órdenes deben estar en el mismo estado', 'danger');
+        return;
+    }
+
+    const estadoActual = Array.from(estados)[0];
+    const ordenesSeleccionadas = seleccionados.map((i, el) => $(el).val()).get();
+
+    $('#ordenesIdEstadoMultiple').val(JSON.stringify(ordenesSeleccionadas));
+    $('#nuevoEstadoMultiple').val(estadoActual);
+    
+    // Mostrar información de las órdenes seleccionadas
+    $('#cantidadOrdenesSeleccionadas').text(ordenesSeleccionadas.length);
+    $('#estadoActualMultiple').text(estadoActual);
+
+    new bootstrap.Modal($('#modalCambiarEstadoMultiple')).show();
+};
+
+function cambiarEstadoMultiple() {
+    const ordenesJson = $('#ordenesIdEstadoMultiple').val();
+    const nuevoEstado = $('#nuevoEstadoMultiple').val();
+    const ordenes = JSON.parse(ordenesJson);
+
+    if (!ordenes || ordenes.length === 0) {
+        mostrarAlerta('No hay órdenes seleccionadas', 'warning');
+        return;
+    }
+
+    if (!nuevoEstado) {
+        mostrarAlerta('Debe seleccionar un estado', 'warning');
+        return;
+    }
+
+    // Deshabilitar el botón mientras se procesa
+    const btnGuardar = $('#btnGuardarEstadoMultiple');
+    btnGuardar.prop('disabled', true);
+    const textoOriginal = btnGuardar.html();
+    btnGuardar.html('<span class="spinner-border spinner-border-sm me-2"></span>Procesando...');
+
+    $.ajax({
+        url: `/api/ordenes-compra/cambiar-estado-multiple`,
+        method: 'PATCH',
+        headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify({ 
+            ordenes: ordenes,
+            estado: nuevoEstado 
+        }),
+        success: function(response) {
+            if (response.success) {
+                mostrarAlerta(`${response.data.exitosas} órdenes actualizadas exitosamente`, 'success');
+                
+                if (response.data.fallidas && response.data.fallidas.length > 0) {
+                    const mensajeFallidas = response.data.fallidas.map(f => 
+                        `${f.orden_id}: ${f.error}`
+                    ).join('\n');
+                    mostrarAlerta(`Errores:\n${mensajeFallidas}`, 'warning');
+                }
+                
+                bootstrap.Modal.getInstance($('#modalCambiarEstadoMultiple')[0]).hide();
+                $('input.seleccionar-orden').prop('checked', false);
+                cargarOrdenes(currentPage);
+            }
+        },
+        error: function(xhr) {
+            const error = xhr.responseJSON?.error || 'Error al cambiar estado';
+            
+            // Detectar si es error de permisos
+            if (error.includes('permiso') || error.includes('Permiso')) {
+                mostrarAlertaPermiso(error);
+            } else {
+                mostrarAlerta(error, 'danger');
+            }
+        },
+        complete: function() {
+            btnGuardar.prop('disabled', false);
+            btnGuardar.html(textoOriginal);
+        }
+    });
+}
+
+// Función para mostrar alerta de permiso denegado
+function mostrarAlertaPermiso(mensaje) {
+    const alerta = `
+        <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-left: 5px solid #dc3545; background-color: #f8d7da; color: #721c24;">
+            <strong style="font-size: 1.1em;">
+                <i class="bi bi-lock-fill me-2"></i>Acceso Denegado
+            </strong>
+            <hr>
+            <p class="mb-0" style="font-size: 0.95em;">
+                ${mensaje}
+            </p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    $('#alertPlaceholder').html(alerta);
+    setTimeout(() => $('.alert').alert('close'), 6000);
 }
 
 window.eliminarOrden = function(ordenId) {
