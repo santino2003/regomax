@@ -53,8 +53,16 @@ app.set('views', path.join(__dirname, '../views'));
 
 // Configurar middleware
 // CORS configurado para permitir credentials desde dominios específicos
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',').map(origin => origin.trim());
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'https://programa.regomax.com', // Especificar origen en lugar de '*'
+  origin: function(origin, callback) {
+    // Permitir requests sin origin (como mobile apps, requests desde el mismo servidor, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   credentials: true, // Permitir credentials (cookies)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
