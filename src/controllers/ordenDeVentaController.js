@@ -77,6 +77,37 @@ const OVController = {
             });
         }
     },
+
+    async obtenerOrdenesPorEstado(req, res) {
+        try {
+            const { estado } = req.params;
+            
+            // Validar que se proporcionó un estado
+            if (!estado) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El estado es requerido'
+                });
+            }
+            
+            // Obtener órdenes por estado
+            const ordenes = await OVService.obtenerOrdenesPorEstado(estado);
+            
+            return res.status(200).json({
+                success: true,
+                data: ordenes,
+                message: `${ordenes.length} órdenes encontradas en estado '${estado}'`
+            });
+        } catch (error) {
+            console.error('Error al obtener órdenes por estado:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener órdenes por estado',
+                error: error.message
+            });
+        }
+    },
+
     async vistaListarOrdenes(req, res) {
         try {
             // Parámetros de paginación para la vista

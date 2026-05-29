@@ -20,6 +20,12 @@ router.post('/nueva',
     ordenDeVentaController.crearOrdenDeVenta
 ); // Nueva ruta para compatibilidad con el frontend
 
+router.get('/estado/:estado', 
+    auth.verifyToken,
+    permissionsMiddleware.hasAnyPermission(['ordenes:view', 'despachos:create']),
+    ordenDeVentaController.obtenerOrdenesPorEstado
+);
+
 router.get('/cliente/:clienteId', 
     auth.verifyToken,
     permissionsMiddleware.hasAnyPermission(['ordenes:view', 'despachos:create']),
