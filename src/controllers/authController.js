@@ -23,8 +23,8 @@ const authController = {
       // Setear cookie HttpOnly con el token
       res.cookie('token', result.token, {
         httpOnly: true,
-        secure: false, // true si usas HTTPS
-        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production', // true en HTTPS (producción)
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' permite cross-origin en HTTPS
         maxAge: 8 * 60 * 60 * 1000 // 8 horas
       });
       

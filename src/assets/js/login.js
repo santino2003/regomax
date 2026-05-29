@@ -30,7 +30,7 @@ function logout() {
     // Hacer una petición al servidor para eliminar la cookie
     fetch('/api/auth/logout', {
         method: 'POST',
-        credentials: 'same-origin' // Importante para incluir cookies
+        credentials: 'include' // 'include' permite enviar cookies en cross-origin
     })
     .then(() => {
         document.getElementById('username').value = '';
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Realizar la solicitud de login incluyendo las cookies
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
-                credentials: 'same-origin', // Importante para incluir y recibir cookies
+                credentials: 'include', // 'include' permite enviar cookies en cross-origin
                 headers: {
                     'Content-Type': 'application/json'
                 },

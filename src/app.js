@@ -52,7 +52,14 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
 
 // Configurar middleware
-app.use(cors());
+// CORS configurado para permitir credentials desde dominios específicos
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || 'https://programa.regomax.com', // Especificar origen en lugar de '*'
+  credentials: true, // Permitir credentials (cookies)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
