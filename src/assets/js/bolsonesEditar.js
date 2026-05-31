@@ -46,7 +46,7 @@ $(document).ready(function() {
     }
     
     // Función para imprimir código de barras
-    window.imprimirCodigo = function(base64Data, codigo) {
+    window.imprimirCodigo = function(base64Data, codigo, productoNombre = '') {
         // Crear iframe oculto para impresión
         const printFrame = document.createElement('iframe');
         printFrame.style.position = 'fixed';
@@ -73,18 +73,51 @@ $(document).ready(function() {
                             body {
                                 margin: 0;
                                 padding: 2mm;
-                                text-align: center;
                                 font-family: Arial, sans-serif;
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                height: 100%;
+                            }
+                            .qr-container {
+                                flex-shrink: 0;
                             }
                             img {
-                                max-width: 80mm;
-                                height: auto;
+                                width: 40mm;
+                                height: 40mm;
+                                display: block;
+                            }
+                            .text-container {
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: flex-start;
+                                margin-left: 2mm;
+                                flex-grow: 1;
+                            }
+                            .codigo {
+                                font-size: 11pt;
+                                font-weight: bold;
+                                letter-spacing: 1px;
+                                line-height: 1.3;
+                                word-break: break-all;
+                            }
+                            .producto {
+                                font-size: 8pt;
+                                margin-top: 2mm;
+                                line-height: 1.2;
+                                word-break: break-word;
                             }
                         </style>
                     </head>
                     <body>
-                        <img src="data:image/png;base64,${base64Data}" alt="Código de barras ${codigo}">
-                        <div style="font-size: 10pt; margin-top: 2mm;">${codigo}</div>
+                        <div class="qr-container">
+                            <img src="data:image/png;base64,${base64Data}" alt="Código QR ${codigo}">
+                        </div>
+                        <div class="text-container">
+                            <div class="codigo">${codigo}</div>
+                            <div class="producto">${productoNombre || ''}</div>
+                        </div>
                     </body>
                 </html>
             `);
