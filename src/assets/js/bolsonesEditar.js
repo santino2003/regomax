@@ -105,14 +105,14 @@ $(document).ready(function() {
                                 flex-grow: 1;
                             }
                             .codigo {
-                                font-size: 11pt;
+                                font-size: 16pt;
                                 font-weight: bold;
                                 letter-spacing: 1px;
                                 line-height: 1.3;
                                 word-break: break-all;
                             }
                             .producto {
-                                font-size: 8pt;
+                                font-size: 12pt;
                                 margin-top: 2mm;
                                 line-height: 1.2;
                                 word-break: break-word;
