@@ -247,22 +247,63 @@ $(document).ready(function() {
                                 margin: 0;
                                 padding: 0;
                             }
+                            * {
+                                margin: 0 !important;
+                                padding: 0 !important;
+                            }
+                            html, body {
+                                width: 90mm !important;
+                                height: 45mm !important;
+                                overflow: hidden !important;
+                            }
                             body {
                                 margin: 0;
                                 padding: 2mm;
-                                text-align: center;
                                 font-family: Arial, sans-serif;
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                height: 45mm !important;
+                            }
+                            .qr-container {
+                                flex-shrink: 0;
                             }
                             img {
-                                max-width: 80mm;
-                                height: auto;
+                                width: 40mm;
+                                height: 40mm;
+                                display: block;
+                            }
+                            .text-container {
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: flex-start;
+                                margin-left: 2mm;
+                                flex-grow: 1;
+                            }
+                            .codigo {
+                                font-size: 16pt;
+                                font-weight: bold;
+                                letter-spacing: 1px;
+                                line-height: 1.3;
+                                word-break: break-all;
+                            }
+                            .producto {
+                                font-size: 12pt;
+                                margin-top: 2mm;
+                                line-height: 1.2;
+                                word-break: break-word;
                             }
                         </style>
                     </head>
                     <body>
-                        <img src="data:image/png;base64,${base64Data}" alt="Código de barras ${codigo}">
-                        <div style="font-size: 10pt; margin-top: 2mm;">${codigo}</div>
-                        <div style="font-size: 8pt; margin-top: 1mm;">${nombre}</div>
+                        <div class="qr-container">
+                            <img src="data:image/png;base64,${base64Data}" alt="Código QR ${codigo}">
+                        </div>
+                        <div class="text-container">
+                            <div class="codigo">${codigo}</div>
+                            <div class="producto">${nombre}</div>
+                        </div>
                     </body>
                 </html>
             `);
