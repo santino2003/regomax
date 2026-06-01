@@ -70,6 +70,15 @@ $(document).ready(function() {
                                 margin: 0;
                                 padding: 0;
                             }
+                            * {
+                                margin: 0 !important;
+                                padding: 0 !important;
+                            }
+                            html, body {
+                                width: 90mm !important;
+                                height: 45mm !important;
+                                overflow: hidden !important;
+                            }
                             body {
                                 margin: 0;
                                 padding: 2mm;
@@ -77,7 +86,7 @@ $(document).ready(function() {
                                 display: flex;
                                 align-items: center;
                                 justify-content: space-between;
-                                height: 100%;
+                                height: 45mm !important;
                             }
                             .qr-container {
                                 flex-shrink: 0;
