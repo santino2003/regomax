@@ -65,6 +65,50 @@ class DespachoRepository {
         }
     }
 
+    async obtenerDetalleDespachoPorBolsonCodigo(bolsonCodigo) {
+        try {
+            const query = `
+                SELECT
+                    dd.id AS detalle_id,
+                    dd.despacho_id,
+                    dd.bolson_codigo,
+                    dd.producto AS detalle_producto,
+                    dd.peso AS detalle_peso,
+                    dd.precinto AS detalle_precinto,
+                    dd.fecha_despacho,
+                    dd.es_manual,
+                    d.id AS despacho_id_real,
+                    d.fecha AS despacho_fecha,
+                    d.orden_venta_id,
+                    d.responsable AS despacho_responsable,
+                    d.observaciones AS despacho_observaciones,
+                    ov.cliente,
+                    ov.cliente_final,
+                    ov.codigo_venta
+                FROM despachos_detalle dd
+                JOIN despachos d ON d.id = dd.despacho_id
+                LEFT JOIN ordenes_venta ov ON ov.id = d.orden_venta_id
+                WHERE dd.bolson_codigo = ?
+                ORDER BY d.fecha DESC, dd.id DESC
+                LIMIT 1
+            `;
+            const result = await db.query(query, [bolsonCodigo]);
+            if (!result || result.length === 0) return null;
+
+            const detalle = result[0];
+            return {
+                fecha_despacho: detalle.fecha_despacho,
+                cliente_final: detalle.cliente_final,
+                codigo_venta: detalle.codigo_venta,
+                responsable: detalle.despacho_responsable,
+                observaciones: detalle.despacho_observaciones
+            };
+        } catch (error) {
+            console.error('Error al obtener detalle de despacho por bolsón:', error);
+            throw error;
+        }
+    }
+
     // Verificar si un bolsón fue despachado después de una fecha específica
 
     // Obtener todos los despachos de una orden

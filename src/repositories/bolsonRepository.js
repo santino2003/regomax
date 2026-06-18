@@ -139,6 +139,20 @@ class BolsonRepository {
     }
   }
 
+  async obtenerEstadoDespachadoPorCodigo(codigo) {
+    try {
+      const result = await db.query(
+        'SELECT * FROM bolsones WHERE codigo = ?',
+        [codigo]
+      );
+      if (!result || result.length === 0) return null;
+      return result[0];
+    } catch (error) {
+      console.error('Error al obtener estado despachado del bolsón:', error);
+      throw error;
+    }
+  }
+
   async marcarComoDespachadoPorCodigo(codigo) {
     try {
       await db.query('UPDATE bolsones SET despachado = 1 WHERE codigo = ?', [codigo]);
