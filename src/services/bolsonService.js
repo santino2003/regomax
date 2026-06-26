@@ -1,4 +1,5 @@
 const bolsonRepository = require('../repositories/bolsonRepository');
+const despachoRepository = require('../repositories/despachoRepository');
 const barcodeGenerator = require('../utils/barcodeGenerator');
 const generarBarcodeBase64 = require('../utils/imageBarcode');
 const productoRepository = require('../repositories/productoRepository');
@@ -121,6 +122,32 @@ class BolsonService {
             throw new Error('Error al obtener el bolsón: ' + error.message);
         }
     }
+
+    async obtenerEstadoDespachado(codigo) {
+        try {
+            const bolson = await bolsonRepository.obtenerEstadoDespachadoPorCodigo(codigo);
+            if (!bolson) {
+                return null;
+            }
+
+            const valorDespachado = Number(bolson.despachado) === 1 ? 1 : 0;
+            const { asociado_a_parte, parte_diario_id, ...bolsonData } = bolson;
+            const resultado = {
+                ...bolsonData,
+                despachado: valorDespachado === 1
+            };
+
+            if (resultado.despachado) {
+                resultado.despachoDetalle = await despachoRepository.obtenerDetalleDespachoPorBolsonCodigo(codigo);
+            }
+
+            return resultado;
+        } catch (error) {
+            console.error('Error al obtener estado despachado del bolsón:', error);
+            throw new Error('Error al obtener estado despachado del bolsón: ' + error.message);
+        }
+    }
+
     async actualizar(id, productoData) {
         try {
             const { producto, peso, precinto  } = productoData;

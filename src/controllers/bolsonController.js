@@ -75,6 +75,33 @@ const bolsonController = {
             });
         }
     },
+
+    async obtenerEstadoDespachado(req, res) {
+        try {
+            const { codigo } = req.params;
+            const estado = await bolsonService.obtenerEstadoDespachado(codigo);
+
+            if (!estado) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Bolsón no encontrado'
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: estado
+            });
+        } catch (error) {
+            console.error('Error al obtener estado despachado del bolsón:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Error al obtener estado despachado del bolsón',
+                error: error.message
+            });
+        }
+    },
+
     async actualizarBolson(req, res) {
         try {
             const { id } = req.params;

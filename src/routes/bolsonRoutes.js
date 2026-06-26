@@ -51,6 +51,12 @@ router.get('/get/:id',
     bolsonController.obtenerBolson
 );
 
+router.get('/despachado/:codigo',
+    auth.verifyToken,
+    permissionsMiddleware.hasPermission('bolsones:view'),
+    bolsonController.obtenerEstadoDespachado
+);
+
 router.put('/actualizar/:id', 
     auth.verifyToken,
     permissionsMiddleware.hasPermission('bolsones:edit'),
