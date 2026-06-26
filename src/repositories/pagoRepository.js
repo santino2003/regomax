@@ -792,16 +792,27 @@ class PagoRepository {
                     fecha_marcado_pagado = NOW(),
                     marcado_pagado_por = ?,
                     detalle_pago = ?
-                WHERE id = ?`;
+                WHERE id = ? AND COALESCE(pagado, FALSE) = FALSE`;
             const params = [username, detalle, pagoId];
 
+            let result;
             if (connection) {
-                await connection.execute(sql, params);
+                const [updateResult] = await connection.execute(sql, params);
+                result = updateResult;
             } else {
-                await db.query(sql, params);
+                result = await db.query(sql, params);
             }
 
-            return { success: true };
+            const affectedRows = result?.affectedRows || 0;
+
+            if (affectedRows !== 1) {
+                const error = new Error('No se pudo marcar el pago como pagado. Verifique el estado del pago e intente nuevamente.');
+                error.statusCode = 409;
+                error.affectedRows = affectedRows;
+                throw error;
+            }
+
+            return { success: true, affectedRows };
         } catch (error) {
             console.error('Error en PagoRepository.marcarComoPagado:', error);
             throw error;
@@ -823,16 +834,28 @@ class PagoRepository {
                     fecha_marcado_pagado = NOW(),
                     marcado_pagado_por = ?,
                     detalle_pago = ?
-                WHERE id IN (${placeholders})`;
+                WHERE id IN (${placeholders}) AND COALESCE(pagado, FALSE) = FALSE`;
             const params = [username, detalle, ...pagoIds];
 
+            let result;
             if (connection) {
-                await connection.execute(sql, params);
+                const [updateResult] = await connection.execute(sql, params);
+                result = updateResult;
             } else {
-                await db.query(sql, params);
+                result = await db.query(sql, params);
             }
 
-            return { success: true };
+            const affectedRows = result?.affectedRows || 0;
+
+            if (affectedRows !== pagoIds.length) {
+                const error = new Error('No se pudieron marcar todos los pagos como pagados. La operación fue cancelada; intente nuevamente.');
+                error.statusCode = 409;
+                error.affectedRows = affectedRows;
+                error.expectedRows = pagoIds.length;
+                throw error;
+            }
+
+            return { success: true, affectedRows };
         } catch (error) {
             console.error('Error en PagoRepository.marcarComoPagadoMultiple:', error);
             throw error;

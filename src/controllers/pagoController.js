@@ -257,9 +257,9 @@ class PagoController {
             return res.redirect(`/pagos/${id}`);
         } catch (error) {
             console.error('Error en PagoController.marcarComoPagado:', error);
-            res.status(500).json({
+            res.status(error.statusCode || 500).json({
                 success: false,
-                message: 'Error al marcar pago como pagado',
+                message: error.message || 'Error al marcar pago como pagado. Realice la operación nuevamente.',
                 error: error.message
             });
         }
@@ -293,9 +293,9 @@ class PagoController {
             });
         } catch (error) {
             console.error('Error en PagoController.marcarPagosMultiples:', error);
-            res.status(500).json({
+            res.status(error.statusCode || 500).json({
                 success: false,
-                message: 'Error al registrar pago múltiple',
+                message: error.message || 'Error al registrar pago múltiple. Realice la operación nuevamente.',
                 error: error.message
             });
         }
