@@ -13,7 +13,7 @@
     <style>
         @media print {
             @page {
-                size: A4 landscape;
+                size: A4 portrait;
                 margin: 10mm;
             }
             html,
@@ -58,9 +58,10 @@
                 break-inside: avoid;
                 color: #000 !important;
                 background: #fff !important;
+                font-size: 12px !important;
             }
             #reciboPago .card-body {
-                padding: 1rem !important;
+                padding: 0.9rem !important;
             }
             #reciboPago .row {
                 display: flex !important;
@@ -78,6 +79,7 @@
                 margin-top: 0 !important;
             }
             #reciboPago .monto-destacado {
+                font-size: 1.35rem !important;
                 color: #198754 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -86,7 +88,7 @@
                 border-top: 2px solid #000 !important;
                 min-height: 46px;
                 padding-top: 0.5rem !important;
-                margin-top: 2.5rem !important;
+                margin-top: 2rem !important;
             }
         }
         #reciboPago {
