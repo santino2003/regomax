@@ -243,20 +243,67 @@
                     <% } %>
                     
                     <% if (pagination && pagination.totalPages > 1) { %>
+                        <%
+                        const totalPages = pagination.totalPages;
+                        const currentPage = pagination.page;
+                        const maxPagesToShow = 5;
+                        const baseUrl = typeof estadoActual !== 'undefined' ? `/partes-diarios/estado/${estadoActual}` : '/partes-diarios';
+
+                        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+                        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+                        if (endPage - startPage + 1 < maxPagesToShow) {
+                            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                        }
+                        %>
                         <nav aria-label="Navegación de partes diarios" class="mt-3 no-print">
                             <ul class="pagination justify-content-center">
                                 <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                    <a class="page-link" href="<%= typeof estadoActual !== 'undefined' ? `/partes-diarios/estado/${estadoActual}` : '/partes-diarios' %>?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %>" tabindex="-1">Anterior</a>
+                                    <a class="page-link" href="<%= baseUrl %>?page=1&limit=<%= pagination.limit %>" aria-label="Primera">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
                                 </li>
-                                
-                                <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+
+                                <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="<%= baseUrl %>?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %>" aria-label="Anterior">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+
+                                <% if (startPage > 1) { %>
+                                    <li class="page-item">
+                                        <a class="page-link" href="<%= baseUrl %>?page=1&limit=<%= pagination.limit %>">1</a>
+                                    </li>
+                                    <% if (startPage > 2) { %>
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    <% } %>
+                                <% } %>
+
+                                <% for(let i = startPage; i <= endPage; i++) { %>
                                     <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                                        <a class="page-link" href="<%= typeof estadoActual !== 'undefined' ? `/partes-diarios/estado/${estadoActual}` : '/partes-diarios' %>?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
+                                        <a class="page-link" href="<%= baseUrl %>?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
                                     </li>
                                 <% } %>
-                                
+
+                                <% if (endPage < totalPages) { %>
+                                    <% if (endPage < totalPages - 1) { %>
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    <% } %>
+                                    <li class="page-item">
+                                        <a class="page-link" href="<%= baseUrl %>?page=<%= totalPages %>&limit=<%= pagination.limit %>"><%= totalPages %></a>
+                                    </li>
+                                <% } %>
+
                                 <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                    <a class="page-link" href="<%= typeof estadoActual !== 'undefined' ? `/partes-diarios/estado/${estadoActual}` : '/partes-diarios' %>?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %>">Siguiente</a>
+                                    <a class="page-link" href="<%= baseUrl %>?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %>" aria-label="Siguiente">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+
+                                <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link" href="<%= baseUrl %>?page=<%= pagination.totalPages %>&limit=<%= pagination.limit %>" aria-label="Última">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
                                 </li>
                             </ul>
                         </nav>
