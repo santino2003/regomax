@@ -86,11 +86,12 @@ class PDFOrdenCompraService {
             // Encabezados de tabla de items
             const itemTableY = currentY;
             const colWidths = {
-                bien: 200,
-                centroCosto: 85,
-                descripcion: 140,
+                bien: 160,
+                centroCosto: 75,
+                descripcion: 125,
                 cantidad: 45,
-                unidad: 45
+                unidad: 45,
+                medioPago: 65
             };
 
             // Línea superior
@@ -116,6 +117,9 @@ class PDFOrdenCompraService {
             xPos += colWidths.cantidad;
             
             doc.text('Unidad', xPos + 5, itemTableY + 3, { width: colWidths.unidad - 10, align: 'center' });
+            xPos += colWidths.unidad;
+
+            doc.text('Medio Pago', xPos + 5, itemTableY + 3, { width: colWidths.medioPago - 10, align: 'center' });
 
             // Línea debajo de encabezados
             currentY = itemTableY + 14;
@@ -140,6 +144,7 @@ class PDFOrdenCompraService {
                     const bienText = item.bien_nombre || '';
                     const centroCosto = item.centro_costo || '-';
                     const unidad = item.unidad_medida_nombre_lindo || item.unidad_medida_nombre || '-';
+                    const medioPago = item.medio_pago || '-';
                     const cantidad = parseFloat(item.cantidad) || 0;
                     
                     // Calcular altura real necesaria para cada campo usando heightOfString
@@ -196,6 +201,13 @@ class PDFOrdenCompraService {
                         width: colWidths.unidad - 10, 
                         align: 'center'
                     });
+                    xPos += colWidths.unidad;
+
+                    // Medio de Pago
+                    doc.text(medioPago, xPos + 5, currentY, {
+                        width: colWidths.medioPago - 10,
+                        align: 'center'
+                    });
 
                     currentY = rowStartY + rowHeight;
 
@@ -240,6 +252,12 @@ class PDFOrdenCompraService {
                .lineTo(xPos, itemsEndY)
                .stroke();
             xPos += colWidths.unidad;
+
+            // Separador después de Unidad
+            doc.moveTo(xPos, itemsStartY)
+               .lineTo(xPos, itemsEndY)
+               .stroke();
+            xPos += colWidths.medioPago;
             
             // Borde derecho
             doc.moveTo(xPos, itemsStartY)

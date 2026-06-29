@@ -65,8 +65,8 @@ class OrdenCompraRepository {
                         `INSERT INTO ordenes_compra_items (
                             orden_compra_id, bien_id, cantidad, cantidad_recibida,
                             unidad_medida_id, proveedor_sugerido_id, descripcion, 
-                            centro_costo, precio_unitario
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                            centro_costo, precio_unitario, medio_pago
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             ordenId,
                             item.bien_id,
@@ -76,7 +76,8 @@ class OrdenCompraRepository {
                             item.proveedor_sugerido_id || null,
                             item.descripcion || null,
                             item.centro_costo || null,
-                            item.precio_unitario || null
+                            item.precio_unitario || null,
+                            item.medio_pago
                         ]
                     );
                 }
@@ -198,8 +199,8 @@ class OrdenCompraRepository {
                         `INSERT INTO ordenes_compra_items (
                             orden_compra_id, bien_id, cantidad, cantidad_recibida,
                             unidad_medida_id, proveedor_sugerido_id, descripcion, 
-                            centro_costo, precio_unitario
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                            centro_costo, precio_unitario, medio_pago
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             id,
                             item.bien_id,
@@ -209,7 +210,8 @@ class OrdenCompraRepository {
                             item.proveedor_sugerido_id || null,
                             item.descripcion || null,
                             item.centro_costo || null,
-                            item.precio_unitario || null
+                            item.precio_unitario || null,
+                            item.medio_pago
                         ]
                     );
                 }
@@ -578,6 +580,7 @@ class OrdenCompraRepository {
                 oci.cantidad,
                 oci.cantidad_recibida,
                 oci.precio_unitario as item_precio_unitario,
+                oci.medio_pago,
                 b.nombre as bien_nombre,
                 b.codigo as bien_codigo,
                 p.id as proveedor_id,

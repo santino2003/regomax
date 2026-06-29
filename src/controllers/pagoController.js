@@ -91,6 +91,7 @@ class PagoController {
             const filtros = {
                 proveedor_id: req.query.proveedor_id || '',
                 tipo_pago: req.query.tipo_pago || '',
+                medio_pago: req.query.medio_pago || '',
                 fecha_desde: req.query.fecha_desde || '',
                 fecha_hasta: req.query.fecha_hasta || '',
                 pagado: req.query.pagado // Filtro de estado pagado
@@ -206,6 +207,7 @@ class PagoController {
                 orden_codigo: req.query.orden_codigo || '',
                 proveedor: req.query.proveedor || '',
                 tipo_pago: req.query.tipo_pago || '',
+                medio_pago: req.query.medio_pago || '',
                 fecha_desde: req.query.fecha_desde || '',
                 fecha_hasta: req.query.fecha_hasta || '',
                 bien_nombre: req.query.bien_nombre || ''

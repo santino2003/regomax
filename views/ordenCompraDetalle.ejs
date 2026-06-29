@@ -138,13 +138,14 @@
                                 : (item.cantidad_recibida || 0)
                             }</td>
                             <td>${item.unidad_medida_nombre || '-'}</td>
+                            <td>${item.medio_pago || '-'}</td>
                             <td>${item.proveedor_sugerido_nombre || '-'}</td>
                             <td>${item.descripcion || '-'}</td>
                         </tr>
                     `;
                 });
             } else {
-                itemsHtml = '<tr><td colspan="8" class="text-center">Sin items</td></tr>';
+                itemsHtml = '<tr><td colspan="9" class="text-center">Sin items</td></tr>';
             }
 
             const html = `
@@ -236,6 +237,7 @@
                                         <th>Cantidad</th>
                                         <th>Cant. Recibida</th>
                                         <th>Unidad</th>
+                                        <th>Medio Pago</th>
                                         <th>Proveedor Sugerido</th>
                                         <th>Descripción</th>
                                     </tr>

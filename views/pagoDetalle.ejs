@@ -293,6 +293,11 @@
                                         </div>
                                     <% } %>
 
+                                    <div class="mb-3">
+                                        <div class="detail-label">Medio de Pago</div>
+                                        <div class="detail-value"><%= pago.medio_pago || '-' %></div>
+                                    </div>
+
                                     <% if (pago.bien_nombre) { %>
                                         <hr>
                                         <h6 class="text-muted mb-3"><i class="bi bi-box me-1"></i>Información del Bien</h6>
