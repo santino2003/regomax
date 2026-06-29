@@ -35,6 +35,11 @@ class OrdenCompraService {
         return condicionesPermitidas.includes(condicion);
     }
 
+    validarMedioPagoItem(medioPago) {
+        const mediosPermitidos = ['Efectivo', 'Transferencia'];
+        return mediosPermitidos.includes(medioPago);
+    }
+
     /**
      * Normalizar cuotas recibidas (array o JSON string)
      */
@@ -152,6 +157,14 @@ class OrdenCompraService {
 
                 if (!item.cantidad || item.cantidad <= 0) {
                     throw new Error('La cantidad debe ser mayor a 0');
+                }
+
+                if (!item.medio_pago) {
+                    throw new Error('El medio de pago es obligatorio en cada item');
+                }
+
+                if (!this.validarMedioPagoItem(item.medio_pago)) {
+                    throw new Error('El medio de pago de cada item debe ser Efectivo o Transferencia');
                 }
             }
 
@@ -423,6 +436,14 @@ class OrdenCompraService {
 
                     if (!item.cantidad || item.cantidad <= 0) {
                         throw new Error('La cantidad debe ser mayor a 0');
+                    }
+
+                    if (!item.medio_pago) {
+                        throw new Error('El medio de pago es obligatorio en cada item');
+                    }
+
+                    if (!this.validarMedioPagoItem(item.medio_pago)) {
+                        throw new Error('El medio de pago de cada item debe ser Efectivo o Transferencia');
                     }
 
                     // Validar que cantidad recibida no sea mayor que cantidad solicitada

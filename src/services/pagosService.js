@@ -5,6 +5,10 @@ const db = require('../config/db');
 const { calcularJuevesProximaSemana, formatMySQLLocal } = require('../utils/fecha');
 
 class PagosService {
+    obtenerClaveProveedorMedio(proveedorId, medioPago) {
+        return `${proveedorId || ''}::${medioPago || ''}`;
+    }
+
     async registrarPagoPorRecepcion(ordenId, itemId, cantidadRecibida, username) {
         try {
             console.log('💰 [PAGOS] Procesando recepción:', { ordenId, itemId, cantidadRecibida, usuario: username });
@@ -97,7 +101,8 @@ class PagosService {
                 fechaPago: fechaPago,
                 registradoPor: username,
                 observaciones: `Pago por recepción de ${cantidadRecibida} unidades de "${itemInfo.bien_nombre}"`,
-                moneda: precioInfo.moneda || 'ARS'
+                moneda: precioInfo.moneda || 'ARS',
+                medioPago: itemInfo.medio_pago || null
             });
 
             console.log('💾 [PAGOS] Pago registrado con ID:', pagoRegistrado.id);
@@ -195,17 +200,21 @@ class PagosService {
                             continue;
                         }
 
-                        if (!itemsPorProveedor.has(provId)) {
-                            itemsPorProveedor.set(provId, {
+                        const medioPago = item.medio_pago || null;
+                        const grupoKey = this.obtenerClaveProveedorMedio(provId, medioPago);
+
+                        if (!itemsPorProveedor.has(grupoKey)) {
+                            itemsPorProveedor.set(grupoKey, {
                                 proveedorId: provId,
                                 proveedorNombre: provNombre,
+                                medioPago,
                                 items: [],
                                 montoItems: 0,
                                 moneda: null
                             });
                         }
 
-                        const grupoProveedor = itemsPorProveedor.get(provId);
+                        const grupoProveedor = itemsPorProveedor.get(grupoKey);
                         grupoProveedor.items.push(item);
                         
                         // Obtener precio del proveedor para ese bien (igual que en registrarPagoPorRecepcion)
@@ -322,6 +331,7 @@ class PagosService {
                     registradoPor: username,
                     observaciones: `Adelanto para orden ${orden.codigo} - Proveedor: ${grupo.proveedorNombre} (${grupo.items.length} item(s), Total items: $${grupo.montoItems.toFixed(2)}) - Contrafactura`,
                     moneda: monedaProveedor,
+                    medioPago: grupo.medioPago || null,
                     connection: transactionConnection
                 });
 
@@ -431,17 +441,21 @@ class PagosService {
                             continue;
                         }
 
-                        if (!itemsPorProveedor.has(provId)) {
-                            itemsPorProveedor.set(provId, {
+                        const medioPago = item.medio_pago || null;
+                        const grupoKey = this.obtenerClaveProveedorMedio(provId, medioPago);
+
+                        if (!itemsPorProveedor.has(grupoKey)) {
+                            itemsPorProveedor.set(grupoKey, {
                                 proveedorId: provId,
                                 proveedorNombre: provNombre,
+                                medioPago,
                                 items: [],
                                 montoItems: 0,
                                 moneda: null
                             });
                         }
 
-                        const grupoProveedor = itemsPorProveedor.get(provId);
+                        const grupoProveedor = itemsPorProveedor.get(grupoKey);
                         grupoProveedor.items.push(item);
                         
                         // Obtener precio del proveedor para ese bien (igual que en registrarPagoPorRecepcion)
@@ -547,7 +561,8 @@ class PagosService {
                     fechaPago: fechaPago,
                     registradoPor: username,
                     observaciones: `Pago para orden ${orden.codigo} - Proveedor: ${grupo.proveedorNombre} (${grupo.items.length} item(s)) - Contrafactura`,
-                    moneda: monedaProveedor
+                    moneda: monedaProveedor,
+                    medioPago: grupo.medioPago || null
                 });
 
                 pagosRegistrados.push({
@@ -665,16 +680,20 @@ class PagosService {
                             console.warn(`⚠️ [PAGOS] Item ${item.bien_nombre} sin proveedor - se omitirá`);
                             continue;
                         }
-                        if (!itemsPorProveedor.has(provId)) {
-                            itemsPorProveedor.set(provId, {
+                        const medioPago = item.medio_pago || null;
+                        const grupoKey = this.obtenerClaveProveedorMedio(provId, medioPago);
+
+                        if (!itemsPorProveedor.has(grupoKey)) {
+                            itemsPorProveedor.set(grupoKey, {
                                 proveedorId: provId,
                                 proveedorNombre: provNombre,
+                                medioPago,
                                 items: [],
                                 montoItems: 0,
                                 moneda: null
                             });
                         }
-                        const grupoProveedor = itemsPorProveedor.get(provId);
+                        const grupoProveedor = itemsPorProveedor.get(grupoKey);
                         grupoProveedor.items.push(item);
                         try {
                             const precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
@@ -779,6 +798,7 @@ class PagosService {
                     registradoPor: username,
                     observaciones: observaciones || `Cuota ${numeroCuota} - ${grupo.proveedorNombre}`,
                     moneda: monedaProveedor,
+                    medioPago: grupo.medioPago || null,
                     connection: transactionConnection
                 });
 
@@ -1310,16 +1330,18 @@ class PagosService {
             const ordenId = pagos[0].orden_compra_id;
             const proveedorId = pagos[0].proveedor_id;
             const moneda = (pagos[0].moneda || 'ARS').toUpperCase();
+            const medioPago = pagos[0].medio_pago || null;
 
             const pagosInvalidos = pagos.filter(p => 
                 p.proveedor_id !== proveedorId ||
-                p.moneda.toUpperCase() !== moneda
+                p.moneda.toUpperCase() !== moneda ||
+                (p.medio_pago || null) !== medioPago
             );
 
             if (pagosInvalidos.length > 0) {
                 return {
                     success: false,
-                    message: 'Los pagos deben pertenecer al proveedor y moneda para un comprobante único'
+                    message: 'Los pagos deben pertenecer al mismo proveedor, moneda y medio de pago para un comprobante único'
                 };
             }
 
@@ -1351,6 +1373,7 @@ class PagosService {
                 registradoPor: username,
                 observaciones,
                 moneda,
+                medioPago,
                 connection
             });
 

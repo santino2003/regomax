@@ -217,6 +217,14 @@
                                         </select>
                                     </div>
                                     <div class="col-md-6 col-lg-2">
+                                        <label for="medio_pago" class="form-label">Medio de Pago</label>
+                                        <select class="form-select" id="medio_pago" name="medio_pago">
+                                            <option value="">Todos</option>
+                                            <option value="Efectivo" <%= filtros.medio_pago === 'Efectivo' ? 'selected' : '' %>>Efectivo</option>
+                                            <option value="Transferencia" <%= filtros.medio_pago === 'Transferencia' ? 'selected' : '' %>>Transferencia</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 col-lg-2">
                                         <label for="fecha_desde" class="form-label">Desde</label>
                                         <input type="date" 
                                                class="form-control" 
@@ -276,6 +284,7 @@
                                     <th>Orden</th>
                                     <th>Proveedor</th>
                                     <th>Tipo</th>
+                                    <th>Medio</th>
                                     <th>Bien</th>
                                     <th>Monto</th>
                                     <th>Fecha Pago</th>
@@ -286,7 +295,7 @@
                             <tbody>
                                 <% if (pagos.length === 0) { %>
                                     <tr>
-                                        <td colspan="9" class="text-center py-4">
+                                        <td colspan="10" class="text-center py-4">
                                             <i class="bi bi-inbox fs-1 text-muted"></i>
                                             <p class="text-muted mt-2">No se encontraron pagos con los filtros aplicados</p>
                                         </td>
@@ -333,6 +342,19 @@
                                                     <span class="badge bg-secondary badge-tipo-pago">
                                                         <i class="bi bi-collection me-1"></i>Pago Múltiple
                                                     </span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (pago.medio_pago === 'Efectivo') { %>
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-cash me-1"></i>Efectivo
+                                                    </span>
+                                                <% } else if (pago.medio_pago === 'Transferencia') { %>
+                                                    <span class="badge bg-primary">
+                                                        <i class="bi bi-bank me-1"></i>Transferencia
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="text-muted">-</span>
                                                 <% } %>
                                             </td>
                                             <td>

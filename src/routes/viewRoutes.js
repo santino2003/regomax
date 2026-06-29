@@ -51,29 +51,47 @@ router.get('/home', [authMiddleware.verifyToken, noCacheMiddleware], async (req,
             // Formatear fecha utilizando la utilidad de fechaUtils para zona horaria Argentina
             const fechaFormateada = fechaUtils.formatearFechaHoraLocal(accion.fecha_hora);
             
+            const accionFormato = accion.accion.replace(/_/g, ' ');
+
             // Crear descripción amigable según el tipo de acción
             let descripcion = '';
+            let etiqueta = '';
             switch(accion.accion) {
                 case 'crear':
                     descripcion = `Creó ${entidadFormato}${accion.entidad_id ? ' #' + accion.entidad_id : ''}`;
+                    etiqueta = 'Creación';
                     break;
                 case 'editar':
                     descripcion = `Editó ${entidadFormato}${accion.entidad_id ? ' #' + accion.entidad_id : ''}`;
+                    etiqueta = 'Edición';
                     break;
                 case 'eliminar':
                     descripcion = `Eliminó ${entidadFormato}${accion.entidad_id ? ' #' + accion.entidad_id : ''}`;
+                    etiqueta = 'Eliminación';
                     break;
                 case 'consultar':
                     descripcion = `Consultó ${entidadFormato}${accion.entidad_id ? ' #' + accion.entidad_id : ''}`;
+                    etiqueta = 'Consulta';
                     break;
                 case 'login':
                     descripcion = 'Inició sesión';
+                    etiqueta = 'Login';
                     break;
                 case 'logout':
                     descripcion = 'Cerró sesión';
+                    etiqueta = 'Logout';
+                    break;
+                case 'actualizar_cantidad_recibida':
+                    descripcion = `Actualizó cantidad recibida en ${entidadFormato}${accion.entidad_id ? ' #' + accion.entidad_id : ''}`;
+                    etiqueta = 'Actualizar cantidad recibida';
+                    break;
+                case 'cambiar_estado':
+                    descripcion = `Cambió estado de ${entidadFormato}${accion.entidad_id ? ' #' + accion.entidad_id : ''}`;
+                    etiqueta = 'Cambiar estado';
                     break;
                 default:
-                    descripcion = `${accion.accion} ${entidadFormato}${accion.entidad_id ? ' #' + accion.entidad_id : ''}`;
+                    descripcion = `${accionFormato} ${entidadFormato}${accion.entidad_id ? ' #' + accion.entidad_id : ''}`;
+                    etiqueta = accionFormato;
             }
             
             return {
@@ -81,7 +99,8 @@ router.get('/home', [authMiddleware.verifyToken, noCacheMiddleware], async (req,
                 fecha: fechaFormateada,
                 descripcion: descripcion,
                 entidad: entidadFormato,
-                accion: accion.accion
+                accion: accion.accion,
+                etiqueta: etiqueta
             };
         });
         

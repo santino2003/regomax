@@ -358,28 +358,37 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-2">
+                    <div class="row g-3">
+                        <div class="col-md-2 col-lg-2">
                             <label class="form-label">CANTIDAD <span class="text-danger">*</span></label>
                             <input type="number" class="form-control item-cantidad" name="items[${itemCounter}][cantidad]" step="0.01" value="${item.cantidad}" required data-item="${itemCounter}">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3 col-lg-2">
                             <label class="form-label">UNIDAD DE MEDIDA</label>
                             <select class="form-select" name="items[${itemCounter}][unidad_medida_id]">
                                 <option value="">---------</option>
                                 ${unidadesMedida.map(um => `<option value="${um.id}" ${um.id === item.unidad_medida_id ? 'selected' : ''}>${um.nombre}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3 col-lg-2">
                             <label class="form-label">PRECIO UNITARIO</label>
                             <input type="number" class="form-control item-precio" name="items[${itemCounter}][precio_unitario]" step="0.01" min="0" placeholder="0.00" value="${item.precio_unitario || ''}" data-item="${itemCounter}" readonly>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-2 col-lg-1">
                             <label class="form-label">MONEDA</label>
                             <input type="text" class="form-control item-moneda" value="${item.moneda || ''}" placeholder="---" readonly>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">PROVEEDOR SUGERIDO</label>
+                        <div class="col-md-4 col-lg-2">
+                            <label class="form-label">MEDIO PAGO <span class="text-danger">*</span></label>
+                            <select class="form-select" name="items[${itemCounter}][medio_pago]" required>
+                                <option value="" ${!item.medio_pago ? 'selected' : ''}>---------</option>
+                                <option value="Efectivo" ${item.medio_pago === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                                <option value="Transferencia" ${item.medio_pago === 'Transferencia' ? 'selected' : ''}>Transferencia</option>
+                            </select>
+                            <div class="invalid-feedback">El medio de pago es obligatorio</div>
+                        </div>
+                        <div class="col-md-8 col-lg-3">
+                            <label class="form-label">PROVEEDOR</label>
                             <select class="form-select proveedor-select" name="items[${itemCounter}][proveedor_sugerido_id]" data-selected="${item.proveedor_sugerido_id || ''}">
                                 <option value="">Cargando...</option>
                             </select>
@@ -476,28 +485,37 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-2">
+                    <div class="row g-3">
+                        <div class="col-md-2 col-lg-2">
                             <label class="form-label">CANTIDAD <span class="text-danger">*</span></label>
                             <input type="number" class="form-control item-cantidad" name="items[${itemCounter}][cantidad]" step="0.01" required data-item="${itemCounter}">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3 col-lg-2">
                             <label class="form-label">UNIDAD DE MEDIDA</label>
                             <select class="form-select" name="items[${itemCounter}][unidad_medida_id]">
                                 <option value="">---------</option>
                                 ${unidadesMedida.map(um => `<option value="${um.id}">${um.nombre}</option>`).join('')}
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3 col-lg-2">
                             <label class="form-label">PRECIO UNITARIO</label>
                             <input type="number" class="form-control item-precio" name="items[${itemCounter}][precio_unitario]" step="0.01" min="0" placeholder="0.00" data-item="${itemCounter}" readonly>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-2 col-lg-1">
                             <label class="form-label">MONEDA</label>
                             <input type="text" class="form-control item-moneda" value="" placeholder="---" readonly>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">PROVEEDOR SUGERIDO</label>
+                        <div class="col-md-4 col-lg-2">
+                            <label class="form-label">MEDIO PAGO <span class="text-danger">*</span></label>
+                            <select class="form-select" name="items[${itemCounter}][medio_pago]" required>
+                                <option value="">---------</option>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Transferencia">Transferencia</option>
+                            </select>
+                            <div class="invalid-feedback">El medio de pago es obligatorio</div>
+                        </div>
+                        <div class="col-md-8 col-lg-3">
+                            <label class="form-label">PROVEEDOR</label>
                             <select class="form-select" name="items[${itemCounter}][proveedor_sugerido_id]">
                                 <option value="">Seleccione un bien primero</option>
                             </select>
@@ -1131,6 +1149,8 @@
                     descripcion: $item.find('textarea[name$="[descripcion]"]').val(),
                     cantidad: parseFloat($item.find('input[name$="[cantidad]"]').val()),
                     cantidad_recibida: cantidadRecibida ? parseFloat(cantidadRecibida) : 0,
+                    precio_unitario: parseFloat($item.find('.item-precio').val()) || 0,
+                    medio_pago: $item.find('select[name$="[medio_pago]"]').val(),
                     unidad_medida_id: $item.find('select[name$="[unidad_medida_id]"]').val() ? parseInt($item.find('select[name$="[unidad_medida_id]"]').val()) : null,
                     proveedor_sugerido_id: $item.find('select[name$="[proveedor_sugerido_id]"]').val() ? parseInt($item.find('select[name$="[proveedor_sugerido_id]"]').val()) : null
                 });

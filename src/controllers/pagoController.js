@@ -91,6 +91,7 @@ class PagoController {
             const filtros = {
                 proveedor_id: req.query.proveedor_id || '',
                 tipo_pago: req.query.tipo_pago || '',
+                medio_pago: req.query.medio_pago || '',
                 fecha_desde: req.query.fecha_desde || '',
                 fecha_hasta: req.query.fecha_hasta || '',
                 pagado: req.query.pagado // Filtro de estado pagado
@@ -206,6 +207,7 @@ class PagoController {
                 orden_codigo: req.query.orden_codigo || '',
                 proveedor: req.query.proveedor || '',
                 tipo_pago: req.query.tipo_pago || '',
+                medio_pago: req.query.medio_pago || '',
                 fecha_desde: req.query.fecha_desde || '',
                 fecha_hasta: req.query.fecha_hasta || '',
                 bien_nombre: req.query.bien_nombre || ''
@@ -257,9 +259,9 @@ class PagoController {
             return res.redirect(`/pagos/${id}`);
         } catch (error) {
             console.error('Error en PagoController.marcarComoPagado:', error);
-            res.status(500).json({
+            res.status(error.statusCode || 500).json({
                 success: false,
-                message: 'Error al marcar pago como pagado',
+                message: error.message || 'Error al marcar pago como pagado. Realice la operación nuevamente.',
                 error: error.message
             });
         }
@@ -293,9 +295,9 @@ class PagoController {
             });
         } catch (error) {
             console.error('Error en PagoController.marcarPagosMultiples:', error);
-            res.status(500).json({
+            res.status(error.statusCode || 500).json({
                 success: false,
-                message: 'Error al registrar pago múltiple',
+                message: error.message || 'Error al registrar pago múltiple. Realice la operación nuevamente.',
                 error: error.message
             });
         }

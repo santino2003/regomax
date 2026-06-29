@@ -17,6 +17,7 @@ class PagoRepository {
                 registradoPor,
                 observaciones,
                 moneda,
+                medioPago,
                 connection
             } = pagoData;
 
@@ -30,10 +31,11 @@ class PagoRepository {
                     precio_unitario,
                     monto_pago,
                     moneda,
+                    medio_pago,
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, ?, ?, 'RECEPCION', ?, ?, ?, ?, ?, ?, ?)`;
+                ) VALUES (?, ?, ?, 'RECEPCION', ?, ?, ?, ?, ?, ?, ?, ?)`;
             const params = [
                 ordenCompraId,
                 bienId,
@@ -42,6 +44,7 @@ class PagoRepository {
                 precioUnitario,
                 montoPago,
                 moneda || 'ARS',
+                medioPago || null,
                 fechaPago,
                 registradoPor,
                 observaciones || null
@@ -75,6 +78,7 @@ class PagoRepository {
                 registradoPor,
                 observaciones,
                 moneda,
+                medioPago,
                 connection
             } = pagoData;
 
@@ -86,16 +90,18 @@ class PagoRepository {
                     monto_pago,
                     monto_adelanto,
                     moneda,
+                    medio_pago,
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, ?, 'ADELANTO', ?, ?, ?, ?, ?, ?)`;
+                ) VALUES (?, ?, 'ADELANTO', ?, ?, ?, ?, ?, ?, ?)`;
             const params = [
                 ordenCompraId,
                 proveedorId,
                 montoAdelanto,
                 montoAdelanto,
                 moneda || 'ARS',
+                medioPago || null,
                 fechaPago,
                 registradoPor,
                 observaciones || null
@@ -131,6 +137,7 @@ class PagoRepository {
                 registradoPor,
                 observaciones,
                 moneda,
+                medioPago,
                 connection
             } = pagoData;
 
@@ -143,10 +150,11 @@ class PagoRepository {
                     monto_total,
                     monto_adelanto,
                     moneda,
+                    medio_pago,
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, ?, 'SALDO_COMPLETO', ?, ?, ?, ?, ?, ?, ?)`;
+                ) VALUES (?, ?, 'SALDO_COMPLETO', ?, ?, ?, ?, ?, ?, ?, ?)`;
             const params = [
                 ordenCompraId,
                 proveedorId,
@@ -154,6 +162,7 @@ class PagoRepository {
                 montoTotal,
                 montoAdelanto,
                 moneda || 'ARS',
+                medioPago || null,
                 fechaPago,
                 registradoPor,
                 observaciones || null
@@ -187,6 +196,7 @@ class PagoRepository {
                 registradoPor,
                 observaciones,
                 moneda,
+                medioPago,
                 connection
             } = pagoData;
 
@@ -198,15 +208,17 @@ class PagoRepository {
                     tipo_pago,
                     monto_pago,
                     moneda,
+                    medio_pago,
                     fecha_pago,
                     registrado_por,
                     observaciones
-                ) VALUES (?, NULL, ?, 'MULTIPLE', ?, ?, ?, ?, ?)`;
+                ) VALUES (?, NULL, ?, 'MULTIPLE', ?, ?, ?, ?, ?, ?)`;
             const params = [
                 ordenCompraId,
                 proveedorId,
                 montoPago,
                 moneda || 'ARS',
+                medioPago || null,
                 fechaPago,
                 registradoPor,
                 observaciones || null
@@ -593,6 +605,11 @@ class PagoRepository {
                 params.push(filtros.tipo_pago);
             }
 
+            if (filtros.medio_pago) {
+                query += ' AND p.medio_pago = ?';
+                params.push(filtros.medio_pago);
+            }
+
             if (filtros.fecha_desde) {
                 query += ' AND p.fecha_pago >= ?';
                 params.push(filtros.fecha_desde);
@@ -635,6 +652,11 @@ class PagoRepository {
             if (filtros.tipo_pago) {
                 countQueryWithFilters += ' AND p.tipo_pago = ?';
                 countParams.push(filtros.tipo_pago);
+            }
+
+            if (filtros.medio_pago) {
+                countQueryWithFilters += ' AND p.medio_pago = ?';
+                countParams.push(filtros.medio_pago);
             }
 
             if (filtros.fecha_desde) {
@@ -703,6 +725,11 @@ class PagoRepository {
                 params.push(filtros.tipo_pago);
             }
 
+            if (filtros.medio_pago) {
+                query += ' AND p.medio_pago = ?';
+                params.push(filtros.medio_pago);
+            }
+
             if (filtros.fecha_desde) {
                 query += ' AND p.fecha_pago >= ?';
                 params.push(filtros.fecha_desde);
@@ -762,6 +789,11 @@ class PagoRepository {
                 params.push(filtros.tipo_pago);
             }
 
+            if (filtros.medio_pago) {
+                query += ' AND p.medio_pago = ?';
+                params.push(filtros.medio_pago);
+            }
+
             if (filtros.fecha_desde) {
                 query += ' AND p.fecha_pago >= ?';
                 params.push(filtros.fecha_desde);
@@ -792,16 +824,27 @@ class PagoRepository {
                     fecha_marcado_pagado = NOW(),
                     marcado_pagado_por = ?,
                     detalle_pago = ?
-                WHERE id = ?`;
+                WHERE id = ? AND COALESCE(pagado, FALSE) = FALSE`;
             const params = [username, detalle, pagoId];
 
+            let result;
             if (connection) {
-                await connection.execute(sql, params);
+                const [updateResult] = await connection.execute(sql, params);
+                result = updateResult;
             } else {
-                await db.query(sql, params);
+                result = await db.query(sql, params);
             }
 
-            return { success: true };
+            const affectedRows = result?.affectedRows || 0;
+
+            if (affectedRows !== 1) {
+                const error = new Error('No se pudo marcar el pago como pagado. Verifique el estado del pago e intente nuevamente.');
+                error.statusCode = 409;
+                error.affectedRows = affectedRows;
+                throw error;
+            }
+
+            return { success: true, affectedRows };
         } catch (error) {
             console.error('Error en PagoRepository.marcarComoPagado:', error);
             throw error;
@@ -823,16 +866,28 @@ class PagoRepository {
                     fecha_marcado_pagado = NOW(),
                     marcado_pagado_por = ?,
                     detalle_pago = ?
-                WHERE id IN (${placeholders})`;
+                WHERE id IN (${placeholders}) AND COALESCE(pagado, FALSE) = FALSE`;
             const params = [username, detalle, ...pagoIds];
 
+            let result;
             if (connection) {
-                await connection.execute(sql, params);
+                const [updateResult] = await connection.execute(sql, params);
+                result = updateResult;
             } else {
-                await db.query(sql, params);
+                result = await db.query(sql, params);
             }
 
-            return { success: true };
+            const affectedRows = result?.affectedRows || 0;
+
+            if (affectedRows !== pagoIds.length) {
+                const error = new Error('No se pudieron marcar todos los pagos como pagados. La operación fue cancelada; intente nuevamente.');
+                error.statusCode = 409;
+                error.affectedRows = affectedRows;
+                error.expectedRows = pagoIds.length;
+                throw error;
+            }
+
+            return { success: true, affectedRows };
         } catch (error) {
             console.error('Error en PagoRepository.marcarComoPagadoMultiple:', error);
             throw error;
@@ -874,10 +929,11 @@ class PagoRepository {
                         precio_unitario,
                         monto_pago,
                         moneda,
+                        medio_pago,
                         fecha_pago,
                         registrado_por,
                         observaciones
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         pagoOriginal.orden_compra_id,
                         pagoOriginal.bien_id || null,
@@ -887,6 +943,7 @@ class PagoRepository {
                         pagoOriginal.precio_unitario || null,
                         parseFloat(cuota.monto),
                         pagoOriginal.moneda || 'ARS',
+                        pagoOriginal.medio_pago || null,
                         cuota.fecha,
                         username,
                         observacionesCuota

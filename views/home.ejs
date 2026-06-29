@@ -335,25 +335,25 @@
                             </h5>
                             
                             <% if (typeof accionesRecientes !== 'undefined' && accionesRecientes.length > 0) { %>
-                                <ul class="list-group list-group-flush mt-3">
+                                <ul class="list-group list-group-flush mt-3 recent-actions-list">
                                     <% accionesRecientes.forEach(function(accion) { %>
-                                        <li class="list-group-item px-0">
-                                            <div class="d-flex align-items-center">
+                                        <li class="list-group-item px-0 recent-action-item">
+                                            <div class="recent-action">
                                                 <% if (accion.accion === 'crear') { %>
-                                                    <span class="badge bg-success me-2">Creación</span>
+                                                    <span class="badge bg-success recent-action-badge">Creación</span>
                                                 <% } else if (accion.accion === 'editar') { %>
-                                                    <span class="badge bg-warning text-dark me-2">Edición</span>
+                                                    <span class="badge bg-warning text-dark recent-action-badge">Edición</span>
                                                 <% } else if (accion.accion === 'eliminar') { %>
-                                                    <span class="badge bg-danger me-2">Eliminación</span>
+                                                    <span class="badge bg-danger recent-action-badge">Eliminación</span>
                                                 <% } else if (accion.accion === 'login') { %>
-                                                    <span class="badge bg-info text-dark me-2">Login</span>
+                                                    <span class="badge bg-info text-dark recent-action-badge">Login</span>
                                                 <% } else if (accion.accion === 'logout') { %>
-                                                    <span class="badge bg-secondary me-2">Logout</span>
+                                                    <span class="badge bg-secondary recent-action-badge">Logout</span>
                                                 <% } else { %>
-                                                    <span class="badge bg-primary me-2"><%= accion.accion %></span>
+                                                    <span class="badge bg-primary recent-action-badge"><%= accion.etiqueta || accion.accion %></span>
                                                 <% } %>
-                                                <div>
-                                                    <div><%= accion.descripcion %></div>
+                                                <div class="recent-action-content">
+                                                    <div class="recent-action-description"><%= accion.descripcion %></div>
                                                     <small class="text-muted"><%= accion.fecha %></small>
                                                 </div>
                                             </div>

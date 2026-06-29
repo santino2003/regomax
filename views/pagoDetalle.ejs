@@ -12,22 +12,93 @@
     <link rel="stylesheet" href="/assets/css/home.css">
     <style>
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            html,
+            body {
+                width: 100%;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
             body * {
                 visibility: hidden;
+            }
+            .navbar,
+            .menu-container > .d-flex,
+            .menu-container > .row > .col-md-6,
+            .menu-container > .row > .col-12:not(.mt-4),
+            #reciboPago .btn {
+                display: none !important;
+            }
+            .container-fluid,
+            .container-fluid > .row,
+            .container-fluid > .row > .col-12,
+            .menu-container,
+            .menu-container > .row,
+            .menu-container > .row > .col-12.mt-4 {
+                display: block !important;
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             #reciboPago, #reciboPago * {
                 visibility: visible;
             }
             #reciboPago {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
+                position: static;
+                width: 100% !important;
+                margin: 0 !important;
+                border: 1px solid #000 !important;
+                border-radius: .25rem !important;
+                page-break-inside: avoid;
+                break-inside: avoid;
+                color: #000 !important;
+                background: #fff !important;
+                font-size: 12px !important;
+            }
+            #reciboPago .card-body {
+                padding: 0.9rem !important;
+            }
+            #reciboPago .row {
+                display: flex !important;
+                flex-wrap: wrap !important;
+            }
+            #reciboPago .col-md-6 {
+                flex: 0 0 auto !important;
+                width: 50% !important;
+                max-width: 50% !important;
+            }
+            #reciboPago .text-md-end {
+                text-align: right !important;
+            }
+            #reciboPago .mt-md-0 {
+                margin-top: 0 !important;
+            }
+            #reciboPago .monto-destacado {
+                font-size: 1.35rem !important;
+                color: #198754 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            #reciboPago .firma-recibo {
+                border-top: 2px solid #000 !important;
+                min-height: 46px;
+                padding-top: 0.5rem !important;
+                margin-top: 2rem !important;
             }
         }
         #reciboPago {
             border: 1px solid #ced4da;
             border-radius: .25rem;
+        }
+        #reciboPago .firma-recibo {
+            border-top: 1px solid #000;
+            padding-top: 0.5rem;
+            margin-top: 2.5rem;
         }
         .info-card {
             transition: transform 0.2s;
@@ -222,6 +293,11 @@
                                         </div>
                                     <% } %>
 
+                                    <div class="mb-3">
+                                        <div class="detail-label">Medio de Pago</div>
+                                        <div class="detail-value"><%= pago.medio_pago || '-' %></div>
+                                    </div>
+
                                     <% if (pago.bien_nombre) { %>
                                         <hr>
                                         <h6 class="text-muted mb-3"><i class="bi bi-box me-1"></i>Información del Bien</h6>
@@ -361,13 +437,13 @@
 
                                         <div class="row mt-4">
                                             <div class="col-md-6 text-center">
-                                                <div style="border-top: 1px solid #000; padding-top: 0.5rem; margin-top: 2.5rem;">
+                                                <div class="firma-recibo">
                                                     <strong>Firma y Aclaración</strong><br>
                                                     <small>Proveedor / Responsable</small>
                                                 </div>
                                             </div>
                                             <div class="col-md-6 text-center mt-4 mt-md-0">
-                                                <div style="border-top: 1px solid #000; padding-top: 0.5rem; margin-top: 2.5rem;">
+                                                <div class="firma-recibo">
                                                     <strong>Aclaración</strong><br>
                                                     <small>Documento</small>
                                                 </div>
