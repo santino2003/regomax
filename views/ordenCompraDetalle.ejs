@@ -121,11 +121,26 @@
             const fechaAdelanto = orden.fecha_adelanto ? 
                 new Date(orden.fecha_adelanto).toLocaleDateString('es-AR') : '-';
             const fechaCreacion = new Date(orden.created_at).toLocaleDateString('es-AR');
+            const formatoImporte = (valor) => (parseFloat(valor) || 0).toLocaleString('es-AR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            const aplicaAjustes = !!orden.contrafactura;
+            const impuestos = aplicaAjustes ? (parseFloat(orden.impuestos) || 0) : 0;
+            const descuento = aplicaAjustes ? (parseFloat(orden.descuento) || 0) : 0;
+            const totalesPorMoneda = {};
 
             let itemsHtml = '';
             if (orden.items && orden.items.length > 0) {
                 orden.items.forEach((item, index) => {
                     const editable = orden.estado === 'En Proceso';
+                    const moneda = (item.moneda || 'ARS').toString().toUpperCase();
+                    const cantidad = parseFloat(item.cantidad) || 0;
+                    const precioUnitario = parseFloat(item.precio_unitario) || 0;
+                    const subtotal = cantidad * precioUnitario;
+                    if (subtotal > 0) {
+                        totalesPorMoneda[moneda] = (totalesPorMoneda[moneda] || 0) + subtotal;
+                    }
                     itemsHtml += `
                         <tr>
                             <td>${index + 1}</td>
@@ -140,13 +155,32 @@
                             <td>${item.unidad_medida_nombre || '-'}</td>
                             <td>${item.medio_pago || '-'}</td>
                             <td>${item.proveedor_sugerido_nombre || '-'}</td>
+                            <td>${moneda} ${formatoImporte(precioUnitario)}</td>
+                            <td>${moneda} ${formatoImporte(subtotal)}</td>
                             <td>${item.descripcion || '-'}</td>
                         </tr>
                     `;
                 });
             } else {
-                itemsHtml = '<tr><td colspan="9" class="text-center">Sin items</td></tr>';
+                itemsHtml = '<tr><td colspan="11" class="text-center">Sin items</td></tr>';
             }
+
+            const monedasTotales = Object.keys(totalesPorMoneda);
+            const monedaAjuste = monedasTotales[0] || 'ARS';
+            if (aplicaAjustes && (impuestos > 0 || descuento > 0)) {
+                totalesPorMoneda[monedaAjuste] = Math.max((totalesPorMoneda[monedaAjuste] || 0) + impuestos - descuento, 0);
+            }
+
+            const totalesHtml = Object.keys(totalesPorMoneda).length > 0
+                ? Object.entries(totalesPorMoneda).map(([moneda, total]) => `
+                    <div class="col-md-4 mb-2">
+                        <div class="border rounded p-2 bg-light">
+                            <small class="text-muted d-block">Total ${moneda}</small>
+                            <strong>${moneda} ${formatoImporte(total)}</strong>
+                        </div>
+                    </div>
+                `).join('')
+                : '<div class="col-12 text-muted">Sin total calculado</div>';
 
             const html = `
                 <div class="card mb-3">
@@ -239,6 +273,8 @@
                                         <th>Unidad</th>
                                         <th>Medio Pago</th>
                                         <th>Proveedor Sugerido</th>
+                                        <th>Precio Unit.</th>
+                                        <th>Subtotal</th>
                                         <th>Descripción</th>
                                     </tr>
                                 </thead>
@@ -247,6 +283,23 @@
                                 </tbody>
                             </table>
                         </div>
+                        ${aplicaAjustes ? `
+                        <div class="row mt-3">
+                            <div class="col-md-4 mb-2">
+                                <div class="border rounded p-2 bg-light">
+                                    <small class="text-muted d-block">Impuestos</small>
+                                    <strong>${monedaAjuste} ${formatoImporte(impuestos)}</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="border rounded p-2 bg-light">
+                                    <small class="text-muted d-block">Descuento</small>
+                                    <strong>${monedaAjuste} ${formatoImporte(descuento)}</strong>
+                                </div>
+                            </div>
+                            ${totalesHtml}
+                        </div>
+                        ` : ''}
                         ${orden.estado === 'En Proceso' ? `
                         <div class="text-end mt-3">
                             <button class="btn btn-primary" id="btnGuardarCantidades" onclick="guardarCantidadesRecibidas()">
