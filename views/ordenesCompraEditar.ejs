@@ -199,6 +199,24 @@
                             </div>
                         </div>
 
+                        <div class="card mb-3 shadow-sm" id="ajustesTotalContainer" style="display: <%= orden.contrafactura ? 'block' : 'none' %>;">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Ajustes del Total</h5>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="impuestos" class="form-label">Impuestos</label>
+                                        <input type="number" class="form-control ajuste-total" id="impuestos" name="impuestos" step="0.01" min="0" placeholder="0.00" value="<%= orden.impuestos || '' %>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="descuento" class="form-label">Descuento</label>
+                                        <input type="number" class="form-control ajuste-total" id="descuento" name="descuento" step="0.01" min="0" placeholder="0.00" value="<%= orden.descuento || '' %>">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-end gap-2">
                             <a href="/ordenes-compra/<%= orden.id %>" class="btn btn-secondary">
                                 <i class="bi bi-x-circle me-1"></i>Cancelar
@@ -260,9 +278,12 @@
                 
                 if (isChecked) {
                     $contrafacturaContainer.slideDown();
+                    $('#ajustesTotalContainer').slideDown();
                     reconstruirPlanesCuotasPorMoneda();
                 } else {
                     $contrafacturaContainer.slideUp();
+                    $('#ajustesTotalContainer').slideUp();
+                    $('#impuestos, #descuento').val('');
                     $('#planesCuotasContainer').empty();
                 }
             });
@@ -280,6 +301,8 @@
             $('#planesCuotasContainer').on('change', '.adelanto-moneda, .fecha-adelanto-moneda', function() {
                 reconstruirPlanesCuotasPorMoneda();
             });
+
+            $('.ajuste-total').on('input change', calcularMontoTotal);
             
             // Manejar el botón de agregar archivo
             $('#btnAgregarArchivo').on('click', function() {
@@ -773,6 +796,16 @@
                 totales[moneda] += (cantidad * precio);
             });
 
+            const impuestos = parseFloat($('#impuestos').val()) || 0;
+            const descuento = parseFloat($('#descuento').val()) || 0;
+            const ajusteNeto = impuestos - descuento;
+
+            if (ajusteNeto !== 0) {
+                const monedas = Object.keys(totales);
+                const monedaAjuste = monedas[0] || 'ARS';
+                totales[monedaAjuste] = Math.max((totales[monedaAjuste] || 0) + ajusteNeto, 0);
+            }
+
             return totales;
         }
 
@@ -1029,6 +1062,8 @@
             formData.append('fecha_entrega_proveedor', $('#fecha_entrega_proveedor').val());
             formData.append('asunto', $('#asunto').val());
             formData.append('contrafactura', $('#contrafactura').is(':checked') ? 'true' : 'false');
+            formData.append('impuestos', $('#contrafactura').is(':checked') ? ($('#impuestos').val() || '0') : '0');
+            formData.append('descuento', $('#contrafactura').is(':checked') ? ($('#descuento').val() || '0') : '0');
             
             // Si es contrafactura, incluir adelanto y cuotas
             if ($('#contrafactura').is(':checked')) {

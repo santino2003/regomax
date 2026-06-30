@@ -80,6 +80,36 @@ class OrdenCompraService {
         }, {});
     }
 
+    normalizarImporteAjuste(valor) {
+        const importe = parseFloat(valor);
+        return Number.isFinite(importe) && importe > 0 ? importe : 0;
+    }
+
+    aplicarAjustesAlResumenMontos(resumen, impuestos = 0, descuento = 0) {
+        const impuestosNum = this.normalizarImporteAjuste(impuestos);
+        const descuentoNum = this.normalizarImporteAjuste(descuento);
+        const ajusteNeto = impuestosNum - descuentoNum;
+
+        if (ajusteNeto === 0) {
+            return resumen;
+        }
+
+        const monedas = Array.from(resumen.monedasUtilizadas || []);
+        const monedaAjuste = monedas[0] || 'ARS';
+
+        resumen.totalesPorMoneda[monedaAjuste] = Math.max(
+            (parseFloat(resumen.totalesPorMoneda[monedaAjuste]) || 0) + ajusteNeto,
+            0
+        );
+
+        if (!monedas.includes(monedaAjuste)) {
+            resumen.monedasUtilizadas.push(monedaAjuste);
+        }
+
+        resumen.montoTotal = Math.max((parseFloat(resumen.montoTotal) || 0) + ajusteNeto, 0);
+        return resumen;
+    }
+
     async calcularMontosOrdenPorMoneda(items = [], logDetalle = false) {
         let montoTotal = 0;
         const monedasUtilizadas = new Set();
@@ -187,6 +217,8 @@ class OrdenCompraService {
                 monto_adelanto: ordenData.monto_adelanto || null, // Monto de adelanto (cuando es contrafactura)
                 moneda_adelanto: ordenData.moneda_adelanto || 'ARS', // Moneda del adelanto
                 fecha_adelanto: ordenData.fecha_adelanto || null, // Fecha de la seña/adelanto
+                impuestos: ordenData.contrafactura ? this.normalizarImporteAjuste(ordenData.impuestos) : 0,
+                descuento: ordenData.contrafactura ? this.normalizarImporteAjuste(ordenData.descuento) : 0,
                 creado_por: usuario
             };
 
@@ -212,7 +244,11 @@ class OrdenCompraService {
                     }];
                 }
 
-                const resumenMonedas = await this.calcularMontosOrdenPorMoneda(ordenData.items, true);
+                const resumenMonedas = this.aplicarAjustesAlResumenMontos(
+                    await this.calcularMontosOrdenPorMoneda(ordenData.items, true),
+                    datosOrden.impuestos,
+                    datosOrden.descuento
+                );
                 montoTotalContrafactura = resumenMonedas.montoTotal;
                 const { totalesPorMoneda, monedasUtilizadas } = resumenMonedas;
 
@@ -492,6 +528,12 @@ class OrdenCompraService {
                 contrafactura: ordenData.contrafactura !== undefined 
                     ? ordenData.contrafactura 
                     : ordenActual.contrafactura,
+                impuestos: ordenData.impuestos !== undefined && ordenData.contrafactura
+                    ? this.normalizarImporteAjuste(ordenData.impuestos)
+                    : (ordenData.contrafactura ? this.normalizarImporteAjuste(ordenActual.impuestos) : 0),
+                descuento: ordenData.descuento !== undefined && ordenData.contrafactura
+                    ? this.normalizarImporteAjuste(ordenData.descuento)
+                    : (ordenData.contrafactura ? this.normalizarImporteAjuste(ordenActual.descuento) : 0),
                 archivos_adjuntos: ordenData.archivos_adjuntos, // Agregar archivos nuevos
                 archivos_eliminar: ordenData.archivos_eliminar // Archivos a eliminar
             };

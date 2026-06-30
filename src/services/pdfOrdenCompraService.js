@@ -59,6 +59,10 @@ class PDFOrdenCompraService {
                 const date = new Date(dateStr);
                 return date.toLocaleDateString('es-AR');
             };
+            const formatAmount = (value) => (parseFloat(value) || 0).toLocaleString('es-AR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
 
             const infoTableEndY = currentY - 3 + (15 * 4); // 4 filas
 
@@ -133,6 +137,8 @@ class PDFOrdenCompraService {
             let itemsEndY = currentY;
             
             if (orden.items && orden.items.length > 0) {
+                const totalesPorMoneda = {};
+
                 orden.items.forEach((item, index) => {
                     currentY += 3;
                     
@@ -146,6 +152,13 @@ class PDFOrdenCompraService {
                     const unidad = item.unidad_medida_nombre_lindo || item.unidad_medida_nombre || '-';
                     const medioPago = item.medio_pago || '-';
                     const cantidad = parseFloat(item.cantidad) || 0;
+                    const moneda = String(item.moneda || 'ARS').toUpperCase();
+                    const precioUnitario = parseFloat(item.precio_unitario) || 0;
+                    const subtotal = cantidad * precioUnitario;
+
+                    if (subtotal > 0) {
+                        totalesPorMoneda[moneda] = (totalesPorMoneda[moneda] || 0) + subtotal;
+                    }
                     
                     // Calcular altura real necesaria para cada campo usando heightOfString
                     doc.fontSize(7);
@@ -218,6 +231,31 @@ class PDFOrdenCompraService {
                     
                     itemsEndY = currentY;
                 });
+
+                const aplicaAjustes = !!orden.contrafactura;
+                const impuestos = aplicaAjustes ? (parseFloat(orden.impuestos) || 0) : 0;
+                const descuento = aplicaAjustes ? (parseFloat(orden.descuento) || 0) : 0;
+                const monedas = Object.keys(totalesPorMoneda);
+                const monedaAjuste = monedas[0] || 'ARS';
+
+                if (aplicaAjustes && (impuestos > 0 || descuento > 0)) {
+                    totalesPorMoneda[monedaAjuste] = Math.max((totalesPorMoneda[monedaAjuste] || 0) + impuestos - descuento, 0);
+                }
+
+                if (aplicaAjustes) {
+                    currentY = itemsEndY + 12;
+                    doc.fontSize(8).font('Helvetica-Bold').text('Resumen de importes', 380, currentY, { width: 175, align: 'left' });
+                    currentY += 13;
+                    doc.font('Helvetica');
+                    doc.text(`Impuestos: ${monedaAjuste} ${formatAmount(impuestos)}`, 380, currentY, { width: 175, align: 'left' });
+                    currentY += 11;
+                    doc.text(`Descuento: ${monedaAjuste} ${formatAmount(descuento)}`, 380, currentY, { width: 175, align: 'left' });
+                    currentY += 11;
+                    Object.entries(totalesPorMoneda).forEach(([moneda, total]) => {
+                        doc.font('Helvetica-Bold').text(`Total ${moneda}: ${formatAmount(total)}`, 380, currentY, { width: 175, align: 'left' });
+                        currentY += 11;
+                    });
+                }
             }
 
             // Líneas verticales para la tabla de items

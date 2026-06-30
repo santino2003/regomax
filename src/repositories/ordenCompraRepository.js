@@ -36,8 +36,8 @@ class OrdenCompraRepository {
                 `INSERT INTO ordenes_compra (
                     codigo, estado, fecha_entrega_solicitada, fecha_entrega_proveedor,
                     condicion, asunto, archivo_adjunto, proveedor_id, creado_por, contrafactura, 
-                    fecha_pago, monto_adelanto, moneda_adelanto, fecha_adelanto
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    fecha_pago, monto_adelanto, moneda_adelanto, fecha_adelanto, impuestos, descuento
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     ordenData.codigo,
                     ordenData.estado || 'Abierta',
@@ -52,7 +52,9 @@ class OrdenCompraRepository {
                     ordenData.fecha_pago || null,
                     ordenData.monto_adelanto || null,
                     ordenData.moneda_adelanto || 'ARS',
-                    ordenData.fecha_adelanto || null
+                    ordenData.fecha_adelanto || null,
+                    ordenData.impuestos || 0,
+                    ordenData.descuento || 0
                 ]
             );
             
@@ -123,7 +125,9 @@ class OrdenCompraRepository {
                 fecha_pago = ?,
                 monto_adelanto = ?,
                 moneda_adelanto = ?,
-                fecha_adelanto = ?
+                fecha_adelanto = ?,
+                impuestos = ?,
+                descuento = ?
             `;
             let updateValues = [
                 ordenData.estado,
@@ -136,7 +140,9 @@ class OrdenCompraRepository {
                 ordenData.fecha_pago || null,
                 ordenData.monto_adelanto || null,
                 ordenData.moneda_adelanto || 'ARS',
-                ordenData.fecha_adelanto || null
+                ordenData.fecha_adelanto || null,
+                ordenData.impuestos || 0,
+                ordenData.descuento || 0
             ];
             
             console.log('Valor de contrafactura en Repository:', ordenData.contrafactura, 'Tipo:', typeof ordenData.contrafactura);
@@ -474,11 +480,21 @@ class OrdenCompraRepository {
                     b.descripcion as bien_descripcion,
                     um.nombre as unidad_medida_nombre,
                     um.nombre_lindo as unidad_medida_nombre_lindo,
-                    ps.nombre as proveedor_sugerido_nombre
+                    ps.nombre as proveedor_sugerido_nombre,
+                    bp.moneda as moneda
                 FROM ordenes_compra_items oci
                 INNER JOIN bienes b ON oci.bien_id = b.id
                 LEFT JOIN unidades_medida um ON oci.unidad_medida_id = um.id
                 LEFT JOIN proveedores ps ON oci.proveedor_sugerido_id = ps.id
+                LEFT JOIN (
+                    SELECT bp1.*
+                    FROM bienes_proveedores bp1
+                    INNER JOIN (
+                        SELECT MAX(id) as id
+                        FROM bienes_proveedores
+                        GROUP BY bien_id, proveedor_id
+                    ) latest ON bp1.id = latest.id
+                ) bp ON bp.bien_id = oci.bien_id AND bp.proveedor_id = oci.proveedor_sugerido_id
                 WHERE oci.orden_compra_id = ?
                 ORDER BY oci.id`,
                 [id]
@@ -518,9 +534,11 @@ class OrdenCompraRepository {
                     estado,
                     COUNT(*) as cantidad,
                     SUM(
-                        (SELECT SUM(oci.cantidad * oci.precio_unitario) 
+                        (SELECT COALESCE(SUM(oci.cantidad * oci.precio_unitario), 0)
                          FROM ordenes_compra_items oci 
                          WHERE oci.orden_compra_id = oc.id)
+                        + COALESCE(oc.impuestos, 0)
+                        - COALESCE(oc.descuento, 0)
                     ) as monto_total
                 FROM ordenes_compra oc
                 GROUP BY estado
