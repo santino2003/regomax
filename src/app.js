@@ -44,6 +44,7 @@ const ajusteInventarioRoutes = require('./routes/ajusteInventarioRoutes'); // Im
 const ordenCompraRoutes = require('./routes/ordenCompraRoutes'); // Importamos las rutas de ordenes de compra
 const permisosTransicionesRoutes = require('./routes/permisosTransicionesRoutes'); // Importamos las rutas de permisos de transiciones
 const pagoRoutes = require('./routes/pagoRoutes'); // Importamos las rutas de pagos
+const servicioRoutes = require('./routes/servicioRoutes'); // Importamos las rutas de servicios de compras
 // Crear aplicación Express
 const app = express();
 
@@ -114,6 +115,9 @@ app.use('/', salidaRoutes); // Rutas para salidas de bienes/kits
 
 // Montar rutas de ajustes de inventario - incluye tanto vistas como API
 app.use('/', ajusteInventarioRoutes); // Rutas para ajustes de inventario
+
+// Montar rutas de servicios dentro de compras
+app.use('/compras/servicios', servicioRoutes); // Rutas para gestión de servicios
 
 // Montar rutas de pagos - incluye tanto vistas como API
 app.use('/pagos', pagoRoutes); // Rutas para gestión de pagos

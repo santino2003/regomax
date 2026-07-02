@@ -205,6 +205,11 @@
                                         <a href="/pagos/listar"><i class="bi bi-cash-coin me-2"></i> Pagos</a>
                                     </div>
                                     <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['servicio:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/compras/servicios"><i class="bi bi-tools me-2"></i> Servicios</a>
+                                    </div>
+                                    <% } %>
                                     <!-- Puedes agregar más opciones de compras aquí -->
                                 </div>
                             </div>
