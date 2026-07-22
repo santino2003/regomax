@@ -411,10 +411,11 @@
                             <div class="invalid-feedback">El medio de pago es obligatorio</div>
                         </div>
                         <div class="col-md-8 col-lg-3">
-                            <label class="form-label">PROVEEDOR</label>
-                            <select class="form-select proveedor-select" name="items[${itemCounter}][proveedor_sugerido_id]" data-selected="${item.proveedor_sugerido_id || ''}">
+                            <label class="form-label">PROVEEDOR <span class="text-danger">*</span></label>
+                            <select class="form-select proveedor-select" name="items[${itemCounter}][proveedor_sugerido_id]" data-selected="${item.proveedor_sugerido_id || ''}" required>
                                 <option value="">Cargando...</option>
                             </select>
+                            <div class="invalid-feedback">El proveedor es obligatorio</div>
                         </div>
                     </div>
                 </div>
@@ -538,10 +539,11 @@
                             <div class="invalid-feedback">El medio de pago es obligatorio</div>
                         </div>
                         <div class="col-md-8 col-lg-3">
-                            <label class="form-label">PROVEEDOR</label>
-                            <select class="form-select" name="items[${itemCounter}][proveedor_sugerido_id]">
+                            <label class="form-label">PROVEEDOR <span class="text-danger">*</span></label>
+                            <select class="form-select" name="items[${itemCounter}][proveedor_sugerido_id]" required>
                                 <option value="">Seleccione un bien primero</option>
                             </select>
+                            <div class="invalid-feedback">El proveedor es obligatorio</div>
                         </div>
                     </div>
                 </div>
@@ -1190,6 +1192,12 @@
                     proveedor_sugerido_id: $item.find('select[name$="[proveedor_sugerido_id]"]').val() ? parseInt($item.find('select[name$="[proveedor_sugerido_id]"]').val()) : null
                 });
             });
+
+            if (items.some(item => !item.proveedor_sugerido_id)) {
+                $('#formEditarOrden').addClass('was-validated');
+                mostrarAlerta('Debe seleccionar un proveedor para cada item', 'warning');
+                return;
+            }
 
             formData.append('items', JSON.stringify(items));
 

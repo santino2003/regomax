@@ -1,4 +1,5 @@
 const servicioService = require('../services/servicioService');
+const pagoRepository = require('../repositories/pagoRepository');
 
 const servicioController = {
     async nuevoServicio(req, res) {
@@ -69,6 +70,52 @@ const servicioController = {
         }
     },
 
+    async crearPagoServicio(req, res) {
+        try {
+            const { servicio_id, monto, fecha_pago, moneda, medio_pago, observaciones } = req.body;
+            const montoPago = parseFloat(monto);
+
+            if (!servicio_id) {
+                return res.status(400).json({ success: false, error: 'Debe seleccionar un servicio' });
+            }
+
+            if (!monto || Number.isNaN(montoPago) || montoPago <= 0) {
+                return res.status(400).json({ success: false, error: 'El monto debe ser mayor a cero' });
+            }
+
+            if (!fecha_pago) {
+                return res.status(400).json({ success: false, error: 'Debe ingresar la fecha a pagar' });
+            }
+
+            if (!medio_pago || !['Efectivo', 'Transferencia'].includes(medio_pago)) {
+                return res.status(400).json({ success: false, error: 'Debe seleccionar un medio de pago válido' });
+            }
+
+            await servicioService.obtenerPorId(servicio_id);
+            const pago = await pagoRepository.registrarPagoServicio({
+                servicioId: servicio_id,
+                montoPago,
+                fechaPago: fecha_pago,
+                registradoPor: req.user.username,
+                moneda: moneda || 'ARS',
+                medioPago: medio_pago,
+                observaciones
+            });
+
+            return res.status(201).json({
+                success: true,
+                message: 'Pago de servicio registrado exitosamente',
+                pagoId: pago.id
+            });
+        } catch (error) {
+            console.error('Error al crear pago de servicio:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Error al crear pago de servicio'
+            });
+        }
+    },
+
     // Vistas
     async vistaListarServicios(req, res) {
         try {
@@ -100,6 +147,22 @@ const servicioController = {
             console.error('Error al renderizar vista de nuevo servicio:', error);
             res.status(500).render('error', {
                 message: 'Error al cargar la vista de nuevo servicio',
+                error
+            });
+        }
+    },
+
+    async vistaNuevoPagoServicio(req, res) {
+        try {
+            const resultado = await servicioService.obtenerTodas(1, 1000);
+            res.render('pagoServiciosNuevo', {
+                username: req.user.username,
+                servicios: resultado.data || []
+            });
+        } catch (error) {
+            console.error('Error al renderizar vista de pago de servicio:', error);
+            res.status(500).render('error', {
+                message: 'Error al cargar la vista de pago de servicio',
                 error
             });
         }
