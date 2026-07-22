@@ -42,6 +42,7 @@ const configAlertasStockRoutes = require('./routes/configAlertasStockRoutes'); /
 const salidaRoutes = require('./routes/salidaRoutes'); // Importamos las rutas de salidas
 const ajusteInventarioRoutes = require('./routes/ajusteInventarioRoutes'); // Importamos las rutas de ajustes de inventario
 const ordenCompraRoutes = require('./routes/ordenCompraRoutes'); // Importamos las rutas de ordenes de compra
+const ordenTrabajoRoutes = require('./routes/ordenTrabajoRoutes'); // Importamos las rutas de ordenes de trabajo
 const permisosTransicionesRoutes = require('./routes/permisosTransicionesRoutes'); // Importamos las rutas de permisos de transiciones
 const pagoRoutes = require('./routes/pagoRoutes'); // Importamos las rutas de pagos
 // const servicioRoutes = require('./routes/servicioRoutes'); // Rutas de servicios deshabilitadas temporalmente
@@ -108,6 +109,7 @@ app.use('/api/almacenes', almacenRoutes); // Rutas para gestión de almacenes
 app.use('/api/bienes', bienRoutes); // Rutas para gestión de bienes
 app.use('/api/kits', kitRoutes); // Rutas para gestión de kits
 app.use('/api/ordenes-compra', ordenCompraRoutes); // Rutas para gestión de ordenes de compra
+app.use('/api/ordenes-trabajo', ordenTrabajoRoutes); // Rutas para gestión de ordenes de trabajo
 app.use('/api/permisos-transiciones', permisosTransicionesRoutes); // Rutas para gestión de permisos de transiciones
 app.use('/config-alertas-stock', configAlertasStockRoutes); // Rutas para configuración de alertas
 

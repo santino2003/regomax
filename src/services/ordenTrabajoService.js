@@ -1,0 +1,88 @@
+const ordenTrabajoRepository = require('../repositories/ordenTrabajoRepository');
+
+const ESTADOS_VALIDOS = ['Pendiente', 'En Proceso', 'Cerrada'];
+const MANTENIMIENTOS_VALIDOS = ['Correctivo', 'Preventivo', 'Predictivo', 'Otro'];
+const TIPOS_VALIDOS = ['Electrico', 'Mecanico', 'Hidraulico', 'Otro'];
+
+class OrdenTrabajoService {
+    async crear(ordenTrabajoData) {
+        const data = this.validar(ordenTrabajoData);
+        const id = await ordenTrabajoRepository.crear(data);
+
+        return {
+            success: true,
+            id,
+            message: 'Orden de trabajo creada exitosamente'
+        };
+    }
+
+    async obtenerTodos(page = 1, limit = 10) {
+        return ordenTrabajoRepository.obtenerTodos(page, limit);
+    }
+
+    validar(ordenTrabajoData) {
+        const mantenimiento = this.normalizarArray(ordenTrabajoData.mantenimiento);
+        const tipo = this.normalizarArray(ordenTrabajoData.tipo);
+        const asignadoA = ordenTrabajoData.asignado_a || null;
+        const personasDestinadas = ordenTrabajoData.personas_destinadas === '' || ordenTrabajoData.personas_destinadas == null
+            ? null
+            : parseInt(ordenTrabajoData.personas_destinadas, 10);
+
+        if (!ordenTrabajoData.fecha_pedido) {
+            throw new Error('La fecha de pedido es obligatoria');
+        }
+
+        if (!ESTADOS_VALIDOS.includes(ordenTrabajoData.estado)) {
+            throw new Error('El estado seleccionado no es válido');
+        }
+
+        if (personasDestinadas !== null && (!Number.isInteger(personasDestinadas) || personasDestinadas < 0)) {
+            throw new Error('Personas destinadas debe ser un número entero mayor o igual a cero');
+        }
+
+        if (!ordenTrabajoData.descripcion || ordenTrabajoData.descripcion.trim() === '') {
+            throw new Error('La descripción es obligatoria');
+        }
+
+        if (mantenimiento.length === 0) {
+            throw new Error('Debe seleccionar al menos una opción de mantenimiento');
+        }
+
+        if (tipo.length === 0) {
+            throw new Error('Debe seleccionar al menos un tipo');
+        }
+
+        this.validarOpciones(mantenimiento, MANTENIMIENTOS_VALIDOS, 'mantenimiento');
+        this.validarOpciones(tipo, TIPOS_VALIDOS, 'tipo');
+
+        return {
+            fecha_pedido: ordenTrabajoData.fecha_pedido,
+            fecha_terminada: ordenTrabajoData.fecha_terminada || null,
+            estado: ordenTrabajoData.estado,
+            asignado_a: asignadoA,
+            personas_destinadas: personasDestinadas,
+            maquina: ordenTrabajoData.maquina || null,
+            descripcion: ordenTrabajoData.descripcion.trim(),
+            mantenimiento,
+            tipo,
+            creado_por: ordenTrabajoData.creado_por
+        };
+    }
+
+    normalizarArray(value) {
+        if (!value) {
+            return [];
+        }
+
+        return Array.isArray(value) ? value : [value];
+    }
+
+    validarOpciones(opciones, validas, campo) {
+        const invalida = opciones.find((opcion) => !validas.includes(opcion));
+        if (invalida) {
+            throw new Error(`La opción "${invalida}" no es válida para ${campo}`);
+        }
+    }
+}
+
+module.exports = new OrdenTrabajoService();
