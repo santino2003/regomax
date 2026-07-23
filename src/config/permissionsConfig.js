@@ -97,14 +97,6 @@ const PERMISSIONS = {
     DELETE: 'familia:delete',
   },
 
-  // Permisos para servicios
-  SERVICIOS: {
-    VIEW: 'servicio:view',
-    CREATE: 'servicio:create',
-    EDIT: 'servicio:edit',
-    DELETE: 'servicio:delete',
-  },
-  
   // Permisos para categorias
   CATEGORIAS: {
     VIEW: 'categoria:view',

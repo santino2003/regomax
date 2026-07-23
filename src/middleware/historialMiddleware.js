@@ -665,40 +665,6 @@ const familia = {
 };
 
 /**
- * Funciones específicas para extraer detalles de servicios
- */
-const servicioDetalles = {
-    crear: (req, res, body) => {
-        return {
-            nombre: req.body?.nombre,
-            responsable: req.user?.username
-        };
-    },
-    editar: (req, res, body) => {
-        return {
-            servicio_id: req.params?.id,
-            nombre: req.body?.nombre,
-            responsable: req.user?.username
-        };
-    },
-    eliminar: (req, res, body) => {
-        return {
-            servicio_id: req.params?.id,
-            responsable: req.user?.username
-        };
-    }
-};
-
-/**
- * Funciones para registrar acciones de servicios
- */
-const servicio = {
-    crear: () => registrarHistorial('crear', 'servicio', servicioDetalles.crear),
-    editar: () => registrarHistorial('editar', 'servicio', servicioDetalles.editar),
-    eliminar: () => registrarHistorial('eliminar', 'servicio', servicioDetalles.eliminar)
-};
-
-/**
  * Funciones específicas para extraer detalles de centros de costo
  */
 const centroCostoDetalles = {
@@ -1121,7 +1087,6 @@ module.exports = {
     proveedor,
     clienteNFU,
     familia,
-    servicio,
     centroCosto,
     categoria,
     unidadMedida,

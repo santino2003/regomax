@@ -6,10 +6,9 @@ CREATE TABLE IF NOT EXISTS pagos (
     orden_compra_id INT NULL,
     bien_id INT NULL,  -- NULL para pagos a contrafactura completos
     proveedor_id INT NULL,
-    servicio_id INT NULL,
     
-    -- Tipo de pago: 'RECEPCION', 'ADELANTO', 'SALDO_COMPLETO', 'MULTIPLE', 'SERVICIO'
-    tipo_pago ENUM('RECEPCION', 'ADELANTO', 'SALDO_COMPLETO', 'MULTIPLE', 'SERVICIO') NOT NULL,
+    -- Tipo de pago: 'RECEPCION', 'ADELANTO', 'SALDO_COMPLETO', 'MULTIPLE'
+    tipo_pago ENUM('RECEPCION', 'ADELANTO', 'SALDO_COMPLETO', 'MULTIPLE') NOT NULL,
     
     -- Datos del bien (solo para tipo RECEPCION)
     cantidad_recibida DECIMAL(10, 2) NULL,
@@ -34,12 +33,10 @@ CREATE TABLE IF NOT EXISTS pagos (
     FOREIGN KEY (orden_compra_id) REFERENCES ordenes_compra(id) ON DELETE CASCADE,
     FOREIGN KEY (bien_id) REFERENCES bienes(id) ON DELETE SET NULL,
     FOREIGN KEY (proveedor_id) REFERENCES proveedores(id) ON DELETE RESTRICT,
-    FOREIGN KEY (servicio_id) REFERENCES servicios(id) ON DELETE SET NULL,
     
     -- Índices
     INDEX idx_orden_compra (orden_compra_id),
     INDEX idx_proveedor (proveedor_id),
-    INDEX idx_servicio_id (servicio_id),
     INDEX idx_fecha_pago (fecha_pago),
     INDEX idx_tipo_pago (tipo_pago),
     INDEX idx_fecha_registro (fecha_registro)
