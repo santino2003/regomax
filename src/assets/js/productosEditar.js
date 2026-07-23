@@ -8,6 +8,14 @@ $(document).ready(function() {
     
     // Modal instance
     const modalAgregarBien = new bootstrap.Modal(document.getElementById('modalAgregarBien'));
+
+    $('#modalBienSelect').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: '-- Seleccione un bien --',
+        allowClear: true,
+        dropdownParent: $('#modalAgregarBien')
+    });
     
     // Cargar bienes existentes desde la tabla al array
     $('#tablaBienes tbody tr[data-bien-id]').each(function() {
@@ -27,7 +35,7 @@ $(document).ready(function() {
     
     // Abrir modal para agregar bien
     $('#btnAgregarBien').on('click', function() {
-        $('#modalBienSelect').val('');
+        $('#modalBienSelect').val('').trigger('change');
         $('#modalCantidad').val(1);
         modalAgregarBien.show();
     });

@@ -10,6 +10,10 @@
     
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
@@ -147,9 +151,12 @@
                                             <% if (bienesAsociados && bienesAsociados.length > 0) { %>
                                                 <% bienesAsociados.forEach((bienAsoc, idx) => { 
                                                     const bienInfo = bienes.find(b => b.id == bienAsoc.bien_id);
+                                                    const bienDisplay = bienInfo 
+                                                        ? `${bienInfo.codigo || 'BN-' + String(bienInfo.id).padStart(3, '0')} - ${bienInfo.nombre}` 
+                                                        : 'Bien ID ' + bienAsoc.bien_id;
                                                 %>
                                                     <tr data-bien-id="<%= bienAsoc.bien_id %>">
-                                                        <td><%= bienInfo ? bienInfo.nombre : 'Bien ID ' + bienAsoc.bien_id %></td>
+                                                        <td><%= bienDisplay %></td>
                                                         <td><%= bienInfo ? bienInfo.cantidad_stock : '-' %> <%= bienInfo ? (bienInfo.unidad_medida || '') : '' %></td>
                                                         <td>
                                                             <input type="number" class="form-control form-control-sm cantidad-bien" 
@@ -191,10 +198,11 @@
                                                 <% if(bienes && bienes.length > 0) { %>
                                                     <% bienes.forEach(bien => { %>
                                                         <option value="<%= bien.id %>" 
-                                                                data-nombre="<%= bien.nombre %>"
+                                                                data-nombre="<%= bien.codigo || 'BN-' + String(bien.id).padStart(3, '0') %> - <%= bien.nombre %>"
+                                                                data-codigo="<%= bien.codigo || 'BN-' + String(bien.id).padStart(3, '0') %>"
                                                                 data-stock="<%= bien.cantidad_stock %>"
                                                                 data-unidad="<%= bien.unidad_medida || '' %>">
-                                                            <%= bien.nombre %> (Stock: <%= bien.cantidad_stock %> <%= bien.unidad_medida || '' %>)
+                                                            <%= bien.codigo || 'BN-' + String(bien.id).padStart(3, '0') %> - <%= bien.nombre %> (Stock: <%= bien.cantidad_stock %> <%= bien.unidad_medida || '' %>)
                                                         </option>
                                                     <% }) %>
                                                 <% } %>
@@ -238,6 +246,9 @@
     
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     <!-- Common JS (Para funcionalidades compartidas como logout) -->
     <script src="/assets/js/common.js"></script>

@@ -51,7 +51,7 @@ const ProductoController = {
     async vistaNuevoProducto(req, res) {
         try {
             // Obtener lista de bienes para el selector
-            const bienesResult = await bienRepository.obtenerTodos(1, 1000, {});
+            const bienesResult = await bienRepository.obtenerTodos(1, 10000, {});
             const bienes = bienesResult.data || [];
             
             return res.render('productosNuevo', {
@@ -130,7 +130,7 @@ const ProductoController = {
             const producto = await ProductoService.obtenerProductoPorId(id);
             
             // Obtener lista de bienes para el selector
-            const bienesResult = await bienRepository.obtenerTodos(1, 1000, {});
+            const bienesResult = await bienRepository.obtenerTodos(1, 10000, {});
             const bienes = bienesResult.data || [];
             
             return res.render('productosEditar', {
