@@ -56,6 +56,14 @@ const PERMISSIONS = {
     CHANGE_STATE: 'ordenes_compra:change_state',
     MANAGE_TRANSITIONS: 'ordenes_compra:manage_transitions', // Gestionar permisos de transición de estados
   },
+
+  // Permisos para órdenes de trabajo
+  ORDENES_TRABAJO: {
+    VIEW: 'ordenes_trabajo:view',
+    CREATE: 'ordenes_trabajo:create',
+    EDIT: 'ordenes_trabajo:edit',
+    DELETE: 'ordenes_trabajo:delete',
+  },
   
   // Permisos para productos
   PRODUCTOS: {
@@ -87,6 +95,14 @@ const PERMISSIONS = {
     CREATE: 'familia:create',
     EDIT: 'familia:edit',
     DELETE: 'familia:delete',
+  },
+
+  // Permisos para servicios
+  SERVICIOS: {
+    VIEW: 'servicio:view',
+    CREATE: 'servicio:create',
+    EDIT: 'servicio:edit',
+    DELETE: 'servicio:delete',
   },
   
   // Permisos para categorias

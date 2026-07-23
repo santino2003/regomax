@@ -120,6 +120,29 @@
                             </div>
                         </div>
                         
+                        <!-- Mantenimiento -->
+                        <!-- <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMantenimiento">
+                                    <i class="bi bi-wrench-adjustable me-2"></i> Mantenimiento
+                                </button>
+                            </h2>
+                            <div id="collapseMantenimiento" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                                <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['ordenes_trabajo:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/ordenes-trabajo"><i class="bi bi-clipboard2-check me-2"></i> Órdenes de Trabajo</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['ordenes_trabajo:create'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/ordenes-trabajo/nueva"><i class="bi bi-plus-circle me-2"></i> Nueva Orden de Trabajo</a>
+                                    </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+ -->
                         <!-- Nuevo desplegable para Ingreso NFU -->
                         <div class="accordion-item">
                             <h2 class="accordion-header">
@@ -205,6 +228,7 @@
                                         <a href="/pagos/listar"><i class="bi bi-cash-coin me-2"></i> Pagos</a>
                                     </div>
                                     <% } %>
+                                    <!-- Accesos a servicios y pagos de servicios ocultos temporalmente. -->
                                     <!-- Puedes agregar más opciones de compras aquí -->
                                 </div>
                             </div>
@@ -312,7 +336,7 @@
                                 // Para cada sección, verificar si tiene elementos de menú
                                 accordionSections.forEach(section => {
                                     const menuItems = section.querySelectorAll('.submenu-item');
-                                    if (menuItems.length === 0) {
+                                    if (menuItems.length === 0 && section.dataset.allowEmpty !== 'true') {
                                         // Si no hay elementos de menú, ocultar la sección completa
                                         section.style.display = 'none';
                                     }

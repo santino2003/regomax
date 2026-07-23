@@ -115,6 +115,7 @@
                     const totalRecepcion = totales && totales.total_recepcion ? totales.total_recepcion : 0;
                     const totalAdelanto = totales && totales.total_adelanto ? totales.total_adelanto : 0;
                     const totalSaldo = totales && totales.total_saldo ? totales.total_saldo : 0;
+                    const totalServicio = totales && totales.total_servicio ? totales.total_servicio : 0;
 
                     const resumenesPorMoneda = Array.isArray(totalesPorMoneda) && totalesPorMoneda.length > 0
                         ? totalesPorMoneda
@@ -123,13 +124,14 @@
                             total_general: totalGeneral,
                             total_recepcion: totalRecepcion,
                             total_adelanto: totalAdelanto,
-                            total_saldo: totalSaldo
+                            total_saldo: totalSaldo,
+                            total_servicio: totalServicio
                         }];
                     %>
 
                     <% resumenesPorMoneda.forEach(resumen => { %>
                         <div class="row mb-4">
-                            <div class="col-md-3">
+                            <div class="col-md">
                                 <div class="card resumen-card">
                                     <div class="card-body">
                                         <h6 class="card-subtitle mb-2 text-muted">Total General</h6>
@@ -140,7 +142,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md">
                                 <div class="card">
                                     <div class="card-body">
                                         <h6 class="card-subtitle mb-2 text-muted">Por Recepción</h6>
@@ -151,7 +153,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md">
                                 <div class="card">
                                     <div class="card-body">
                                         <h6 class="card-subtitle mb-2 text-muted">Adelantos</h6>
@@ -162,13 +164,24 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md">
                                 <div class="card">
                                     <div class="card-body">
                                         <h6 class="card-subtitle mb-2 text-muted">Saldos Completos</h6>
                                         <h5 class="card-title mb-0">
                                             <%= resumen.moneda || 'ARS' %>
                                             <%= formatoMoneda(resumen.total_saldo) %>
+                                        </h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">Servicios</h6>
+                                        <h5 class="card-title mb-0">
+                                            <%= resumen.moneda || 'ARS' %>
+                                            <%= formatoMoneda(resumen.total_servicio) %>
                                         </h5>
                                     </div>
                                 </div>
@@ -214,6 +227,7 @@
                                             <option value="ADELANTO" <%= filtros.tipo_pago === 'ADELANTO' ? 'selected' : '' %>>Adelanto</option>
                                             <option value="SALDO_COMPLETO" <%= filtros.tipo_pago === 'SALDO_COMPLETO' ? 'selected' : '' %>>Saldo Completo</option>
                                             <option value="MULTIPLE" <%= filtros.tipo_pago === 'MULTIPLE' ? 'selected' : '' %>>Pago Múltiple</option>
+                                            <option value="SERVICIO" <%= filtros.tipo_pago === 'SERVICIO' ? 'selected' : '' %>>Servicio</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6 col-lg-2">
@@ -285,7 +299,7 @@
                                     <th>Proveedor</th>
                                     <th>Tipo</th>
                                     <th>Medio</th>
-                                    <th>Bien</th>
+                                    <th>Bien / Servicio</th>
                                     <th>Monto</th>
                                     <th>Fecha Pago</th>
                                     <th>Observación</th>
@@ -311,20 +325,24 @@
                                                        data-orden-codigo="<%= pago.orden_codigo %>"
                                                        data-proveedor-id="<%= pago.proveedor_id %>"
                                                        data-proveedor-nombre="<%= pago.proveedor_nombre %>"
-                                                       data-bien-nombre="<%= pago.bien_nombre || '' %>"
+                                                       data-bien-nombre="<%= pago.bien_nombre || pago.servicio_nombre || '' %>"
                                                        data-bien-codigo="<%= pago.bien_codigo || '' %>"
                                                        data-moneda="<%= pago.moneda || 'ARS' %>"
                                                        data-monto="<%= pago.monto_pago %>"
                                                        data-tipo-pago="<%= pago.tipo_pago %>"
-                                                       <%= pago.pagado ? 'disabled' : '' %>>
+                                                       <%= pago.pagado || pago.tipo_pago === 'SERVICIO' ? 'disabled' : '' %>>
                                             </td>
                                             <td>
-                                                <a href="/ordenes-compra/<%= pago.orden_compra_id %>" 
-                                                   class="text-decoration-none">
-                                                    <%= pago.orden_codigo %>
-                                                </a>
+                                                <% if (pago.orden_compra_id) { %>
+                                                    <a href="/ordenes-compra/<%= pago.orden_compra_id %>" 
+                                                       class="text-decoration-none">
+                                                        <%= pago.orden_codigo %>
+                                                    </a>
+                                                <% } else { %>
+                                                    <span class="text-muted">-</span>
+                                                <% } %>
                                             </td>
-                                            <td><%= pago.proveedor_nombre %></td>
+                                            <td><%= pago.proveedor_nombre || '-' %></td>
                                             <td>
                                                 <% if (pago.tipo_pago === 'RECEPCION') { %>
                                                     <span class="badge tipo-recepcion badge-tipo-pago">
@@ -342,6 +360,10 @@
                                                     <span class="badge bg-secondary badge-tipo-pago">
                                                         <i class="bi bi-collection me-1"></i>Pago Múltiple
                                                     </span>
+                                                <% } else if (pago.tipo_pago === 'SERVICIO') { %>
+                                                    <span class="badge bg-info text-dark badge-tipo-pago">
+                                                        <i class="bi bi-receipt me-1"></i>Servicio
+                                                    </span>
                                                 <% } %>
                                             </td>
                                             <td>
@@ -358,7 +380,9 @@
                                                 <% } %>
                                             </td>
                                             <td>
-                                                <% if (pago.bien_nombre) { %>
+                                                <% if (pago.tipo_pago === 'SERVICIO') { %>
+                                                    <%= pago.servicio_nombre || 'Servicio' %>
+                                                <% } else if (pago.bien_nombre) { %>
                                                     <%= pago.bien_nombre %>
                                                     <% if (pago.bien_codigo) { %>
                                                         <small class="text-muted d-block">(<%= pago.bien_codigo %>)</small>
@@ -418,11 +442,13 @@
                                                                 title="Marcar como pagado">
                                                             <i class="bi bi-check-circle"></i>
                                                         </button>
-                                                        <button class="btn btn-sm btn-warning" 
-                                                                onclick="abrirModalRefinanciar(<%= pago.id %>, '<%= pago.proveedor_nombre %>', <%= pago.monto_pago %>)"
-                                                                title="Refinanciar pago">
-                                                            <i class="bi bi-calendar-event"></i>
-                                                        </button>
+                                                        <% if (pago.tipo_pago !== 'SERVICIO') { %>
+                                                            <button class="btn btn-sm btn-warning" 
+                                                                    onclick="abrirModalRefinanciar(<%= pago.id %>, '<%= pago.proveedor_nombre %>', <%= pago.monto_pago %>)"
+                                                                    title="Refinanciar pago">
+                                                                <i class="bi bi-calendar-event"></i>
+                                                            </button>
+                                                        <% } %>
                                                     <% } %>
                                                 </div>
                                             </td>

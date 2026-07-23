@@ -11,6 +11,7 @@ const despachoController = require('../controllers/despachoController');
 const parteDiarioController = require('../controllers/parteDiarioController');
 const historialController = require('../controllers/historialController');
 const ordenCompraController = require('../controllers/ordenCompraController');
+const ordenTrabajoController = require('../controllers/ordenTrabajoController');
 const historialService = require('../services/historialService');
 // Importar utilidades de fecha para compartir en todas las vistas
 const fechaUtils = require('../utils/fecha');
@@ -176,6 +177,37 @@ router.get('/ordenes/:id', [
     noCacheMiddleware,
     permissionsMiddleware.hasPermission('ordenes:view')
 ], OVController.vistaVisualizarOrden);
+
+// Rutas de órdenes de trabajo
+router.get('/ordenes-trabajo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:view')
+], ordenTrabajoController.vistaListar);
+
+router.get('/ordenes-trabajo/nueva', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:create')
+], ordenTrabajoController.vistaNueva);
+
+router.get('/ordenes-trabajo/:id/editar', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:edit')
+], ordenTrabajoController.vistaEditar);
+
+router.get('/ordenes-trabajo/:id/imprimir', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:view')
+], ordenTrabajoController.vistaImprimir);
+
+router.get('/ordenes-trabajo/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:view')
+], ordenTrabajoController.vistaVer);
 
 // Rutas de productos - con verificación de permisos
 router.get('/productos', [

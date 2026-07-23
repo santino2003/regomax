@@ -205,15 +205,19 @@
                                     <div class="mb-3">
                                         <div class="detail-label">Orden de Compra</div>
                                         <div class="detail-value">
-                                            <a href="/ordenes-compra/<%= pago.orden_compra_id %>" class="text-decoration-none">
-                                                <i class="bi bi-box-seam me-1"></i><%= pago.orden_codigo %>
-                                            </a>
+                                            <% if (pago.orden_compra_id) { %>
+                                                <a href="/ordenes-compra/<%= pago.orden_compra_id %>" class="text-decoration-none">
+                                                    <i class="bi bi-box-seam me-1"></i><%= pago.orden_codigo %>
+                                                </a>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
                                         </div>
                                     </div>
 
                                     <div class="mb-3">
                                         <div class="detail-label">Proveedor</div>
-                                        <div class="detail-value"><%= pago.proveedor_nombre %></div>
+                                        <div class="detail-value"><%= pago.proveedor_nombre || '-' %></div>
                                     </div>
 
                                     <div class="mb-3">
@@ -234,6 +238,10 @@
                                             <% } else if (pago.tipo_pago === 'MULTIPLE') { %>
                                                 <span class="badge bg-secondary badge-tipo-pago">
                                                     <i class="bi bi-collection me-1"></i>Pago Múltiple
+                                                </span>
+                                            <% } else if (pago.tipo_pago === 'SERVICIO') { %>
+                                                <span class="badge bg-info text-dark badge-tipo-pago">
+                                                    <i class="bi bi-receipt me-1"></i>Servicio
                                                 </span>
                                             <% } %>
                                         </div>
@@ -339,6 +347,14 @@
                                                 </div>
                                             </div>
                                         <% } %>
+                                    <% } else if (pago.servicio_nombre) { %>
+                                        <hr>
+                                        <h6 class="text-muted mb-3"><i class="bi bi-tools me-1"></i>Información del Servicio</h6>
+                                        
+                                        <div class="mb-3">
+                                            <div class="detail-label">Servicio</div>
+                                            <div class="detail-value"><%= pago.servicio_nombre %></div>
+                                        </div>
                                     <% } else { %>
                                         <div class="alert alert-info mb-0" role="alert">
                                             <i class="bi bi-info-circle me-2"></i>

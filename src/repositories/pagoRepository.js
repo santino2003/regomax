@@ -2,6 +2,53 @@ const db = require('../config/db');
 
 class PagoRepository {
     /**
+     * Registrar un pago de servicio
+     */
+    async registrarPagoServicio(pagoData) {
+        try {
+            const {
+                servicioId,
+                montoPago,
+                fechaPago,
+                registradoPor,
+                observaciones,
+                moneda,
+                medioPago
+            } = pagoData;
+
+            const result = await db.query(
+                `INSERT INTO pagos (
+                    orden_compra_id,
+                    bien_id,
+                    proveedor_id,
+                    servicio_id,
+                    tipo_pago,
+                    monto_pago,
+                    moneda,
+                    medio_pago,
+                    fecha_pago,
+                    registrado_por,
+                    observaciones
+                ) VALUES (NULL, NULL, NULL, ?, 'SERVICIO', ?, ?, ?, ?, ?, ?)`,
+                [
+                    servicioId,
+                    montoPago,
+                    moneda || 'ARS',
+                    medioPago || null,
+                    fechaPago,
+                    registradoPor,
+                    observaciones || null
+                ]
+            );
+
+            return { id: result.insertId };
+        } catch (error) {
+            console.error('Error en PagoRepository.registrarPagoServicio:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Registrar un pago por recepción de bienes
      */
     async registrarPagoRecepcion(pagoData) {
@@ -249,12 +296,14 @@ class PagoRepository {
                     p.*,
                     b.nombre AS bien_nombre,
                     b.codigo AS bien_codigo,
+                    s.nombre AS servicio_nombre,
                     pr.nombre AS proveedor_nombre,
                     oc.codigo AS orden_codigo
                 FROM pagos p
                 LEFT JOIN bienes b ON p.bien_id = b.id
-                JOIN proveedores pr ON p.proveedor_id = pr.id
-                JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
+                LEFT JOIN servicios s ON p.servicio_id = s.id
+                LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+                LEFT JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
                 WHERE p.orden_compra_id = ?
                 ORDER BY p.fecha_registro DESC`,
                 [ordenCompraId]
@@ -277,12 +326,14 @@ class PagoRepository {
                     p.*,
                     b.nombre AS bien_nombre,
                     b.codigo AS bien_codigo,
+                    s.nombre AS servicio_nombre,
                     pr.nombre AS proveedor_nombre,
                     oc.codigo AS orden_codigo
                 FROM pagos p
                 LEFT JOIN bienes b ON p.bien_id = b.id
-                JOIN proveedores pr ON p.proveedor_id = pr.id
-                JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
+                LEFT JOIN servicios s ON p.servicio_id = s.id
+                LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+                LEFT JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
                 WHERE p.proveedor_id = ?
             `;
             
@@ -340,7 +391,7 @@ class PagoRepository {
                     COUNT(*) as cantidad_pagos,
                     SUM(p.monto_pago) as total_monto
                 FROM pagos p
-                JOIN proveedores pr ON p.proveedor_id = pr.id
+                LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
                 WHERE p.fecha_pago BETWEEN ? AND ?
                 GROUP BY p.fecha_pago, p.tipo_pago, pr.nombre
                 ORDER BY p.fecha_pago DESC, pr.nombre`,
@@ -509,12 +560,14 @@ class PagoRepository {
                     p.*,
                     b.nombre AS bien_nombre,
                     b.codigo AS bien_codigo,
+                    s.nombre AS servicio_nombre,
                     pr.nombre AS proveedor_nombre,
                     oc.codigo AS orden_codigo
                 FROM pagos p
                 LEFT JOIN bienes b ON p.bien_id = b.id
-                JOIN proveedores pr ON p.proveedor_id = pr.id
-                JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
+                LEFT JOIN servicios s ON p.servicio_id = s.id
+                LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+                LEFT JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
                 WHERE p.id = ?`,
                 [pagoId]
             );
@@ -541,12 +594,14 @@ class PagoRepository {
                     p.*,
                     b.nombre AS bien_nombre,
                     b.codigo AS bien_codigo,
+                    s.nombre AS servicio_nombre,
                     pr.nombre AS proveedor_nombre,
                     oc.codigo AS orden_codigo
                 FROM pagos p
                 LEFT JOIN bienes b ON p.bien_id = b.id
-                JOIN proveedores pr ON p.proveedor_id = pr.id
-                JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
+                LEFT JOIN servicios s ON p.servicio_id = s.id
+                LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+                LEFT JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
                 WHERE p.id IN (${placeholders})`,
                 pagoIds
             );
@@ -569,12 +624,14 @@ class PagoRepository {
                     p.*,
                     b.nombre AS bien_nombre,
                     b.codigo AS bien_codigo,
+                    s.nombre AS servicio_nombre,
                     pr.nombre AS proveedor_nombre,
                     oc.codigo AS orden_codigo
                 FROM pagos p
                 LEFT JOIN bienes b ON p.bien_id = b.id
-                JOIN proveedores pr ON p.proveedor_id = pr.id
-                JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
+                LEFT JOIN servicios s ON p.servicio_id = s.id
+                LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+                LEFT JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
                 WHERE 1=1
             `;
 
@@ -632,8 +689,9 @@ class PagoRepository {
                 SELECT COUNT(*) as total
                 FROM pagos p
                 LEFT JOIN bienes b ON p.bien_id = b.id
-                JOIN proveedores pr ON p.proveedor_id = pr.id
-                JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
+                LEFT JOIN servicios s ON p.servicio_id = s.id
+                LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+                LEFT JOIN ordenes_compra oc ON p.orden_compra_id = oc.id
                 WHERE 1=1
             `;
 
@@ -704,7 +762,8 @@ class PagoRepository {
                     COALESCE(SUM(p.monto_pago), 0) AS total_general,
                     COALESCE(SUM(CASE WHEN p.tipo_pago = 'RECEPCION' THEN p.monto_pago ELSE 0 END), 0) AS total_recepcion,
                     COALESCE(SUM(CASE WHEN p.tipo_pago = 'ADELANTO' THEN p.monto_pago ELSE 0 END), 0) AS total_adelanto,
-                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'SALDO_COMPLETO' THEN p.monto_pago ELSE 0 END), 0) AS total_saldo
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'SALDO_COMPLETO' THEN p.monto_pago ELSE 0 END), 0) AS total_saldo,
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'SERVICIO' THEN p.monto_pago ELSE 0 END), 0) AS total_servicio
                 FROM pagos p
                 WHERE 1=1
             `;
@@ -749,7 +808,8 @@ class PagoRepository {
                 total_general: 0,
                 total_recepcion: 0,
                 total_adelanto: 0,
-                total_saldo: 0
+                total_saldo: 0,
+                total_servicio: 0
             };
         } catch (error) {
             console.error('Error en PagoRepository.obtenerTotalesConFiltros:', error);
@@ -768,7 +828,8 @@ class PagoRepository {
                     COALESCE(SUM(p.monto_pago), 0) AS total_general,
                     COALESCE(SUM(CASE WHEN p.tipo_pago = 'RECEPCION' THEN p.monto_pago ELSE 0 END), 0) AS total_recepcion,
                     COALESCE(SUM(CASE WHEN p.tipo_pago = 'ADELANTO' THEN p.monto_pago ELSE 0 END), 0) AS total_adelanto,
-                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'SALDO_COMPLETO' THEN p.monto_pago ELSE 0 END), 0) AS total_saldo
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'SALDO_COMPLETO' THEN p.monto_pago ELSE 0 END), 0) AS total_saldo,
+                    COALESCE(SUM(CASE WHEN p.tipo_pago = 'SERVICIO' THEN p.monto_pago ELSE 0 END), 0) AS total_servicio
                 FROM pagos p
                 WHERE 1=1
             `;
