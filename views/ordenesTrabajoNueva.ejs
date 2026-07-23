@@ -108,7 +108,7 @@
                                 <div class="d-flex flex-wrap gap-3">
                                     <% ['Correctivo', 'Preventivo', 'Predictivo', 'Otro'].forEach((opcion) => { %>
                                         <div class="form-check">
-                                            <input class="form-check-input mantenimiento-check" type="checkbox" value="<%= opcion %>" id="mantenimiento<%= opcion %>">
+                                            <input class="form-check-input mantenimiento-option" type="radio" name="mantenimiento" value="<%= opcion %>" id="mantenimiento<%= opcion %>">
                                             <label class="form-check-label" for="mantenimiento<%= opcion %>"><%= opcion %></label>
                                         </div>
                                     <% }) %>
@@ -119,7 +119,7 @@
                                 <div class="d-flex flex-wrap gap-3">
                                     <% ['Electrico', 'Mecanico', 'Hidraulico', 'Otro'].forEach((opcion) => { %>
                                         <div class="form-check">
-                                            <input class="form-check-input tipo-check" type="checkbox" value="<%= opcion %>" id="tipo<%= opcion %>">
+                                            <input class="form-check-input tipo-option" type="radio" name="tipo" value="<%= opcion %>" id="tipo<%= opcion %>">
                                             <label class="form-check-label" for="tipo<%= opcion %>"><%= opcion %></label>
                                         </div>
                                     <% }) %>
@@ -167,21 +167,16 @@
                     return;
                 }
 
-                const mantenimiento = $('.mantenimiento-check:checked').map(function() {
-                    return this.value;
-                }).get();
+                const mantenimiento = $('.mantenimiento-option:checked').val();
+                const tipo = $('.tipo-option:checked').val();
 
-                const tipo = $('.tipo-check:checked').map(function() {
-                    return this.value;
-                }).get();
-
-                if (mantenimiento.length === 0) {
-                    showAlert('Seleccione al menos una opción de mantenimiento', 'warning');
+                if (!mantenimiento) {
+                    showAlert('Seleccione una opción de mantenimiento', 'warning');
                     return;
                 }
 
-                if (tipo.length === 0) {
-                    showAlert('Seleccione al menos un tipo', 'warning');
+                if (!tipo) {
+                    showAlert('Seleccione un tipo', 'warning');
                     return;
                 }
 

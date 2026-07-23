@@ -191,6 +191,24 @@ router.get('/ordenes-trabajo/nueva', [
     permissionsMiddleware.hasPermission('ordenes_trabajo:create')
 ], ordenTrabajoController.vistaNueva);
 
+router.get('/ordenes-trabajo/:id/editar', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:edit')
+], ordenTrabajoController.vistaEditar);
+
+router.get('/ordenes-trabajo/:id/imprimir', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:view')
+], ordenTrabajoController.vistaImprimir);
+
+router.get('/ordenes-trabajo/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:view')
+], ordenTrabajoController.vistaVer);
+
 // Rutas de productos - con verificación de permisos
 router.get('/productos', [
     authMiddleware.verifyToken, 

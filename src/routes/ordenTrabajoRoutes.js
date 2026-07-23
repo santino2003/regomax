@@ -13,10 +13,22 @@ router.get(
     ordenTrabajoController.obtenerTodos
 );
 
+router.get(
+    '/:id',
+    permissionsMiddleware.hasPermission(PERMISSIONS.ORDENES_TRABAJO.VIEW),
+    ordenTrabajoController.obtenerPorId
+);
+
 router.post(
     '/',
     permissionsMiddleware.hasPermission(PERMISSIONS.ORDENES_TRABAJO.CREATE),
     ordenTrabajoController.crear
+);
+
+router.put(
+    '/:id',
+    permissionsMiddleware.hasPermission(PERMISSIONS.ORDENES_TRABAJO.EDIT),
+    ordenTrabajoController.modificar
 );
 
 module.exports = router;

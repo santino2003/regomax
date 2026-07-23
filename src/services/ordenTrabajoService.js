@@ -20,9 +20,33 @@ class OrdenTrabajoService {
         return ordenTrabajoRepository.obtenerTodos(page, limit);
     }
 
+    async obtenerPorId(id) {
+        const ordenTrabajo = await ordenTrabajoRepository.obtenerPorId(id);
+        if (!ordenTrabajo) {
+            throw new Error('Orden de trabajo no encontrada');
+        }
+        return ordenTrabajo;
+    }
+
+    async modificar(id, ordenTrabajoData) {
+        const ordenTrabajo = await this.obtenerPorId(id);
+        const data = this.validar({
+            ...ordenTrabajoData,
+            creado_por: ordenTrabajo.creado_por
+        });
+
+        await ordenTrabajoRepository.modificar(id, data);
+
+        return {
+            success: true,
+            id,
+            message: 'Orden de trabajo modificada exitosamente'
+        };
+    }
+
     validar(ordenTrabajoData) {
-        const mantenimiento = this.normalizarArray(ordenTrabajoData.mantenimiento);
-        const tipo = this.normalizarArray(ordenTrabajoData.tipo);
+        const mantenimiento = this.normalizarOpcion(ordenTrabajoData.mantenimiento);
+        const tipo = this.normalizarOpcion(ordenTrabajoData.tipo);
         const asignadoA = ordenTrabajoData.asignado_a || null;
         const personasDestinadas = ordenTrabajoData.personas_destinadas === '' || ordenTrabajoData.personas_destinadas == null
             ? null
@@ -44,16 +68,16 @@ class OrdenTrabajoService {
             throw new Error('La descripción es obligatoria');
         }
 
-        if (mantenimiento.length === 0) {
-            throw new Error('Debe seleccionar al menos una opción de mantenimiento');
+        if (!mantenimiento) {
+            throw new Error('Debe seleccionar una opción de mantenimiento');
         }
 
-        if (tipo.length === 0) {
-            throw new Error('Debe seleccionar al menos un tipo');
+        if (!tipo) {
+            throw new Error('Debe seleccionar un tipo');
         }
 
-        this.validarOpciones(mantenimiento, MANTENIMIENTOS_VALIDOS, 'mantenimiento');
-        this.validarOpciones(tipo, TIPOS_VALIDOS, 'tipo');
+        this.validarOpcion(mantenimiento, MANTENIMIENTOS_VALIDOS, 'mantenimiento');
+        this.validarOpcion(tipo, TIPOS_VALIDOS, 'tipo');
 
         return {
             fecha_pedido: ordenTrabajoData.fecha_pedido,
@@ -69,18 +93,17 @@ class OrdenTrabajoService {
         };
     }
 
-    normalizarArray(value) {
+    normalizarOpcion(value) {
         if (!value) {
-            return [];
+            return '';
         }
 
-        return Array.isArray(value) ? value : [value];
+        return Array.isArray(value) ? value[0] || '' : value;
     }
 
-    validarOpciones(opciones, validas, campo) {
-        const invalida = opciones.find((opcion) => !validas.includes(opcion));
-        if (invalida) {
-            throw new Error(`La opción "${invalida}" no es válida para ${campo}`);
+    validarOpcion(opcion, validas, campo) {
+        if (!validas.includes(opcion)) {
+            throw new Error(`La opción "${opcion}" no es válida para ${campo}`);
         }
     }
 }

@@ -79,8 +79,8 @@ class OrdenTrabajoRepository {
             return {
                 data: result.map((orden) => ({
                     ...orden,
-                    mantenimiento: this.parseJsonArray(orden.mantenimiento),
-                    tipo: this.parseJsonArray(orden.tipo)
+                    mantenimiento: this.parseJsonOption(orden.mantenimiento),
+                    tipo: this.parseJsonOption(orden.tipo)
                 })),
                 pagination: {
                     page: parseInt(page),
@@ -95,16 +95,76 @@ class OrdenTrabajoRepository {
         }
     }
 
-    parseJsonArray(value) {
+    async obtenerPorId(id) {
+        try {
+            const result = await db.query(
+                'SELECT * FROM ordenes_trabajo WHERE id = ?',
+                [id]
+            );
+
+            if (!result || result.length === 0) {
+                return null;
+            }
+
+            return {
+                ...result[0],
+                mantenimiento: this.parseJsonOption(result[0].mantenimiento),
+                tipo: this.parseJsonOption(result[0].tipo)
+            };
+        } catch (error) {
+            console.error('Error en OrdenTrabajoRepository.obtenerPorId:', error);
+            throw error;
+        }
+    }
+
+    async modificar(id, ordenTrabajoData) {
+        try {
+            await db.query(
+                `UPDATE ordenes_trabajo
+                 SET fecha_pedido = ?,
+                     fecha_terminada = ?,
+                     estado = ?,
+                     asignado_a = ?,
+                     personas_destinadas = ?,
+                     maquina = ?,
+                     descripcion = ?,
+                     mantenimiento = ?,
+                     tipo = ?
+                 WHERE id = ?`,
+                [
+                    ordenTrabajoData.fecha_pedido,
+                    ordenTrabajoData.fecha_terminada || null,
+                    ordenTrabajoData.estado,
+                    ordenTrabajoData.asignado_a,
+                    ordenTrabajoData.personas_destinadas,
+                    ordenTrabajoData.maquina || null,
+                    ordenTrabajoData.descripcion,
+                    JSON.stringify(ordenTrabajoData.mantenimiento),
+                    JSON.stringify(ordenTrabajoData.tipo),
+                    id
+                ]
+            );
+
+            return true;
+        } catch (error) {
+            console.error('Error en OrdenTrabajoRepository.modificar:', error);
+            throw error;
+        }
+    }
+
+    parseJsonOption(value) {
         if (!value) {
-            return [];
+            return '';
         }
 
         try {
             const parsed = JSON.parse(value);
-            return Array.isArray(parsed) ? parsed : [];
+            if (Array.isArray(parsed)) {
+                return parsed[0] || '';
+            }
+            return parsed || '';
         } catch (error) {
-            return [];
+            return value;
         }
     }
 }
