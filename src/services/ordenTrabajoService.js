@@ -16,8 +16,8 @@ class OrdenTrabajoService {
         };
     }
 
-    async obtenerTodos(page = 1, limit = 10) {
-        return ordenTrabajoRepository.obtenerTodos(page, limit);
+    async obtenerTodos(page = 1, limit = 10, filtros = {}) {
+        return ordenTrabajoRepository.obtenerTodos(page, limit, this.normalizarFiltros(filtros));
     }
 
     async obtenerPorId(id) {
@@ -109,6 +109,16 @@ class OrdenTrabajoService {
         if (!validas.includes(opcion)) {
             throw new Error(`La opción "${opcion}" no es válida para ${campo}`);
         }
+    }
+
+    normalizarFiltros(filtros = {}) {
+        return {
+            fecha_desde: filtros.fecha_desde || '',
+            fecha_hasta: filtros.fecha_hasta || '',
+            maquina: filtros.maquina || '',
+            mantenimiento: MANTENIMIENTOS_VALIDOS.includes(filtros.mantenimiento) ? filtros.mantenimiento : '',
+            tipo: TIPOS_VALIDOS.includes(filtros.tipo) ? filtros.tipo : ''
+        };
     }
 }
 
