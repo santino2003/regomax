@@ -741,6 +741,103 @@ const categoria = {
 };
 
 /**
+ * Funciones específicas para extraer detalles de máquinas
+ */
+const maquinaDetalles = {
+    crear: (req, res, body) => {
+        const detalles = {
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+
+        if (body) {
+            try {
+                const data = typeof body === 'string' ? JSON.parse(body) : body;
+                if (data.id) detalles.maquina_id = data.id;
+            } catch (e) {
+                // Si no se puede parsear, continuamos con los datos de entrada.
+            }
+        }
+
+        return detalles;
+    },
+    editar: (req, res, body) => {
+        return {
+            maquina_id: req.params?.id,
+            nombre: req.body?.nombre,
+            responsable: req.user?.username
+        };
+    },
+    eliminar: (req, res, body) => {
+        return {
+            maquina_id: req.params?.id,
+            responsable: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de máquinas
+ */
+const maquina = {
+    crear: () => registrarHistorial('crear', 'maquina', maquinaDetalles.crear),
+    editar: () => registrarHistorial('editar', 'maquina', maquinaDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'maquina', maquinaDetalles.eliminar)
+};
+
+/**
+ * Funciones específicas para extraer detalles de órdenes de trabajo
+ */
+const ordenTrabajoDetalles = {
+    crear: (req, res, body) => {
+        const detalles = {
+            fecha_pedido: req.body?.fecha_pedido,
+            fecha_terminada: req.body?.fecha_terminada || null,
+            estado: req.body?.estado,
+            asignado_a: req.body?.asignado_a || null,
+            personas_destinadas: req.body?.personas_destinadas || null,
+            maquina: req.body?.maquina,
+            mantenimiento: req.body?.mantenimiento,
+            tipo: req.body?.tipo,
+            creado_por: req.user?.username
+        };
+
+        if (body) {
+            try {
+                const data = typeof body === 'string' ? JSON.parse(body) : body;
+                if (data.id) detalles.orden_trabajo_id = data.id;
+            } catch (e) {
+                // Si no se puede parsear, continuamos con los datos de entrada.
+            }
+        }
+
+        return detalles;
+    },
+    editar: (req, res, body) => {
+        return {
+            orden_trabajo_id: req.params?.id,
+            fecha_pedido: req.body?.fecha_pedido,
+            fecha_terminada: req.body?.fecha_terminada || null,
+            estado: req.body?.estado,
+            asignado_a: req.body?.asignado_a || null,
+            personas_destinadas: req.body?.personas_destinadas || null,
+            maquina: req.body?.maquina,
+            mantenimiento: req.body?.mantenimiento,
+            tipo: req.body?.tipo,
+            modificado_por: req.user?.username
+        };
+    }
+};
+
+/**
+ * Funciones para registrar acciones de órdenes de trabajo
+ */
+const ordenTrabajo = {
+    crear: () => registrarHistorial('crear', 'orden_trabajo', ordenTrabajoDetalles.crear),
+    editar: () => registrarHistorial('editar', 'orden_trabajo', ordenTrabajoDetalles.editar)
+};
+
+/**
  * Funciones específicas para extraer detalles de unidades de medida
  */
 const unidadMedidaDetalles = {
@@ -1093,5 +1190,7 @@ module.exports = {
     almacen,
     bien,
     ordenCompra,
+    maquina,
+    ordenTrabajo,
     pago
 };

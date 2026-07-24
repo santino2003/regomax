@@ -64,6 +64,14 @@ const PERMISSIONS = {
     EDIT: 'ordenes_trabajo:edit',
     DELETE: 'ordenes_trabajo:delete',
   },
+
+  // Permisos para máquinas
+  MAQUINAS: {
+    VIEW: 'maquinas:view',
+    CREATE: 'maquinas:create',
+    EDIT: 'maquinas:edit',
+    DELETE: 'maquinas:delete',
+  },
   
   // Permisos para productos
   PRODUCTOS: {

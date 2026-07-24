@@ -63,18 +63,23 @@ class OrdenTrabajoRepository {
         }
     }
 
-    async obtenerTodos(page = 1, limit = 10) {
+    async obtenerTodos(page = 1, limit = 10, filtros = {}) {
         try {
-            const countResult = await db.query('SELECT COUNT(*) as total FROM ordenes_trabajo');
+            const { whereClause, params } = this.buildFiltrosQuery(filtros);
+            const countResult = await db.query(
+                `SELECT COUNT(*) as total FROM ordenes_trabajo ${whereClause}`,
+                params
+            );
             const totalRegistros = countResult[0].total;
             const offset = (page - 1) * limit;
 
             const result = await db.query(`
                 SELECT *
                 FROM ordenes_trabajo
+                ${whereClause}
                 ORDER BY fecha_creacion DESC
                 LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
-            `);
+            `, params);
 
             return {
                 data: result.map((orden) => ({
@@ -95,6 +100,41 @@ class OrdenTrabajoRepository {
         }
     }
 
+    buildFiltrosQuery(filtros = {}) {
+        const conditions = [];
+        const params = [];
+
+        if (filtros.fecha_desde) {
+            conditions.push('fecha_pedido >= ?');
+            params.push(filtros.fecha_desde);
+        }
+
+        if (filtros.fecha_hasta) {
+            conditions.push('fecha_pedido <= ?');
+            params.push(filtros.fecha_hasta);
+        }
+
+        if (filtros.maquina) {
+            conditions.push('maquina = ?');
+            params.push(filtros.maquina);
+        }
+
+        if (filtros.mantenimiento) {
+            conditions.push("JSON_UNQUOTE(JSON_EXTRACT(mantenimiento, '$')) = ?");
+            params.push(filtros.mantenimiento);
+        }
+
+        if (filtros.tipo) {
+            conditions.push("JSON_UNQUOTE(JSON_EXTRACT(tipo, '$')) = ?");
+            params.push(filtros.tipo);
+        }
+
+        return {
+            whereClause: conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '',
+            params
+        };
+    }
+
     async obtenerPorId(id) {
         try {
             const result = await db.query(
@@ -113,6 +153,32 @@ class OrdenTrabajoRepository {
             };
         } catch (error) {
             console.error('Error en OrdenTrabajoRepository.obtenerPorId:', error);
+            throw error;
+        }
+    }
+
+    async obtenerPorIds(ids = []) {
+        try {
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return [];
+            }
+
+            const placeholders = ids.map(() => '?').join(',');
+            const result = await db.query(
+                `SELECT *
+                 FROM ordenes_trabajo
+                 WHERE id IN (${placeholders})
+                 ORDER BY fecha_pedido DESC, id DESC`,
+                ids
+            );
+
+            return result.map((orden) => ({
+                ...orden,
+                mantenimiento: this.parseJsonOption(orden.mantenimiento),
+                tipo: this.parseJsonOption(orden.tipo)
+            }));
+        } catch (error) {
+            console.error('Error en OrdenTrabajoRepository.obtenerPorIds:', error);
             throw error;
         }
     }

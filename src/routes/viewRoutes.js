@@ -12,6 +12,7 @@ const parteDiarioController = require('../controllers/parteDiarioController');
 const historialController = require('../controllers/historialController');
 const ordenCompraController = require('../controllers/ordenCompraController');
 const ordenTrabajoController = require('../controllers/ordenTrabajoController');
+const maquinaController = require('../controllers/maquinaController');
 const historialService = require('../services/historialService');
 // Importar utilidades de fecha para compartir en todas las vistas
 const fechaUtils = require('../utils/fecha');
@@ -208,6 +209,31 @@ router.get('/ordenes-trabajo/:id', [
     noCacheMiddleware,
     permissionsMiddleware.hasPermission('ordenes_trabajo:view')
 ], ordenTrabajoController.vistaVer);
+
+// Rutas de máquinas
+router.get('/maquinas', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('maquinas:view')
+], maquinaController.vistaListarMaquinas);
+
+router.get('/maquinas/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('maquinas:create')
+], maquinaController.vistaNuevaMaquina);
+
+router.get('/maquinas/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('maquinas:edit')
+], maquinaController.vistaEditarMaquina);
+
+router.get('/maquinas/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('maquinas:view')
+], maquinaController.vistaVerMaquina);
 
 // Rutas de productos - con verificación de permisos
 router.get('/productos', [

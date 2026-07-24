@@ -14,9 +14,9 @@ class PDFOrdenTrabajoService {
             margins: { top: 40, bottom: 40, left: 40, right: 40 }
         });
 
-        const pageLeft = 40;
-        const pageWidth = 515;
-        let currentY = 40;
+        const pageLeft = doc.page.margins.left;
+        const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+        let currentY = doc.page.margins.top;
 
         doc.font('Helvetica').fontSize(14).text('Regomax S.A.', pageLeft, currentY);
         currentY += 30;
@@ -25,8 +25,10 @@ class PDFOrdenTrabajoService {
 
         currentY = this.drawInfoTable(doc, ordenTrabajo, pageLeft, currentY, pageWidth);
         currentY += 16;
+        currentY = this.ensureSpace(doc, currentY, 17);
         currentY = this.drawRiskTable(doc, pageLeft, currentY, pageWidth);
-        this.drawSignatureLines(doc, pageLeft, currentY + 42, pageWidth);
+        const signatureY = this.ensureSpace(doc, currentY + 42, 30);
+        this.drawSignatureLines(doc, pageLeft, signatureY, pageWidth);
 
         doc.end();
         return doc;
@@ -46,10 +48,12 @@ class PDFOrdenTrabajoService {
         ];
 
         rows.forEach(([label, value]) => {
+            doc.font('Helvetica').fontSize(10);
             const rowHeight = Math.max(
                 doc.heightOfString(String(value), { width: valueWidth - 8 }) + 8,
                 17
             );
+            y = this.ensureSpace(doc, y, rowHeight);
 
             doc.rect(x, y, labelWidth, rowHeight).stroke();
             doc.rect(x + labelWidth, y, valueWidth, rowHeight).fillAndStroke('#e8eef8', '#222');
@@ -72,16 +76,6 @@ class PDFOrdenTrabajoService {
         const riskWidth = 200;
         const precautionWidth = width - riskWidth;
         const headerHeight = 17;
-
-        doc.rect(x, y, riskWidth, headerHeight).fillAndStroke('#bed2ef', '#222');
-        doc.rect(x + riskWidth, y, precautionWidth, headerHeight).fillAndStroke('#bed2ef', '#222');
-        doc.fillColor('#000')
-            .font('Helvetica-Bold')
-            .fontSize(10)
-            .text('Riesgos', x + 4, y + 4, { width: riskWidth - 8 })
-            .text('Precauciones', x + riskWidth + 4, y + 4, { width: precautionWidth - 8 });
-
-        y += headerHeight;
 
         const groups = [
             {
@@ -122,10 +116,17 @@ class PDFOrdenTrabajoService {
         ];
 
         doc.fontSize(9).font('Helvetica');
+        y = this.drawRiskHeader(doc, x, y, riskWidth, precautionWidth, headerHeight);
 
         groups.forEach((group) => {
             const rowHeight = 18;
             const groupHeight = group.precauciones.length * rowHeight;
+
+            if (this.exceedsPage(doc, y, groupHeight)) {
+                doc.addPage();
+                y = doc.page.margins.top;
+                y = this.drawRiskHeader(doc, x, y, riskWidth, precautionWidth, headerHeight);
+            }
 
             doc.rect(x, y, riskWidth, groupHeight).stroke();
             doc.font('Helvetica')
@@ -142,6 +143,33 @@ class PDFOrdenTrabajoService {
         });
 
         return y;
+    }
+
+    drawRiskHeader(doc, x, y, riskWidth, precautionWidth, headerHeight) {
+        y = this.ensureSpace(doc, y, headerHeight);
+
+        doc.rect(x, y, riskWidth, headerHeight).fillAndStroke('#bed2ef', '#222');
+        doc.rect(x + riskWidth, y, precautionWidth, headerHeight).fillAndStroke('#bed2ef', '#222');
+        doc.fillColor('#000')
+            .font('Helvetica-Bold')
+            .fontSize(10)
+            .text('Riesgos', x + 4, y + 4, { width: riskWidth - 8 })
+            .text('Precauciones', x + riskWidth + 4, y + 4, { width: precautionWidth - 8 });
+
+        return y + headerHeight;
+    }
+
+    ensureSpace(doc, y, neededHeight) {
+        if (this.exceedsPage(doc, y, neededHeight)) {
+            doc.addPage();
+            return doc.page.margins.top;
+        }
+
+        return y;
+    }
+
+    exceedsPage(doc, y, neededHeight) {
+        return y + neededHeight > doc.page.height - doc.page.margins.bottom;
     }
 
     drawSignatureLines(doc, x, y, width) {

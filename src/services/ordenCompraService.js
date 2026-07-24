@@ -189,10 +189,6 @@ class OrdenCompraService {
                     throw new Error('La cantidad debe ser mayor a 0');
                 }
 
-                if (!item.proveedor_sugerido_id) {
-                    throw new Error('El proveedor es obligatorio en cada item');
-                }
-
                 if (!item.medio_pago) {
                     throw new Error('El medio de pago es obligatorio en cada item');
                 }
@@ -476,10 +472,6 @@ class OrdenCompraService {
 
                     if (!item.cantidad || item.cantidad <= 0) {
                         throw new Error('La cantidad debe ser mayor a 0');
-                    }
-
-                    if (!item.proveedor_sugerido_id) {
-                        throw new Error('El proveedor es obligatorio en cada item');
                     }
 
                     if (!item.medio_pago) {
