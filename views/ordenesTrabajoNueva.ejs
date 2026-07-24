@@ -87,10 +87,16 @@
                                 <div class="invalid-feedback">Ingrese un número entero mayor o igual a cero.</div>
                             </div>
                             <div class="col-md-4">
-                                <label for="maquina" class="form-label">Máquina</label>
-                                <select class="form-select" id="maquina" name="maquina">
+                                <label for="maquina" class="form-label">Máquina <span class="text-danger">*</span></label>
+                                <select class="form-select" id="maquina" name="maquina" required>
                                     <option value="">Seleccione una máquina</option>
+                                    <% if (maquinas && maquinas.length > 0) { %>
+                                        <% maquinas.forEach((maquina) => { %>
+                                            <option value="<%= maquina.nombre %>"><%= maquina.nombre %></option>
+                                        <% }) %>
+                                    <% } %>
                                 </select>
+                                <div class="invalid-feedback">Seleccione una máquina.</div>
                             </div>
                         </div>
 
@@ -155,6 +161,13 @@
                 theme: 'bootstrap-5',
                 width: '100%',
                 placeholder: 'Buscar usuario',
+                allowClear: true
+            });
+
+            $('#maquina').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Buscar máquina',
                 allowClear: true
             });
 

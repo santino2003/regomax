@@ -45,6 +45,7 @@ const ordenCompraRoutes = require('./routes/ordenCompraRoutes'); // Importamos l
 const ordenTrabajoRoutes = require('./routes/ordenTrabajoRoutes'); // Importamos las rutas de ordenes de trabajo
 const permisosTransicionesRoutes = require('./routes/permisosTransicionesRoutes'); // Importamos las rutas de permisos de transiciones
 const pagoRoutes = require('./routes/pagoRoutes'); // Importamos las rutas de pagos
+const maquinaRoutes = require('./routes/maquinaRoutes'); // Importamos las rutas de máquinas
 // Crear aplicación Express
 const app = express();
 
@@ -109,6 +110,7 @@ app.use('/api/kits', kitRoutes); // Rutas para gestión de kits
 app.use('/api/ordenes-compra', ordenCompraRoutes); // Rutas para gestión de ordenes de compra
 app.use('/api/ordenes-trabajo', ordenTrabajoRoutes); // Rutas para gestión de ordenes de trabajo
 app.use('/api/permisos-transiciones', permisosTransicionesRoutes); // Rutas para gestión de permisos de transiciones
+app.use('/api/maquinas', maquinaRoutes); // Rutas para gestión de máquinas
 app.use('/config-alertas-stock', configAlertasStockRoutes); // Rutas para configuración de alertas
 
 // Montar rutas de salidas - incluye tanto vistas como API

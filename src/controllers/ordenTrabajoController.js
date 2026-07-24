@@ -1,6 +1,7 @@
 const ordenTrabajoService = require('../services/ordenTrabajoService');
 const pdfOrdenTrabajoService = require('../services/pdfOrdenTrabajoService');
 const userRepository = require('../repositories/userRepository');
+const maquinaService = require('../services/maquinaService');
 
 const ordenTrabajoController = {
     async crear(req, res) {
@@ -87,11 +88,15 @@ const ordenTrabajoController = {
 
     async vistaNueva(req, res) {
         try {
-            const usuarios = await userRepository.findAll();
+            const [usuarios, maquinas] = await Promise.all([
+                userRepository.findAll(),
+                maquinaService.obtenerTodasSinPaginacion()
+            ]);
 
             res.render('ordenesTrabajoNueva', {
                 username: req.user.username,
-                usuarios
+                usuarios,
+                maquinas
             });
         } catch (error) {
             console.error('Error al cargar nueva orden de trabajo:', error);
@@ -138,15 +143,17 @@ const ordenTrabajoController = {
 
     async vistaEditar(req, res) {
         try {
-            const [ordenTrabajo, usuarios] = await Promise.all([
+            const [ordenTrabajo, usuarios, maquinas] = await Promise.all([
                 ordenTrabajoService.obtenerPorId(req.params.id),
-                userRepository.findAll()
+                userRepository.findAll(),
+                maquinaService.obtenerTodasSinPaginacion()
             ]);
 
             res.render('ordenesTrabajoEditar', {
                 username: req.user.username,
                 ordenTrabajo,
-                usuarios
+                usuarios,
+                maquinas
             });
         } catch (error) {
             console.error('Error al editar orden de trabajo:', error);

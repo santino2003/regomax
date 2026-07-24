@@ -64,6 +64,10 @@ class OrdenTrabajoService {
             throw new Error('Personas destinadas debe ser un número entero mayor o igual a cero');
         }
 
+        if (!ordenTrabajoData.maquina || ordenTrabajoData.maquina.trim() === '') {
+            throw new Error('La máquina es obligatoria');
+        }
+
         if (!ordenTrabajoData.descripcion || ordenTrabajoData.descripcion.trim() === '') {
             throw new Error('La descripción es obligatoria');
         }
@@ -85,7 +89,7 @@ class OrdenTrabajoService {
             estado: ordenTrabajoData.estado,
             asignado_a: asignadoA,
             personas_destinadas: personasDestinadas,
-            maquina: ordenTrabajoData.maquina || null,
+            maquina: ordenTrabajoData.maquina.trim(),
             descripcion: ordenTrabajoData.descripcion.trim(),
             mantenimiento,
             tipo,
