@@ -77,7 +77,7 @@ class OrdenTrabajoRepository {
                 SELECT *
                 FROM ordenes_trabajo
                 ${whereClause}
-                ORDER BY fecha_creacion DESC
+                ORDER BY CAST(SUBSTRING(id, 4) AS UNSIGNED) DESC
                 LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
             `, params);
 
@@ -168,7 +168,7 @@ class OrdenTrabajoRepository {
                 `SELECT *
                  FROM ordenes_trabajo
                  WHERE id IN (${placeholders})
-                 ORDER BY fecha_pedido DESC, id DESC`,
+                 ORDER BY CAST(SUBSTRING(id, 4) AS UNSIGNED) DESC`,
                 ids
             );
 
@@ -223,15 +223,36 @@ class OrdenTrabajoRepository {
             return '';
         }
 
-        try {
-            const parsed = JSON.parse(value);
-            if (Array.isArray(parsed)) {
-                return parsed[0] || '';
+        let parsed = value;
+
+        if (typeof value === 'string') {
+            try {
+                parsed = JSON.parse(value);
+            } catch (error) {
+                parsed = value;
             }
-            return parsed || '';
-        } catch (error) {
-            return value;
         }
+
+        if (Array.isArray(parsed)) {
+            parsed = parsed[0] || '';
+        }
+
+        const opcion = String(parsed || '').trim();
+        const clave = opcion
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+        const opcionesCanonicas = {
+            correctivo: 'Correctivo',
+            preventivo: 'Preventivo',
+            predictivo: 'Predictivo',
+            otro: 'Otro',
+            electrico: 'Electrico',
+            mecanico: 'Mecanico',
+            hidraulico: 'Hidraulico'
+        };
+
+        return opcionesCanonicas[clave] || opcion;
     }
 }
 

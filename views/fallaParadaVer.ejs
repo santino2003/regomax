@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-AR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle Máquina - Regomax</title>
+    <title>Detalle Falla / Parada - Regomax</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/assets/css/home.css">
@@ -28,33 +28,43 @@
         </div>
     </nav>
 
-    <div class="container my-4">
+    <main class="container my-4">
         <div class="menu-container p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="menu-heading mb-0"><i class="bi bi-gear-wide-connected me-2"></i>Detalle de la Máquina</h4>
-                <a href="/maquinas/editar/<%= maquina.id %>" class="btn btn-warning">
+                <h4 class="menu-heading mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Detalle Falla / Parada #<%= fallaParada.id %>
+                </h4>
+                <a href="/mantenimiento/fallas-paradas/<%= fallaParada.id %>/editar" class="btn btn-warning">
                     <i class="bi bi-pencil me-2"></i>Editar
                 </a>
             </div>
 
             <div class="card">
                 <div class="card-body">
-                    <label class="form-label fw-bold">Nombre:</label>
-                    <p class="form-control-plaintext"><%= maquina.nombre %></p>
-                    <label class="form-label fw-bold">Descripción:</label>
-                    <p class="form-control-plaintext text-break"><%= maquina.descripcion || '-' %></p>
-                    <label class="form-label fw-bold">Responsable:</label>
-                    <p class="form-control-plaintext"><%= maquina.responsable || '-' %></p>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Fecha:</strong><p class="mb-0"><%= fallaParada.fecha ? new Date(`${fallaParada.fecha}T00:00:00`).toLocaleDateString('es-AR') : '-' %></p></div>
+                        <div class="col-md-4"><strong>Hora:</strong><p class="mb-0"><%= fallaParada.hora || '-' %></p></div>
+                        <div class="col-md-4"><strong>Minutos afectados:</strong><p class="mb-0"><%= fallaParada.minutos_afectados ?? '-' %></p></div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Máquina:</strong><p class="mb-0"><%= fallaParada.maquina || '-' %></p></div>
+                        <div class="col-md-4"><strong>Falla:</strong><p class="mb-0"><%= fallaParada.falla_nombre || '-' %></p></div>
+                        <div class="col-md-4"><strong>Tipo parada:</strong><p class="mb-0"><span class="badge bg-secondary"><%= fallaParada.tipo_parada || '-' %></span></p></div>
+                    </div>
+                    <hr>
+                    <div class="mb-3"><strong>Descripción:</strong><p class="mb-0 text-break"><%= fallaParada.descripcion || '-' %></p></div>
+                    <div><strong>Observaciones:</strong><p class="mb-0 text-break"><%= fallaParada.observaciones || '-' %></p></div>
                 </div>
             </div>
 
             <div class="mt-4">
-                <a href="/maquinas" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                <a href="/mantenimiento/fallas-paradas" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al listado
                 </a>
             </div>
         </div>
-    </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

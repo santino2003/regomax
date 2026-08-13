@@ -133,6 +133,9 @@
                                     <div class="submenu-item">
                                         <a href="/ordenes-trabajo"><i class="bi bi-clipboard2-check me-2"></i> Órdenes de Trabajo</a>
                                     </div>
+                                    <div class="submenu-item">
+                                        <a href="/mantenimiento/fallas-paradas"><i class="bi bi-exclamation-triangle me-2"></i> Fallas / Paradas</a>
+                                    </div>
                                     <% } %>
                                     <% if (user && (user.role === 'admin' || user.permissions && user.permissions['ordenes_trabajo:create'])) { %>
                                     <div class="submenu-item">
@@ -142,6 +145,11 @@
                                     <% if (user && (user.role === 'admin' || user.permissions && user.permissions['maquinas:view'])) { %>
                                     <div class="submenu-item">
                                         <a href="/maquinas"><i class="bi bi-gear-wide-connected me-2"></i> Máquinas</a>
+                                    </div>
+                                    <% } %>
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['fallas:view'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/fallas"><i class="bi bi-tools me-2"></i> Fallas</a>
                                     </div>
                                     <% } %>
                                 </div>

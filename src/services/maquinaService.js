@@ -8,17 +8,27 @@ class MaquinaService {
         return nombre.trim();
     }
 
+    normalizarDescripcion(descripcion) {
+        if (descripcion == null || String(descripcion).trim() === '') {
+            return null;
+        }
+        return String(descripcion).trim();
+    }
+
     async crearMaquina(maquinaData) {
         const nombre = this.validarNombre(maquinaData.nombre);
-        await maquinaRepository.crear(nombre, maquinaData.responsable || null);
+        const descripcion = this.normalizarDescripcion(maquinaData.descripcion);
+        await maquinaRepository.crear(nombre, descripcion, maquinaData.responsable || null);
         return {
             success: true,
             message: 'Máquina creada exitosamente'
         };
     }
 
-    async modificarMaquina(id, nombre) {
-        await maquinaRepository.modificar(id, this.validarNombre(nombre));
+    async modificarMaquina(id, maquinaData) {
+        const nombre = this.validarNombre(maquinaData.nombre);
+        const descripcion = this.normalizarDescripcion(maquinaData.descripcion);
+        await maquinaRepository.modificar(id, nombre, descripcion);
         return {
             success: true,
             message: 'Máquina modificada exitosamente'

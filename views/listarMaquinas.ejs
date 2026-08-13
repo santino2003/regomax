@@ -44,6 +44,7 @@
                     <thead>
                         <tr>
                             <th>Nombre</th>
+                            <th>Descripción</th>
                             <th>Responsable</th>
                             <th>Fecha Creación</th>
                             <th>Acciones</th>
@@ -54,6 +55,7 @@
                             <% maquinas.forEach(maquina => { %>
                                 <tr>
                                     <td><%= maquina.nombre %></td>
+                                    <td class="text-break"><%= maquina.descripcion || '-' %></td>
                                     <td><%= maquina.responsable || '-' %></td>
                                     <td><%= maquina.fecha_creacion ? new Date(maquina.fecha_creacion).toLocaleDateString('es-AR') : '-' %></td>
                                     <td>
@@ -73,7 +75,7 @@
                             <% }) %>
                         <% } else { %>
                             <tr>
-                                <td colspan="4" class="text-center">No hay máquinas registradas</td>
+                                <td colspan="5" class="text-center">No hay máquinas registradas</td>
                             </tr>
                         <% } %>
                     </tbody>

@@ -22,8 +22,7 @@ const maquinaController = {
     async modificarMaquina(req, res) {
         try {
             const { id } = req.params;
-            const { nombre } = req.body;
-            await maquinaService.modificarMaquina(id, nombre);
+            await maquinaService.modificarMaquina(id, req.body);
             return res.status(200).json({
                 success: true,
                 message: 'Máquina modificada exitosamente'

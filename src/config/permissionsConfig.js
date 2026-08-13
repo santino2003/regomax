@@ -72,6 +72,14 @@ const PERMISSIONS = {
     EDIT: 'maquinas:edit',
     DELETE: 'maquinas:delete',
   },
+
+  // Permisos para fallas
+  FALLAS: {
+    VIEW: 'fallas:view',
+    CREATE: 'fallas:create',
+    EDIT: 'fallas:edit',
+    DELETE: 'fallas:delete',
+  },
   
   // Permisos para productos
   PRODUCTOS: {

@@ -747,6 +747,7 @@ const maquinaDetalles = {
     crear: (req, res, body) => {
         const detalles = {
             nombre: req.body?.nombre,
+            descripcion: req.body?.descripcion || null,
             responsable: req.user?.username
         };
 
@@ -765,6 +766,7 @@ const maquinaDetalles = {
         return {
             maquina_id: req.params?.id,
             nombre: req.body?.nombre,
+            descripcion: req.body?.descripcion || null,
             responsable: req.user?.username
         };
     },
@@ -783,6 +785,29 @@ const maquina = {
     crear: () => registrarHistorial('crear', 'maquina', maquinaDetalles.crear),
     editar: () => registrarHistorial('editar', 'maquina', maquinaDetalles.editar),
     eliminar: () => registrarHistorial('eliminar', 'maquina', maquinaDetalles.eliminar)
+};
+
+const fallaDetalles = {
+    crear: (req, res, body) => {
+        const detalles = { nombre: req.body?.nombre, responsable: req.user?.username };
+        if (body) {
+            try {
+                const data = typeof body === 'string' ? JSON.parse(body) : body;
+                if (data.id) detalles.falla_id = data.id;
+            } catch (e) {
+                // Se conservan los datos de entrada si la respuesta no es JSON.
+            }
+        }
+        return detalles;
+    },
+    editar: (req) => ({ falla_id: req.params?.id, nombre: req.body?.nombre, responsable: req.user?.username }),
+    eliminar: (req) => ({ falla_id: req.params?.id, responsable: req.user?.username })
+};
+
+const falla = {
+    crear: () => registrarHistorial('crear', 'falla', fallaDetalles.crear),
+    editar: () => registrarHistorial('editar', 'falla', fallaDetalles.editar),
+    eliminar: () => registrarHistorial('eliminar', 'falla', fallaDetalles.eliminar)
 };
 
 /**
@@ -1191,6 +1216,7 @@ module.exports = {
     bien,
     ordenCompra,
     maquina,
+    falla,
     ordenTrabajo,
     pago
 };

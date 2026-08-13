@@ -13,6 +13,8 @@ const historialController = require('../controllers/historialController');
 const ordenCompraController = require('../controllers/ordenCompraController');
 const ordenTrabajoController = require('../controllers/ordenTrabajoController');
 const maquinaController = require('../controllers/maquinaController');
+const fallaParadaController = require('../controllers/fallaParadaController');
+const fallaController = require('../controllers/fallaController');
 const historialService = require('../services/historialService');
 // Importar utilidades de fecha para compartir en todas las vistas
 const fechaUtils = require('../utils/fecha');
@@ -210,6 +212,31 @@ router.get('/ordenes-trabajo/:id', [
     permissionsMiddleware.hasPermission('ordenes_trabajo:view')
 ], ordenTrabajoController.vistaVer);
 
+// Registro de fallas y paradas de mantenimiento
+router.get('/mantenimiento/fallas-paradas', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:view')
+], fallaParadaController.vistaListar);
+
+router.get('/mantenimiento/fallas-paradas/nueva', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:create')
+], fallaParadaController.vistaNueva);
+
+router.get('/mantenimiento/fallas-paradas/:id/editar', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:edit')
+], fallaParadaController.vistaEditar);
+
+router.get('/mantenimiento/fallas-paradas/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ordenes_trabajo:view')
+], fallaParadaController.vistaVer);
+
 // Rutas de máquinas
 router.get('/maquinas', [
     authMiddleware.verifyToken,
@@ -234,6 +261,31 @@ router.get('/maquinas/:id', [
     noCacheMiddleware,
     permissionsMiddleware.hasPermission('maquinas:view')
 ], maquinaController.vistaVerMaquina);
+
+// Rutas de fallas
+router.get('/fallas', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('fallas:view')
+], fallaController.vistaListarFallas);
+
+router.get('/fallas/nuevo', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('fallas:create')
+], fallaController.vistaNuevaFalla);
+
+router.get('/fallas/editar/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('fallas:edit')
+], fallaController.vistaEditarFalla);
+
+router.get('/fallas/:id', [
+    authMiddleware.verifyToken,
+    noCacheMiddleware,
+    permissionsMiddleware.hasPermission('fallas:view')
+], fallaController.vistaVerFalla);
 
 // Rutas de productos - con verificación de permisos
 router.get('/productos', [
