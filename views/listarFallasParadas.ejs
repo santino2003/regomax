@@ -111,7 +111,6 @@
                             <thead>
                                 <tr>
                                     <th><input type="checkbox" id="selectAllRegistros" class="form-check-input" title="Seleccionar todas"></th>
-                                    <th>ID</th>
                                     <th>Fecha</th>
                                     <th>Hora</th>
                                     <th>Minutos afectados</th>
@@ -127,7 +126,6 @@
                                     <% fallasParadas.forEach((registro) => { %>
                                         <tr>
                                             <td><input type="checkbox" class="form-check-input falla-parada-checkbox" value="<%= registro.id %>"></td>
-                                            <td><strong><%= registro.id %></strong></td>
                                             <td><%= registro.fecha ? new Date(`${registro.fecha}T00:00:00`).toLocaleDateString('es-AR') : '-' %></td>
                                             <td><%= registro.hora || '-' %></td>
                                             <td><%= registro.minutos_afectados ?? '-' %></td>
@@ -149,7 +147,7 @@
                                     <% }) %>
                                 <% } else { %>
                                     <tr>
-                                        <td colspan="10" class="text-center">No hay fallas o paradas registradas</td>
+                                        <td colspan="9" class="text-center">No hay fallas o paradas registradas</td>
                                     </tr>
                                 <% } %>
                             </tbody>
@@ -166,15 +164,35 @@
                             };
                         %>
                         <nav aria-label="Navegación de fallas y paradas">
-                            <ul class="pagination justify-content-center">
+                            <ul class="pagination pagination-sm justify-content-center flex-wrap gap-1">
                                 <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
                                     <a class="page-link" href="<%= buildPageUrl(pagination.page - 1) %>">Anterior</a>
                                 </li>
-                                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
-                                    <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                                        <a class="page-link" href="<%= buildPageUrl(i) %>"><%= i %></a>
+                                <%
+                                    const paginasVisibles = [];
+                                    const agregarPagina = (pagina) => {
+                                        if (pagina >= 1 && pagina <= pagination.totalPages && !paginasVisibles.includes(pagina)) {
+                                            paginasVisibles.push(pagina);
+                                        }
+                                    };
+
+                                    agregarPagina(1);
+                                    for (let pagina = pagination.page - 2; pagina <= pagination.page + 2; pagina++) {
+                                        agregarPagina(pagina);
+                                    }
+                                    agregarPagina(pagination.totalPages);
+                                    paginasVisibles.sort((a, b) => a - b);
+                                %>
+                                <% paginasVisibles.forEach((pagina, indice) => { %>
+                                    <% if (indice > 0 && pagina - paginasVisibles[indice - 1] > 1) { %>
+                                        <li class="page-item disabled" aria-hidden="true">
+                                            <span class="page-link border-0 bg-transparent">…</span>
+                                        </li>
+                                    <% } %>
+                                    <li class="page-item <%= pagination.page === pagina ? 'active' : '' %>">
+                                        <a class="page-link" href="<%= buildPageUrl(pagina) %>"><%= pagina %></a>
                                     </li>
-                                <% } %>
+                                <% }) %>
                                 <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
                                     <a class="page-link" href="<%= buildPageUrl(pagination.page + 1) %>">Siguiente</a>
                                 </li>

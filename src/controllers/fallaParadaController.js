@@ -184,7 +184,6 @@ module.exports = {
             const workbook = new Excel.Workbook();
             const worksheet = workbook.addWorksheet('Fallas y Paradas');
             worksheet.columns = [
-                { header: 'ID', key: 'id', width: 10 },
                 { header: 'Fecha', key: 'fecha', width: 14 },
                 { header: 'Hora', key: 'hora', width: 10 },
                 { header: 'Minutos afectados', key: 'minutos_afectados', width: 20 },
@@ -202,7 +201,6 @@ module.exports = {
 
             registros.forEach((registro) => {
                 worksheet.addRow({
-                    id: registro.id,
                     fecha: formatearFechaInput(registro.fecha),
                     hora: formatearHoraInput(registro.hora),
                     minutos_afectados: registro.minutos_afectados,
