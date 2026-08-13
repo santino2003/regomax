@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS maquinas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL UNIQUE,
+    descripcion TEXT NULL,
     responsable VARCHAR(255) NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

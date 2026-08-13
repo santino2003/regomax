@@ -747,6 +747,7 @@ const maquinaDetalles = {
     crear: (req, res, body) => {
         const detalles = {
             nombre: req.body?.nombre,
+            descripcion: req.body?.descripcion || null,
             responsable: req.user?.username
         };
 
@@ -765,6 +766,7 @@ const maquinaDetalles = {
         return {
             maquina_id: req.params?.id,
             nombre: req.body?.nombre,
+            descripcion: req.body?.descripcion || null,
             responsable: req.user?.username
         };
     },

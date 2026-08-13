@@ -1,18 +1,18 @@
 const db = require('../config/db');
 
 class MaquinaRepository {
-    async crear(nombre, responsable) {
+    async crear(nombre, descripcion, responsable) {
         await db.query(
-            'INSERT INTO maquinas (nombre, responsable) VALUES (?, ?)',
-            [nombre, responsable]
+            'INSERT INTO maquinas (nombre, descripcion, responsable) VALUES (?, ?, ?)',
+            [nombre, descripcion, responsable]
         );
         return true;
     }
 
-    async modificar(id, nombre) {
+    async modificar(id, nombre, descripcion) {
         await db.query(
-            'UPDATE maquinas SET nombre = ? WHERE id = ?',
-            [nombre, id]
+            'UPDATE maquinas SET nombre = ?, descripcion = ? WHERE id = ?',
+            [nombre, descripcion, id]
         );
         return true;
     }

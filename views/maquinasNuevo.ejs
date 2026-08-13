@@ -39,6 +39,10 @@
                     <input type="text" class="form-control" id="nombre" name="nombre" required>
                     <div class="invalid-feedback">Por favor ingrese el nombre de la máquina.</div>
                 </div>
+                <div class="mb-3">
+                    <label for="descripcion" class="form-label">Descripción</label>
+                    <textarea class="form-control" id="descripcion" name="descripcion" rows="4" placeholder="Ingrese una descripción de la máquina"></textarea>
+                </div>
                 <button type="submit" id="submitBtn" class="btn btn-primary">
                     <i class="bi bi-save me-2"></i>Guardar Máquina
                 </button>
@@ -71,7 +75,10 @@
                 fetch('/api/maquinas/nuevo', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre: $('#nombre').val().trim() })
+                    body: JSON.stringify({
+                        nombre: $('#nombre').val().trim(),
+                        descripcion: $('#descripcion').val().trim()
+                    })
                 })
                 .then(response => response.json())
                 .then(data => {
