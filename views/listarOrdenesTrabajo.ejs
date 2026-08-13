@@ -9,6 +9,52 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/home.css">
+    <style>
+        .ordenes-trabajo-container {
+            max-width: 1320px;
+        }
+
+        .ordenes-trabajo-wrapper {
+            overflow-x: visible;
+        }
+
+        .ordenes-trabajo-table {
+            width: 100%;
+            table-layout: fixed;
+            font-size: 0.9rem;
+        }
+
+        .ordenes-trabajo-table th,
+        .ordenes-trabajo-table td {
+            padding: 0.5rem 0.35rem;
+            vertical-align: middle;
+            overflow-wrap: anywhere;
+        }
+
+        .ordenes-trabajo-table th {
+            line-height: 1.15;
+        }
+
+        .ordenes-trabajo-table .acciones {
+            white-space: nowrap;
+            overflow-wrap: normal;
+        }
+
+        .ordenes-trabajo-table .acciones .btn {
+            padding: 0.25rem 0.4rem;
+        }
+
+        @media (max-width: 767.98px) {
+            .ordenes-trabajo-table {
+            font-size: 0.76rem;
+            }
+
+            .ordenes-trabajo-table th,
+            .ordenes-trabajo-table td {
+                padding: 0.3rem 0.15rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -36,7 +82,7 @@
         </div>
     </nav>
 
-    <div class="container my-4">
+    <div class="container ordenes-trabajo-container my-4">
         <div class="row mb-4">
             <div class="col">
                 <div class="menu-container p-4">
@@ -111,8 +157,20 @@
                         </div>
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover align-middle">
+                    <div class="table-responsive ordenes-trabajo-wrapper">
+                        <table class="table table-striped table-hover align-middle ordenes-trabajo-table">
+                            <colgroup>
+                                <col style="width: 3.5%">
+                                <col style="width: 8%">
+                                <col style="width: 8%">
+                                <col style="width: 8%">
+                                <col style="width: 8%">
+                                <col style="width: 13%">
+                                <col style="width: 9%">
+                                <col style="width: 8%">
+                                <col style="width: 22%">
+                                <col style="width: 12.5%">
+                            </colgroup>
                             <thead>
                                 <tr>
                                     <th>
@@ -122,11 +180,10 @@
                                     <th>Fecha Pedido</th>
                                     <th>Fecha Terminada</th>
                                     <th>Estado</th>
-                                    <th>Asignado a</th>
-                                    <th>Personas</th>
                                     <th>Máquina</th>
                                     <th>Mantenimiento</th>
                                     <th>Tipo</th>
+                                    <th>Descripción</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -141,12 +198,11 @@
                                             <td><%= orden.fecha_pedido ? new Date(orden.fecha_pedido).toLocaleDateString('es-AR') : '-' %></td>
                                             <td><%= orden.fecha_terminada ? new Date(orden.fecha_terminada).toLocaleDateString('es-AR') : '-' %></td>
                                             <td><span class="badge bg-secondary"><%= orden.estado %></span></td>
-                                            <td><%= orden.asignado_a || '-' %></td>
-                                            <td><%= orden.personas_destinadas != null ? orden.personas_destinadas : '-' %></td>
                                             <td><%= orden.maquina || '-' %></td>
                                             <td><%= orden.mantenimiento || '-' %></td>
                                             <td><%= orden.tipo || '-' %></td>
-                                            <td>
+                                            <td class="text-break"><%= orden.descripcion || '-' %></td>
+                                            <td class="acciones">
                                                 <div class="btn-group" role="group">
                                                     <a href="/ordenes-trabajo/<%= orden.id %>" class="btn btn-sm btn-outline-primary" title="Ver">
                                                         <i class="bi bi-eye"></i>
@@ -163,7 +219,7 @@
                                     <% }) %>
                                 <% } else { %>
                                     <tr>
-                                        <td colspan="11" class="text-center">No hay órdenes de trabajo registradas</td>
+                                        <td colspan="10" class="text-center">No hay órdenes de trabajo registradas</td>
                                     </tr>
                                 <% } %>
                             </tbody>
@@ -180,15 +236,35 @@
                             };
                         %>
                         <nav aria-label="Navegación de órdenes de trabajo">
-                            <ul class="pagination justify-content-center">
+                            <ul class="pagination pagination-sm justify-content-center flex-wrap gap-1">
                                 <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
                                     <a class="page-link" href="<%= buildPageUrl(pagination.page - 1) %>">Anterior</a>
                                 </li>
-                                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
-                                    <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                                        <a class="page-link" href="<%= buildPageUrl(i) %>"><%= i %></a>
+                                <%
+                                    const paginasVisibles = [];
+                                    const agregarPagina = (pagina) => {
+                                        if (pagina >= 1 && pagina <= pagination.totalPages && !paginasVisibles.includes(pagina)) {
+                                            paginasVisibles.push(pagina);
+                                        }
+                                    };
+
+                                    agregarPagina(1);
+                                    for (let pagina = pagination.page - 2; pagina <= pagination.page + 2; pagina++) {
+                                        agregarPagina(pagina);
+                                    }
+                                    agregarPagina(pagination.totalPages);
+                                    paginasVisibles.sort((a, b) => a - b);
+                                %>
+                                <% paginasVisibles.forEach((pagina, indice) => { %>
+                                    <% if (indice > 0 && pagina - paginasVisibles[indice - 1] > 1) { %>
+                                        <li class="page-item disabled" aria-hidden="true">
+                                            <span class="page-link border-0 bg-transparent">…</span>
+                                        </li>
+                                    <% } %>
+                                    <li class="page-item <%= pagination.page === pagina ? 'active' : '' %>">
+                                        <a class="page-link" href="<%= buildPageUrl(pagina) %>"><%= pagina %></a>
                                     </li>
-                                <% } %>
+                                <% }) %>
                                 <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
                                     <a class="page-link" href="<%= buildPageUrl(pagination.page + 1) %>">Siguiente</a>
                                 </li>
