@@ -137,11 +137,6 @@
                                         <a href="/mantenimiento/fallas-paradas"><i class="bi bi-exclamation-triangle me-2"></i> Fallas / Paradas</a>
                                     </div>
                                     <% } %>
-                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['ordenes_trabajo:create'])) { %>
-                                    <div class="submenu-item">
-                                        <a href="/ordenes-trabajo/nueva"><i class="bi bi-plus-circle me-2"></i> Nueva Orden de Trabajo</a>
-                                    </div>
-                                    <% } %>
                                     <% if (user && (user.role === 'admin' || user.permissions && user.permissions['maquinas:view'])) { %>
                                     <div class="submenu-item">
                                         <a href="/maquinas"><i class="bi bi-gear-wide-connected me-2"></i> Máquinas</a>
