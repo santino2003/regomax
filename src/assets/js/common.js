@@ -52,11 +52,15 @@ function preventBackNavigation() {
         }
     });
     
-    // Prevenir navegación hacia atrás después de logout
-    window.history.pushState(null, null, window.location.href);
-    window.onpopstate = function() {
+    // Algunas pantallas conservan su estado en la URL y necesitan permitir
+    // la navegación normal con Atrás/Adelante.
+    const allowBackNavigation = document.body.dataset.allowBackNavigation === 'true';
+    if (!allowBackNavigation) {
         window.history.pushState(null, null, window.location.href);
-    };
+        window.onpopstate = function() {
+            window.history.pushState(null, null, window.location.href);
+        };
+    }
     
     // Verificar la autenticación periódicamente
     setInterval(checkSessionStatus, 30000); // Verificar cada 30 segundos

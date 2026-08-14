@@ -115,18 +115,35 @@ class OrdenTrabajoRepository {
         }
 
         if (filtros.maquina) {
-            conditions.push('maquina = ?');
-            params.push(filtros.maquina);
+            // Las órdenes importadas pueden guardar "(máquina) descripción".
+            // Buscar por contenido mantiene compatibles esos registros y los nuevos.
+            conditions.push('maquina LIKE ?');
+            params.push(`%${filtros.maquina}%`);
         }
 
         if (filtros.mantenimiento) {
-            conditions.push("JSON_UNQUOTE(JSON_EXTRACT(mantenimiento, '$')) = ?");
-            params.push(filtros.mantenimiento);
+            // Los datos históricos importados están guardados como arrays JSON
+            // (p. ej. ["Correctivo"]); los nuevos, como strings JSON.
+            conditions.push(`(
+                JSON_UNQUOTE(JSON_EXTRACT(mantenimiento, '$')) = ?
+                OR JSON_UNQUOTE(JSON_EXTRACT(mantenimiento, '$[0]')) = ?
+            )`);
+            params.push(filtros.mantenimiento, filtros.mantenimiento);
         }
 
         if (filtros.tipo) {
-            conditions.push("JSON_UNQUOTE(JSON_EXTRACT(tipo, '$')) = ?");
-            params.push(filtros.tipo);
+            const variantesTipo = {
+                Electrico: ['Electrico', 'Eléctrico'],
+                Mecanico: ['Mecanico', 'Mecánico'],
+                Hidraulico: ['Hidraulico', 'Hidráulico'],
+                Otro: ['Otro', 'Otro']
+            }[filtros.tipo] || [filtros.tipo, filtros.tipo];
+
+            conditions.push(`(
+                JSON_UNQUOTE(JSON_EXTRACT(tipo, '$')) IN (?, ?)
+                OR JSON_UNQUOTE(JSON_EXTRACT(tipo, '$[0]')) IN (?, ?)
+            )`);
+            params.push(...variantesTipo, ...variantesTipo);
         }
 
         return {

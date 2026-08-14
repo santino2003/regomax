@@ -43,8 +43,8 @@ class MaquinaService {
         };
     }
 
-    async obtenerTodas(page = 1, limit = 10) {
-        return maquinaRepository.obtenerTodas(page, limit);
+    async obtenerTodas(page = 1, limit = 10, filtros = {}) {
+        return maquinaRepository.obtenerTodas(page, limit, filtros);
     }
 
     async obtenerTodasSinPaginacion() {

@@ -22,13 +22,20 @@ class MaquinaRepository {
         return true;
     }
 
-    async obtenerTodas(page = 1, limit = 10) {
-        const countResult = await db.query('SELECT COUNT(*) as total FROM maquinas');
+    async obtenerTodas(page = 1, limit = 10, filtros = {}) {
+        const nombre = String(filtros.nombre || '').trim();
+        const whereClause = nombre ? 'WHERE nombre LIKE ?' : '';
+        const params = nombre ? [`%${nombre}%`] : [];
+        const countResult = await db.query(
+            `SELECT COUNT(*) as total FROM maquinas ${whereClause}`,
+            params
+        );
         const totalRegistros = countResult[0].total;
         const offset = (page - 1) * limit;
 
         const result = await db.query(
-            `SELECT * FROM maquinas ORDER BY nombre ASC LIMIT ${parseInt(limit, 10)} OFFSET ${parseInt(offset, 10)}`
+            `SELECT * FROM maquinas ${whereClause} ORDER BY nombre ASC LIMIT ${parseInt(limit, 10)} OFFSET ${parseInt(offset, 10)}`,
+            params
         );
 
         return {

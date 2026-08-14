@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/assets/css/home.css">
 </head>
-<body>
+<body data-allow-back-navigation="true">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="/home">
@@ -44,7 +44,7 @@
                     <a href="/ordenes-trabajo/<%= ordenTrabajo.id %>/imprimir" class="btn btn-outline-dark me-2" target="_blank">
                         <i class="bi bi-printer me-2"></i>Imprimir
                     </a>
-                    <a href="/ordenes-trabajo/<%= ordenTrabajo.id %>/editar" class="btn btn-primary">
+                    <a href="/ordenes-trabajo/<%= ordenTrabajo.id %>/editar" class="btn btn-primary" id="editLink">
                         <i class="bi bi-pencil me-2"></i>Editar
                     </a>
                 </div>
@@ -67,7 +67,7 @@
             </div>
 
             <div class="mt-4">
-                <a href="/ordenes-trabajo" class="btn btn-secondary">
+                <a href="/ordenes-trabajo" class="btn btn-secondary" id="backToList">
                     <i class="bi bi-arrow-left me-2"></i>Volver
                 </a>
             </div>
@@ -77,5 +77,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/assets/js/common.js"></script>
+    <script>
+        const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+        if (returnTo === '/ordenes-trabajo' || returnTo?.startsWith('/ordenes-trabajo?')) {
+            document.getElementById('backToList').href = returnTo;
+            const editUrl = new URL(document.getElementById('editLink').href, window.location.origin);
+            editUrl.searchParams.set('returnTo', returnTo);
+            document.getElementById('editLink').href = editUrl.pathname + editUrl.search;
+        }
+    </script>
 </body>
 </html>
