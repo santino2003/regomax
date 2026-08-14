@@ -10,7 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/home.css">
 </head>
-<body>
+<body data-allow-back-navigation="true">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="/home">
@@ -133,7 +133,7 @@
                 <button type="submit" id="submitBtn" class="btn btn-primary">
                     <i class="bi bi-save me-2"></i>Guardar Cambios
                 </button>
-                <a href="/ordenes-trabajo/<%= ordenTrabajo.id %>" class="btn btn-outline-secondary ms-2">
+                <a href="/ordenes-trabajo/<%= ordenTrabajo.id %>" class="btn btn-outline-secondary ms-2" id="cancelLink">
                     <i class="bi bi-x-circle me-2"></i>Cancelar
                 </a>
             </form>
@@ -147,6 +147,13 @@
     <script>
         $(document).ready(function() {
             const form = $('#formEditarOrdenTrabajo');
+            const requestedReturnTo = new URLSearchParams(window.location.search).get('returnTo');
+            const returnTo = requestedReturnTo === '/ordenes-trabajo' || requestedReturnTo?.startsWith('/ordenes-trabajo?')
+                ? requestedReturnTo
+                : '/ordenes-trabajo';
+            const detailUrl = new URL('/ordenes-trabajo/<%= ordenTrabajo.id %>', window.location.origin);
+            detailUrl.searchParams.set('returnTo', returnTo);
+            $('#cancelLink').attr('href', detailUrl.pathname + detailUrl.search);
 
             $('#asignado_a').select2({
                 theme: 'bootstrap-5',
@@ -206,7 +213,7 @@
                     success: function(response) {
                         showAlert('Orden de trabajo actualizada exitosamente', 'success');
                         setTimeout(() => {
-                            window.location.href = '/ordenes-trabajo/<%= ordenTrabajo.id %>';
+                            window.location.href = detailUrl.pathname + detailUrl.search;
                         }, 1200);
                     },
                     error: function(xhr) {

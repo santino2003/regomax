@@ -10,7 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/home.css">
 </head>
-<body>
+<body data-allow-back-navigation="true">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="/home">
@@ -138,7 +138,7 @@
                                 <button type="submit" id="submitBtn" class="btn btn-primary">
                                     <i class="bi bi-save me-2"></i>Guardar Orden de Trabajo
                                 </button>
-                                <a href="/ordenes-trabajo" class="btn btn-outline-secondary ms-2">
+                                <a href="/ordenes-trabajo" class="btn btn-outline-secondary ms-2" id="cancelLink">
                                     <i class="bi bi-x-circle me-2"></i>Cancelar
                                 </a>
                             </div>
@@ -156,6 +156,11 @@
     <script>
         $(document).ready(function() {
             const form = $('#formNuevaOrdenTrabajo');
+            const requestedReturnTo = new URLSearchParams(window.location.search).get('returnTo');
+            const returnTo = requestedReturnTo === '/ordenes-trabajo' || requestedReturnTo?.startsWith('/ordenes-trabajo?')
+                ? requestedReturnTo
+                : '/ordenes-trabajo';
+            $('#cancelLink').attr('href', returnTo);
 
             $('#asignado_a').select2({
                 theme: 'bootstrap-5',
@@ -215,7 +220,7 @@
                     success: function(response) {
                         showAlert(`Orden de trabajo ${response.id} creada exitosamente`, 'success');
                         setTimeout(() => {
-                            window.location.href = '/ordenes-trabajo';
+                            window.location.href = returnTo;
                         }, 1200);
                     },
                     error: function(xhr) {

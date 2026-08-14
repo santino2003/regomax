@@ -56,7 +56,8 @@ const maquinaController = {
         try {
             const page = parseInt(req.query.page, 10) || 1;
             const limit = parseInt(req.query.limit, 10) || 10;
-            const resultado = await maquinaService.obtenerTodas(page, limit);
+            const filtros = { nombre: req.query.nombre || '' };
+            const resultado = await maquinaService.obtenerTodas(page, limit, filtros);
             return res.status(200).json(resultado);
         } catch (error) {
             console.error('Error al obtener máquinas:', error);
@@ -68,12 +69,14 @@ const maquinaController = {
         try {
             const page = parseInt(req.query.page, 10) || 1;
             const limit = parseInt(req.query.limit, 10) || 10;
-            const resultado = await maquinaService.obtenerTodas(page, limit);
+            const filtros = { nombre: req.query.nombre || '' };
+            const resultado = await maquinaService.obtenerTodas(page, limit, filtros);
 
             res.render('listarMaquinas', {
                 username: req.user.username,
                 maquinas: resultado.data,
-                pagination: resultado.pagination
+                pagination: resultado.pagination,
+                filtros
             });
         } catch (error) {
             console.error('Error al listar máquinas:', error);
