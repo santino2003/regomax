@@ -155,6 +155,39 @@ function setupViewSiteLink() {
     }
 }
 
+// Conserva la URL completa del listado (página y filtros) al navegar a
+// pantallas relacionadas. Las vistas activan este comportamiento con data-*.
+function setupListStateNavigation() {
+    const listPath = document.body.dataset.stateListPath;
+    const returnListPath = document.body.dataset.returnListPath;
+
+    if (listPath && window.location.pathname === listPath) {
+        const returnTo = window.location.pathname + window.location.search;
+        document.querySelectorAll('[data-preserve-list-state]').forEach((link) => {
+            const url = new URL(link.href, window.location.origin);
+            url.searchParams.set('returnTo', returnTo);
+            link.href = url.pathname + url.search;
+        });
+    }
+
+    if (returnListPath) {
+        const requestedReturnTo = new URLSearchParams(window.location.search).get('returnTo');
+        const validReturnTo = requestedReturnTo === returnListPath
+            || requestedReturnTo?.startsWith(`${returnListPath}?`);
+        const returnTo = validReturnTo ? requestedReturnTo : returnListPath;
+        window.listReturnTo = returnTo;
+
+        document.querySelectorAll('[data-return-to-list]').forEach((link) => {
+            link.href = returnTo;
+        });
+        document.querySelectorAll('[data-preserve-return-to]').forEach((link) => {
+            const url = new URL(link.href, window.location.origin);
+            url.searchParams.set('returnTo', returnTo);
+            link.href = url.pathname + url.search;
+        });
+    }
+}
+
 // Inicializar cuando el DOM esté cargado
 document.addEventListener('DOMContentLoaded', function() {
     // Prevenir navegación hacia atrás
@@ -165,4 +198,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Configurar el enlace "Ver sitio"
     setupViewSiteLink();
+
+    setupListStateNavigation();
 });

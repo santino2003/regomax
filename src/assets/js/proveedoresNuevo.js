@@ -75,7 +75,7 @@ $(document).ready(function() {
                     $('#formNuevoProveedor').removeClass('was-validated');
                     
                     // Opcional: redirigir a la lista de proveedores
-                    window.location.href = '/proveedores';
+                    window.location.href = window.listReturnTo || '/proveedores';
                 }, 2000);
             } else {
                 showAlert(`Error: ${data.error || data.message}`, 'danger');

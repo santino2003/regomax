@@ -104,7 +104,7 @@
                             <label for="fecha_hasta" class="form-label">Hasta</label>
                             <input type="date" class="form-control" id="fecha_hasta" name="fecha_hasta" value="<%= filtros ? filtros.fecha_hasta : '' %>">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label for="maquina" class="form-label">Máquina</label>
                             <select class="form-select" id="maquina" name="maquina">
                                 <option value="">Todas</option>
@@ -115,21 +115,12 @@
                                 <% } %>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <label for="mantenimiento" class="form-label">Mantenimiento</label>
-                            <select class="form-select" id="mantenimiento" name="mantenimiento">
+                        <div class="col-md-3">
+                            <label for="estado" class="form-label">Estado</label>
+                            <select class="form-select" id="estado" name="estado">
                                 <option value="">Todos</option>
-                                <% ['Correctivo', 'Preventivo', 'Predictivo', 'Otro'].forEach((opcion) => { %>
-                                    <option value="<%= opcion %>" <%= filtros && filtros.mantenimiento === opcion ? 'selected' : '' %>><%= opcion %></option>
-                                <% }) %>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="tipo" class="form-label">Tipo</label>
-                            <select class="form-select" id="tipo" name="tipo">
-                                <option value="">Todos</option>
-                                <% ['Electrico', 'Mecanico', 'Hidraulico', 'Otro'].forEach((opcion) => { %>
-                                    <option value="<%= opcion %>" <%= filtros && filtros.tipo === opcion ? 'selected' : '' %>><%= opcion %></option>
+                                <% ['Pendiente', 'En Proceso', 'Cerrada'].forEach((opcion) => { %>
+                                    <option value="<%= opcion %>" <%= filtros && filtros.estado === opcion ? 'selected' : '' %>><%= opcion %></option>
                                 <% }) %>
                             </select>
                         </div>

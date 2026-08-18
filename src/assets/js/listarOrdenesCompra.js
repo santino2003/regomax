@@ -6,10 +6,50 @@ let currentFilters = {
     estado: 'En Proceso,Aprobada'
 };
 
-$(document).ready(function() {
-    cargarBienes();
+function leerEstadoDesdeUrl() {
+    const params = new URLSearchParams(window.location.search);
+    currentPage = Math.max(1, parseInt(params.get('page'), 10) || 1);
+    currentLimit = Math.max(1, parseInt(params.get('limit'), 10) || 50);
+    currentFilters = {
+        estado: params.has('estado') ? params.get('estado') : 'En Proceso,Aprobada',
+        condicion: params.get('condicion') || '',
+        bien_id: params.get('bien_id') || '',
+        busqueda: params.get('busqueda') || ''
+    };
+}
+
+function aplicarEstadoEnFormulario() {
     $('#filtroEstado').val(currentFilters.estado);
-    cargarOrdenes();
+    $('#filtroCondicion').val(currentFilters.condicion);
+    $('#filtroBien').val(currentFilters.bien_id);
+    $('#filtroBusqueda').val(currentFilters.busqueda);
+    $('#limitSelector').val(currentLimit);
+}
+
+function actualizarUrl(mode = 'push') {
+    const params = new URLSearchParams();
+    params.set('page', currentPage);
+    params.set('limit', currentLimit);
+    // Estado vacío significa "Todos" y debe distinguirse de la URL inicial,
+    // que usa el filtro predeterminado En Proceso/Aprobada.
+    params.set('estado', currentFilters.estado || '');
+    Object.entries(currentFilters).forEach(([key, value]) => {
+        if (key !== 'estado' && value) params.set(key, value);
+    });
+    const url = `${window.location.pathname}?${params.toString()}`;
+    window.history[mode === 'replace' ? 'replaceState' : 'pushState']({}, '', url);
+
+    const nuevaUrl = new URL('/ordenes-compra/nueva', window.location.origin);
+    nuevaUrl.searchParams.set('returnTo', window.location.pathname + window.location.search);
+    $('#nuevaOrdenLink').attr('href', nuevaUrl.pathname + nuevaUrl.search);
+}
+
+$(document).ready(function() {
+    leerEstadoDesdeUrl();
+    aplicarEstadoEnFormulario();
+    actualizarUrl('replace');
+    cargarBienes();
+    cargarOrdenes(currentPage, false);
     
     $('#filtrosForm').on('submit', function(e) {
         e.preventDefault();
@@ -19,12 +59,12 @@ $(document).ready(function() {
             bien_id: $('#filtroBien').val(),
             busqueda: $('#filtroBusqueda').val()
         };
-        cargarOrdenes(1);
+        cargarOrdenes(1, true);
     });
 
     $('#limitSelector').on('change', function() {
         currentLimit = parseInt($(this).val());
-        cargarOrdenes(1);
+        cargarOrdenes(1, true);
     });
 
     $('#btnGuardarEstado').on('click', function() {
@@ -51,6 +91,13 @@ $(document).ready(function() {
         localStorage.removeItem('token');
         window.location.href = '/login.html';
     });
+
+    window.addEventListener('popstate', function() {
+        leerEstadoDesdeUrl();
+        aplicarEstadoEnFormulario();
+        actualizarUrl('replace');
+        cargarOrdenes(currentPage, false);
+    });
 });
 
 // Hacer la función global para que funcione desde los onclick en HTML
@@ -69,6 +116,7 @@ function cargarBienes() {
                 response.data.bienes.forEach(bien => {
                     select.append(`<option value="${bien.id}">${bien.codigo} - ${bien.nombre}</option>`);
                 });
+                select.val(currentFilters.bien_id);
             }
         },
         error: function(xhr) {
@@ -77,7 +125,10 @@ function cargarBienes() {
     });
 }
 
-function cargarOrdenes(page = 1) {
+function cargarOrdenes(page = 1, updateHistory = true) {
+    currentPage = page;
+    if (updateHistory) actualizarUrl('push');
+
     const params = {
         pagina: page,
         limite: currentLimit,
@@ -118,6 +169,7 @@ function renderizarTabla(ordenes) {
         return;
     }
 
+    const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
     ordenes.forEach((orden, index) => {
         const estadoClass = orden.estado.replace(/\s/g, '');
         const fechaSolicitada = orden.fecha_entrega_solicitada ? 
@@ -143,10 +195,10 @@ function renderizarTabla(ordenes) {
                 <td title="${orden.asunto || ''}">${asuntoCorto}</td>
                 <td>${orden.creado_por}</td>
                 <td>
-                    <a href="/ordenes-compra/${orden.id}" class="btn btn-sm btn-info" title="Ver">
+                    <a href="/ordenes-compra/${orden.id}?returnTo=${returnTo}" class="btn btn-sm btn-info" title="Ver">
                         <i class="bi bi-eye"></i>
                     </a>
-                    <a href="/ordenes-compra/${orden.id}/editar" class="btn btn-sm btn-warning" title="Editar">
+                    <a href="/ordenes-compra/${orden.id}/editar?returnTo=${returnTo}" class="btn btn-sm btn-warning" title="Editar">
                         <i class="bi bi-pencil"></i>
                     </a>
                     <button class="btn btn-sm btn-success" onclick="abrirModalEstado(${orden.id}, '${orden.estado}')" title="Cambiar Estado">
