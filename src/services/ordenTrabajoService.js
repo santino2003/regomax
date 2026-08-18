@@ -116,8 +116,7 @@ class OrdenTrabajoService {
             fecha_desde: filtros.fecha_desde || '',
             fecha_hasta: filtros.fecha_hasta || '',
             maquina: filtros.maquina || '',
-            mantenimiento: MANTENIMIENTOS_VALIDOS.includes(filtros.mantenimiento) ? filtros.mantenimiento : '',
-            tipo: TIPOS_VALIDOS.includes(filtros.tipo) ? filtros.tipo : ''
+            estado: ESTADOS_VALIDOS.includes(filtros.estado) ? filtros.estado : ''
         };
     }
 }

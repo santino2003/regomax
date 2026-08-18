@@ -121,6 +121,11 @@ class OrdenTrabajoRepository {
             params.push(`%${filtros.maquina}%`);
         }
 
+        if (filtros.estado) {
+            conditions.push('estado = ?');
+            params.push(filtros.estado);
+        }
+
         if (filtros.mantenimiento) {
             // Los datos históricos importados están guardados como arrays JSON
             // (p. ej. ["Correctivo"]); los nuevos, como strings JSON.

@@ -11,8 +11,7 @@ function obtenerFiltros(query) {
         fecha_desde: query.fecha_desde || '',
         fecha_hasta: query.fecha_hasta || '',
         maquina: query.maquina || '',
-        mantenimiento: query.mantenimiento || '',
-        tipo: query.tipo || ''
+        estado: Object.prototype.hasOwnProperty.call(query, 'estado') ? query.estado : 'Pendiente'
     };
 }
 
