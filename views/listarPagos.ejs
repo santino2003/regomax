@@ -55,7 +55,7 @@
         }
     </style>
 </head>
-<body>
+<body data-allow-back-navigation="true" data-state-list-path="/pagos/listar">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
@@ -411,7 +411,7 @@
                                             </td>
                                             <td>
                                                 <div class="btn-group" role="group">
-                                                    <a href="/pagos/<%= pago.id %>" 
+                                                    <a href="/pagos/<%= pago.id %>" data-preserve-list-state
                                                        class="btn btn-sm btn-info" 
                                                        title="Ver detalles">
                                                         <i class="bi bi-eye"></i>
@@ -721,6 +721,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="/assets/js/common.js"></script>
     
     <!-- Script de Pagos -->
     <script src="/assets/js/pagos.js"></script>

@@ -14,7 +14,7 @@
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
 </head>
-<body>
+<body data-allow-back-navigation="true" data-return-list-path="/proveedores">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
@@ -125,7 +125,7 @@
                                 <button type="submit" id="submitBtn" class="btn btn-primary">
                                     <i class="bi bi-save me-2"></i>Guardar Proveedor
                                 </button>
-                                <a href="/proveedores" class="btn btn-outline-secondary ms-2">
+                                <a href="/proveedores" class="btn btn-outline-secondary ms-2" data-return-to-list>
                                     <i class="bi bi-x-circle me-2"></i>Cancelar
                                 </a>
                             </div>
