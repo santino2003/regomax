@@ -150,7 +150,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = '/almacenes';
+                        window.location.href = window.listReturnTo || '/almacenes';
                     } else {
                         alert('Error al eliminar el almacén');
                         $('#confirmDelete').html(originalText).prop('disabled', false);

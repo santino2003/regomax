@@ -196,7 +196,7 @@ $(document).ready(function() {
             if (data.success) {
                 showAlert('Kit creado exitosamente', 'success');
                 setTimeout(() => {
-                    window.location.href = '/kits/' + data.data.id;
+                    window.location.href = '/kits/' + data.data.id + '?returnTo=' + encodeURIComponent(window.listReturnTo || '/kits');
                 }, 1500);
             } else {
                 showAlert(data.error || 'Error al crear el kit', 'danger');

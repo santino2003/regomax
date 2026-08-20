@@ -141,7 +141,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = '/almacenes';
+                        window.location.href = window.listReturnTo || '/almacenes';
                     } else {
                         showAlert(data.message || 'Error al crear el almacén', 'danger');
                         submitBtn.html(originalText).prop('disabled', false);

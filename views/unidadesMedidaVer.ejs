@@ -154,7 +154,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = '/unidades-medida';
+                        window.location.href = window.listReturnTo || '/unidades-medida';
                     } else {
                         alert('Error al eliminar la unidad de medida');
                         $('#confirmDelete').html(originalText).prop('disabled', false);

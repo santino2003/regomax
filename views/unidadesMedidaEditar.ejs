@@ -152,7 +152,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = `/unidades-medida/${unidadMedidaId}`;
+                        window.location.href = `/unidades-medida/${unidadMedidaId}?returnTo=${encodeURIComponent(window.listReturnTo || '/unidades-medida')}`;
                     } else {
                         showAlert(data.message || 'Error al actualizar la unidad de medida', 'danger');
                         submitBtn.html(originalText).prop('disabled', false);

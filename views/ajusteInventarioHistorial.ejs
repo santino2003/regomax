@@ -127,9 +127,34 @@
             let paginaActual = 1;
             let registrosPorPagina = 20;
 
-            // Obtener el bien_id de la URL si existe
-            const urlParams = new URLSearchParams(window.location.search);
-            const bienIdFiltro = urlParams.get('bien_id');
+            let bienIdFiltro = '';
+
+            function leerEstadoDesdeUrl() {
+                const params = new URLSearchParams(window.location.search);
+                paginaActual = Math.max(1, parseInt(params.get('page'), 10) || 1);
+                registrosPorPagina = Math.max(1, parseInt(params.get('limit'), 10) || 20);
+                bienIdFiltro = params.get('bien_id') || '';
+                $('#filtroTipo').val(params.get('tipo_movimiento') || '');
+                $('#filtroFechaDesde').val(params.get('fecha_desde') || '');
+                $('#filtroFechaHasta').val(params.get('fecha_hasta') || '');
+                $('#registrosPorPagina').val(registrosPorPagina);
+            }
+
+            function actualizarUrl(mode = 'push') {
+                const params = new URLSearchParams({ page: paginaActual, limit: registrosPorPagina });
+                if (bienIdFiltro) params.set('bien_id', bienIdFiltro);
+                if ($('#filtroTipo').val()) params.set('tipo_movimiento', $('#filtroTipo').val());
+                if ($('#filtroFechaDesde').val()) params.set('fecha_desde', $('#filtroFechaDesde').val());
+                if ($('#filtroFechaHasta').val()) params.set('fecha_hasta', $('#filtroFechaHasta').val());
+                window.history[mode === 'replace' ? 'replaceState' : 'pushState']({}, '', `${window.location.pathname}?${params}`);
+
+                const nuevaUrl = new URL('/ajuste-inventario', window.location.origin);
+                nuevaUrl.searchParams.set('returnTo', window.location.pathname + window.location.search);
+                $('a[href="/ajuste-inventario"], a[href^="/ajuste-inventario?returnTo="]').attr('href', nuevaUrl.pathname + nuevaUrl.search);
+            }
+
+            leerEstadoDesdeUrl();
+            actualizarUrl('replace');
 
             // Si hay un bien_id en la URL, cargar el nombre del bien
             if (bienIdFiltro) {
@@ -137,19 +162,19 @@
             }
 
             // Cargar movimientos al inicio
-            cargarMovimientos();
+            cargarMovimientos(false);
             
             // Event handler para cambiar registros por página
             $('#registrosPorPagina').on('change', function() {
                 registrosPorPagina = parseInt($(this).val());
                 paginaActual = 1; // Reiniciar a la primera página
-                cargarMovimientos();
+                cargarMovimientos(true);
             });
 
             // Botón filtrar
             $('#btnFiltrar').on('click', function() {
                 paginaActual = 1;
-                cargarMovimientos();
+                cargarMovimientos(true);
             });
 
             /**
@@ -182,7 +207,8 @@
             /**
              * Cargar movimientos con filtros
              */
-            function cargarMovimientos() {
+            function cargarMovimientos(updateHistory = false) {
+                if (updateHistory) actualizarUrl('push');
                 const filtros = {
                     page: paginaActual,
                     limit: registrosPorPagina,
@@ -391,7 +417,7 @@
                     const pagina = parseInt($(this).data('pagina'));
                     if (pagina > 0 && pagina <= totalPages) {
                         paginaActual = pagina;
-                        cargarMovimientos();
+                        cargarMovimientos(true);
                     }
                 });
             }
@@ -402,6 +428,11 @@
             function actualizarInfoRegistros(mostrados, total) {
                 $('#infoRegistros').text(`Mostrando ${mostrados} de ${total} registros`);
             }
+
+            window.addEventListener('popstate', function() {
+                leerEstadoDesdeUrl();
+                actualizarUrl('replace');
+                cargarMovimientos(false);
+            });
         });
     </script>
-

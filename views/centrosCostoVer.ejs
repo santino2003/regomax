@@ -146,7 +146,7 @@
                     success: function(response) {
                         showAlert('Centro de costo eliminado exitosamente', 'success');
                         setTimeout(() => {
-                            window.location.href = '/centros-costo/listar';
+                            window.location.href = window.listReturnTo || '/centros-costo/listar';
                         }, 1500);
                     },
                     error: function(xhr) {
