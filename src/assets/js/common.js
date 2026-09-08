@@ -37,9 +37,22 @@ if (typeof window.showAlert !== 'function') {
 
 // Función para evitar el caché y prevenir la navegación hacia atrás
 function preventBackNavigation() {
-    // Prevenir el uso del caché para esta página
+    // Algunas pantallas conservan su estado en la URL y necesitan permitir
+    // la navegación normal con Atrás/Adelante.
+    const statefulWarehousePaths = [
+        '/familias', '/categorias', '/centros-costo', '/unidades-medida',
+        '/almacenes', '/bienes', '/kits', '/salida', '/config-alertas-stock', '/ajuste-inventario',
+        '/users', '/historial', '/ordenes', '/despachos', '/nfu', '/clientes-nfu',
+        '/productos', '/bolsones', '/bolsones-despachados', '/partes-diarios',
+        '/reporte-general', '/reporte-ar', '/dias-habiles', '/fallas'
+    ];
+    const allowBackNavigation = document.body.dataset.allowBackNavigation === 'true'
+        || statefulWarehousePaths.some((path) => window.location.pathname === path || window.location.pathname.startsWith(`${path}/`));
+
+    // En las pantallas con estado en URL se permite restaurar la página desde
+    // el back/forward cache. Así Volver no repite el render ni las consultas.
     window.onpageshow = function(event) {
-        if (event.persisted) {
+        if (event.persisted && !allowBackNavigation) {
             // Si la página se carga desde el caché (botón atrás)
             window.location.reload();
         }
@@ -52,9 +65,6 @@ function preventBackNavigation() {
         }
     });
     
-    // Algunas pantallas conservan su estado en la URL y necesitan permitir
-    // la navegación normal con Atrás/Adelante.
-    const allowBackNavigation = document.body.dataset.allowBackNavigation === 'true';
     if (!allowBackNavigation) {
         window.history.pushState(null, null, window.location.href);
         window.onpopstate = function() {
@@ -158,13 +168,54 @@ function setupViewSiteLink() {
 // Conserva la URL completa del listado (página y filtros) al navegar a
 // pantallas relacionadas. Las vistas activan este comportamiento con data-*.
 function setupListStateNavigation() {
-    const listPath = document.body.dataset.stateListPath;
-    const returnListPath = document.body.dataset.returnListPath;
+    const warehouseModules = [
+        { listPath: '/familias', prefixes: ['/familias'] },
+        { listPath: '/categorias', prefixes: ['/categorias'] },
+        { listPath: '/centros-costo/listar', prefixes: ['/centros-costo'] },
+        { listPath: '/unidades-medida', prefixes: ['/unidades-medida'] },
+        { listPath: '/almacenes', prefixes: ['/almacenes'] },
+        { listPath: '/bienes', prefixes: ['/bienes', '/salida', '/config-alertas-stock'] },
+        { listPath: '/kits', prefixes: ['/kits'] },
+        { listPath: '/ajuste-inventario/historial', prefixes: ['/ajuste-inventario'] },
+        { listPath: '/users', prefixes: ['/users'] },
+        { listPath: '/historial', prefixes: ['/historial'] },
+        { listPath: '/ordenes', prefixes: ['/ordenes'] },
+        { listPath: '/nfu', prefixes: ['/nfu'] },
+        { listPath: '/clientes-nfu', prefixes: ['/clientes-nfu'] },
+        { listPath: '/productos', prefixes: ['/productos'] },
+        { listPath: '/bolsones', prefixes: ['/bolsones'] },
+        { listPath: '/bolsones-despachados', prefixes: ['/bolsones-despachados'] },
+        {
+            listPath: '/partes-diarios',
+            prefixes: ['/partes-diarios'],
+            isListPath: (path) => path === '/partes-diarios' || path.startsWith('/partes-diarios/estado/')
+        },
+        { listPath: '/reporte-general', prefixes: ['/reporte-general', '/reporte-ar'] },
+        { listPath: '/dias-habiles', prefixes: ['/dias-habiles'] },
+        { listPath: '/fallas', prefixes: ['/fallas'] }
+    ];
+    const inferredModule = warehouseModules.find((module) =>
+        module.prefixes.some((prefix) => window.location.pathname === prefix || window.location.pathname.startsWith(`${prefix}/`))
+    );
+    const isCurrentListPath = inferredModule
+        && (inferredModule.isListPath
+            ? inferredModule.isListPath(window.location.pathname)
+            : window.location.pathname === inferredModule.listPath);
+    const listPath = document.body.dataset.stateListPath
+        || (isCurrentListPath ? window.location.pathname : null);
+    const returnListPath = document.body.dataset.returnListPath
+        || (inferredModule && !isCurrentListPath ? inferredModule.listPath : null);
 
     if (listPath && window.location.pathname === listPath) {
         const returnTo = window.location.pathname + window.location.search;
-        document.querySelectorAll('[data-preserve-list-state]').forEach((link) => {
+        const links = document.querySelectorAll('[data-preserve-list-state], a[href]');
+        links.forEach((link) => {
             const url = new URL(link.href, window.location.origin);
+            const belongsToModule = inferredModule?.prefixes.some((prefix) =>
+                url.pathname === prefix || url.pathname.startsWith(`${prefix}/`)
+            );
+            if (!link.hasAttribute('data-preserve-list-state')
+                && (!belongsToModule || url.pathname === listPath)) return;
             url.searchParams.set('returnTo', returnTo);
             link.href = url.pathname + url.search;
         });
@@ -172,8 +223,24 @@ function setupListStateNavigation() {
 
     if (returnListPath) {
         const requestedReturnTo = new URLSearchParams(window.location.search).get('returnTo');
-        const validReturnTo = requestedReturnTo === returnListPath
-            || requestedReturnTo?.startsWith(`${returnListPath}?`);
+        let requestedReturnPath = null;
+        let requestedReturnOrigin = null;
+        try {
+            const requestedUrl = requestedReturnTo
+                ? new URL(requestedReturnTo, window.location.origin)
+                : null;
+            requestedReturnPath = requestedUrl?.pathname || null;
+            requestedReturnOrigin = requestedUrl?.origin || null;
+        } catch (error) {
+            requestedReturnPath = null;
+        }
+        const validReturnTo = requestedReturnTo
+            && requestedReturnOrigin === window.location.origin
+            && requestedReturnTo.startsWith('/')
+            && !requestedReturnTo.startsWith('//')
+            && (inferredModule?.isListPath
+                ? inferredModule.isListPath(requestedReturnPath)
+                : requestedReturnPath === returnListPath);
         const returnTo = validReturnTo ? requestedReturnTo : returnListPath;
         window.listReturnTo = returnTo;
 
@@ -185,6 +252,43 @@ function setupListStateNavigation() {
             url.searchParams.set('returnTo', returnTo);
             link.href = url.pathname + url.search;
         });
+
+        if (inferredModule) {
+            document.querySelectorAll('a[href]').forEach((link) => {
+                const url = new URL(link.href, window.location.origin);
+                const belongsToModule = inferredModule.prefixes.some((prefix) =>
+                    url.pathname === prefix || url.pathname.startsWith(`${prefix}/`)
+                );
+                if (!belongsToModule) return;
+                if (url.pathname === returnListPath) {
+                    link.href = returnTo;
+                    return;
+                }
+                url.searchParams.set('returnTo', returnTo);
+                link.href = url.pathname + url.search;
+            });
+        }
+
+        // Si el usuario llegó directamente desde ese listado, Volver usa la
+        // entrada previa del historial para recuperar el DOM ya renderizado.
+        let previousUrl = null;
+        try {
+            previousUrl = document.referrer ? new URL(document.referrer) : null;
+        } catch (error) {
+            previousUrl = null;
+        }
+        if (previousUrl
+            && previousUrl.origin === window.location.origin
+            && previousUrl.pathname + previousUrl.search === returnTo) {
+            document.querySelectorAll('a[href]').forEach((link) => {
+                const url = new URL(link.href, window.location.origin);
+                if (url.pathname + url.search !== returnTo) return;
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    window.history.back();
+                });
+            });
+        }
     }
 }
 

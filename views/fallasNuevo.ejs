@@ -29,7 +29,7 @@
             const button = $('#submitBtn').prop('disabled', true);
             const response = await fetch('/api/fallas/nuevo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre: $('#nombre').val().trim() }) });
             const data = await response.json();
-            if (response.ok && data.success) window.location.href = '/fallas';
+            if (response.ok && data.success) window.location.href = window.listReturnTo || '/fallas';
             else { $('#alertPlaceholder').html(`<div class="alert alert-danger">${data.error || 'Error al crear la falla'}</div>`); button.prop('disabled', false); }
         });
     </script>

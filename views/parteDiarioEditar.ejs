@@ -445,7 +445,7 @@
                         <!-- Botones -->
                         <div class="row mt-4">
                             <div class="col">
-                                <button type="button" class="btn btn-secondary" onclick="window.location.href='/partes-diarios'">
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href=window.listReturnTo || '/partes-diarios'">
                                     <i class="bi bi-arrow-left me-2"></i>Cancelar
                                 </button>
                                 
@@ -681,7 +681,7 @@
                     success: function(response) {
                         if (response.success) {
                             alert('Parte diario actualizado exitosamente');
-                            window.location.href = '/partes-diarios';
+                            window.location.href = window.listReturnTo || '/partes-diarios';
                         } else {
                             alert(`Error: ${response.message}`);
                         }
@@ -709,7 +709,7 @@
                     success: function(response) {
                         if (response.success) {
                             // Redireccionar a la lista de partes diarios
-                            window.location.href = '/partes-diarios';
+                            window.location.href = window.listReturnTo || '/partes-diarios';
                         } else {
                             alert('Error al eliminar: ' + response.message);
                         }

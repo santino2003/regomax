@@ -89,7 +89,7 @@ $(document).ready(function() {
                     $('#formNuevoCliente').removeClass('was-validated');
                     
                     // Opcional: redirigir a la lista de clientes
-                    window.location.href = '/clientes-nfu';
+                    window.location.href = window.listReturnTo || '/clientes-nfu';
                 }, 2000);
             } else {
                 showAlert(`Error: ${data.error || data.message}`, 'danger');

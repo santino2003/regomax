@@ -253,7 +253,7 @@
                 
                 if (data.success) {
                     alert('Ingreso de NFU registrado correctamente');
-                    window.location.href = '/nfu';
+                    window.location.href = window.listReturnTo || '/nfu';
                 } else {
                     alert('Error: ' + (data.mensaje || 'Ocurrió un error al registrar el ingreso'));
                 }

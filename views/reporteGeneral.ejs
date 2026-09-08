@@ -657,7 +657,10 @@
             }
             
             // Redirigir a la página del reporte AR con la fecha seleccionada
-            window.location.href = `/reporte-ar?fecha=${fecha}`;
+            const reporteUrl = new URL('/reporte-ar', window.location.origin);
+            reporteUrl.searchParams.set('fecha', fecha);
+            reporteUrl.searchParams.set('returnTo', window.location.pathname + window.location.search);
+            window.location.href = reporteUrl.pathname + reporteUrl.search;
         }
 
         function formatNumber(num) {

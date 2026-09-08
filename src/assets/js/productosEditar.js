@@ -182,7 +182,7 @@ $(document).ready(function() {
                     
                     // Redirigir al listado después de 1.5 segundos
                     setTimeout(function() {
-                        window.location.href = '/productos';
+                        window.location.href = window.listReturnTo || '/productos';
                     }, 1500);
                 } else {
                     mostrarAlerta('Error: ' + response.message, 'danger');

@@ -204,7 +204,7 @@ $(document).ready(function() {
             if (data.success) {
                 showAlert('Kit actualizado exitosamente', 'success');
                 setTimeout(() => {
-                    window.location.href = '/kits/' + kitId;
+                    window.location.href = '/kits/' + kitId + '?returnTo=' + encodeURIComponent(window.listReturnTo || '/kits');
                 }, 1500);
             } else {
                 showAlert(data.error || 'Error al actualizar el kit', 'danger');

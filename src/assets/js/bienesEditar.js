@@ -318,7 +318,7 @@ $(document).ready(function() {
             if (data.success) {
                 showAlert('Bien actualizado correctamente', 'success');
                 setTimeout(() => {
-                    window.location.href = `/bienes/${bienId}`;
+                    window.location.href = `/bienes/${bienId}?returnTo=${encodeURIComponent(window.listReturnTo || '/bienes')}`;
                 }, 1000);
             } else {
                 showAlert(data.error || 'Error al actualizar el bien', 'danger');

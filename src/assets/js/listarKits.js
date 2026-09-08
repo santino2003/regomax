@@ -4,6 +4,30 @@ $(document).ready(function() {
     let currentFilters = {};
     let kitIdToDelete = null;
     const modalEliminar = new bootstrap.Modal('#modalEliminar');
+
+    function leerEstadoDesdeUrl() {
+        const params = new URLSearchParams(window.location.search);
+        currentPage = Math.max(1, parseInt(params.get('page'), 10) || 1);
+        currentFilters = {};
+        ['tipo', 'categoria_id', 'busqueda'].forEach((key) => {
+            const value = params.get(key);
+            if (value) currentFilters[key] = value;
+        });
+    }
+
+    function aplicarEstadoEnFormulario() {
+        $('#filtroTipo').val(currentFilters.tipo || '');
+        $('#filtroCategoria').val(currentFilters.categoria_id || '');
+        $('#filtroBusqueda').val(currentFilters.busqueda || '');
+    }
+
+    function actualizarUrl(mode = 'push') {
+        const params = new URLSearchParams({ page: currentPage, limit: 10, ...currentFilters });
+        window.history[mode === 'replace' ? 'replaceState' : 'pushState']({}, '', `${window.location.pathname}?${params}`);
+        const nuevaUrl = new URL('/kits/nuevo', window.location.origin);
+        nuevaUrl.searchParams.set('returnTo', window.location.pathname + window.location.search);
+        $('a[href="/kits/nuevo"], a[href^="/kits/nuevo?"]').attr('href', nuevaUrl.pathname + nuevaUrl.search);
+    }
     
     function showAlert(message, type) {
         const alertHtml = `
@@ -16,7 +40,9 @@ $(document).ready(function() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
-    function cargarKits(page = 1) {
+    function cargarKits(page = 1, updateHistory = true) {
+        currentPage = page;
+        if (updateHistory) actualizarUrl('push');
         const params = new URLSearchParams({
             page: page,
             limit: 10,
@@ -49,6 +75,7 @@ $(document).ready(function() {
         }
         
         let html = '';
+        const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
         kits.forEach(kit => {
             const stockClass = kit.cantidad_stock <= 0 ? 'text-danger fw-bold' : '';
             
@@ -64,10 +91,10 @@ $(document).ready(function() {
                     <td class="text-end ${stockClass}">${kit.cantidad_stock}</td>
                     <td class="text-end">$${parseFloat(kit.precio || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
                     <td class="text-center">
-                        <a href="/kits/${kit.id}" class="btn btn-sm btn-outline-info" title="Ver">
+                        <a href="/kits/${kit.id}?returnTo=${returnTo}" class="btn btn-sm btn-outline-info" title="Ver">
                             <i class="bi bi-eye"></i>
                         </a>
-                        <a href="/kits/editar/${kit.id}" class="btn btn-sm btn-outline-warning" title="Editar">
+                        <a href="/kits/editar/${kit.id}?returnTo=${returnTo}" class="btn btn-sm btn-outline-warning" title="Editar">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <button class="btn btn-sm btn-outline-secondary" onclick="imprimirCodigoKit(${kit.id}, '${kit.codigo.replace(/'/g, "\\'")}', '${kit.nombre.replace(/'/g, "\\'")}')">
@@ -150,7 +177,7 @@ $(document).ready(function() {
             if (data.success) {
                 showAlert('Kit eliminado correctamente', 'success');
                 modalEliminar.hide();
-                cargarKits(currentPage);
+                cargarKits(currentPage, false);
             } else {
                 showAlert(data.error || 'Error al eliminar el kit', 'danger');
             }
@@ -324,6 +351,15 @@ $(document).ready(function() {
         printFrame.src = 'about:blank';
     }
     
-    // Cargar datos iniciales
-    cargarKits(1);
+    window.addEventListener('popstate', function() {
+        leerEstadoDesdeUrl();
+        aplicarEstadoEnFormulario();
+        actualizarUrl('replace');
+        cargarKits(currentPage, false);
+    });
+
+    leerEstadoDesdeUrl();
+    aplicarEstadoEnFormulario();
+    actualizarUrl('replace');
+    cargarKits(currentPage, false);
 });

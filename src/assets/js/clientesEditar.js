@@ -87,7 +87,7 @@ $(document).ready(function() {
                 
                 // Redirigir a la vista del cliente después de 2 segundos
                 setTimeout(() => {
-                    window.location.href = `/clientes-nfu/${clienteId}`;
+                    window.location.href = `/clientes-nfu/${clienteId}?returnTo=${encodeURIComponent(window.listReturnTo || '/clientes-nfu')}`;
                 }, 2000);
             } else {
                 showAlert(`Error: ${data.error || data.message}`, 'danger');

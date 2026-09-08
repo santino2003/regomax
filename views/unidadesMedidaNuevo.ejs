@@ -149,7 +149,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = '/unidades-medida';
+                        window.location.href = window.listReturnTo || '/unidades-medida';
                     } else {
                         showAlert(data.message || 'Error al crear la unidad de medida', 'danger');
                         submitBtn.html(originalText).prop('disabled', false);

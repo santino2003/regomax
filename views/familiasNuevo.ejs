@@ -141,7 +141,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = '/familias';
+                        window.location.href = window.listReturnTo || '/familias';
                     } else {
                         showAlert(data.message || 'Error al crear la familia', 'danger');
                         submitBtn.html(originalText).prop('disabled', false);

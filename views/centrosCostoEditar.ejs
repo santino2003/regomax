@@ -115,7 +115,7 @@
                     success: function(response) {
                         showAlert('Centro de costo actualizado exitosamente', 'success');
                         setTimeout(() => {
-                            window.location.href = `/centros-costo/${centroCostoId}/ver`;
+                            window.location.href = `/centros-costo/${centroCostoId}/ver?returnTo=${encodeURIComponent(window.listReturnTo || '/centros-costo/listar')}`;
                         }, 1500);
                     },
                     error: function(xhr) {

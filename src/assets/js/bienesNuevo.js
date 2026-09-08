@@ -309,17 +309,17 @@ $(document).ready(function() {
                     
                     // Redirigir después de 3 segundos para que el usuario vea los errores
                     setTimeout(() => {
-                        window.location.href = `/bienes/${bienId}`;
+                        window.location.href = `/bienes/${bienId}?returnTo=${encodeURIComponent(window.listReturnTo || '/bienes')}`;
                     }, 3000);
                 } else {
                     showAlert(`Bien creado correctamente con ${resultado.archivosSubidos.length} archivo(s)`, 'success');
                     setTimeout(() => {
-                        window.location.href = `/bienes/${bienId}`;
+                        window.location.href = `/bienes/${bienId}?returnTo=${encodeURIComponent(window.listReturnTo || '/bienes')}`;
                     }, 1000);
                 }
             } else {
                 // Sin archivos, redirigir directamente
-                window.location.href = '/bienes';
+                window.location.href = window.listReturnTo || '/bienes';
             }
             
         } catch (error) {

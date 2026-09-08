@@ -5,6 +5,37 @@ $(document).ready(function() {
     let currentFilters = {};
     let bienIdToDelete = null;
     const modalEliminar = new bootstrap.Modal('#modalEliminar');
+
+    function leerEstadoDesdeUrl() {
+        const params = new URLSearchParams(window.location.search);
+        currentPage = Math.max(1, parseInt(params.get('page'), 10) || 1);
+        currentLimit = Math.max(1, parseInt(params.get('limit'), 10) || 50);
+        currentFilters = {};
+        ['tipo', 'categoria_id', 'familia_id', 'busqueda', 'critico'].forEach((key) => {
+            const value = params.get(key);
+            if (value) currentFilters[key] = value;
+        });
+    }
+
+    function aplicarEstadoEnFormulario() {
+        $('#filtroTipo').val(currentFilters.tipo || '');
+        $('#filtroCategoria').val(currentFilters.categoria_id || '');
+        $('#filtroFamilia').val(currentFilters.familia_id || '');
+        $('#filtroBusqueda').val(currentFilters.busqueda || '');
+        $('#filtroCritico').prop('checked', currentFilters.critico === '1');
+        $('#limitSelector').val(currentLimit);
+    }
+
+    function actualizarUrl(mode = 'push') {
+        const params = new URLSearchParams({ page: currentPage, limit: currentLimit, ...currentFilters });
+        window.history[mode === 'replace' ? 'replaceState' : 'pushState']({}, '', `${window.location.pathname}?${params}`);
+        const returnTo = window.location.pathname + window.location.search;
+        $('a[href="/bienes/nuevo"], a[href^="/bienes/nuevo?"], a[href="/salida"], a[href^="/salida?"]').each(function() {
+            const url = new URL(this.href, window.location.origin);
+            url.searchParams.set('returnTo', returnTo);
+            this.href = url.pathname + url.search;
+        });
+    }
     
     function showAlert(message, type) {
         const alertHtml = `
@@ -17,7 +48,9 @@ $(document).ready(function() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
-    function cargarBienes(page = 1) {
+    function cargarBienes(page = 1, updateHistory = true) {
+        currentPage = page;
+        if (updateHistory) actualizarUrl('push');
         const params = new URLSearchParams({
             page: page,
             limit: currentLimit,
@@ -65,6 +98,7 @@ $(document).ready(function() {
         }
         
         let html = '';
+        const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
         bienes.forEach(bien => {
             // Considerar crítico si cantidad_critica está definida (incluso si es 0) y el stock es menor o igual
             const stockClass = (bien.cantidad_critica !== null && bien.cantidad_critica !== undefined && bien.cantidad_stock <= bien.cantidad_critica)
@@ -89,10 +123,10 @@ $(document).ready(function() {
                     <td class="text-end ${stockClass}">${formatearCantidad(bien.cantidad_stock)}</td>
                     <td>${bien.ubicacion || '-'}</td>
                     <td class="text-center">
-                        <a href="/bienes/${bien.id}" class="btn btn-sm btn-outline-info" title="Ver">
+                        <a href="/bienes/${bien.id}?returnTo=${returnTo}" class="btn btn-sm btn-outline-info" title="Ver">
                             <i class="bi bi-eye"></i>
                         </a>
-                        <a href="/bienes/editar/${bien.id}" class="btn btn-sm btn-outline-warning" title="Editar">
+                        <a href="/bienes/editar/${bien.id}?returnTo=${returnTo}" class="btn btn-sm btn-outline-warning" title="Editar">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <a href="/ajuste-inventario/historial?bien_id=${bien.id}" class="btn btn-sm btn-outline-primary" title="Historial">
@@ -271,7 +305,7 @@ $(document).ready(function() {
         if (busqueda) currentFilters.busqueda = busqueda;
         if (critico) currentFilters.critico = '1';
         
-        cargarBienes(1);
+        cargarBienes(1, true);
     });
     
     $('#btnLimpiar').on('click', function() {
@@ -281,13 +315,13 @@ $(document).ready(function() {
         $('#filtroBusqueda').val('');
         $('#filtroCritico').prop('checked', false);
         currentFilters = {};
-        cargarBienes(1);
+        cargarBienes(1, true);
     });
     
     // Selector de límite
     $('#limitSelector').on('change', function() {
         currentLimit = parseInt($(this).val());
-        cargarBienes(1);
+        cargarBienes(1, true);
     });
     
     // Enter en búsqueda
@@ -427,6 +461,16 @@ $(document).ready(function() {
         printFrame.src = 'about:blank';
     }
     
-    // Cargar datos iniciales
-    cargarBienes(1);
+    window.addEventListener('popstate', function() {
+        leerEstadoDesdeUrl();
+        aplicarEstadoEnFormulario();
+        actualizarUrl('replace');
+        cargarBienes(currentPage, false);
+    });
+
+    // Cargar datos iniciales desde la URL.
+    leerEstadoDesdeUrl();
+    aplicarEstadoEnFormulario();
+    actualizarUrl('replace');
+    cargarBienes(currentPage, false);
 });

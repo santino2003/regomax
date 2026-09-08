@@ -22,7 +22,11 @@
             const id = $('#fallaId').val(); const button = $('#submitBtn').prop('disabled', true);
             const response = await fetch(`/api/fallas/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre: $('#nombre').val().trim() }) });
             const data = await response.json();
-            if (response.ok && data.success) window.location.href = `/fallas/${id}`;
+            if (response.ok && data.success) {
+                const detalle = new URL(`/fallas/${id}`, window.location.origin);
+                if (window.listReturnTo) detalle.searchParams.set('returnTo', window.listReturnTo);
+                window.location.href = detalle.pathname + detalle.search;
+            }
             else { $('#alertPlaceholder').html(`<div class="alert alert-danger">${data.error || 'Error al actualizar la falla'}</div>`); button.prop('disabled', false); }
         });
     </script>

@@ -147,17 +147,17 @@
                 .then(data => {
                     if (data.success) {
                         deleteModal.hide();
-                        window.location.href = '/familias';
+                        window.location.href = window.listReturnTo || '/familias';
                     } else {
                         deleteModal.hide();
                         console.error('Error:', data.message || 'No se pudo eliminar la familia');
-                        setTimeout(() => window.location.href = '/familias', 500);
+                        setTimeout(() => window.location.href = window.listReturnTo || '/familias', 500);
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     deleteModal.hide();
-                    setTimeout(() => window.location.href = '/familias', 500);
+                    setTimeout(() => window.location.href = window.listReturnTo || '/familias', 500);
                 })
                 .finally(() => {
                     btn.html(originalText).prop('disabled', false);

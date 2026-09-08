@@ -130,7 +130,7 @@
         }
     </style>
 </head>
-<body>
+<body data-allow-back-navigation="true" data-return-list-path="/ordenes">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
@@ -172,7 +172,7 @@
                             <i class="bi bi-truck me-2"></i>Despachos de Orden #<%= orden.id %>
                         </h4>
                         <div>
-                            <a href="/ordenes/<%= orden.id %>" class="btn btn-outline-primary">
+                            <a href="/ordenes/<%= orden.id %>" class="btn btn-outline-primary" data-preserve-return-to>
                                 <i class="bi bi-eye me-1"></i>Ver Orden
                             </a>
                         </div>
