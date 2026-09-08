@@ -41,7 +41,8 @@ function preventBackNavigation() {
     // la navegación normal con Atrás/Adelante.
     const statefulWarehousePaths = [
         '/familias', '/categorias', '/centros-costo', '/unidades-medida',
-        '/almacenes', '/bienes', '/kits', '/salida', '/ajuste-inventario'
+        '/almacenes', '/bienes', '/kits', '/salida', '/ajuste-inventario',
+        '/users', '/historial', '/ordenes', '/despachos', '/nfu', '/clientes-nfu'
     ];
     const allowBackNavigation = document.body.dataset.allowBackNavigation === 'true'
         || statefulWarehousePaths.some((path) => window.location.pathname === path || window.location.pathname.startsWith(`${path}/`));
@@ -173,7 +174,12 @@ function setupListStateNavigation() {
         { listPath: '/almacenes', prefixes: ['/almacenes'] },
         { listPath: '/bienes', prefixes: ['/bienes', '/salida'] },
         { listPath: '/kits', prefixes: ['/kits'] },
-        { listPath: '/ajuste-inventario/historial', prefixes: ['/ajuste-inventario'] }
+        { listPath: '/ajuste-inventario/historial', prefixes: ['/ajuste-inventario'] },
+        { listPath: '/users', prefixes: ['/users'] },
+        { listPath: '/historial', prefixes: ['/historial'] },
+        { listPath: '/ordenes', prefixes: ['/ordenes'] },
+        { listPath: '/nfu', prefixes: ['/nfu'] },
+        { listPath: '/clientes-nfu', prefixes: ['/clientes-nfu'] }
     ];
     const inferredModule = warehouseModules.find((module) =>
         module.prefixes.some((prefix) => window.location.pathname === prefix || window.location.pathname.startsWith(`${prefix}/`))

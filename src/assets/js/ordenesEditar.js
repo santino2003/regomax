@@ -151,7 +151,7 @@ $(document).ready(function() {
                     // Mostrar mensaje de éxito
                     alert('Orden actualizada correctamente');
                     // Redireccionar a la vista de detalle
-                    window.location.href = `/ordenes/${ordenId}`;
+                    window.location.href = `/ordenes/${ordenId}?returnTo=${encodeURIComponent(window.listReturnTo || '/ordenes')}`;
                 } else {
                     alert('Error: ' + response.message);
                     $btnSubmit.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Guardar cambios');

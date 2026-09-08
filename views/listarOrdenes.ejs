@@ -151,18 +151,29 @@
                         
                         <!-- Controles de paginación -->
                         <% if (pagination && pagination.totalPages > 1) { %>
+                            <%
+                                const buildPageUrl = (page) => {
+                                    const params = new URLSearchParams();
+                                    params.set('page', page);
+                                    params.set('limit', pagination.limit);
+                                    if (typeof currentSearch !== 'undefined' && currentSearch) params.set('search', currentSearch);
+                                    if (typeof currentEstado !== 'undefined' && currentEstado) params.set('estado', currentEstado);
+                                    if (typeof searchType !== 'undefined' && searchType) params.set('searchType', searchType);
+                                    return `/ordenes?${params.toString()}`;
+                                };
+                            %>
                             <nav aria-label="Navegación de órdenes">
                                 <ul class="pagination justify-content-center">
                                     <!-- Botón Primera Página -->
                                     <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/ordenes?page=1&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %><%= typeof searchType !== 'undefined' && searchType ? '&searchType=' + searchType : '' %>" aria-label="Primera">
+                                        <a class="page-link" href="<%= buildPageUrl(1) %>" aria-label="Primera">
                                             <span aria-hidden="true">&laquo;&laquo;</span>
                                         </a>
                                     </li>
                                     
                                     <!-- Botón Anterior -->
                                     <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/ordenes?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %><%= typeof searchType !== 'undefined' && searchType ? '&searchType=' + searchType : '' %>" aria-label="Anterior">
+                                        <a class="page-link" href="<%= buildPageUrl(pagination.page - 1) %>" aria-label="Anterior">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
                                     </li>
@@ -185,7 +196,7 @@
                                     if (startPage > 1) { 
                                     %>
                                         <li class="page-item">
-                                            <a class="page-link" href="/ordenes?page=1&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %><%= typeof searchType !== 'undefined' && searchType ? '&searchType=' + searchType : '' %>">1</a>
+                                            <a class="page-link" href="<%= buildPageUrl(1) %>">1</a>
                                         </li>
                                         <% if (startPage > 2) { %>
                                             <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -195,7 +206,7 @@
                                     <!-- Páginas numéricas -->
                                     <% for (let i = startPage; i <= endPage; i++) { %>
                                         <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                                            <a class="page-link" href="/ordenes?page=<%= i %>&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %><%= typeof searchType !== 'undefined' && searchType ? '&searchType=' + searchType : '' %>"><%= i %></a>
+                                            <a class="page-link" href="<%= buildPageUrl(i) %>"><%= i %></a>
                                         </li>
                                     <% } %>
                                     
@@ -205,20 +216,20 @@
                                             <li class="page-item disabled"><span class="page-link">...</span></li>
                                         <% } %>
                                         <li class="page-item">
-                                            <a class="page-link" href="/ordenes?page=<%= totalPages %>&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %><%= typeof searchType !== 'undefined' && searchType ? '&searchType=' + searchType : '' %>"><%= totalPages %></a>
+                                            <a class="page-link" href="<%= buildPageUrl(totalPages) %>"><%= totalPages %></a>
                                         </li>
                                     <% } %>
                                     
                                     <!-- Botón Siguiente -->
                                     <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/ordenes?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %><%= typeof searchType !== 'undefined' && searchType ? '&searchType=' + searchType : '' %>" aria-label="Siguiente">
+                                        <a class="page-link" href="<%= buildPageUrl(pagination.page + 1) %>" aria-label="Siguiente">
                                             <span aria-hidden="true">&raquo;</span>
                                         </a>
                                     </li>
                                     
                                     <!-- Botón Última Página -->
                                     <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                        <a class="page-link" href="/ordenes?page=<%= pagination.totalPages %>&limit=<%= pagination.limit %><%= typeof currentSearch !== 'undefined' && currentSearch ? '&search=' + currentSearch : '' %><%= typeof currentEstado !== 'undefined' && currentEstado ? '&estado=' + currentEstado : '' %><%= typeof searchType !== 'undefined' && searchType ? '&searchType=' + searchType : '' %>" aria-label="Última">
+                                        <a class="page-link" href="<%= buildPageUrl(pagination.totalPages) %>" aria-label="Última">
                                             <span aria-hidden="true">&raquo;&raquo;</span>
                                         </a>
                                     </li>

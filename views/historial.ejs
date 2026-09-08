@@ -211,10 +211,20 @@
                     
                     <!-- Paginación -->
                     <% if (pagination && pagination.totalPages > 1) { %>
+                        <%
+                            const buildPageUrl = (page) => {
+                                const params = new URLSearchParams();
+                                Object.entries(filtros || {}).forEach(([key, value]) => {
+                                    if (value) params.set(key, value);
+                                });
+                                params.set('page', page);
+                                return `/historial?${params.toString()}`;
+                            };
+                        %>
                         <nav aria-label="Navegación de historial">
                             <ul class="pagination justify-content-center mb-0 mt-3">
                                 <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                                    <a class="page-link" href="<%= pagination.page === 1 ? '#' : `/historial?page=${pagination.page - 1}` %>">
+                                    <a class="page-link" href="<%= pagination.page === 1 ? '#' : buildPageUrl(pagination.page - 1) %>">
                                         Anterior
                                     </a>
                                 </li>
@@ -225,7 +235,7 @@
                                 
                                 if (startPage > 1) { %>
                                     <li class="page-item">
-                                        <a class="page-link" href="/historial?page=1">1</a>
+                                        <a class="page-link" href="<%= buildPageUrl(1) %>">1</a>
                                     </li>
                                     <% if (startPage > 2) { %>
                                         <li class="page-item disabled">
@@ -236,7 +246,7 @@
                                 
                                 <% for (let i = startPage; i <= endPage; i++) { %>
                                     <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                                        <a class="page-link" href="/historial?page=<%= i %>"><%= i %></a>
+                                        <a class="page-link" href="<%= buildPageUrl(i) %>"><%= i %></a>
                                     </li>
                                 <% } %>
                                 
@@ -247,14 +257,14 @@
                                         </li>
                                     <% } %>
                                     <li class="page-item">
-                                        <a class="page-link" href="/historial?page=<%= pagination.totalPages %>">
+                                        <a class="page-link" href="<%= buildPageUrl(pagination.totalPages) %>">
                                             <%= pagination.totalPages %>
                                         </a>
                                     </li>
                                 <% } %>
                                 
                                 <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
-                                    <a class="page-link" href="<%= pagination.page === pagination.totalPages ? '#' : `/historial?page=${pagination.page + 1}` %>">
+                                    <a class="page-link" href="<%= pagination.page === pagination.totalPages ? '#' : buildPageUrl(pagination.page + 1) %>">
                                         Siguiente
                                     </a>
                                 </li>

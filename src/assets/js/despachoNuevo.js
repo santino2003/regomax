@@ -6,7 +6,8 @@ $(document).ready(function() {
     let totalPeso = 0;
     
     // Botón de volver atrás
-    $('#btnVolver').on('click', function() {
+    $('#btnVolver').on('click', function(event) {
+        event.preventDefault();
         window.history.back();
     });
     

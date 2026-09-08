@@ -166,7 +166,7 @@
                         
                         // Mostrar mensaje de éxito y redirigir
                         alert('Cliente eliminado exitosamente');
-                        window.location.href = '/clientes-nfu';
+                        window.location.href = window.listReturnTo || '/clientes-nfu';
                     } else {
                         alert('Error: ' + (data.message || 'No se pudo eliminar el cliente'));
                     }

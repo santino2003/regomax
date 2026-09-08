@@ -222,7 +222,7 @@ $(document).ready(function() {
                     
                     // Redirigir a la lista de órdenes después de 3 segundos
                     setTimeout(() => {
-                        window.location.href = '/ordenes';
+                        window.location.href = window.listReturnTo || '/ordenes';
                     }, 1000);
                     
                 }, 2000);
