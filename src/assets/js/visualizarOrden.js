@@ -53,7 +53,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Éxito - redirigir a la lista de órdenes
-                window.location.href = '/ordenes?deleted=true';
+                const returnUrl = new URL(window.listReturnTo || '/ordenes', window.location.origin);
+                returnUrl.searchParams.set('deleted', 'true');
+                window.location.href = returnUrl.pathname + returnUrl.search;
             } else {
                 // Error - mostrar mensaje
                 alert('Error al eliminar la orden: ' + data.message);

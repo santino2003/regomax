@@ -63,11 +63,15 @@
                         <script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 var btnVolver = document.getElementById('btnVolver');
-                                // Si existe un referrer (la página anterior), usamos eso
-                                if (document.referrer && document.referrer !== '') {
-                                    btnVolver.href = document.referrer;
+                                var requestedReturnTo = new URLSearchParams(window.location.search).get('returnTo');
+                                var allowedPaths = ['/bolsones', '/bolsones-despachados', '/ordenes'];
+                                if (requestedReturnTo && requestedReturnTo.startsWith('/') && !requestedReturnTo.startsWith('//')) {
+                                    var returnUrl = new URL(requestedReturnTo, window.location.origin);
+                                    var isAllowed = allowedPaths.some(function(path) {
+                                        return returnUrl.pathname === path || returnUrl.pathname.startsWith(path + '/');
+                                    });
+                                    if (isAllowed) btnVolver.href = returnUrl.pathname + returnUrl.search;
                                 }
-                                // En caso contrario, nos quedamos con el href="/home" predeterminado
                             });
                         </script>
                     </div>

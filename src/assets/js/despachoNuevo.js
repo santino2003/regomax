@@ -8,7 +8,21 @@ $(document).ready(function() {
     // Botón de volver atrás
     $('#btnVolver').on('click', function(event) {
         event.preventDefault();
-        window.history.back();
+        const returnTo = $('#btnVolver').attr('href') || '/home';
+        let previousUrl = null;
+        try {
+            previousUrl = document.referrer ? new URL(document.referrer) : null;
+        } catch (error) {
+            previousUrl = null;
+        }
+
+        if (previousUrl
+            && previousUrl.origin === window.location.origin
+            && previousUrl.pathname + previousUrl.search === returnTo) {
+            window.history.back();
+        } else {
+            window.location.href = returnTo;
+        }
     });
     
     // Diccionario para rastrear bolsones escaneados por orden y evitar duplicados

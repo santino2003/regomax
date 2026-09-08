@@ -41,8 +41,10 @@ function preventBackNavigation() {
     // la navegación normal con Atrás/Adelante.
     const statefulWarehousePaths = [
         '/familias', '/categorias', '/centros-costo', '/unidades-medida',
-        '/almacenes', '/bienes', '/kits', '/salida', '/ajuste-inventario',
-        '/users', '/historial', '/ordenes', '/despachos', '/nfu', '/clientes-nfu'
+        '/almacenes', '/bienes', '/kits', '/salida', '/config-alertas-stock', '/ajuste-inventario',
+        '/users', '/historial', '/ordenes', '/despachos', '/nfu', '/clientes-nfu',
+        '/productos', '/bolsones', '/bolsones-despachados', '/partes-diarios',
+        '/reporte-general', '/reporte-ar', '/dias-habiles', '/fallas'
     ];
     const allowBackNavigation = document.body.dataset.allowBackNavigation === 'true'
         || statefulWarehousePaths.some((path) => window.location.pathname === path || window.location.pathname.startsWith(`${path}/`));
@@ -172,22 +174,37 @@ function setupListStateNavigation() {
         { listPath: '/centros-costo/listar', prefixes: ['/centros-costo'] },
         { listPath: '/unidades-medida', prefixes: ['/unidades-medida'] },
         { listPath: '/almacenes', prefixes: ['/almacenes'] },
-        { listPath: '/bienes', prefixes: ['/bienes', '/salida'] },
+        { listPath: '/bienes', prefixes: ['/bienes', '/salida', '/config-alertas-stock'] },
         { listPath: '/kits', prefixes: ['/kits'] },
         { listPath: '/ajuste-inventario/historial', prefixes: ['/ajuste-inventario'] },
         { listPath: '/users', prefixes: ['/users'] },
         { listPath: '/historial', prefixes: ['/historial'] },
         { listPath: '/ordenes', prefixes: ['/ordenes'] },
         { listPath: '/nfu', prefixes: ['/nfu'] },
-        { listPath: '/clientes-nfu', prefixes: ['/clientes-nfu'] }
+        { listPath: '/clientes-nfu', prefixes: ['/clientes-nfu'] },
+        { listPath: '/productos', prefixes: ['/productos'] },
+        { listPath: '/bolsones', prefixes: ['/bolsones'] },
+        { listPath: '/bolsones-despachados', prefixes: ['/bolsones-despachados'] },
+        {
+            listPath: '/partes-diarios',
+            prefixes: ['/partes-diarios'],
+            isListPath: (path) => path === '/partes-diarios' || path.startsWith('/partes-diarios/estado/')
+        },
+        { listPath: '/reporte-general', prefixes: ['/reporte-general', '/reporte-ar'] },
+        { listPath: '/dias-habiles', prefixes: ['/dias-habiles'] },
+        { listPath: '/fallas', prefixes: ['/fallas'] }
     ];
     const inferredModule = warehouseModules.find((module) =>
         module.prefixes.some((prefix) => window.location.pathname === prefix || window.location.pathname.startsWith(`${prefix}/`))
     );
+    const isCurrentListPath = inferredModule
+        && (inferredModule.isListPath
+            ? inferredModule.isListPath(window.location.pathname)
+            : window.location.pathname === inferredModule.listPath);
     const listPath = document.body.dataset.stateListPath
-        || (inferredModule && window.location.pathname === inferredModule.listPath ? inferredModule.listPath : null);
+        || (isCurrentListPath ? window.location.pathname : null);
     const returnListPath = document.body.dataset.returnListPath
-        || (inferredModule && window.location.pathname !== inferredModule.listPath ? inferredModule.listPath : null);
+        || (inferredModule && !isCurrentListPath ? inferredModule.listPath : null);
 
     if (listPath && window.location.pathname === listPath) {
         const returnTo = window.location.pathname + window.location.search;
@@ -206,8 +223,24 @@ function setupListStateNavigation() {
 
     if (returnListPath) {
         const requestedReturnTo = new URLSearchParams(window.location.search).get('returnTo');
-        const validReturnTo = requestedReturnTo === returnListPath
-            || requestedReturnTo?.startsWith(`${returnListPath}?`);
+        let requestedReturnPath = null;
+        let requestedReturnOrigin = null;
+        try {
+            const requestedUrl = requestedReturnTo
+                ? new URL(requestedReturnTo, window.location.origin)
+                : null;
+            requestedReturnPath = requestedUrl?.pathname || null;
+            requestedReturnOrigin = requestedUrl?.origin || null;
+        } catch (error) {
+            requestedReturnPath = null;
+        }
+        const validReturnTo = requestedReturnTo
+            && requestedReturnOrigin === window.location.origin
+            && requestedReturnTo.startsWith('/')
+            && !requestedReturnTo.startsWith('//')
+            && (inferredModule?.isListPath
+                ? inferredModule.isListPath(requestedReturnPath)
+                : requestedReturnPath === returnListPath);
         const returnTo = validReturnTo ? requestedReturnTo : returnListPath;
         window.listReturnTo = returnTo;
 

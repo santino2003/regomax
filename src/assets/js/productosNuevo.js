@@ -14,7 +14,7 @@ $(document).ready(function() {
         } else if (referrer && (referrer.includes('/bolsones/nuevo') || referrer.includes('/bolsones/'))) {
             window.close(); // Cerrar ventana si fue abierta desde bolsones
         } else {
-            window.history.back(); // Volver atrás como opción predeterminada
+            window.location.href = window.listReturnTo || '/productos';
         }
     });
     
