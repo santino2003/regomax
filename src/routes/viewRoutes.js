@@ -389,6 +389,10 @@ router.get('/nfu/nuevo', [
     permissionsMiddleware.hasPermission('reportes:view')
 ], nfuController.mostrarFormularioIngresoNFU);
 
+router.get('/produccion-historica', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('dias_habiles:view')
+], require('../controllers/bolsonPlanificacionController').mostrar);
+
 // Ruta para la planificación (antes días hábiles)
 const diasHabilesController = require('../controllers/diasHabilesController');
 router.get('/dias-habiles', [
