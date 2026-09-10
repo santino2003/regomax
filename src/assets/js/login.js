@@ -59,6 +59,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let widgetId;
     let siteKey = '';
     let loadingCaptcha;
+    let configLoaded = false; // Flag para indicar que la configuración se cargó
+    
     async function showCaptcha() {
         document.getElementById('captchaContainer').classList.remove('d-none');
         if (widgetId !== undefined) return;
@@ -93,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+    
     const configReady = fetch('/api/auth/captcha-config', { credentials: 'include', cache: 'no-store' })
         .then(async response => {
             if (!response.ok) throw new Error('No se pudo cargar la protección del login. Recargá la página.');
@@ -103,13 +106,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 showError('Falta configurar reCAPTCHA en el servidor. Después de dos intentos fallidos no podrás continuar hasta que se configure.');
             }
             if (captchaRequired) await showCaptcha();
+            configLoaded = true; // Marcar configuración como lista
             return true;
-        }).catch(error => { showError(error.message); return false; });
+        }).catch(error => { 
+            showError(error.message); 
+            configLoaded = false;
+            return false; 
+        });
 
     // Manejar el envío del formulario
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
         event.stopPropagation();
+        
+        // Validar que la configuración esté cargada antes de continuar
+        if (!configLoaded) {
+            showError('La configuración de seguridad aún se está cargando. Por favor, espera un momento.');
+            return;
+        }
         
         // Validar el formulario usando Bootstrap validation
         form.classList.add('was-validated');
@@ -128,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Iniciando sesión...';
 
         try {
-            if (!await configReady) throw new Error('No se pudo cargar la protección del login. Recargá la página.');
             const recaptchaToken = widgetId !== undefined ? grecaptcha.getResponse(widgetId) : '';
             if (captchaRequired && !recaptchaToken) throw new Error('Completá el reCAPTCHA para continuar.');
             // Realizar la solicitud de login incluyendo las cookies
@@ -179,3 +192,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
