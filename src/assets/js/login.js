@@ -55,6 +55,54 @@ document.addEventListener('DOMContentLoaded', function() {
     // Bootstrap form validation
     const form = document.getElementById('loginForm');
     
+    let captchaRequired = false;
+    let widgetId;
+    let siteKey = '';
+    let loadingCaptcha;
+    async function showCaptcha() {
+        document.getElementById('captchaContainer').classList.remove('d-none');
+        if (widgetId !== undefined) return;
+        if (!siteKey) throw new Error('Falta configurar reCAPTCHA en el servidor.');
+        if (!loadingCaptcha) {
+            loadingCaptcha = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                const timer = setTimeout(() => {
+                    reject(new Error('reCAPTCHA tardó demasiado en cargar. Recargá la página.'));
+                }, 15000);
+                window.onLoginCaptchaLoaded = () => {
+                    clearTimeout(timer);
+                    resolve();
+                };
+                script.src = 'https://www.google.com/recaptcha/api.js?onload=onLoginCaptchaLoaded&render=explicit&hl=es';
+                script.async = true;
+                script.defer = true;
+                script.onerror = () => {
+                    clearTimeout(timer);
+                    reject(new Error('No se pudo cargar reCAPTCHA. Recargá la página.'));
+                };
+                document.head.appendChild(script);
+            });
+        }
+        await loadingCaptcha;
+        if (widgetId === undefined) {
+            widgetId = grecaptcha.render('loginCaptcha', {
+                sitekey: siteKey,
+                size: 'compact',
+                'expired-callback': () => showError('El reCAPTCHA venció. Completalo nuevamente.'),
+                'error-callback': () => showError('Error de conexión con reCAPTCHA. Intentá nuevamente.')
+            });
+        }
+    }
+    const configReady = fetch('/api/auth/captcha-config', { credentials: 'include', cache: 'no-store' })
+        .then(async response => {
+            if (!response.ok) throw new Error('No se pudo cargar la protección del login. Recargá la página.');
+            const config = await response.json();
+            siteKey = config.siteKey;
+            captchaRequired = config.captchaRequired;
+            if (captchaRequired) await showCaptcha();
+            return true;
+        }).catch(error => { showError(error.message); return false; });
+
     // Manejar el envío del formulario
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -68,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
+        const password = document.getElementById('password').value;
         
         // Deshabilitar el botón durante la solicitud
         const loginButton = document.getElementById('loginButton');
@@ -77,6 +125,9 @@ document.addEventListener('DOMContentLoaded', function() {
         loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Iniciando sesión...';
 
         try {
+            if (!await configReady) throw new Error('No se pudo cargar la protección del login. Recargá la página.');
+            const recaptchaToken = widgetId !== undefined ? grecaptcha.getResponse(widgetId) : '';
+            if (captchaRequired && !recaptchaToken) throw new Error('Completá el reCAPTCHA para continuar.');
             // Realizar la solicitud de login incluyendo las cookies
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
@@ -84,12 +135,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ username, password, recaptchaToken })
             });
 
             const data = await response.json();
 
             if (!response.ok) {
+                if (data.captchaRequired) {
+                    captchaRequired = true;
+                    await showCaptcha();
+                }
                 throw new Error(data.message || 'Error al iniciar sesión');
             }
 
@@ -105,6 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 1000);
             
         } catch (error) {
+            if (widgetId !== undefined) grecaptcha.reset(widgetId);
             showError(error.message);
             // Restaurar el botón
             loginButton.disabled = false;

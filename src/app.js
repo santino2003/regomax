@@ -51,6 +51,11 @@ const fallaParadaRoutes = require('./routes/fallaParadaRoutes');
 // Crear aplicación Express
 const app = express();
 
+// Configurar únicamente con las IP/subredes de los proxies del despliegue.
+if (process.env.TRUST_PROXY) {
+  app.set('trust proxy', process.env.TRUST_PROXY.split(',').map(value => value.trim()));
+}
+
 // Configurar motor de plantillas EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));

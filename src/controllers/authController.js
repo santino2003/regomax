@@ -1,25 +1,48 @@
+const { createLoginProtection } = require('../services/loginProtection');
+const loginProtection = createLoginProtection({ db: require('../config/db') });
 const authService = require('../services/authService');
 const userRepository = require('../repositories/userRepository');
 const hashUtils = require('../utils/hash');
 const { getAllPermissionsByCategory } = require('../config/permissionsConfig');
 
 const authController = {
+  async captchaConfig(req, res) {
+    res.set('Cache-Control', 'no-store');
+    try {
+      return res.json({ siteKey: loginProtection.siteKey(), captchaRequired: await loginProtection.required(req) });
+    } catch (error) {
+      return res.status(503).json({ message: 'No se pudo cargar la protección del login' });
+    }
+  },
+
   // Controlador para login
   async login(req, res) {
     try {
       const { username, password } = req.body;
       
       // Validación básica
-      if (!username || !password) {
+      if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || !password) {
         return res.status(400).json({ 
           success: false, 
           message: 'El nombre de usuario y contraseña son requeridos' 
         });
       }
 
+      if (await loginProtection.required(req)) {
+        try {
+          if (!await loginProtection.verify(req.body.recaptchaToken)) {
+            return res.status(403).json({ success: false, captchaRequired: true, message: 'Completá el reCAPTCHA para continuar' });
+          }
+        } catch (error) {
+          return res.status(503).json({ success: false, captchaRequired: true, message: 'No se pudo verificar el reCAPTCHA. Intentá nuevamente más tarde.' });
+        }
+      }
+
       // Llamar al servicio de autenticación
       const result = await authService.login(username, password);
       
+      await loginProtection.clear(req);
+
       // Setear cookie HttpOnly con el token
       res.cookie('token', result.token, {
         httpOnly: true,
@@ -38,10 +61,12 @@ const authController = {
     } catch (error) {
       // Manejar errores específicos
       if (error.message === 'Credenciales inválidas') {
-        return res.status(401).json({
-          success: false,
-          message: 'Credenciales inválidas'
-        });
+        try {
+          const captchaRequired = await loginProtection.failed(req);
+          return res.status(401).json({ success: false, message: 'Credenciales inválidas', captchaRequired });
+        } catch (storageError) {
+          return res.status(503).json({ success: false, message: 'No se pudo registrar el intento. Intentá nuevamente más tarde.' });
+        }
       }
       
       // Error genérico del servidor
