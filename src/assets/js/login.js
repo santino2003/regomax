@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (widgetId === undefined) {
             widgetId = grecaptcha.render('loginCaptcha', {
                 sitekey: siteKey,
-                size: 'compact',
+                size: document.getElementById('captchaContainer').clientWidth >= 304 ? 'normal' : 'compact',
                 'expired-callback': () => showError('El reCAPTCHA venció. Completalo nuevamente.'),
                 'error-callback': () => showError('Error de conexión con reCAPTCHA. Intentá nuevamente.')
             });
@@ -99,6 +99,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const config = await response.json();
             siteKey = config.siteKey;
             captchaRequired = config.captchaRequired;
+            if (!config.configured) {
+                showError('Falta configurar reCAPTCHA en el servidor. Después de dos intentos fallidos no podrás continuar hasta que se configure.');
+            }
             if (captchaRequired) await showCaptcha();
             return true;
         }).catch(error => { showError(error.message); return false; });

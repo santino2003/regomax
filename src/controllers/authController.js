@@ -9,7 +9,7 @@ const authController = {
   async captchaConfig(req, res) {
     res.set('Cache-Control', 'no-store');
     try {
-      return res.json({ siteKey: loginProtection.siteKey(), captchaRequired: await loginProtection.required(req) });
+      return res.json({ configured: loginProtection.configured(), siteKey: loginProtection.siteKey(), captchaRequired: await loginProtection.required(req) });
     } catch (error) {
       return res.status(503).json({ message: 'No se pudo cargar la protección del login' });
     }

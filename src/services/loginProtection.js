@@ -21,6 +21,7 @@ function createLoginProtection({ db, fetchImpl = (...args) => fetch(...args), en
   }
   return {
     required,
+    configured: () => Boolean(env.RECAPTCHA_SITE_KEY?.trim() && env.RECAPTCHA_SECRET_KEY?.trim()),
     siteKey: () => env.RECAPTCHA_SITE_KEY || '',
     async failed(req) {
       await init();
