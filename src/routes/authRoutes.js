@@ -6,6 +6,7 @@ const historialMiddleware = require('../middleware/historialMiddleware');
 const permissionsMiddleware = require('../middleware/permissions');
 
 // Rutas públicas sin registro en historial
+router.get('/captcha-config', authController.captchaConfig);
 router.post('/login', authController.login);
 router.post('/register', authController.register);
 router.post('/logout', authMiddleware.verifyToken, authController.logout);

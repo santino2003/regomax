@@ -14,7 +14,10 @@
     <style>
         body {
             background-color: #f8f9fa;
-            height: 100vh;
+            min-height: 100vh;
+            min-height: 100dvh;
+            margin: 0;
+            padding: 24px 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -43,6 +46,14 @@
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             background-color: white;
+        }
+        #captchaContainer {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        #loginCaptcha {
+            flex: 0 0 auto;
         }
         /* Ocultar los indicadores de validación correcta (tildes verdes) */
         .was-validated .form-control:valid {
@@ -103,6 +114,9 @@
                         <div class="invalid-feedback">
                             Por favor ingrese su contraseña.
                         </div>
+                    </div>
+                    <div id="captchaContainer" class="mb-3 d-none">
+                        <div id="loginCaptcha"></div>
                     </div>
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary" id="loginButton">
