@@ -1,0 +1,65 @@
+<%- include('partials/header', { title: 'Producción histórica' }) %>
+<% const kilos = value => Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const pageUrl = page => '/produccion-historica?' + new URLSearchParams({ ...filtros, page: String(page) }).toString(); %>
+<main class="container my-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="menu-container p-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <h4 class="menu-heading mb-0"><i class="bi bi-clock-history me-2"></i>Producción histórica</h4>
+        <a href="/home" class="btn btn-outline-primary"><i class="bi bi-arrow-left me-2"></i>Volver al inicio</a>
+    </div>
+    <div class="card mb-4">
+        <div class="card-header bg-light"><h5 class="card-title mb-0"><i class="bi bi-funnel me-2"></i>Filtros</h5></div>
+        <div class="card-body">
+    <form method="get" action="/produccion-historica">
+        <div class="row g-3 align-items-end">
+            <div class="col-sm-6 col-lg-3"><label for="desde" class="form-label">Desde</label><input class="form-control" type="date" id="desde" name="desde" value="<%= filtros.desde %>" required></div>
+            <div class="col-sm-6 col-lg-3"><label for="hasta" class="form-label">Hasta</label><input class="form-control" type="date" id="hasta" name="hasta" value="<%= filtros.hasta %>" required></div>
+            <div class="col-sm-8 col-lg-4"><label for="producto" class="form-label">Producto del listado</label><select class="form-select" id="producto" name="producto"><option value="">Todos los productos</option>
+                <% productos.forEach(item => { %><option value="<%= item.producto %>" <%= filtros.producto === item.producto ? 'selected' : '' %>><%= item.producto %></option><% }); %>
+            </select></div>
+            <div class="col-sm-4 col-lg-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-search me-1"></i>Consultar</button></div>
+        </div>
+        <p class="small text-muted mt-3 mb-0">Se utiliza la fecha de registro del bolsón, incluidos los días desde y hasta. Incluye despachados y no despachados.</p>
+    </form>
+        </div>
+    </div>
+    <section aria-labelledby="resumenTitulo" class="card mb-4">
+        <div class="card-header bg-light"><h5 id="resumenTitulo" class="card-title mb-0"><i class="bi bi-bar-chart me-2"></i>Kilos por producto del período</h5></div>
+        <div class="card-body">
+        <p class="text-muted small">Este resumen incluye todos los productos del período, independientemente del filtro de producto y de la página del listado.</p>
+        <div class="row g-3">
+            <div class="col-sm-6 col-xl-3"><div class="card bg-primary text-white h-100"><div class="card-body"><h3 class="h6">Total general</h3><div class="fs-3 fw-bold"><%= kilos(totalKilos) %> <span class="fs-6">kg</span></div></div></div></div>
+            <% resumen.forEach(item => { %>
+            <div class="col-sm-6 col-xl-3"><div class="card h-100"><div class="card-body"><h3 class="h6"><%= item.producto || 'Sin producto' %></h3><div class="fs-4 fw-bold"><%= kilos(item.kilos) %> <span class="fs-6 text-muted">kg</span></div><div class="text-muted small"><%= item.cantidad %> bolsones</div></div></div></div>
+            <% }); %>
+        </div>
+        </div>
+    </section>
+    <section class="card" aria-labelledby="listadoTitulo">
+        <div class="card-header bg-light d-flex flex-wrap align-items-center justify-content-between gap-2"><h5 id="listadoTitulo" class="card-title mb-0"><i class="bi bi-list-check me-2"></i>Listado de bolsones</h5><span class="badge bg-primary rounded-pill"><%= pagination.total %> registros · 50 por página</span></div>
+        <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>Código</th><th>Precinto</th><th>Producto</th><th class="text-end">Kilos</th><th>Fecha</th><th>Estado</th></tr></thead>
+            <tbody>
+                <% bolsones.forEach(bolson => { %><tr>
+                    <td><%= bolson.codigo %></td><td><%= bolson.precinto || '—' %></td><td><%= bolson.producto %></td><td class="text-end text-nowrap"><%= kilos(bolson.peso) %></td><td class="text-nowrap"><%= fechaUtils.formatearFechaLocal(bolson.fecha) %></td>
+                    <td><span class="badge <%= Number(bolson.despachado) === 1 ? 'bg-success' : 'bg-secondary' %>"><%= Number(bolson.despachado) === 1 ? 'Despachado' : 'No despachado' %></span></td>
+                </tr><% }); %>
+                <% if (!bolsones.length) { %><tr><td colspan="6" class="text-center text-muted py-5">No hay bolsones para los filtros seleccionados.</td></tr><% } %>
+            </tbody>
+        </table></div>
+        <div class="card-footer d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <span class="small text-muted">Página <%= pagination.page %> de <%= pagination.totalPages %></span>
+            <nav aria-label="Páginas de bolsones"><ul class="pagination mb-0 flex-wrap">
+                <% if (pagination.page > 1) { %><li class="page-item"><a class="page-link" href="<%= pageUrl(1) %>">Primera</a></li><li class="page-item"><a class="page-link" href="<%= pageUrl(pagination.page - 1) %>">Anterior</a></li><% } %>
+                <% for (let p = Math.max(1, pagination.page - 2); p <= Math.min(pagination.totalPages, pagination.page + 2); p++) { %><li class="page-item <%= p === pagination.page ? 'active' : '' %>"><a class="page-link" href="<%= pageUrl(p) %>" <%- p === pagination.page ? 'aria-current="page"' : '' %>><%= p %></a></li><% } %>
+                <% if (pagination.page < pagination.totalPages) { %><li class="page-item"><a class="page-link" href="<%= pageUrl(pagination.page + 1) %>">Siguiente</a></li><li class="page-item"><a class="page-link" href="<%= pageUrl(pagination.totalPages) %>">Última</a></li><% } %>
+            </ul></nav>
+        </div>
+    </section>
+            </div>
+        </div>
+    </div>
+</main>
+<%- include('partials/footer') %>
