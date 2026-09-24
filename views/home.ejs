@@ -123,6 +123,26 @@
                             </div>
                         </div>
                         
+                        <!-- Ingresos -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIngresos" aria-expanded="false" aria-controls="collapseIngresos">
+                                    <i class="bi bi-person-vcard me-2"></i> Ingresos
+                                </button>
+                            </h2>
+                            <div id="collapseIngresos" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                                <div class="accordion-body">
+                                    <% if (user && (user.role === 'admin' || user.permissions && user.permissions['ingresos:create'])) { %>
+                                    <div class="submenu-item">
+                                        <a href="/ingresos"><i class="bi bi-plus-circle me-2"></i> Registrar ingreso</a>
+                                    </div>
+                                    <% } else { %>
+                                    <p class="text-muted mb-0">No tiene permiso para registrar ingresos.</p>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Mantenimiento -->
                         <div class="accordion-item">
                             <h2 class="accordion-header">

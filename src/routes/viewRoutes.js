@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const ingresoController = require('../controllers/ingresoController');
 const path = require('path');
 const authMiddleware = require('../middleware/auth');
 const noCacheMiddleware = require('../middleware/noCacheMiddleware');
@@ -24,6 +25,9 @@ router.use((req, res, next) => {
     res.locals.fechaUtils = fechaUtils;
     next();
 });
+
+router.get('/ingresos', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ingresos:create')], ingresoController.vistaNuevoIngreso);
 
 // Ruta base - redirigir a login
 router.get('/', (req, res) => {

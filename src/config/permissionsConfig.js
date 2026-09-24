@@ -4,6 +4,9 @@
  */
 
 const PERMISSIONS = {
+  INGRESOS: {
+    CREATE: 'ingresos:create',
+  },
   // Permisos para usuarios
   USERS: {
     VIEW: 'users:view',
