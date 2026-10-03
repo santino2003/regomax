@@ -1,8 +1,17 @@
 const ingresoService = require('../services/ingresoService');
+const clienteNFUService = require('../services/clienteNFUService');
 
 const ingresoController = {
-    vistaNuevoIngreso(req, res) {
-        res.render('ingresosNuevo', { username: req.user.username });
+    async vistaNuevoIngreso(req, res) {
+        let clientes = [];
+        let errorClientes = false;
+        try {
+            clientes = await clienteNFUService.obtenerTodos() || [];
+        } catch (error) {
+            console.error('Error al obtener clientes NFU para ingresos:', error);
+            errorClientes = true;
+        }
+        res.render('ingresosNuevo', { username: req.user.username, clientes, errorClientes });
     },
 
     async identificarPersona(req, res) {

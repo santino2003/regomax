@@ -1,0 +1,50 @@
+<%- include('partials/header') %>
+<div class="container my-4">
+    <div class="menu-container p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <h4 class="menu-heading mb-0">Ingresos y egresos</h4>
+            <a href="/ingresos" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Registrar ingreso</a>
+        </div>
+        <% if (registrado) { %>
+            <div class="alert alert-success" role="status">Ingreso registrado correctamente.</div>
+        <% } %>
+        <% if (errorListado) { %>
+            <div class="alert alert-danger" role="alert">No se pudo cargar el listado. <a href="/ingresos/listado">Reintentar</a></div>
+        <% } else { %>
+            <p class="text-muted">Total de movimientos: <%= total %></p>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead><tr>
+                        <th scope="col">ID</th><th scope="col">Fecha y hora</th><th scope="col">Movimiento</th>
+                        <th scope="col">Motivo</th><th scope="col">Nombre</th><th scope="col">Apellido</th><th scope="col">Patente</th>
+                    </tr></thead>
+                    <tbody>
+                        <% if (!movimientos.length) { %>
+                            <tr><td colspan="7" class="text-center text-muted">No hay ingresos ni egresos registrados.</td></tr>
+                        <% } %>
+                        <% movimientos.forEach(movimiento => { %>
+                            <tr>
+                                <td><%= movimiento.id %></td>
+                                <td><%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_movimiento) %></td>
+                                <td><%= movimiento.tipo_movimiento %></td>
+                                <td><%= movimiento.motivo %></td>
+                                <td><%= movimiento.nombre %></td>
+                                <td><%= movimiento.apellido %></td>
+                                <td><%= movimiento.patente %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+            <% if (paginas > 1) { %>
+                <nav aria-label="Paginación de movimientos" class="d-flex align-items-center gap-3 my-3">
+                    <% if (pagina > 1) { %><a class="btn btn-outline-primary" href="/ingresos/listado?page=<%= pagina - 1 %>">Anterior</a><% } %>
+                    <span>Página <%= pagina %> de <%= paginas %></span>
+                    <% if (pagina < paginas) { %><a class="btn btn-outline-primary" href="/ingresos/listado?page=<%= pagina + 1 %>">Siguiente</a><% } %>
+                </nav>
+            <% } %>
+        <% } %>
+        <a href="/home" class="btn btn-outline-secondary mt-3">Volver al inicio</a>
+    </div>
+</div>
+<%- include('partials/footer') %>

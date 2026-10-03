@@ -3,7 +3,65 @@ document.addEventListener('DOMContentLoaded', () => {
     const formPersona = document.getElementById('formPersona');
     const seleccionada = document.getElementById('personaSeleccionada');
     const alerta = document.getElementById('alertPlaceholder');
+    const formMotivo = document.getElementById('formMotivoIngreso');
+    const motivo = document.getElementById('motivoIngreso');
+    const camposNFU = document.getElementById('camposNFU');
+    const empresa = document.getElementById('cliente_id');
     let procesando = false;
+    let ingresoGuardado = false;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('registrado') === '1') {
+        const mensaje = document.createElement('div');
+        mensaje.className = 'alert alert-success';
+        mensaje.textContent = 'Ingreso exitoso. Escanee o ingrese otro DNI para continuar.';
+        alerta.replaceChildren(mensaje);
+        document.getElementById('entrada').focus();
+        url.searchParams.delete('registrado');
+        window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    }
+
+    function actualizarMotivo() {
+        const esNFU = motivo.value === 'CNFU/NFU';
+        camposNFU.classList.toggle('d-none', !esNFU);
+        camposNFU.disabled = !esNFU;
+        empresa.disabled = !esNFU;
+        if (esNFU && window.jQuery?.fn.select2 && !empresa.classList.contains('select2-hidden-accessible')) {
+            window.jQuery(empresa).select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Seleccionar cliente',
+                allowClear: false,
+                language: {
+                    noResults: () => 'No se encontraron resultados',
+                    searching: () => 'Buscando...'
+                }
+            });
+        }
+        if (!esNFU) {
+            empresa.value = '';
+            document.getElementById('tipo').value = '';
+            document.getElementById('patente').value = '';
+        }
+        if (window.jQuery?.fn.select2) window.jQuery(empresa).trigger('change');
+    }
+
+    motivo.addEventListener('change', actualizarMotivo);
+    formMotivo.addEventListener('submit', event => {
+        event.preventDefault();
+        if (ingresoGuardado || !seleccionada.dataset.personaId) return;
+        enviar(formMotivo, '/api/ingresos/movimientos', {
+            tipo_movimiento: 'INGRESO',
+            motivo: motivo.value,
+            nombre: document.getElementById('personaNombre').textContent,
+            apellido: document.getElementById('personaApellido').textContent,
+            patente: document.getElementById('patente').value.trim()
+        }, () => {
+            ingresoGuardado = true;
+            window.location.href = '/ingresos?registrado=1';
+        });
+    });
+    actualizarMotivo();
 
     function mostrarPersona(persona) {
         formIdentificar.classList.add('d-none');
@@ -51,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alerta.replaceChildren(mensaje);
         } finally {
             procesando = false;
-            botones.forEach(boton => { boton.disabled = false; });
+            botones.forEach(boton => { boton.disabled = form === formMotivo && ingresoGuardado; });
             submit.innerHTML = texto;
         }
     }
@@ -84,6 +142,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (procesando) return;
             formIdentificar.reset();
             formPersona.reset();
+            formMotivo.reset();
+            formMotivo.classList.remove('was-validated');
+            ingresoGuardado = false;
+            actualizarMotivo();
             formIdentificar.classList.remove('d-none', 'was-validated');
             formPersona.classList.add('d-none');
             seleccionada.classList.add('d-none');
