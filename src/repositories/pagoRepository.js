@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { formatMySQLLocal } = require('../utils/fecha');
 
 class PagoRepository {
     /**
@@ -823,13 +824,15 @@ class PagoRepository {
      */
     async marcarComoPagado(pagoId, username, detalle = null, connection = null) {
         try {
+            const fechaPago = formatMySQLLocal(new Date());
             const sql = `UPDATE pagos 
                 SET pagado = TRUE,
-                    fecha_marcado_pagado = NOW(),
+                    fecha_pago = ?,
+                    fecha_marcado_pagado = ?,
                     marcado_pagado_por = ?,
                     detalle_pago = ?
                 WHERE id = ? AND COALESCE(pagado, FALSE) = FALSE`;
-            const params = [username, detalle, pagoId];
+            const params = [fechaPago.split(' ')[0], fechaPago, username, detalle, pagoId];
 
             let result;
             if (connection) {
@@ -865,13 +868,15 @@ class PagoRepository {
             }
 
             const placeholders = pagoIds.map(() => '?').join(',');
+            const fechaPago = formatMySQLLocal(new Date());
             const sql = `UPDATE pagos 
                 SET pagado = TRUE,
-                    fecha_marcado_pagado = NOW(),
+                    fecha_pago = ?,
+                    fecha_marcado_pagado = ?,
                     marcado_pagado_por = ?,
                     detalle_pago = ?
                 WHERE id IN (${placeholders}) AND COALESCE(pagado, FALSE) = FALSE`;
-            const params = [username, detalle, ...pagoIds];
+            const params = [fechaPago.split(' ')[0], fechaPago, username, detalle, ...pagoIds];
 
             let result;
             if (connection) {

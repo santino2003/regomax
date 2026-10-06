@@ -48,6 +48,7 @@ const pagoRoutes = require('./routes/pagoRoutes'); // Importamos las rutas de pa
 const maquinaRoutes = require('./routes/maquinaRoutes'); // Importamos las rutas de máquinas
 const fallaRoutes = require('./routes/fallaRoutes');
 const fallaParadaRoutes = require('./routes/fallaParadaRoutes');
+const ingresoRoutes = require('./routes/ingresoRoutes');
 // Crear aplicación Express
 const app = express();
 
@@ -96,6 +97,7 @@ app.use(permissionErrorHandler);
 
 // Rutas API
 app.use('/api/auth', authRoutes);
+app.use('/api/ingresos', ingresoRoutes);
 app.use('/api/bolsones', bolsonRoutes);
 app.use('/api/ordenes', ordenDeVentaRoutes);
 app.use('/api/productos', productoRoutes);
