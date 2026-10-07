@@ -96,10 +96,12 @@ $(document).ready(function() {
         // Aplicar clase de advertencia si el stock está crítico
         const card = $('#itemInfoCard');
         card.removeClass('item-info-card stock-warning stock-danger');
+        const stock = parseFloat(item.cantidad_stock);
+        const cantidadCritica = parseFloat(item.cantidad_critica);
         
-        if (item.cantidad_critica !== null && item.cantidad_critica !== undefined && item.cantidad_stock <= item.cantidad_critica) {
+        if (item.cantidad_critica !== null && item.cantidad_critica !== undefined && stock <= cantidadCritica) {
             card.addClass('stock-danger');
-        } else if (item.cantidad_critica !== null && item.cantidad_critica !== undefined && item.cantidad_stock <= item.cantidad_critica * 1.5) {
+        } else if (item.cantidad_critica !== null && item.cantidad_critica !== undefined && stock <= cantidadCritica * 1.5) {
             card.addClass('stock-warning');
         } else {
             card.addClass('item-info-card');
