@@ -937,7 +937,14 @@ const almacen = {
  */
 const bienDetalles = {
     crear: (req, res, body) => {
+        let respuesta = body;
+        if (typeof body === 'string') {
+            try { respuesta = JSON.parse(body); } catch { respuesta = null; }
+        }
         return {
+            bien_id: respuesta?.data?.id,
+
+            codigo: req.body?.codigo,
             nombre: req.body?.nombre,
             tipo: req.body?.tipo,
             categoria_id: req.body?.categoria_id,
@@ -950,6 +957,7 @@ const bienDetalles = {
     editar: (req, res, body) => {
         return {
             bien_id: req.params?.id,
+            codigo: req.body?.codigo,
             nombre: req.body?.nombre,
             tipo: req.body?.tipo,
             categoria_id: req.body?.categoria_id,

@@ -56,7 +56,7 @@
                             <i class="bi bi-clock-history me-2"></i>Historial de Acciones
                         </h4>
                         <div>
-                            <a href="/api/historial/exportar" class="btn btn-success">
+                            <a href="<%= exportUrl %>" class="btn btn-success">
                                 <i class="bi bi-file-earmark-excel me-1"></i> Exportar CSV
                             </a>
                         </div>
@@ -69,6 +69,12 @@
                         </div>
                         <div class="card-body">
                             <form id="filtrosForm" method="GET" action="/historial">
+                                <div class="mb-3">
+                                    <label for="buscar" class="form-label">Buscar en el historial</label>
+                                    <input type="search" class="form-control" id="buscar" name="buscar"
+                                        value="<%= filtros.buscar || '' %>" placeholder="Nombre del bien, código, ID, descripción u otro dato">
+                                    <div class="form-text">Buscá por una o varias palabras y combiná la búsqueda con los filtros.</div>
+                                </div>
                                 <div class="row">
                                     <div class="col-md-3 mb-3">
                                         <label for="usuario" class="form-label">Usuario</label>
@@ -79,23 +85,18 @@
                                         <label for="accion" class="form-label">Acción</label>
                                         <select class="form-select" id="accion" name="accion">
                                             <option value="">Todas las acciones</option>
-                                            <option value="crear" <%= filtros.accion === 'crear' ? 'selected' : '' %>>Crear</option>
-                                            <option value="editar" <%= filtros.accion === 'editar' ? 'selected' : '' %>>Editar</option>
-                                            <option value="eliminar" <%= filtros.accion === 'eliminar' ? 'selected' : '' %>>Eliminar</option>
-                                            <option value="consultar" <%= filtros.accion === 'consultar' ? 'selected' : '' %>>Consultar</option>
-                                            <option value="login" <%= filtros.accion === 'login' ? 'selected' : '' %>>Inicio de sesión</option>
-                                            <option value="logout" <%= filtros.accion === 'logout' ? 'selected' : '' %>>Cierre de sesión</option>
+                                            <% opciones.acciones.forEach(accion => { %>
+                                                <option value="<%= accion %>" <%= filtros.accion === accion ? 'selected' : '' %>><%= etiqueta(accion) %></option>
+                                            <% }) %>
                                         </select>
                                     </div>
                                     <div class="col-md-3 mb-3">
                                         <label for="entidad" class="form-label">Entidad</label>
                                         <select class="form-select" id="entidad" name="entidad">
                                             <option value="">Todas las entidades</option>
-                                            <option value="bolson" <%= filtros.entidad === 'bolson' ? 'selected' : '' %>>Bolsón</option>
-                                            <option value="orden_venta" <%= filtros.entidad === 'orden_venta' ? 'selected' : '' %>>Orden de Venta</option>
-                                            <option value="parte_diario" <%= filtros.entidad === 'parte_diario' ? 'selected' : '' %>>Parte Diario</option>
-                                            <option value="despacho" <%= filtros.entidad === 'despacho' ? 'selected' : '' %>>Despacho</option>
-                                            <option value="usuario" <%= filtros.entidad === 'usuario' ? 'selected' : '' %>>Usuario</option>
+                                            <% opciones.entidades.forEach(entidad => { %>
+                                                <option value="<%= entidad %>" <%= filtros.entidad === entidad ? 'selected' : '' %>><%= etiqueta(entidad) %></option>
+                                            <% }) %>
                                         </select>
                                     </div>
                                     <div class="col-md-3 mb-3">
@@ -125,6 +126,7 @@
                         </div>
                     </div>
 
+                    <p class="text-muted" role="status"><%= pagination.total %> registros encontrados</p>
                     <!-- Tabla de historial -->
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -158,8 +160,7 @@
                                                         timeZone: 'America/Argentina/Buenos_Aires',
                                                         hour12: false
                                                     };
-                                                    const fechaFormateada = fecha.toLocaleDateString('es-AR', options) + ' ' + 
-                                                        fecha.toLocaleTimeString('es-AR', options);
+                                                    const fechaFormateada = fecha.toLocaleString('es-AR', options);
                                                     %><%= fechaFormateada %><%
                                                 } catch(e) { 
                                                     %><%= item.fecha_hora %><%
@@ -177,23 +178,36 @@
                                                 <% } else if (item.accion === 'consultar') { %>
                                                     <span class="badge bg-info">Consultar</span>
                                                 <% } else if (item.accion === 'login') { %>
-                                                    <span class="badge bg-primary">Login</span>
+                                                    <span class="badge bg-primary">Inicio de sesión</span>
                                                 <% } else if (item.accion === 'logout') { %>
-                                                    <span class="badge bg-secondary">Logout</span>
+                                                    <span class="badge bg-secondary">Cierre de sesión</span>
                                                 <% } else { %>
-                                                    <span class="badge bg-dark"><%= item.accion %></span>
+                                                    <span class="badge bg-dark"><%= etiqueta(item.accion) %></span>
                                                 <% } %>
                                             </td>
-                                            <td><%= item.entidad.replace(/_/g, ' ') %></td>
+                                            <td><%= etiqueta(item.entidad) %></td>
                                             <td>
-                                                <% if (item.detalles) { %>
-                                                    <button type="button" class="btn btn-sm btn-outline-info btnVerDetalles" 
-                                                            data-bs-toggle="modal" data-bs-target="#detallesModal"
-                                                            data-detalles='<%- JSON.stringify(item.detalles) %>'>
-                                                        <i class="bi bi-eye"></i>
+                                                <%
+                                                    const datos = item.detalles && typeof item.detalles === 'object' && !Array.isArray(item.detalles)
+                                                        ? { ...item.detalles } : item.detalles;
+                                                    if (datos && typeof datos === 'object' && !Array.isArray(datos)) {
+                                                        if (item.bien_codigo && !datos.codigo) datos.codigo = item.bien_codigo;
+                                                        if (item.bien_nombre && !datos.nombre) datos.nombre = item.bien_nombre;
+                                                    }
+                                                    const filas = datos == null ? [] : filasDetalles(datos);
+                                                    const resumen = filas.filter(f => /^(Nombre|Código|ID del bien|Cantidad|Detalle)$/.test(f.campo));
+                                                %>
+                                                <% resumen.slice(0, 3).forEach(fila => { %>
+                                                    <div class="small"><strong><%= fila.campo %>:</strong> <%= fila.valor %></div>
+                                                <% }) %>
+                                                <% if (filas.length) { %>
+                                                    <button type="button" class="btn btn-sm btn-outline-info btnVerDetalles mt-1"
+                                                        data-bs-toggle="modal" data-bs-target="#detallesModal"
+                                                        data-detalles="<%= JSON.stringify(filas) %>">
+                                                        <i class="bi bi-eye me-1"></i> Ver detalles
                                                     </button>
                                                 <% } else { %>
-                                                    -
+                                                    <span class="text-muted">Sin detalles</span>
                                                 <% } %>
                                             </td>
                                         </tr>
@@ -293,7 +307,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <pre id="detallesJSON" class="bg-light p-3 rounded"></pre>
+                    <dl id="detallesContenido" class="row mb-0" style="overflow-wrap: anywhere"></dl>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -313,26 +327,25 @@
             // Manejar clic en botones de ver detalles
             document.querySelectorAll('.btnVerDetalles').forEach(button => {
                 button.addEventListener('click', function() {
-                    const detalles = this.getAttribute('data-detalles');
-                    try {
-                        const detallesObj = JSON.parse(detalles);
-                        document.getElementById('detallesJSON').textContent = JSON.stringify(detallesObj, null, 2);
-                    } catch (e) {
-                        document.getElementById('detallesJSON').textContent = detalles || 'No hay detalles disponibles';
-                    }
+                    const contenido = document.getElementById('detallesContenido');
+                    contenido.replaceChildren();
+                    const filas = JSON.parse(this.getAttribute('data-detalles'));
+                    filas.forEach(fila => {
+                        const campo = document.createElement('dt');
+                        campo.className = 'col-sm-4 border-bottom py-2';
+                        campo.textContent = fila.campo;
+                        const valor = document.createElement('dd');
+                        valor.className = 'col-sm-8 border-bottom py-2 mb-0';
+                        valor.style.whiteSpace = 'pre-wrap';
+                        valor.textContent = fila.valor;
+                        contenido.append(campo, valor);
+                    });
                 });
             });
             
             // Manejar botón limpiar filtros
             document.getElementById('btnLimpiarFiltros').addEventListener('click', function() {
-                document.getElementById('usuario').value = '';
-                document.getElementById('accion').value = '';
-                document.getElementById('entidad').value = '';
-                document.getElementById('fechaDesde').value = '';
-                document.getElementById('fechaHasta').value = '';
-                
-                // Enviar el formulario para aplicar la limpieza
-                document.getElementById('filtrosForm').submit();
+                window.location.assign('/historial');
             });
         });
     </script>
