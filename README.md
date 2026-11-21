@@ -30,8 +30,9 @@ las transacciones y los envíos de correo se sustituyen por simulaciones. No se
 requieren `.env`, credenciales ni una base de datos activa.
 
 Los nombres, comentarios y mensajes propios de las pruebas se escriben en español.
-La cobertura nueva se incorpora de a un servicio por vez: se crean sus pruebas,
-se ejecutan y se guardan en un commit. El siguiente servicio se inicia cuando se
+La cobertura nueva se incorpora en bloques de cinco servicios por cada «seguí»,
+manteniendo un archivo por servicio. Se crean y ejecutan las pruebas, y se deja
+la revisión y los commits al usuario. El siguiente bloque se inicia cuando se
 indique «seguí».
 
 Ejecutar `npm test` con las dependencias instaladas y Node.js 20 o superior.
