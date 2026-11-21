@@ -2,30 +2,20 @@ const db = require('../config/db');
 const { formatMySQLLocal, fechaActual } = require('../utils/fecha');
 
 class DespachoRepository {
-    // Iniciar una transacción
-    async iniciarTransaccion() {
-        await db.query('START TRANSACTION');
-    }
-    
-    // Confirmar una transacción
-    async confirmarTransaccion() {
-        await db.query('COMMIT');
-    }
-    
-    // Revertir una transacción
-    async revertirTransaccion() {
-        await db.query('ROLLBACK');
+    async bloquearOrden(ordenId, connection) {
+        const rows = await db.query('SELECT id FROM ordenes_venta WHERE id = ? FOR UPDATE', [ordenId], connection);
+        if (!rows.length) throw new Error('Orden de venta no encontrada');
     }
     
     // Crear un nuevo despacho
-    async crearDespacho(ordenVentaId, responsable, observaciones) {
+    async crearDespacho(ordenVentaId, responsable, observaciones, connection) {
         try {
             const fechaActualStr = formatMySQLLocal(fechaActual()); // Usar utilidad de fecha
             const query = `
                 INSERT INTO despachos (fecha, orden_venta_id, responsable, observaciones)
                 VALUES (?, ?, ?, ?)
             `;
-            const result = await db.query(query, [fechaActualStr, ordenVentaId, responsable, observaciones]);
+            const result = await db.query(query, [fechaActualStr, ordenVentaId, responsable, observaciones], connection);
             return result.insertId;
         } catch (error) {
             console.error('Error al crear despacho:', error);
@@ -34,17 +24,17 @@ class DespachoRepository {
     }
     
     // Agregar detalle de bolsón a un despacho (ahora incluye fecha_despacho)
-    async agregarDetalleBolson(despachoId, bolsonCodigo, producto, peso, precinto) {
+    async agregarDetalleBolson(despachoId, bolsonCodigo, producto, peso, precinto, connection) {
         try {
             const fechaDespacho = formatMySQLLocal(fechaActual()); // Usar utilidad de fecha
             const query = `
                 INSERT INTO despachos_detalle (despacho_id, bolson_codigo, producto, peso, precinto, fecha_despacho)
                 VALUES (?, ?, ?, ?, ?, ?)
             `;
-            await db.query(query, [despachoId, bolsonCodigo, producto, peso, precinto, fechaDespacho]);
+            await db.query(query, [despachoId, bolsonCodigo, producto, peso, precinto, fechaDespacho], connection);
             // Marcar bolsón como despachado
             const bolsonRepository = require('./bolsonRepository');
-            await bolsonRepository.marcarComoDespachadoPorCodigo(bolsonCodigo);
+            await bolsonRepository.marcarComoDespachadoPorCodigo(bolsonCodigo, connection);
         } catch (error) {
             console.error('Error al agregar detalle de bolsón:', error);
             throw error;
@@ -52,12 +42,12 @@ class DespachoRepository {
     }
     
     // Verificar si un bolsón ya fue despachado
-    async verificarBolsonDespachado(bolsonCodigo) {
+    async verificarBolsonDespachado(bolsonCodigo, connection) {
         try {
             const query = `
-                SELECT * FROM despachos_detalle WHERE bolson_codigo = ?
+                SELECT * FROM despachos_detalle WHERE bolson_codigo = ?${connection ? ' FOR UPDATE' : ''}
             `;
-            const result = await db.query(query, [bolsonCodigo]);
+            const result = await db.query(query, [bolsonCodigo], connection);
             return result.length > 0 ? result[0] : null;
         } catch (error) {
             console.error('Error al verificar bolsón despachado:', error);
@@ -246,7 +236,7 @@ class DespachoRepository {
     }
 
     // Actualizar el peso despachado en la orden de venta
-    async actualizarPesoProductoOrden(ordenId, producto, pesoDespachado) {
+    async actualizarPesoProductoOrden(ordenId, producto, pesoDespachado, connection) {
         try {
             // Primero obtenemos los detalles actuales del producto en la orden
             const queryGet = `
@@ -254,7 +244,7 @@ class DespachoRepository {
                 FROM ordenes_venta_detalle 
                 WHERE orden_venta_id = ? AND producto = ?
             `;
-            const detalleActual = await db.query(queryGet, [ordenId, producto]);
+            const detalleActual = await db.query(queryGet, [ordenId, producto], connection);
             
             if (!detalleActual || detalleActual.length === 0) {
                 throw new Error(`Producto ${producto} no encontrado en la orden ${ordenId}`);
@@ -270,7 +260,7 @@ class DespachoRepository {
                 SET cantidad = ? 
                 WHERE id = ?
             `;
-            await db.query(queryUpdate, [nuevoResto, detalleActual[0].id]);
+            await db.query(queryUpdate, [nuevoResto, detalleActual[0].id], connection);
             
             return {
                 pesoAnterior: pesoActual,
@@ -284,14 +274,14 @@ class DespachoRepository {
     }
     
     // Verificar si todos los productos de una orden están en cero
-    async verificarOrdenCompleta(ordenId) {
+    async verificarOrdenCompleta(ordenId, connection) {
         try {
             const query = `
                 SELECT SUM(cantidad) as total_pendiente
                 FROM ordenes_venta_detalle
                 WHERE orden_venta_id = ?
             `;
-            const result = await db.query(query, [ordenId]);
+            const result = await db.query(query, [ordenId], connection);
             
             // Si la suma es 0 o null, la orden está completa
             return !result[0].total_pendiente || result[0].total_pendiente <= 0;
@@ -302,14 +292,14 @@ class DespachoRepository {
     }
     
     // Actualizar el estado de una orden
-    async actualizarEstadoOrden(ordenId, estado) {
+    async actualizarEstadoOrden(ordenId, estado, connection) {
         try {
             const query = `
                 UPDATE ordenes_venta 
                 SET estado = ? 
                 WHERE id = ?
             `;
-            await db.query(query, [estado, ordenId]);
+            await db.query(query, [estado, ordenId], connection);
         } catch (error) {
             console.error('Error al actualizar estado de orden:', error);
             throw error;
@@ -403,13 +393,13 @@ class DespachoRepository {
     }
     
     // Agregar detalle de producto manual a un despacho (para productos sin códigos)
-    async agregarDetalleManual(despachoId, codigoManual, producto, peso) {
+    async agregarDetalleManual(despachoId, codigoManual, producto, peso, connection) {
         try {
             const fechaDespacho = formatMySQLLocal(fechaActual()); // Usar utilidad de fecha
             await db.query(
                 `INSERT INTO despachos_detalle (despacho_id, bolson_codigo, producto, peso, es_manual, fecha_despacho) 
                  VALUES (?, ?, ?, ?, 1, ?)`,
-                [despachoId, codigoManual, producto, peso, fechaDespacho]
+                [despachoId, codigoManual, producto, peso, fechaDespacho], connection
             );
         } catch (error) {
             console.error('Error al agregar detalle manual al despacho:', error);

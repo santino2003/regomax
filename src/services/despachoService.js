@@ -14,15 +14,14 @@ class DespachoService {
                 throw new Error('Se debe proporcionar al menos un código de bolsón para despachar');
             }
             
-            // Iniciar transacción para asegurar que todas las operaciones se hagan o ninguna
-            await despachoRepository.iniciarTransaccion();
-            
-            try {
+            return await db.withTransaction(async connection => {
+                await despachoRepository.bloquearOrden(datosDespacho.ordenVentaId, connection);
                 // Crear el despacho principal
                 const despachoId = await despachoRepository.crearDespacho(
                     datosDespacho.ordenVentaId,
                     datosDespacho.responsable,
-                    datosDespacho.observaciones
+                    datosDespacho.observaciones,
+                    connection
                 );
                 
                 // Procesar cada bolsón
@@ -30,13 +29,13 @@ class DespachoService {
                 
                 for (const codigoBolson of datosDespacho.codigos) {
                     // Verificar que el bolsón existe
-                    const bolson = await bolsonRepository.obtenerPorCodigo(codigoBolson);
+                    const bolson = await bolsonRepository.obtenerPorCodigo(codigoBolson, connection);
                     if (!bolson) {
                         throw new Error(`El bolsón con código ${codigoBolson} no existe`);
                     }
                     
                     // Verificar que no haya sido despachado previamente
-                    const despachoPrevio = await despachoRepository.verificarBolsonDespachado(codigoBolson);
+                    const despachoPrevio = await despachoRepository.verificarBolsonDespachado(codigoBolson, connection);
                     if (despachoPrevio) {
                         throw new Error(`El bolsón con código ${codigoBolson} ya fue despachado previamente`);
                     }
@@ -47,7 +46,8 @@ class DespachoService {
                         codigoBolson,
                         bolson.producto,
                         bolson.peso,
-                        bolson.precinto
+                        bolson.precinto,
+                        connection
                     );
                     
                     // Acumular peso por producto
@@ -62,7 +62,8 @@ class DespachoService {
                     const resultado = await despachoRepository.actualizarPesoProductoOrden(
                         datosDespacho.ordenVentaId,
                         producto,
-                        peso
+                        peso,
+                        connection
                     );
                     
                     detalleActualizaciones.push({
@@ -72,15 +73,12 @@ class DespachoService {
                 }
                 
                 // Verificar si la orden está completa (todos los productos en cantidad 0)
-                const ordenCompleta = await despachoRepository.verificarOrdenCompleta(datosDespacho.ordenVentaId);
+                const ordenCompleta = await despachoRepository.verificarOrdenCompleta(datosDespacho.ordenVentaId, connection);
                 
                 // Si está completa, actualizar el estado
                 if (ordenCompleta) {
-                    await despachoRepository.actualizarEstadoOrden(datosDespacho.ordenVentaId, 'en_logistica');
+                    await despachoRepository.actualizarEstadoOrden(datosDespacho.ordenVentaId, 'en_logistica', connection);
                 }
-                
-                // Confirmar todas las operaciones
-                await despachoRepository.confirmarTransaccion();
                 
                 // Devolver información sobre el despacho
                 return {
@@ -89,11 +87,7 @@ class DespachoService {
                     actualizacionesProductos: detalleActualizaciones,
                     ordenCompleta
                 };
-            } catch (error) {
-                // Si hay algún error, revertir todas las operaciones
-                await despachoRepository.revertirTransaccion();
-                throw error;
-            }
+            });
         } catch (error) {
             console.error('Error en procesarDespacho:', error);
             throw error;
@@ -150,16 +144,15 @@ class DespachoService {
                 throw new Error('Se debe proporcionar al menos un producto para despachar manualmente');
             }
             
-            // Iniciar transacción para asegurar que todas las operaciones se hagan o ninguna
-            await despachoRepository.iniciarTransaccion();
-            
-            try {
+            return await db.withTransaction(async connection => {
+                await despachoRepository.bloquearOrden(datosDespacho.ordenVentaId, connection);
                 // Crear el despacho principal con marca de manual
                 const observacionesCompletas = `[MANUAL] ${datosDespacho.observaciones || 'Despacho manual sin códigos'}`;
                 const despachoId = await despachoRepository.crearDespacho(
                     datosDespacho.ordenVentaId,
                     datosDespacho.responsable,
-                    observacionesCompletas
+                    observacionesCompletas,
+                    connection
                 );
                 
                 const detalleActualizaciones = [];
@@ -170,7 +163,8 @@ class DespachoService {
                     const resultado = await despachoRepository.actualizarPesoProductoOrden(
                         datosDespacho.ordenVentaId,
                         producto.producto,
-                        parseFloat(producto.cantidad)
+                        parseFloat(producto.cantidad),
+                        connection
                     );
                     
                     // Registrar en despacho_detalle con código especial para manuales
@@ -179,7 +173,8 @@ class DespachoService {
                         despachoId,
                         codigoManual,
                         producto.producto,
-                        parseFloat(producto.cantidad)
+                        parseFloat(producto.cantidad),
+                        connection
                     );
                     
                     detalleActualizaciones.push({
@@ -190,15 +185,12 @@ class DespachoService {
                 }
                 
                 // Verificar si la orden está completa (todos los productos en cantidad 0)
-                const ordenCompleta = await despachoRepository.verificarOrdenCompleta(datosDespacho.ordenVentaId);
+                const ordenCompleta = await despachoRepository.verificarOrdenCompleta(datosDespacho.ordenVentaId, connection);
                 
                 // Si está completa, actualizar el estado
                 if (ordenCompleta) {
-                    await despachoRepository.actualizarEstadoOrden(datosDespacho.ordenVentaId, 'en_logistica');
+                    await despachoRepository.actualizarEstadoOrden(datosDespacho.ordenVentaId, 'en_logistica', connection);
                 }
-                
-                // Confirmar todas las operaciones
-                await despachoRepository.confirmarTransaccion();
                 
                 // Devolver información sobre el despacho
                 return {
@@ -208,11 +200,7 @@ class DespachoService {
                     ordenCompleta
                 };
                 
-            } catch (error) {
-                // Si hay algún error, revertir todas las operaciones
-                await despachoRepository.revertirTransaccion();
-                throw error;
-            }
+            });
         } catch (error) {
             console.error('Error en procesarDespachoManual:', error);
             throw new Error(`Error al procesar despacho manual: ${error.message}`);

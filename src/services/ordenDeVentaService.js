@@ -1,4 +1,5 @@
 const OVRepository = require('../repositories/ordenDeVentaRepository');
+const db = require('../config/db');
 
 class OrdenDeVentaService {
     async crearOrdenDeVenta(ordenData) {
@@ -18,22 +19,16 @@ class OrdenDeVentaService {
                 throw new Error('Datos incompletos para crear la orden de venta');
             }
             
-            // INICIO DE TRANSACCIÓN
-            await OVRepository.iniciarTransaccion();
-            
-            try {
+            return await db.withTransaction(async connection => {
                 // Crear la orden principal
                 const ordenId = await OVRepository.crearOrdenVenta(
-                    fecha, cliente, clienteFinal, codigoDeVenta, observaciones, responsable
+                    fecha, cliente, clienteFinal, codigoDeVenta, observaciones, responsable, connection
                 );
                 
                 // Crear cada línea de producto
                 for (const item of productosYCantidades) {
-                    await OVRepository.agregarDetalleOrden(ordenId, item.producto, item.cantidad);
+                    await OVRepository.agregarDetalleOrden(ordenId, item.producto, item.cantidad, connection);
                 }
-                
-                // CONFIRMAR TRANSACCIÓN
-                await OVRepository.confirmarTransaccion();
                 
                 // Retornar el ID para que el frontend pueda mostrar OV-X
                 return {
@@ -41,11 +36,7 @@ class OrdenDeVentaService {
                     codigo: ordenId
                 };
                 
-            } catch (error) {
-                // REVERTIR TRANSACCIÓN si algo falla
-                await OVRepository.revertirTransaccion();
-                throw error;
-            }
+            });
         } catch (error) {
             console.error('Error al crear orden de venta:', error);
             throw new Error('Error al crear orden de venta: ' + error.message);
@@ -79,16 +70,11 @@ class OrdenDeVentaService {
     // Actualizar una orden existente
     async actualizarOrden(id, ordenData) {
         try {
-            // Verificar si la orden existe
-            const ordenExistente = await OVRepository.obtenerPorId(id);
-            if (!ordenExistente) {
-                throw new Error('Orden de venta no encontrada');
-            }
-            
-            // INICIO DE TRANSACCIÓN
-            await OVRepository.iniciarTransaccion();
-            
-            try {
+            return await db.withTransaction(async connection => {
+                const ordenExistente = await OVRepository.obtenerPorId(id, connection);
+                if (!ordenExistente) {
+                    throw new Error('Orden de venta no encontrada');
+                }
                 // Actualizar datos básicos de la orden
                 await OVRepository.actualizarDatosOrden(id, {
                     fecha: ordenData.fecha || ordenExistente.fecha,
@@ -97,12 +83,12 @@ class OrdenDeVentaService {
                     codigo_venta: ordenData.codigoVenta || ordenExistente.codigo_venta,
                     observaciones: ordenData.observaciones !== undefined ? ordenData.observaciones : ordenExistente.observaciones,
                     estado: ordenData.estado || ordenExistente.estado
-                });
+                }, connection);
                 
                 // Si hay nuevos productos, actualizar los productos
                 if (ordenData.productos && ordenData.productos.length > 0) {
                     // Eliminar todos los productos existentes
-                    await OVRepository.eliminarDetallesOrden(id);
+                    await OVRepository.eliminarDetallesOrden(id, connection);
                     
                     // Agregar los nuevos productos
                     for (const producto of ordenData.productos) {
@@ -111,22 +97,15 @@ class OrdenDeVentaService {
                             id, 
                             producto.producto,
                             producto.cantidad,
-                            producto.cantidad_inicial
+                            producto.cantidad_inicial,
+                            connection
                         );
                     }
                 }
                 
-                // CONFIRMAR TRANSACCIÓN
-                await OVRepository.confirmarTransaccion();
-                
                 // Obtener la orden actualizada con sus productos
-                return await OVRepository.obtenerPorId(id);
-                
-            } catch (error) {
-                // REVERTIR TRANSACCIÓN si algo falla
-                await OVRepository.revertirTransaccion();
-                throw error;
-            }
+                return await OVRepository.obtenerPorId(id, connection);
+            });
         } catch (error) {
             console.error('Error al actualizar orden de venta:', error);
             throw new Error(`Error al actualizar orden de venta: ${error.message}`);

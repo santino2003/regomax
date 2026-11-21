@@ -1,4 +1,5 @@
 const mysql = require('mysql2/promise');
+const { withTransaction } = require('../utils/transaction');
 require('dotenv').config();
 
 // Pool sizing can be overridden via environment variables DB_CONNECTION_LIMIT and DB_QUEUE_LIMIT
@@ -148,7 +149,12 @@ function countPlaceholders(sql) {
   return count;
 }
 
-async function query(text, params) {
+async function query(text, params, connection) {
+  // Transaction queries must stay on their connection and must never be retried on another one.
+  if (connection) {
+    const [rows] = await connection.query(text, params);
+    return rows;
+  }
   try {
     const currentPool = getPool();
     if (!currentPool) {
@@ -236,6 +242,7 @@ verifyConnection();
 
 module.exports = {
   query,
+  withTransaction: work => withTransaction(getPool(), work),
   get pool() {
     return getPool();
   },
