@@ -1,6 +1,7 @@
 const { test, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const { cargarServicio } = require('../test-support/serviceUnit');
+const { withTransaction } = require('../src/utils/transaction');
 
 mock.method(console, 'log', () => {});
 mock.method(console, 'warn', () => {});
@@ -14,7 +15,10 @@ function crearContexto(cambios = {}) {
     rollback: mock.fn(async () => { eventos.push('revertir'); }),
     release: mock.fn(() => { eventos.push('liberar'); }), ...cambios.conexion
   };
-  const db = { pool: { getConnection: mock.fn(async () => conexion), ...cambios.pool } };
+  const db = {
+    pool: { getConnection: mock.fn(async () => conexion), ...cambios.pool },
+    withTransaction: mock.fn(tarea => withTransaction(db.pool, tarea))
+  };
   const orden = {
     id: 11, codigo: 'OC-011', contrafactura: true, proveedor_id: 7,
     proveedor_nombre: 'Proveedor A', items: [], ...cambios.orden
@@ -36,6 +40,7 @@ function crearContexto(cambios = {}) {
     obtenerTotalAdelantos: mock.fn(async () => 0),
     obtenerPagosContrafacturaPorOrden: mock.fn(async () => ({ adelantos: [], saldos: [], todos: [] })),
     obtenerPorId: mock.fn(async () => ({ id: 9, pagado: 0, monto_pago: '100' })),
+    obtenerParaRefinanciacion: mock.fn(async () => ({ id: 9, pagado: 0, monto_pago: '100' })),
     refinanciarPagoVariable: mock.fn(async (id, original, cuotas) => ({
       pagoOriginalEliminado: id, cuotasCreadas: cuotas.map((cuota, indice) => ({ id: 201 + indice, ...cuota })),
       totalRefinanciado: cuotas.reduce((total, cuota) => total + parseFloat(cuota.monto), 0)
@@ -473,17 +478,23 @@ for (const caso of [
   { nombre: 'pago inexistente', original: null, cuotas: [{ fecha: '2026-11-26', monto: 100 }], mensaje: 'Pago no encontrado' },
   { nombre: 'pago ya pagado', original: { pagado: 1 }, cuotas: [{ fecha: '2026-11-26', monto: 100 }], mensaje: 'No se puede refinanciar un pago que ya fue marcado como pagado' },
   { nombre: 'lista vacía', cuotas: [], mensaje: 'La cantidad de cuotas debe estar entre 1 y 60' },
+  { nombre: 'cuotas ausentes', cuotas: undefined, mensaje: 'La cantidad de cuotas debe estar entre 1 y 60' },
+  { nombre: 'cuotas nulas', cuotas: null, mensaje: 'La cantidad de cuotas debe estar entre 1 y 60' },
+  { nombre: 'cuotas con formato incorrecto', cuotas: { length: 2 }, mensaje: 'La cantidad de cuotas debe estar entre 1 y 60' },
   { nombre: 'más de sesenta cuotas', cuotas: Array.from({ length: 61 }, () => ({ fecha: '2026-11-26', monto: 1 })), mensaje: 'La cantidad de cuotas debe estar entre 1 y 60' },
   { nombre: 'cuota sin fecha', cuotas: [{ monto: 100 }], mensaje: 'La cuota 1 debe tener una fecha' },
+  { nombre: 'cuota nula', cuotas: [null], mensaje: 'La cuota 1 debe tener una fecha' },
   { nombre: 'segunda cuota sin fecha', cuotas: [{ fecha: '2026-11-26', monto: 50 }, { monto: 50 }], mensaje: 'La cuota 2 debe tener una fecha' },
   { nombre: 'cuota en cero', cuotas: [{ fecha: '2026-11-26', monto: 0 }], mensaje: 'La cuota 1 debe tener un monto mayor a 0' },
   { nombre: 'cuota negativa', cuotas: [{ fecha: '2026-11-26', monto: -1 }], mensaje: 'La cuota 1 debe tener un monto mayor a 0' },
   { nombre: 'importe superior al original', cuotas: [{ fecha: '2026-11-26', monto: 101 }], mensaje: 'El total refinanciado ($101.00) no puede ser mayor al monto original ($100.00)' }
 ]) {
   test(`Pagos: refinanciar rechaza ${caso.nombre} sin modificar el pago`, async () => {
-    const f = crearContexto(Object.hasOwn(caso, 'original') ? { pagos: { obtenerPorId: mock.fn(async () => caso.original) } } : {});
+    const f = crearContexto(Object.hasOwn(caso, 'original') ? { pagos: { obtenerParaRefinanciacion: mock.fn(async () => caso.original) } } : {});
     assert.deepEqual(await f.servicio.refinanciarPago(9, caso.cuotas, 'operador'), { success: false, message: caso.mensaje });
     assert.equal(f.pagos.refinanciarPagoVariable.mock.callCount(), 0);
+    assert.deepEqual(f.pagos.obtenerParaRefinanciacion.mock.calls[0].arguments, [9, f.conexion]);
+    assert.equal(f.conexion.release.mock.callCount(), 1);
   });
 }
 
@@ -491,14 +502,116 @@ test('Pagos: refinanciar distribuye las cuotas y conserva el usuario y las obser
   const f = crearContexto();
   const cuotas = Object.freeze([{ fecha: '2026-11-26', monto: '40' }, { fecha: '2026-12-03', monto: '60' }]);
   const resultado = await f.servicio.refinanciarPago(9, cuotas, 'operador', 'Acuerdo con proveedor');
-  assert.deepEqual(f.pagos.obtenerPorId.mock.calls[0].arguments, [9]);
+  assert.deepEqual(f.pagos.obtenerParaRefinanciacion.mock.calls[0].arguments, [9, f.conexion]);
+  assert.equal(f.pagos.obtenerPorId.mock.callCount(), 0);
   assert.deepEqual(f.pagos.refinanciarPagoVariable.mock.calls[0].arguments, [
-    9, { id: 9, pagado: 0, monto_pago: '100' }, cuotas, 'operador', 'Acuerdo con proveedor'
+    9, { id: 9, pagado: 0, monto_pago: '100' }, cuotas, 'operador', 'Acuerdo con proveedor', f.conexion
   ]);
   assert.deepEqual(resultado, { success: true, message: 'Pago refinanciado exitosamente en 2 cuotas', data: {
     pagoOriginalEliminado: 9, cuotasCreadas: [{ id: 201, fecha: '2026-11-26', monto: '40' },
       { id: 202, fecha: '2026-12-03', monto: '60' }], totalRefinanciado: 100
   } });
+  assert.equal(f.db.withTransaction.mock.callCount(), 1);
+  assert.deepEqual(f.eventos, ['iniciar', 'confirmar', 'liberar']);
+});
+
+test('Pagos: refinanciar valida el monto actual obtenido bajo bloqueo', async () => {
+  const f = crearContexto({ pagos: {
+    obtenerParaRefinanciacion: mock.fn(async () => ({ id: 9, pagado: 0, monto_pago: '80' }))
+  } });
+  assert.deepEqual(await f.servicio.refinanciarPago(9, [{ fecha: '2026-11-26', monto: 90 }], 'operador'), {
+    success: false, message: 'El total refinanciado ($90.00) no puede ser mayor al monto original ($80.00)'
+  });
+  assert.equal(f.pagos.obtenerPorId.mock.callCount(), 0);
+  assert.equal(f.pagos.refinanciarPagoVariable.mock.callCount(), 0);
+});
+
+test('Pagos: refinanciar bloquea y valida antes de crear cuotas y confirma al finalizar', async () => {
+  const f = crearContexto();
+  f.pagos.obtenerParaRefinanciacion.mock.mockImplementation(async () => {
+    f.eventos.push('bloquear pago');
+    assert.equal(f.conexion.beginTransaction.mock.callCount(), 1);
+    return { id: 9, pagado: 0, monto_pago: 100 };
+  });
+  f.pagos.refinanciarPagoVariable.mock.mockImplementation(async (...argumentos) => {
+    f.eventos.push('crear cuotas');
+    assert.equal(argumentos[5], f.conexion);
+    assert.equal(f.conexion.commit.mock.callCount(), 0);
+    return { cuotasCreadas: [], totalRefinanciado: 100 };
+  });
+  await f.servicio.refinanciarPago(9, [{ fecha: '2026-11-26', monto: 100 }], 'operador');
+  assert.deepEqual(f.eventos, ['iniciar', 'bloquear pago', 'crear cuotas', 'confirmar', 'liberar']);
+});
+
+for (const dependencia of ['obtenerParaRefinanciacion', 'refinanciarPagoVariable']) {
+  test(`Pagos: si falla ${dependencia} se revierte la refinanciación y se libera la conexión`, async () => {
+    const error = new Error('Falla simulada de refinanciación');
+    const f = crearContexto({ pagos: { [dependencia]: mock.fn(async () => { throw error; }) } });
+    await assert.rejects(f.servicio.refinanciarPago(9, [{ fecha: '2026-11-26', monto: 100 }], 'operador'), recibido => recibido === error);
+    assert.equal(f.conexion.commit.mock.callCount(), 0);
+    assert.equal(f.conexion.rollback.mock.callCount(), 1);
+    assert.equal(f.conexion.release.mock.callCount(), 1);
+  });
+}
+
+test('Pagos: un conflicto al eliminar el pago revierte las cuotas y conserva el estado 409', async () => {
+  const error = Object.assign(new Error('El pago cambió durante la refinanciación'), { statusCode: 409 });
+  const f = crearContexto({ pagos: { refinanciarPagoVariable: mock.fn(async () => { throw error; }) } });
+  await assert.rejects(f.servicio.refinanciarPago(9, [{ fecha: '2026-11-26', monto: 100 }], 'operador'), recibido => recibido === error);
+  assert.equal(f.conexion.commit.mock.callCount(), 0);
+  assert.equal(f.conexion.rollback.mock.callCount(), 1);
+  assert.equal(f.conexion.release.mock.callCount(), 1);
+});
+
+test('Pagos: si falla el commit de una refinanciación se intenta revertir y se informa el error', async () => {
+  const error = new Error('Falla simulada al confirmar');
+  const f = crearContexto({ conexion: { commit: mock.fn(async () => { throw error; }) } });
+  await assert.rejects(f.servicio.refinanciarPago(9, [{ fecha: '2026-11-26', monto: 100 }], 'operador'), recibido => recibido === error);
+  assert.equal(f.conexion.rollback.mock.callCount(), 1);
+  assert.equal(f.conexion.release.mock.callCount(), 1);
+});
+
+test('Pagos: dos solicitudes de refinanciación no crean cuotas dos veces al simular la espera por el bloqueo', { timeout: 5000 }, async () => {
+  let continuarSegunda;
+  const primeraConfirmada = new Promise(resolve => { continuarSegunda = resolve; });
+  let avisarSegunda;
+  const segundaSolicitoBloqueo = new Promise(resolve => { avisarSegunda = resolve; });
+  const primera = {
+    beginTransaction: mock.fn(async () => {}),
+    commit: mock.fn(async () => { continuarSegunda(); }),
+    rollback: mock.fn(async () => {}), release: mock.fn()
+  };
+  const segunda = {
+    beginTransaction: mock.fn(async () => {}), commit: mock.fn(async () => {}),
+    rollback: mock.fn(async () => {}), release: mock.fn()
+  };
+  const conexiones = [primera, segunda];
+  let siguiente = 0;
+  const f = crearContexto({
+    pool: { getConnection: mock.fn(async () => conexiones[siguiente++]) },
+    pagos: { obtenerParaRefinanciacion: mock.fn(async (id, conexion) => {
+      if (conexion === primera) {
+        await segundaSolicitoBloqueo;
+        return { id: 9, pagado: 0, monto_pago: 100 };
+      }
+      avisarSegunda();
+      await primeraConfirmada;
+      // Simula que el repositorio vuelve a leer después de que se eliminó el original.
+      return null;
+    }) }
+  });
+  const cuotas = [{ fecha: '2026-11-26', monto: 100 }];
+  const resultados = await Promise.all([
+    f.servicio.refinanciarPago(9, cuotas, 'operador'),
+    f.servicio.refinanciarPago(9, cuotas, 'otro-operador')
+  ]);
+  assert.equal(resultados[0].success, true);
+  assert.deepEqual(resultados[1], { success: false, message: 'Pago no encontrado' });
+  assert.equal(f.pagos.refinanciarPagoVariable.mock.callCount(), 1);
+  assert.equal(f.pagos.refinanciarPagoVariable.mock.calls[0].arguments[5], primera);
+  assert.equal(primera.commit.mock.callCount(), 1);
+  assert.equal(primera.release.mock.callCount(), 1);
+  assert.equal(segunda.release.mock.callCount(), 1);
 });
 
 test('Pagos: refinanciar permite un total menor al original y observaciones ausentes', async () => {
@@ -616,7 +729,7 @@ for (const caso of [
   { metodo: 'actualizarOCrearAdelanto', dependencia: 'obtenerPagosContrafacturaPorOrden', argumentos: [datosAdelanto()] },
   { metodo: 'actualizarOCrearSaldoCompleto', dependencia: 'obtenerPagosContrafacturaPorOrden', argumentos: [datosSaldo()] },
   { metodo: 'actualizarPagosContrafactura', dependencia: 'obtenerPagosContrafacturaPorOrden', argumentos: [11, 400, 100, '2026-11-26', null, 'operador'] },
-  { metodo: 'refinanciarPago', dependencia: 'obtenerPorId', argumentos: [9, [{ fecha: '2026-11-26', monto: 100 }], 'operador'] },
+  { metodo: 'refinanciarPago', dependencia: 'obtenerParaRefinanciacion', argumentos: [9, [{ fecha: '2026-11-26', monto: 100 }], 'operador'] },
   { metodo: 'refinanciarPago', dependencia: 'refinanciarPagoVariable', argumentos: [9, [{ fecha: '2026-11-26', monto: 100 }], 'operador'] }
 ]) {
   test(`Pagos: ${caso.metodo} propaga el error original de ${caso.dependencia || caso.metodo}`, async () => {

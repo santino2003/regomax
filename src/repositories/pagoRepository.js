@@ -903,16 +903,19 @@ class PagoRepository {
         }
     }
 
-    /**
-     * Refinanciar un pago existente con cuotas variables
-     * Elimina el pago original y crea nuevos pagos con montos y fechas personalizadas
-     */
-    async refinanciarPagoVariable(pagoId, pagoOriginal, cuotas, username, observacionesGenerales = null) {
-        const connection = await db.pool.getConnection();
-        
-        try {
-            await connection.beginTransaction();
+    async obtenerParaRefinanciacion(pagoId, connection) {
+        if (!connection) throw new Error('La refinanciación requiere una conexión de transacción');
+        const [pagos] = await connection.execute('SELECT * FROM pagos WHERE id = ? FOR UPDATE', [pagoId]);
+        return pagos[0] || null;
+    }
 
+    /**
+     * Crear cuotas y eliminar el pago bloqueado usando la transacción del servicio.
+     */
+    async refinanciarPagoVariable(pagoId, pagoOriginal, cuotas, username, observacionesGenerales = null, connection) {
+        if (!connection) throw new Error('La refinanciación requiere una conexión de transacción');
+
+        try {
             // Calcular total refinanciado
             const totalRefinanciado = cuotas.reduce((sum, c) => sum + parseFloat(c.monto), 0);
 
@@ -968,12 +971,15 @@ class PagoRepository {
             }
 
             // Eliminar el pago original
-            await connection.execute(
-                'DELETE FROM pagos WHERE id = ?',
+            const [eliminacion] = await connection.execute(
+                'DELETE FROM pagos WHERE id = ? AND COALESCE(pagado, FALSE) = FALSE',
                 [pagoId]
             );
-
-            await connection.commit();
+            if (eliminacion.affectedRows !== 1) {
+                throw Object.assign(new Error('El pago cambió durante la refinanciación. Actualice el listado e intente nuevamente.'), {
+                    statusCode: 409
+                });
+            }
 
             return {
                 success: true,
@@ -982,11 +988,8 @@ class PagoRepository {
                 totalRefinanciado
             };
         } catch (error) {
-            await connection.rollback();
             console.error('Error en PagoRepository.refinanciarPagoVariable:', error);
             throw error;
-        } finally {
-            connection.release();
         }
     }
 

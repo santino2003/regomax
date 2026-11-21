@@ -353,7 +353,7 @@ class PagoController {
 
         } catch (error) {
             console.error('Error en PagoController.refinanciarPago:', error);
-            res.status(500).json({
+            res.status(error.statusCode || 500).json({
                 success: false,
                 message: 'Error al refinanciar el pago',
                 error: error.message
