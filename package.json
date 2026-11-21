@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:integration": "node --test --test-concurrency=1 integration/*.integration.js"
   },
   "keywords": [],
   "author": "",

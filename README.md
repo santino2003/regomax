@@ -34,3 +34,18 @@ sin abrir conexiones de red; las operaciones de base de datos se simulan.
 Para validar un archivo por separado: `node --test tests/stock.test.js`.
 Las pruebas simuladas deben complementarse con una prueba de integración contra
 una base de datos de desarrollo antes del despliegue.
+
+## Pruebas de integración con MySQL
+
+Ejecutar `npm run test:integration` contra una base de pruebas con el esquema de la
+aplicación. Se carga `.env` y se usa `TEST_DATABASE_URL` si está definida; en caso
+contrario se usa `DATABASE_URL`. El comando comprueba el motor InnoDB y ejecuta
+los servicios y repositorios con consultas, conexiones y transacciones reales.
+
+Cada prueba crea registros propios con un prefijo aleatorio `IT-` y un responsable
+`integration_...`, y los elimina al terminar, incluso si una aserción falla. No se
+vacían tablas ni se cambian esquemas. Las notificaciones se capturan sin enviar
+correos. Se cubren concurrencia, decimales, kits, movimientos y rollback ante
+restricciones reales de MySQL.
+
+`npm test` sigue ejecutando únicamente las pruebas que no necesitan base de datos.
