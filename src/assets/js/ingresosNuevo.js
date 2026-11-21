@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         enviar(formMotivo, '/api/ingresos/movimientos', {
             tipo_movimiento: 'INGRESO',
             motivo: motivo.value,
+            cliente_id: empresa.value,
             nombre: document.getElementById('personaNombre').textContent,
             apellido: document.getElementById('personaApellido').textContent,
             patente: document.getElementById('patente').value.trim()

@@ -1,6 +1,59 @@
 const personaRepository = require('../repositories/personaRepository');
+const movimientoIngresoRepository = require('../repositories/movimientoIngresoRepository');
+const clienteNFURepository = require('../repositories/clienteNFURepository');
 
 class IngresoService {
+    async obtenerDatosNuevoIngreso() {
+        try {
+            return { clientes: await clienteNFURepository.obtenerTodos() || [], errorClientes: false };
+        } catch (error) {
+            console.error('Error al obtener empresas para ingresos:', error);
+            return { clientes: [], errorClientes: true };
+        }
+    }
+
+    async listarMovimientos(pagina) {
+        const numero = Number(pagina);
+        const limite = 50;
+        const total = await movimientoIngresoRepository.contar();
+        const paginas = Math.max(1, Math.ceil(total / limite));
+        pagina = Math.min(Number.isSafeInteger(numero) && numero > 0 ? numero : 1, paginas);
+        const movimientos = await movimientoIngresoRepository.listar(limite, (pagina - 1) * limite);
+        return { movimientos, total, pagina, paginas };
+    }
+
+    async registrarMovimiento(datos) {
+        if (!datos || typeof datos !== 'object' || Array.isArray(datos)) {
+            throw this.errorValidacion('Ingrese los datos del movimiento.');
+        }
+        const movimiento = {};
+        for (const [campo, limite] of Object.entries({ tipo_movimiento: 7, motivo: 100, nombre: 100, apellido: 100, patente: 20 })) {
+            const valor = typeof datos[campo] === 'string' ? datos[campo].trim() : '';
+            if (!valor || valor.length > limite || /[\x00-\x1f\x7f]/.test(valor)) {
+                throw this.errorValidacion(`El campo ${campo} es obligatorio y debe tener hasta ${limite} caracteres.`);
+            }
+            movimiento[campo] = valor;
+        }
+        movimiento.tipo_movimiento = movimiento.tipo_movimiento.toUpperCase();
+        if (!['INGRESO', 'EGRESO'].includes(movimiento.tipo_movimiento)) {
+            throw this.errorValidacion('El tipo de movimiento debe ser INGRESO o EGRESO.');
+        }
+        movimiento.patente = movimiento.patente.toUpperCase();
+        movimiento.empresa = null;
+        if (datos.cliente_id || (movimiento.tipo_movimiento === 'INGRESO' && movimiento.motivo === 'CNFU/NFU')) {
+            const clienteId = String(datos.cliente_id ?? '');
+            if (!/^[1-9]\d*$/.test(clienteId) || !Number.isSafeInteger(Number(clienteId))) {
+                throw this.errorValidacion('Seleccione una empresa válida.');
+            }
+            const cliente = await clienteNFURepository.obtenerPorId(Number(clienteId));
+            if (!cliente || !cliente.empresa) {
+                throw this.errorValidacion('La empresa seleccionada no existe.');
+            }
+            movimiento.empresa = cliente.empresa;
+        }
+        return movimientoIngresoRepository.crear(movimiento);
+    }
+
     errorValidacion(message) {
         const error = new Error(message);
         error.status = 400;
@@ -48,7 +101,7 @@ class IngresoService {
         return { persona: await personaRepository.crear(persona), requiereRegistro: false };
     }
 
-    async registrar(datos) {
+    async registrarPersona(datos) {
         const persona = this.validarPersona(datos);
         const existente = await personaRepository.obtenerPorDni(persona.dni);
         return existente || personaRepository.crear(persona);

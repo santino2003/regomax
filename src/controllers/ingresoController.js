@@ -1,17 +1,37 @@
 const ingresoService = require('../services/ingresoService');
-const clienteNFUService = require('../services/clienteNFUService');
 
 const ingresoController = {
     async vistaNuevoIngreso(req, res) {
-        let clientes = [];
-        let errorClientes = false;
+        const datos = await ingresoService.obtenerDatosNuevoIngreso();
+        res.render('ingresosNuevo', { username: req.user.username, ...datos });
+    },
+
+    async listarMovimientos(req, res) {
         try {
-            clientes = await clienteNFUService.obtenerTodos() || [];
+            const resultado = await ingresoService.listarMovimientos(req.query.page);
+            res.render('ingresosListado', {
+                title: 'Ingresos y egresos', username: req.user.username, ...resultado,
+                registrado: req.query.registrado === '1', errorListado: false
+            });
         } catch (error) {
-            console.error('Error al obtener clientes NFU para ingresos:', error);
-            errorClientes = true;
+            console.error('Error al listar ingresos y egresos:', error);
+            res.status(500).render('ingresosListado', {
+                title: 'Ingresos y egresos', username: req.user.username,
+                movimientos: [], pagina: 1, paginas: 1, total: 0,
+                registrado: false, errorListado: true
+            });
         }
-        res.render('ingresosNuevo', { username: req.user.username, clientes, errorClientes });
+    },
+
+    async registrarMovimiento(req, res) {
+        try {
+            const movimiento = await ingresoService.registrarMovimiento(req.body);
+            res.status(201).json({ success: true, movimiento });
+        } catch (error) {
+            if (!error.status) console.error('Error al registrar ingreso o egreso:', error);
+            res.status(error.status || 500).json({ success: false,
+                error: error.status ? error.message : 'No se pudo registrar el movimiento. Intente nuevamente.' });
+        }
     },
 
     async identificarPersona(req, res) {
@@ -27,7 +47,7 @@ const ingresoController = {
 
     async registrarPersona(req, res) {
         try {
-            const persona = await ingresoService.registrar(req.body || {});
+            const persona = await ingresoService.registrarPersona(req.body || {});
             res.json({ success: true, persona });
         } catch (error) {
             if (!error.status) console.error('Error al registrar persona:', error);

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS ingresos_egresos (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     patente VARCHAR(20) NOT NULL,
+    empresa VARCHAR(255) NULL,
     fecha_movimiento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_fecha_movimiento (fecha_movimiento),
     INDEX idx_patente (patente)
