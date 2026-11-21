@@ -24,34 +24,20 @@ FIltros: Desde Hasta, tipo, y CNFU/NFU
 
 ## Pruebas
 
+Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:
+`tests/<nombreService>.test.js`. Los repositorios, otros servicios, las conexiones,
+las transacciones y los envíos de correo se sustituyen por simulaciones. No se
+requieren `.env`, credenciales ni una base de datos activa.
+
 Los nombres, comentarios y mensajes propios de las pruebas se escriben en español.
 La cobertura nueva se incorpora de a un servicio por vez: se crean sus pruebas,
 se ejecutan y se guardan en un commit. El siguiente servicio se inicia cuando se
 indique «seguí».
 
 Ejecutar `npm test` con las dependencias instaladas y Node.js 20 o superior.
-Las pruebas usan el ejecutor incorporado de Node y no requieren `.env`, credenciales
-ni una base de datos activa. Cubren registro y privilegios, transacciones de ventas
-y despachos, concurrencia de stock, kits, movimientos, XSS en pagos, opciones del
-pool MySQL y resolución de rutas. El driver MySQL y el generador de Excel se usan
-sin abrir conexiones de red; las operaciones de base de datos se simulan.
+Para un servicio: `node --test tests/almacenService.test.js`.
 
-Para validar un archivo por separado: `node --test tests/stock.test.js`.
-Las pruebas simuladas deben complementarse con una prueba de integración contra
-una base de datos de desarrollo antes del despliegue.
-
-## Pruebas de integración con MySQL
-
-Ejecutar `npm run test:integration` contra una base de pruebas con el esquema de la
-aplicación. Se carga `.env` y se usa `TEST_DATABASE_URL` si está definida; en caso
-contrario se usa `DATABASE_URL`. El comando comprueba el motor InnoDB y ejecuta
-los servicios y repositorios con consultas, conexiones y transacciones reales.
-
-Cada prueba crea registros propios con un prefijo aleatorio `IT-` y un responsable
-`integration_...`, y los elimina al terminar, incluso si una aserción falla. No se
-vacían tablas ni se cambian esquemas. Las notificaciones se capturan sin enviar
-correos. Se cubren concurrencia, decimales, kits, movimientos y rollback ante
-restricciones reales de MySQL, además de creación y edición de ventas, despachos
-manuales y escaneados, y competencia entre órdenes por un mismo bolsón.
-
-`npm test` sigue ejecutando únicamente las pruebas que no necesitan base de datos.
+También se conservan las comprobaciones de rutas, vistas, exportaciones y
+configuración. Estas pruebas tampoco acceden a una base de datos ni envían correos.
+Las pruebas unitarias verifican la lógica del servicio y su uso de las dependencias;
+no comprueban los bloqueos ni los rollbacks de un servidor MySQL real.
