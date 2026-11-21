@@ -46,6 +46,7 @@ Cada prueba crea registros propios con un prefijo aleatorio `IT-` y un responsab
 `integration_...`, y los elimina al terminar, incluso si una aserción falla. No se
 vacían tablas ni se cambian esquemas. Las notificaciones se capturan sin enviar
 correos. Se cubren concurrencia, decimales, kits, movimientos y rollback ante
-restricciones reales de MySQL.
+restricciones reales de MySQL, además de creación y edición de ventas, despachos
+manuales y escaneados, y competencia entre órdenes por un mismo bolsón.
 
 `npm test` sigue ejecutando únicamente las pruebas que no necesitan base de datos.
