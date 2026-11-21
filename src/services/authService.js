@@ -43,8 +43,26 @@ class AuthService {
   }
 
   // Método para registrar un nuevo usuario
-  async register(userData) {
+  async register(userData, actor) {
     try {
+      if (!actor) {
+        throw Object.assign(new Error('Usuario no autenticado'), { statusCode: 401 });
+      }
+      if (actor.role !== 'admin' && actor.permissions?.['users:create'] !== true) {
+        throw Object.assign(new Error('No tienes permiso para crear usuarios'), { statusCode: 403 });
+      }
+
+      const role = userData.role || 'user';
+      const permissions = userData.permissions ?? {};
+      if (!['user', 'supervisor', 'admin'].includes(role) ||
+          typeof permissions !== 'object' || Array.isArray(permissions) ||
+          Object.values(permissions).some(value => typeof value !== 'boolean')) {
+        throw Object.assign(new Error('Rol o permisos inválidos'), { statusCode: 400 });
+      }
+      if (actor.role !== 'admin' && (role !== 'user' || Object.values(permissions).some(Boolean))) {
+        throw Object.assign(new Error('Solo un administrador puede asignar roles o permisos'), { statusCode: 403 });
+      }
+
       // Verificar si el usuario ya existe
       const existingUser = await userRepository.findByUsername(userData.username);
       if (existingUser) {
@@ -57,8 +75,9 @@ class AuthService {
       // Crear usuario con contraseña hasheada y permisos
       const newUser = await userRepository.create({
         ...userData,
+        role,
         password: hashedPassword,
-        permissions: userData.permissions || {} // Asegurarnos de incluir los permisos
+        permissions
       });
 
       // Generar token JWT incluyendo permisos
