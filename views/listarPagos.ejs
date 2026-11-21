@@ -422,8 +422,10 @@
                                                                 title="Marcar como pagado">
                                                             <i class="bi bi-check-circle"></i>
                                                         </button>
-                                                        <button class="btn btn-sm btn-warning" 
-                                                                onclick="abrirModalRefinanciar(<%= pago.id %>, '<%= pago.proveedor_nombre %>', <%= pago.monto_pago %>)"
+                                                        <button class="btn btn-sm btn-warning js-refinanciar-pago"
+                                                                data-pago-id="<%= pago.id %>"
+                                                                data-proveedor-nombre="<%= pago.proveedor_nombre %>"
+                                                                data-monto="<%= pago.monto_pago %>"
                                                                 title="Refinanciar pago">
                                                             <i class="bi bi-calendar-event"></i>
                                                         </button>
