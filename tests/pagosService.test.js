@@ -91,12 +91,12 @@ test('Pagos: la clave de agrupación distingue proveedor y medio de pago y admit
 test('Pagos: una recepción calcula el importe y programa el pago con los datos del proveedor', async () => {
   const f = crearContexto({ precios: { obtenerPrecioProveedorBien: mock.fn(async () => ({ precio: '12.50', moneda: 'USD' })) } });
   const resultado = await f.servicio.registrarPagoPorRecepcion(11, 4, 3, 'operador');
-  assert.deepEqual(f.ordenes.obtenerProveedorDeItem.mock.calls[0].arguments, [11, 4]);
-  assert.deepEqual(f.precios.obtenerPrecioProveedorBien.mock.calls[0].arguments, [10, 7]);
+  assert.deepEqual(f.ordenes.obtenerProveedorDeItem.mock.calls[0].arguments, [11, 4, null]);
+  assert.deepEqual(f.precios.obtenerPrecioProveedorBien.mock.calls[0].arguments, [10, 7, null]);
   assert.deepEqual(f.pagos.registrarPagoRecepcion.mock.calls[0].arguments, [{
     ordenCompraId: 11, bienId: 10, proveedorId: 7, cantidadRecibida: 3, precioUnitario: 12.5,
     montoPago: 37.5, fechaPago: '2026-11-26', registradoPor: 'operador',
-    observaciones: 'Pago por recepción de 3 unidades de "Correa"', moneda: 'USD', medioPago: 'Transferencia'
+    observaciones: 'Pago por recepción de 3 unidades de "Correa"', moneda: 'USD', medioPago: 'Transferencia', connection: null
   }]);
   assert.deepEqual(resultado, {
     success: true, message: '✓ Pago informado: $37.50 (3 × $12.50)', data: {
@@ -155,6 +155,54 @@ test('Pagos: una falla al consultar el precio de recepción se devuelve como adv
     message: '⚠️ Error al consultar precio del proveedor "Proveedor A". No se informará a pagos.'
   });
   assert.equal(f.pagos.registrarPagoRecepcion.mock.callCount(), 0);
+});
+
+test('Pagos: una recepción utiliza la conexión recibida tanto para consultar como para registrar el pago', async () => {
+  const f = crearContexto();
+  assert.equal((await f.servicio.registrarPagoPorRecepcion(11, 4, 2, 'operador', f.conexion)).success, true);
+  assert.deepEqual(f.ordenes.obtenerProveedorDeItem.mock.calls[0].arguments, [11, 4, f.conexion]);
+  assert.deepEqual(f.precios.obtenerPrecioProveedorBien.mock.calls[0].arguments, [10, 7, f.conexion]);
+  assert.equal(f.pagos.registrarPagoRecepcion.mock.calls[0].arguments[0].connection, f.conexion);
+  assert.equal(f.db.pool.getConnection.mock.callCount(), 0);
+  assert.equal(f.conexion.beginTransaction.mock.callCount(), 0);
+  assert.equal(f.conexion.commit.mock.callCount(), 0);
+  assert.equal(f.conexion.rollback.mock.callCount(), 0);
+  assert.equal(f.conexion.release.mock.callCount(), 0);
+});
+
+test('Pagos: una falla de consulta de precio dentro de una recepción se propaga para revertir la transacción', async () => {
+  const error = new Error('Falla simulada al consultar el precio');
+  const f = crearContexto({ precios: { obtenerPrecioProveedorBien: mock.fn(async () => { throw error; }) } });
+  await assert.rejects(f.servicio.registrarPagoPorRecepcion(11, 4, 2, 'operador', f.conexion), recibido => recibido === error);
+  assert.equal(f.pagos.registrarPagoRecepcion.mock.callCount(), 0);
+});
+
+test('Pagos: una recepción con conexión compartida conserva el aviso de precio no configurado', async () => {
+  const f = crearContexto({ precios: { obtenerPrecioProveedorBien: mock.fn(async () => null) } });
+  const resultado = await f.servicio.registrarPagoPorRecepcion(11, 4, 2, 'operador', f.conexion);
+  assert.equal(resultado.success, false);
+  assert.equal(resultado.warning, true);
+  assert.equal(resultado.requiresManualPayment, true);
+  assert.equal(f.pagos.registrarPagoRecepcion.mock.callCount(), 0);
+});
+
+test('Pagos: una recepción con conexión compartida conserva el aviso de proveedor no asignado', async () => {
+  const f = crearContexto({ ordenes: { obtenerProveedorDeItem: mock.fn(async () => ({ bien_nombre: 'Correa' })) } });
+  const resultado = await f.servicio.registrarPagoPorRecepcion(11, 4, 2, 'operador', f.conexion);
+  assert.equal(resultado.warning, true);
+  assert.equal(resultado.requiresManualPayment, true);
+  assert.equal(f.precios.obtenerPrecioProveedorBien.mock.callCount(), 0);
+  assert.equal(f.pagos.registrarPagoRecepcion.mock.callCount(), 0);
+});
+
+test('Pagos: un error de registro con conexión compartida se propaga sin confirmar ni liberar la transacción ajena', async () => {
+  const error = new Error('Falla simulada al registrar el pago');
+  const f = crearContexto({ pagos: { registrarPagoRecepcion: mock.fn(async () => { throw error; }) } });
+  await assert.rejects(f.servicio.registrarPagoPorRecepcion(11, 4, 2, 'operador', f.conexion), recibido => recibido === error);
+  assert.equal(f.pagos.registrarPagoRecepcion.mock.calls[0].arguments[0].connection, f.conexion);
+  assert.equal(f.conexion.commit.mock.callCount(), 0);
+  assert.equal(f.conexion.rollback.mock.callCount(), 0);
+  assert.equal(f.conexion.release.mock.callCount(), 0);
 });
 
 const operacionesContrafactura = [

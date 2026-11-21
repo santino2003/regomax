@@ -9,12 +9,12 @@ class PagosService {
         return `${proveedorId || ''}::${medioPago || ''}`;
     }
 
-    async registrarPagoPorRecepcion(ordenId, itemId, cantidadRecibida, username) {
+    async registrarPagoPorRecepcion(ordenId, itemId, cantidadRecibida, username, connection = null) {
         try {
             console.log('💰 [PAGOS] Procesando recepción:', { ordenId, itemId, cantidadRecibida, usuario: username });
 
             // 1. Obtener el item con su proveedor sugerido directamente del repository
-            const itemInfo = await ordenCompraRepository.obtenerProveedorDeItem(ordenId, itemId);
+            const itemInfo = await ordenCompraRepository.obtenerProveedorDeItem(ordenId, itemId, connection);
 
             // Validar que se encontró el item
             if (!itemInfo) {
@@ -46,7 +46,8 @@ class PagosService {
             try {
                 precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
                     itemInfo.bien_id,
-                    itemInfo.proveedor_sugerido_id
+                    itemInfo.proveedor_sugerido_id,
+                    connection
                 );
                 console.log('💱 [PAGOS] Precio proveedor recibido:', {
                     bienId: itemInfo.bien_id,
@@ -55,6 +56,8 @@ class PagosService {
                     moneda: precioInfo && precioInfo.moneda
                 });
             } catch (error) {
+                // Una falla de consulta dentro de la recepción debe revertir la transacción completa.
+                if (connection) throw error;
                 console.warn(`⚠️ [PAGOS] Error al consultar precio:`, error.message);
                 return {
                     success: false,
@@ -102,7 +105,8 @@ class PagosService {
                 registradoPor: username,
                 observaciones: `Pago por recepción de ${cantidadRecibida} unidades de "${itemInfo.bien_nombre}"`,
                 moneda: precioInfo.moneda || 'ARS',
-                medioPago: itemInfo.medio_pago || null
+                medioPago: itemInfo.medio_pago || null,
+                connection
             });
 
             console.log('💾 [PAGOS] Pago registrado con ID:', pagoRegistrado.id);

@@ -85,7 +85,7 @@ class BienProveedorRepository {
             connection.release();
         }
     }
-    async obtenerPrecioProveedorBien(bienId, proveedorId) {
+    async obtenerPrecioProveedorBien(bienId, proveedorId, connection = null) {
         const query = `
             SELECT 
                 bp.bien_id,
@@ -105,7 +105,7 @@ class BienProveedorRepository {
             LIMIT 1
         `;
 
-        const result = await db.query(query, [bienId, proveedorId]);
+        const result = await db.query(query, [bienId, proveedorId], connection);
         
         // Manejar el resultado igual que en ordenCompraRepository
         const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : 

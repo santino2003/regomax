@@ -827,71 +827,63 @@ class OrdenCompraService {
      */
     async actualizarCantidadRecibida(ordenId, itemId, cantidadRecibida, username = 'sistema') {
         try {
-            const orden = await ordenCompraRepository.obtenerPorId(ordenId);
-            if (!orden) {
-                throw new Error('La orden de compra no existe');
-            }
-
-            if (orden.estado !== 'En Proceso') {
-                throw new Error('Solo se puede actualizar la cantidad recibida cuando la orden está en estado "En Proceso"');
-            }
-
-            // Verificar que el item pertenece a la orden
-            const item = orden.items.find(i => i.id === itemId);
-            if (!item) {
-                throw new Error('El item no pertenece a esta orden');
-            }
-
-            if (cantidadRecibida < 0) {
-                throw new Error('La cantidad recibida no puede ser negativa');
-            }
-
-            // Calcular la diferencia de cantidad recibida
-            const cantidadAnterior = item.cantidad_recibida || 0;
-            const diferencia = cantidadRecibida - cantidadAnterior;
-
-            // Validar que la cantidad recibida no pueda disminuir
-            if (diferencia < 0) {
-                throw new Error('La cantidad recibida no puede ser menor a la cantidad ya registrada');
-            }
-
-            // Variable para guardar advertencias de pago
-            let warningMessage = '';
-
-            if (diferencia !== 0) {
-                // Actualizar cantidad recibida
-                await ordenCompraRepository.actualizarCantidadRecibida(itemId, cantidadRecibida);
-                
-                // Registrar pago por la cantidad recibida
-                const esContrafactura = await ordenCompraRepository.esContraFactura(ordenId); // Verificar si es contrafactura para el registro de pago
-                if (!esContrafactura) {
-                    const pagoResult = await pagosService.registrarPagoPorRecepcion(ordenId, itemId, diferencia, username);
-                    if (pagoResult && pagoResult.warning) {
-                        warningMessage = pagoResult.message;
-                    }                
+            return await db.withTransaction(async connection => {
+                const orden = await ordenCompraRepository.obtenerParaRecepcion(ordenId, itemId, connection);
+                if (!orden) {
+                    throw new Error('La orden de compra no existe');
                 }
-                // Si hay un incremento, actualizar el stock del bien
-                if (diferencia > 0) {
-                    await db.withTransaction(async connection => {
-                        const cambio = await bienService.incrementarStock(item.bien_id, diferencia, connection);
-                        await ajusteInventarioRepository.registrarAjuste({
-                            tipo_movimiento: 'ENTRADA', tipo_item: 'bien', item_id: item.bien_id,
-                            codigo: cambio.item.codigo, nombre: cambio.item.nombre, cantidad: diferencia,
-                            stock_anterior: cambio.stock_anterior, stock_nuevo: cambio.stock_nuevo,
-                            almacen_id: cambio.item.almacen_defecto_id || null,
-                            precio_unitario: item.precio_unitario || null, cliente: null,
-                            responsable: username, usuario_sistema: username, fecha: new Date(),
-                            observaciones: `Recepción de Orden de Compra ${orden.codigo}`
-                        }, connection);
-                    });
-                }
-            }
 
-            return {
-                success: true,
-                message: 'Cantidad recibida actualizada exitosamente',
-                warning: warningMessage || undefined
-            };
+                if (orden.estado !== 'En Proceso') {
+                    throw new Error('Solo se puede actualizar la cantidad recibida cuando la orden está en estado "En Proceso"');
+                }
+
+                const item = orden.items.find(i => i.id === itemId);
+                if (!item) {
+                    throw new Error('El item no pertenece a esta orden');
+                }
+
+                if (cantidadRecibida < 0) {
+                    throw new Error('La cantidad recibida no puede ser negativa');
+                }
+
+                // La diferencia se calcula después de obtener los bloqueos.
+                const cantidadAnterior = item.cantidad_recibida || 0;
+                const diferencia = cantidadRecibida - cantidadAnterior;
+                if (diferencia < 0) {
+                    throw new Error('La cantidad recibida no puede ser menor a la cantidad ya registrada');
+                }
+
+                let warningMessage = '';
+                if (diferencia !== 0) {
+                    await ordenCompraRepository.actualizarCantidadRecibida(itemId, cantidadRecibida, connection);
+
+                    if (!orden.contrafactura) {
+                        const pagoResult = await pagosService.registrarPagoPorRecepcion(ordenId, itemId, diferencia, username, connection);
+                        if (pagoResult && pagoResult.warning) {
+                            warningMessage = pagoResult.message;
+                        } else if (pagoResult && pagoResult.success === false) {
+                            throw new Error(pagoResult.message || 'No se pudo registrar el pago por recepción');
+                        }
+                    }
+
+                    const cambio = await bienService.incrementarStock(item.bien_id, diferencia, connection);
+                    await ajusteInventarioRepository.registrarAjuste({
+                        tipo_movimiento: 'ENTRADA', tipo_item: 'bien', item_id: item.bien_id,
+                        codigo: cambio.item.codigo, nombre: cambio.item.nombre, cantidad: diferencia,
+                        stock_anterior: cambio.stock_anterior, stock_nuevo: cambio.stock_nuevo,
+                        almacen_id: cambio.item.almacen_defecto_id || null,
+                        precio_unitario: item.precio_unitario || null, cliente: null,
+                        responsable: username, usuario_sistema: username, fecha: new Date(),
+                        observaciones: `Recepción de Orden de Compra ${orden.codigo}`
+                    }, connection);
+                }
+
+                return {
+                    success: true,
+                    message: 'Cantidad recibida actualizada exitosamente',
+                    warning: warningMessage || undefined
+                };
+            });
         } catch (error) {
             console.error('Error en OrdenCompraService.actualizarCantidadRecibida:', error);
             throw error;
