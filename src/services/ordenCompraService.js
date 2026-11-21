@@ -1,5 +1,6 @@
 const ordenCompraRepository = require('../repositories/ordenCompraRepository');
 const bienRepository = require('../repositories/bienRepository');
+const bienService = require('./bienService');
 const pagosService = require('./pagosService');
 const ajusteInventarioRepository = require('../repositories/ajusteInventarioRepository');
 const userRepository = require('../repositories/userRepository');
@@ -871,35 +872,17 @@ class OrdenCompraService {
                 }
                 // Si hay un incremento, actualizar el stock del bien
                 if (diferencia > 0) {
-                    // Obtener el bien para actualizar su stock
-                    const bien = await bienRepository.obtenerPorId(item.bien_id);
-                    if (!bien) {
-                        throw new Error('El bien no existe');
-                    }
-
-                    const stockAnterior = parseFloat(bien.cantidad_stock) || 0;
-                    const nuevoStock = stockAnterior + diferencia;
-                    
-                    // Actualizar stock del bien
-                    await bienRepository.actualizarStock(item.bien_id, nuevoStock);
-
-                    // Registrar en movimientos_stock como Entrada
-                    await ajusteInventarioRepository.registrarAjuste({
-                        tipo_movimiento: 'ENTRADA',
-                        tipo_item: 'bien',
-                        item_id: item.bien_id,
-                        codigo: bien.codigo,
-                        nombre: bien.nombre,
-                        cantidad: diferencia,
-                        stock_anterior: stockAnterior,
-                        stock_nuevo: nuevoStock,
-                        almacen_id: bien.almacen_defecto_id || null,
-                        precio_unitario: item.precio_unitario || null,
-                        cliente: null,
-                        responsable: username,
-                        usuario_sistema: username,
-                        fecha: new Date(),
-                        observaciones: `Recepción de Orden de Compra ${orden.codigo}`
+                    await db.withTransaction(async connection => {
+                        const cambio = await bienService.incrementarStock(item.bien_id, diferencia, connection);
+                        await ajusteInventarioRepository.registrarAjuste({
+                            tipo_movimiento: 'ENTRADA', tipo_item: 'bien', item_id: item.bien_id,
+                            codigo: cambio.item.codigo, nombre: cambio.item.nombre, cantidad: diferencia,
+                            stock_anterior: cambio.stock_anterior, stock_nuevo: cambio.stock_nuevo,
+                            almacen_id: cambio.item.almacen_defecto_id || null,
+                            precio_unitario: item.precio_unitario || null, cliente: null,
+                            responsable: username, usuario_sistema: username, fecha: new Date(),
+                            observaciones: `Recepción de Orden de Compra ${orden.codigo}`
+                        }, connection);
                     });
                 }
             }

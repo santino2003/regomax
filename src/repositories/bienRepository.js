@@ -355,11 +355,16 @@ class BienRepository {
     /**
      * Actualizar cantidad en stock
      */
-    async actualizarStock(id, cantidad) {
+    async obtenerStockPorId(id, connection) {
+        const rows = await db.query(`SELECT * FROM bienes WHERE id = ?${connection ? ' FOR UPDATE' : ''}`, [id], connection);
+        return rows[0] || null;
+    }
+
+    async actualizarStock(id, cantidad, connection) {
         try {
             await db.query(
                 'UPDATE bienes SET cantidad_stock = ? WHERE id = ?',
-                [cantidad, id]
+                [cantidad, id], connection
             );
             return true;
         } catch (error) {

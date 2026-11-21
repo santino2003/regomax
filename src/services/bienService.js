@@ -7,6 +7,9 @@ const proveedorRepository = require('../repositories/proveedorRepository');
 const configAlertasStockRepository = require('../repositories/configAlertasStockRepository');
 const emailService = require('../utils/emailService');
 const bienProveedorService = require('./bienProveedorService');
+const db = require('../config/db');
+const { afterCommit } = require('../utils/transaction');
+const { stockQuantity } = require('../utils/stockQuantity');
 
 class BienService {
     /**
@@ -173,8 +176,12 @@ class BienService {
      */
     async actualizarStock(id, cantidad) {
         try {
-            if (cantidad < 0) {
-                throw new Error('La cantidad no puede ser negativa');
+            if (!['string', 'number'].includes(typeof cantidad) || String(cantidad).trim() === '') {
+                throw new Error('La cantidad debe ser un número válido');
+            }
+            cantidad = Number(cantidad);
+            if (!Number.isFinite(cantidad) || cantidad < 0) {
+                throw new Error('La cantidad debe ser un número finito no negativo');
             }
             
             await bienRepository.actualizarStock(id, cantidad);
@@ -189,98 +196,46 @@ class BienService {
         }
     }
 
-    /**
-     * Incrementar stock de un bien
-     */
-    async incrementarStock(id, cantidad) {
-        try {
-            if (cantidad <= 0) {
-                throw new Error('La cantidad debe ser mayor a 0');
-            }
-            
-            const bien = await bienRepository.obtenerPorId(id);
-            if (!bien) {
-                throw new Error('Bien no encontrado');
-            }
-            
-            const nuevaCantidad = parseFloat(bien.cantidad_stock) + cantidad;
-            await bienRepository.actualizarStock(id, nuevaCantidad);
-            
-            return {
-                success: true,
-                message: `Se incrementó el stock en ${cantidad} unidad(es)`,
-            };
-        } catch (error) {
-            console.error('Error en BienService.incrementarStock:', error);
-            throw error;
-        }
+    async incrementarStock(id, cantidad, connection) {
+        return this.cambiarStock(id, cantidad, 1, connection);
     }
 
-    /**
-     * Descontar stock de un bien
-     * @param {Number} id - ID del bien
-     * @param {Number} cantidad - Cantidad a descontar
-     */
-    async descontarStock(id, cantidad) {
-        try {
-            if (cantidad <= 0) {
-                throw new Error('La cantidad debe ser mayor a 0');
-            }
-            
-            const bien = await bienRepository.obtenerPorId(id);
-            if (!bien) {
-                throw new Error('Bien no encontrado');
-            }
-            
-            const cantidadPrevia = parseFloat(bien.cantidad_stock);
-            const nuevaCantidad = cantidadPrevia - cantidad;
-            
-            if (nuevaCantidad < 0) {
-                throw new Error(`Stock insuficiente. Stock actual: ${bien.cantidad_stock}, intentando descontar: ${cantidad}`);
-            }
-            
-            // Actualizar el stock primero
-            await bienRepository.actualizarStock(id, nuevaCantidad);
-            
-            // Verificar si se alcanza el stock crítico
-            console.log(`📊 Verificando stock crítico - Bien ID ${id}: nuevo=${nuevaCantidad}, crítico=${bien.cantidad_critica}, previo=${cantidadPrevia}`);
-            
-            // Alerta si: 1) cantidad_critica está definida (incluso si es 0), 2) nuevo stock es <= crítico, 3) stock previo era > crítico
-            if (bien.cantidad_critica !== null && bien.cantidad_critica !== undefined && nuevaCantidad <= bien.cantidad_critica && cantidadPrevia > bien.cantidad_critica) {
-                console.warn(`⚠️ Advertencia: El stock del bien ID ${id} ha alcanzado el nivel crítico (${nuevaCantidad} unidades restantes).`);
-                
-                // Actualizar el objeto bien con el nuevo stock para el email
-                bien.cantidad_stock = nuevaCantidad;
-                
-                // Obtener emails de usuarios configurados para recibir alertas
-                try {
-                    console.log('📧 Obteniendo emails de destinatarios para alerta...');
-                    const emailsDestinatarios = await configAlertasStockRepository.obtenerEmailsActivos();
-                    console.log('📧 Emails encontrados:', emailsDestinatarios);
-                    
-                    if (emailsDestinatarios && emailsDestinatarios.length > 0) {
-                        console.log('📧 Enviando email de alerta de stock crítico...');
-                        await emailService.enviarAlertaStockCritico(bien, emailsDestinatarios);
-                        console.log('✅ Email de alerta enviado exitosamente');
-                    } else {
-                        console.warn('⚠️ No hay destinatarios configurados para recibir alertas de stock');
-                    }
-                } catch (emailError) {
-                    console.error('❌ Error al enviar email de stock crítico (el descuento ya se realizó):', emailError);
-                    // No lanzar error ya que el descuento ya se completó
-                }
-            } else {
-                console.log(`ℹ️ Stock no alcanzó el nivel crítico o ya estaba por debajo. No se envía alerta.`);
-            }
-            
-            return {
-                success: true,
-                message: `Se descontó ${cantidad} unidad(es) del stock`,
-            };
-        } catch (error) {
-            console.error('Error en BienService.descontarStock:', error);
-            throw error;
+    async descontarStock(id, cantidad, connection) {
+        return this.cambiarStock(id, cantidad, -1, connection);
+    }
+
+    async cambiarStock(id, cantidad, direccion, connection) {
+        cantidad = stockQuantity(cantidad);
+        if (!connection) {
+            return db.withTransaction(tx => this.cambiarStock(id, cantidad, direccion, tx));
         }
+        const bien = await bienRepository.obtenerStockPorId(id, connection);
+        if (!bien) throw new Error('Bien no encontrado');
+        if (bien.es_kit) throw new Error('El stock de un kit debe actualizarse mediante sus componentes');
+
+        const stockAnterior = Number(bien.cantidad_stock);
+        const stockNuevo = stockAnterior + direccion * cantidad;
+        if (!Number.isFinite(stockNuevo) || stockNuevo < 0) {
+            throw new Error(`Stock insuficiente. Stock actual: ${bien.cantidad_stock}, intentando descontar: ${cantidad}`);
+        }
+        await bienRepository.actualizarStock(id, stockNuevo, connection);
+
+        if (direccion < 0 && bien.cantidad_critica != null && stockNuevo <= Number(bien.cantidad_critica) &&
+            stockAnterior > Number(bien.cantidad_critica)) {
+            afterCommit(connection, () => this.notificarStockCritico({ ...bien, cantidad_stock: stockNuevo }));
+        }
+        return {
+            success: true,
+            message: `Stock actualizado en ${direccion * cantidad} unidad(es)`,
+            stock_anterior: stockAnterior,
+            stock_nuevo: stockNuevo,
+            item: bien
+        };
+    }
+
+    async notificarStockCritico(bien) {
+        const emails = await configAlertasStockRepository.obtenerEmailsActivos();
+        if (emails?.length) await emailService.enviarAlertaStockCritico(bien, emails);
     }
 
     /**

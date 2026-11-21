@@ -135,7 +135,7 @@ const kitController = {
                 return res.status(400).json({ error: 'La cantidad es requerida' });
             }
             
-            await kitService.descontarStock(id, parseInt(cantidad));
+            await kitService.descontarStock(id, cantidad);
             return res.status(200).json({
                 success: true,
                 message: 'Stock descontado exitosamente del kit y sus componentes',
@@ -161,7 +161,7 @@ const kitController = {
                 return res.status(400).json({ error: 'La cantidad es requerida' });
             }
             
-            await kitService.incrementarStock(id, parseInt(cantidad));
+            await kitService.incrementarStock(id, cantidad);
             return res.status(200).json({
                 success: true,
                 message: 'Stock incrementado exitosamente del kit y sus componentes',

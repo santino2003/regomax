@@ -6,7 +6,7 @@ class SalidaRepository {
      * @param {Object} movimientoData - Datos del movimiento
      * @returns {Object} Resultado de la inserción
      */
-    async registrarMovimiento(movimientoData) {
+    async registrarMovimiento(movimientoData, connection) {
         try {
             const result = await db.query(`
                 INSERT INTO movimientos_stock (
@@ -40,7 +40,7 @@ class SalidaRepository {
                 movimientoData.responsable,
                 movimientoData.usuario_sistema,
                 movimientoData.observaciones || null
-            ]);
+            ], connection);
 
             return { id: result.insertId };
         } catch (error) {

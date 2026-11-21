@@ -6,7 +6,7 @@ class AjusteInventarioRepository {
      * @param {Object} ajusteData - Datos del ajuste
      * @returns {Object} Resultado de la inserción
      */
-    async registrarAjuste(ajusteData) {
+    async registrarAjuste(ajusteData, connection) {
         try {
             const result = await db.query(`
                 INSERT INTO movimientos_stock (
@@ -42,7 +42,7 @@ class AjusteInventarioRepository {
                 ajusteData.usuario_sistema,
                 ajusteData.fecha || new Date(),
                 ajusteData.observaciones || null
-            ]);
+            ], connection);
 
             return { id: result.insertId };
         } catch (error) {

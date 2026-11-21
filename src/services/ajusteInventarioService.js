@@ -1,5 +1,6 @@
 const ajusteInventarioRepository = require('../repositories/ajusteInventarioRepository');
-const bienRepository = require('../repositories/bienRepository');
+const db = require('../config/db');
+const { stockQuantity } = require('../utils/stockQuantity');
 const bienService = require('./bienService');
 
 class AjusteInventarioService {
@@ -16,76 +17,34 @@ class AjusteInventarioService {
                 throw new Error('Faltan campos requeridos');
             }
 
-            // Obtener información del bien
-            const bien = await bienRepository.obtenerPorId(data.item_id);
-            if (!bien) {
-                throw new Error('Bien no encontrado');
-            }
-
-            // Calcular stock anterior y nuevo
-            const stockAnterior = parseFloat(bien.cantidad_stock) || 0;
-            let stockNuevo;
-
-            // ENTRADA y AJUSTE_ENTRADA suman, SALIDA y AJUSTE_SALIDA restan
-            if (data.tipo_movimiento === 'ENTRADA' || data.tipo_movimiento === 'AJUSTE_ENTRADA') {
-                stockNuevo = stockAnterior + parseFloat(data.cantidad);
-            } else if (data.tipo_movimiento === 'SALIDA' || data.tipo_movimiento === 'AJUSTE_SALIDA') {
-                stockNuevo = stockAnterior - parseFloat(data.cantidad);
-                
-                // Validar que no quede stock negativo
-                if (stockNuevo < 0) {
-                    throw new Error('No hay suficiente stock disponible');
-                }
-            } else {
+            const cantidad = stockQuantity(data.cantidad);
+            if (data.tipo_item !== 'bien') throw new Error('El ajuste debe corresponder a un bien');
+            const entrada = ['ENTRADA', 'AJUSTE_ENTRADA'].includes(data.tipo_movimiento);
+            if (!entrada && !['SALIDA', 'AJUSTE_SALIDA'].includes(data.tipo_movimiento)) {
                 throw new Error('Tipo de movimiento inválido');
             }
-
-            // Preparar datos del ajuste
-            const ajusteData = {
-                tipo_movimiento: data.tipo_movimiento,
-                tipo_item: data.tipo_item,
-                item_id: data.item_id,
-                codigo: bien.codigo,
-                nombre: bien.nombre,
-                cantidad: parseFloat(data.cantidad),
-                stock_anterior: stockAnterior,
-                stock_nuevo: stockNuevo,
-                almacen_id: data.almacen_id || null,
-                precio_unitario: data.precio_unitario || null,
-                cliente: data.cliente || null,
-                responsable: data.responsable,
-                usuario_sistema: username,
-                fecha: data.fecha || new Date(),
-                observaciones: data.observaciones || null
-            };
-
-            console.log('📦 Datos del ajuste a insertar:', ajusteData);
-            console.log('🔍 tipo_movimiento recibido:', data.tipo_movimiento, 'tipo:', typeof data.tipo_movimiento);
-
-            // Registrar el ajuste en movimientos_stock
-            const resultado = await ajusteInventarioRepository.registrarAjuste(ajusteData);
-
-            // Actualizar el stock del bien
-            // Para SALIDA/AJUSTE_SALIDA usar descontarStock que maneja alertas
-            // Para ENTRADA/AJUSTE_ENTRADA actualizar directamente
-            if (data.tipo_movimiento === 'SALIDA' || data.tipo_movimiento === 'AJUSTE_SALIDA') {
-                await bienService.descontarStock(data.item_id, parseFloat(data.cantidad));
-            } else {
-                await bienRepository.actualizarStock(data.item_id, stockNuevo);
-            }
-
-            return {
-                success: true,
-                message: 'Ajuste de inventario procesado correctamente',
-                data: {
-                    movimiento_id: resultado.id,
-                    stock_anterior: stockAnterior,
-                    stock_nuevo: stockNuevo,
-                    diferencia: (data.tipo_movimiento === 'ENTRADA' || data.tipo_movimiento === 'AJUSTE_ENTRADA')
-                        ? `+${data.cantidad}` 
-                        : `-${data.cantidad}`
-                }
-            };
+            return await db.withTransaction(async connection => {
+                const cambio = entrada
+                    ? await bienService.incrementarStock(data.item_id, cantidad, connection)
+                    : await bienService.descontarStock(data.item_id, cantidad, connection);
+                const resultado = await ajusteInventarioRepository.registrarAjuste({
+                    tipo_movimiento: data.tipo_movimiento, tipo_item: data.tipo_item, item_id: data.item_id,
+                    codigo: cambio.item.codigo, nombre: cambio.item.nombre, cantidad,
+                    stock_anterior: cambio.stock_anterior, stock_nuevo: cambio.stock_nuevo,
+                    almacen_id: data.almacen_id || null, precio_unitario: data.precio_unitario || null,
+                    cliente: data.cliente || null, responsable: data.responsable, usuario_sistema: username,
+                    fecha: data.fecha || new Date(), observaciones: data.observaciones || null
+                }, connection);
+                return {
+                    success: true,
+                    message: 'Ajuste de inventario procesado correctamente',
+                    data: {
+                        movimiento_id: resultado.id,
+                        stock_anterior: cambio.stock_anterior, stock_nuevo: cambio.stock_nuevo,
+                        diferencia: `${entrada ? '+' : '-'}${cantidad}`
+                    }
+                };
+            });
         } catch (error) {
             console.error('Error al procesar ajuste:', error);
             return {
