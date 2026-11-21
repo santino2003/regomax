@@ -35,8 +35,8 @@ function fixture(t) {
     const remaining = await db.query(`SELECT
       (SELECT COUNT(*) FROM ordenes_venta WHERE responsable = ?) AS orders,
       (SELECT COUNT(*) FROM bolsones WHERE responsable = ?) AS bags`, [scope.user, scope.user]);
-    assert.equal(Number(remaining[0].orders), 0, 'fixture orders were removed');
-    assert.equal(Number(remaining[0].bags), 0, 'fixture bags were removed');
+    assert.equal(Number(remaining[0].orders), 0, 'Se eliminaron las órdenes creadas por la prueba');
+    assert.equal(Number(remaining[0].bags), 0, 'Se eliminaron los bolsones creados por la prueba');
   });
 
   const product = `${scope.prefix}-product`;
@@ -49,7 +49,7 @@ function fixture(t) {
     ...scope, product, orderData,
     async createOrder(items) { return (await ventas.crearOrdenDeVenta(orderData(items))).codigo; },
     async createBag(weight = 10) {
-      // Numeric codes stay within JavaScript's safe integer range and the BIGINT schema.
+      // Los códigos numéricos respetan el rango de enteros seguros de JavaScript y el campo BIGINT.
       const code = String(700000000000000 + parseInt(randomUUID().replaceAll('-', '').slice(0, 10), 16));
       codes.push(code);
       await db.query(`INSERT INTO bolsones (codigo, producto, peso, precinto, fecha, hora, responsable)
@@ -68,7 +68,7 @@ function fixture(t) {
   };
 }
 
-test('MySQL: creating a sale commits its header and every detail', async t => {
+test('MySQL: la creación de una venta confirma su cabecera y todos sus detalles', async t => {
   const f = fixture(t);
   const orderId = await f.createOrder([{ producto: f.product, cantidad: 10 }, { producto: `${f.product}-second`, cantidad: 2.5 }]);
   const order = await f.order(orderId);
@@ -78,7 +78,7 @@ test('MySQL: creating a sale commits its header and every detail', async t => {
   assert.deepEqual(Object.fromEntries(order.productos.map(row => [row.producto, Number(row.cantidad_inicial)])), expected);
 });
 
-test('MySQL: failing a later sale detail rolls back the header and earlier detail', async t => {
+test('MySQL: una falla en un detalle posterior revierte la cabecera y el detalle anterior de la venta', async t => {
   const f = fixture(t);
   const data = f.orderData([{ producto: f.product, cantidad: 10 }, { producto: `${f.product}-invalid`, cantidad: null }]);
   await assert.rejects(ventas.crearOrdenDeVenta(data), /cantidad no definidos/);
@@ -86,7 +86,7 @@ test('MySQL: failing a later sale detail rolls back the header and earlier detai
   assert.equal(rows.length, 0);
 });
 
-test('MySQL: a real constraint failure during sale editing restores the header and deleted details', async t => {
+test('MySQL: una restricción de la base al editar una venta restaura la cabecera y los detalles eliminados', async t => {
   const f = fixture(t);
   const orderId = await f.createOrder();
   const original = await f.order(orderId);
@@ -99,7 +99,7 @@ test('MySQL: a real constraint failure during sale editing restores the header a
   assert.deepEqual(current.productos, original.productos);
 });
 
-test('MySQL: scanned dispatch commits its details, bag state and order quantities together', async t => {
+test('MySQL: el despacho por escaneo confirma juntos los detalles, el estado del bolsón y las cantidades de la orden', async t => {
   const f = fixture(t);
   const orderId = await f.createOrder();
   const code = await f.createBag();
@@ -115,7 +115,7 @@ test('MySQL: scanned dispatch commits its details, bag state and order quantitie
   assert.equal(String(details[0].bolson_codigo), code);
 });
 
-test('MySQL: a missing later bag rolls back an already registered dispatch detail and bag flag', async t => {
+test('MySQL: un bolsón inexistente revierte el detalle ya registrado y la marca del bolsón anterior', async t => {
   const f = fixture(t);
   const orderId = await f.createOrder();
   const first = await f.createBag(4);
@@ -127,7 +127,7 @@ test('MySQL: a missing later bag rolls back an already registered dispatch detai
   assert.equal(Number((await f.order(orderId)).productos[0].cantidad), 10);
 });
 
-test('MySQL: two different orders cannot dispatch the same bag concurrently', { timeout: 20000 }, async t => {
+test('MySQL: dos órdenes distintas no pueden despachar el mismo bolsón simultáneamente', { timeout: 20000 }, async t => {
   const f = fixture(t);
   const firstOrder = await f.createOrder();
   const secondOrder = await f.createOrder();
@@ -143,7 +143,7 @@ test('MySQL: two different orders cannot dispatch the same bag concurrently', { 
   assert.equal(pending, 10);
 });
 
-test('MySQL: concurrent dispatches for one order preserve both quantity changes', { timeout: 20000 }, async t => {
+test('MySQL: los despachos simultáneos de una orden conservan ambos cambios de cantidad', { timeout: 20000 }, async t => {
   const f = fixture(t);
   const orderId = await f.createOrder();
   const first = await f.createBag(4), second = await f.createBag(4);
@@ -154,7 +154,7 @@ test('MySQL: concurrent dispatches for one order preserve both quantity changes'
   assert.equal(await f.bagDispatched(second), 1);
 });
 
-test('MySQL: manual dispatch commits its detail and the remaining quantity', async t => {
+test('MySQL: el despacho manual confirma su detalle y la cantidad pendiente', async t => {
   const f = fixture(t);
   const orderId = await f.createOrder();
   const result = await despachos.procesarDespachoManual({ ordenVentaId: orderId, responsable: f.user, productosManual: [{ producto: f.product, cantidad: 4 }] });
@@ -166,7 +166,7 @@ test('MySQL: manual dispatch commits its detail and the remaining quantity', asy
   assert.equal(Number(rows[0].peso), 4);
 });
 
-test('MySQL: failure in a later manual product restores the first quantity and removes dispatch records', async t => {
+test('MySQL: una falla en un producto posterior del despacho manual restaura la primera cantidad y revierte los registros', async t => {
   const f = fixture(t);
   const orderId = await f.createOrder();
   await assert.rejects(despachos.procesarDespachoManual({

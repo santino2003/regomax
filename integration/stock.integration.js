@@ -14,7 +14,7 @@ before(async () => {
   db = await connectDatabase();
   await checkTables(db, ['bienes', 'bien_componentes', 'movimientos_stock', 'bienes_archivos',
     'categorias', 'unidades_medida', 'almacenes', 'familias', 'bienes_familias']);
-  // Only notification delivery is substituted. Services, repositories, SQL and transactions are real.
+  // Se sustituye únicamente el envío de notificaciones; los servicios, repositorios, consultas y transacciones son reales.
   bienService = loadModule('src/services/bienService.js', {
     '../repositories/configAlertasStockRepository': { async obtenerEmailsActivos() { return ['integration@example.invalid']; } },
     '../utils/emailService': { async enviarAlertaStockCritico(bien) {
@@ -37,7 +37,7 @@ function ajuste(f, overrides = {}) {
   return { item_id: f.first, tipo_item: 'bien', cantidad: 2, tipo_movimiento: 'AJUSTE_ENTRADA', responsable: f.user, ...overrides };
 }
 
-test('MySQL: simultaneous withdrawals cannot consume the same stock twice', { timeout: 15000 }, async t => {
+test('MySQL: los descuentos simultáneos no pueden consumir dos veces el mismo stock', { timeout: 15000 }, async t => {
   const f = await createStockFixture(t, db);
   const results = await Promise.allSettled([bienService.descontarStock(f.first, 7), bienService.descontarStock(f.first, 7)]);
   assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
@@ -46,13 +46,13 @@ test('MySQL: simultaneous withdrawals cannot consume the same stock twice', { ti
   assert.equal(await f.balance(), 3);
 });
 
-test('MySQL: simultaneous increments and withdrawals preserve every successful change', { timeout: 15000 }, async t => {
+test('MySQL: los incrementos y descuentos simultáneos conservan todos los cambios exitosos', { timeout: 15000 }, async t => {
   const f = await createStockFixture(t, db);
   await Promise.all([bienService.incrementarStock(f.first, '5'), bienService.incrementarStock(f.first, 7), bienService.descontarStock(f.first, 2)]);
   assert.equal(await f.balance(), 20);
 });
 
-test('MySQL: decimal withdrawals and movement balances persist without truncation', async t => {
+test('MySQL: los descuentos decimales y los saldos de movimientos se guardan sin truncarse', async t => {
   const f = await createStockFixture(t, db);
   const result = await salidaService.procesarSalida(salida(f, { cantidad: '0.25' }));
   assert.deepEqual(result.data, { stock_anterior: 10, stock_nuevo: 9.75 });
@@ -63,7 +63,7 @@ test('MySQL: decimal withdrawals and movement balances persist without truncatio
   assert.equal(Number(movements[0].stock_nuevo), 9.75);
 });
 
-test('MySQL: insufficient second kit component rolls back the first component and its alert', async t => {
+test('MySQL: la falta de stock del segundo componente revierte el primero y su alerta', async t => {
   const f = await createStockFixture(t, db, { kit: true, secondStock: 0, critical: 9 });
   await assert.rejects(kitService.descontarStock(f.kitId, 1), /Stock insuficiente/);
   assert.equal(await f.balance(), 10);
@@ -71,7 +71,7 @@ test('MySQL: insufficient second kit component rolls back the first component an
   assert.ok(!notifications.some(notification => notification.id === f.first));
 });
 
-test('MySQL: a successful kit withdrawal commits every component', async t => {
+test('MySQL: el descuento exitoso de un kit confirma todos sus componentes', async t => {
   const f = await createStockFixture(t, db, { kit: true, secondStock: 2 });
   const result = await kitService.descontarStock(f.kitId, 2);
   assert.equal(await f.balance(), 6);
@@ -80,7 +80,7 @@ test('MySQL: a successful kit withdrawal commits every component', async t => {
   assert.equal(result.stock_nuevo, 0);
 });
 
-test('MySQL: simultaneous kit withdrawals respect component availability', { timeout: 15000 }, async t => {
+test('MySQL: los descuentos simultáneos de kits respetan la disponibilidad de sus componentes', { timeout: 15000 }, async t => {
   const f = await createStockFixture(t, db, { kit: true, secondStock: 1 });
   const results = await Promise.allSettled([kitService.descontarStock(f.kitId, 1), kitService.descontarStock(f.kitId, 1)]);
   assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
@@ -88,7 +88,7 @@ test('MySQL: simultaneous kit withdrawals respect component availability', { tim
   assert.equal(await f.balance(f.second), 0);
 });
 
-test('MySQL: a real NOT NULL violation recording a withdrawal rolls back stock and its alert', async t => {
+test('MySQL: una restricción NOT NULL al registrar una salida revierte el stock y su alerta', async t => {
   const f = await createStockFixture(t, db, { critical: 9 });
   await assert.rejects(salidaService.procesarSalida(salida(f, { usuario_sistema: null })), { code: 'ER_BAD_NULL_ERROR' });
   assert.equal(await f.balance(), 10);
@@ -96,14 +96,14 @@ test('MySQL: a real NOT NULL violation recording a withdrawal rolls back stock a
   assert.ok(!notifications.some(notification => notification.id === f.first));
 });
 
-test('MySQL: failure recording a kit movement rolls back all components', async t => {
+test('MySQL: una falla al registrar el movimiento de un kit revierte todos sus componentes', async t => {
   const f = await createStockFixture(t, db, { kit: true });
   await assert.rejects(salidaService.procesarSalida(salida(f, { item_id: f.kitId, tipo_item: 'kit', usuario_sistema: null })), { code: 'ER_BAD_NULL_ERROR' });
   assert.equal(await f.balance(), 10);
   assert.equal(await f.balance(f.second), 10);
 });
 
-test('MySQL: simultaneous adjustments record continuous balances', { timeout: 15000 }, async t => {
+test('MySQL: los ajustes simultáneos registran saldos continuos', { timeout: 15000 }, async t => {
   const f = await createStockFixture(t, db);
   const results = await Promise.all([ajusteService.procesarAjuste(ajuste(f), f.user), ajusteService.procesarAjuste(ajuste(f), f.user)]);
   assert.ok(results.every(result => result.success));
@@ -112,7 +112,7 @@ test('MySQL: simultaneous adjustments record continuous balances', { timeout: 15
   assert.deepEqual(movements.map(row => [Number(row.stock_anterior), Number(row.stock_nuevo)]), [[10, 12], [12, 14]]);
 });
 
-test('MySQL: failure recording an adjustment leaves the stored stock unchanged', async t => {
+test('MySQL: una falla al registrar un ajuste conserva el stock almacenado', async t => {
   const f = await createStockFixture(t, db);
   const result = await ajusteService.procesarAjuste(ajuste(f, { responsable: null }), f.user);
   assert.equal(result.success, false);
@@ -120,9 +120,9 @@ test('MySQL: failure recording an adjustment leaves the stored stock unchanged',
   assert.equal((await f.movements()).length, 0);
 });
 
-test('MySQL: stock alerts observe the committed value through another connection', async t => {
+test('MySQL: las alertas de stock consultan el valor confirmado desde otra conexión', async t => {
   const f = await createStockFixture(t, db, { critical: 9 });
-  // Reserve an observer so the transaction cannot reuse its physical connection.
+  // Reserva una conexión de observación para que la transacción utilice otra conexión física.
   const observer = await db.pool.getConnection();
   notificationReaders.set(f.first, observer);
   try {

@@ -10,29 +10,29 @@ const listPath = path.resolve(__dirname, '../views/listarPagos.ejs');
 const payload = '<img src=x onerror="window.xss=1">\n<script>window.xss=2</script>';
 const pago = { id: 1, pagado: true, tipo_pago: 'CONTRAFACTURA', monto_pago: 100, proveedor_nombre: 'Proveedor', orden_codigo: 'OC-1' };
 
-test('payment detail and printable receipt escape stored HTML', async () => {
+test('El detalle del pago y el recibo imprimible escapan el HTML almacenado', async () => {
   const html = await ejs.renderFile(detailPath, { username: 'operator', pago: { ...pago, detalle_pago: payload } });
   assert.ok(!html.includes(payload));
   assert.equal(html.split(ejs.escapeXML(payload)).length - 1, 2);
   assert.match(html, /white-space:\s*pre-wrap/);
 });
 
-test('receipt observations are also escaped when there is no payment detail', async () => {
+test('Las observaciones del recibo también se escapan cuando no hay detalle del pago', async () => {
   const html = await ejs.renderFile(detailPath, { username: 'operator', pago: { ...pago, observaciones: payload } });
   assert.ok(!html.includes(payload));
   assert.ok(html.includes(ejs.escapeXML(payload)));
 });
 
-test('ordinary payment text preserves line breaks, accents and special characters', async () => {
+test('El texto del pago conserva saltos de línea, tildes y caracteres especiales', async () => {
   const text = 'Transferencia recibida\nRazón social: A & B <sociedad>';
   const html = await ejs.renderFile(detailPath, { username: 'operator', pago: { ...pago, detalle_pago: text } });
   assert.ok(html.includes(ejs.escapeXML(text)));
 });
 
-test('multiple payment modal builds cells as text without interpreting HTML', () => {
+test('El modal de pagos múltiples crea las celdas como texto sin interpretar HTML', () => {
   function element() {
     return { children: [], textContent: '', value: '',
-      set innerHTML(value) { throw new Error('untrusted HTML insertion'); },
+      set innerHTML(value) { throw new Error('Inserción de HTML sin escapar'); },
       appendChild(child) { this.children.push(child); },
       replaceChildren(...children) { this.children = children; }
     };
@@ -51,7 +51,7 @@ test('multiple payment modal builds cells as text without interpreting HTML', ()
   assert.equal(row.children[1].textContent, `${payload} (B1)`);
 });
 
-test('supplier names with quotes remain data in the refinance button', async () => {
+test('Los nombres de proveedores con comillas se tratan como datos en el botón de refinanciación', async () => {
   const name = "Proveedor');window.xss=1;//";
   const html = await ejs.renderFile(listPath, {
     username: 'operator', proveedores: [], pagos: [{ ...pago, pagado: false, proveedor_nombre: name }],

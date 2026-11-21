@@ -39,7 +39,7 @@ function fixture() {
   }) };
 }
 
-test('every registration alias rejects anonymous requests before persisting users', async () => {
+test('Todas las rutas de registro rechazan solicitudes anónimas antes de guardar usuarios', async () => {
   const f = fixture();
   for (const prefix of ['/api/auth', '/api/users', '/users']) {
     for (const url of ['/register', '/']) {
@@ -50,13 +50,13 @@ test('every registration alias rejects anonymous requests before persisting user
   assert.equal(f.created.length, 0);
 });
 
-test('a signed-in user without users:create cannot register users', async () => {
+test('Un usuario autenticado sin el permiso users:create no puede registrar usuarios', async () => {
   const f = fixture();
   assert.equal((await f.request('reader', { role: 'admin' })).status, 403);
   assert.equal(f.created.length, 0);
 });
 
-test('users:create does not allow assigning privileged roles or permissions', async () => {
+test('El permiso users:create no permite asignar roles privilegiados ni permisos', async () => {
   const f = fixture();
   for (const body of [{ role: 'admin' }, { role: 'supervisor' }, { permissions: { 'users:delete': true } }]) {
     assert.equal((await f.request('creator', body)).status, 403);
@@ -64,7 +64,7 @@ test('users:create does not allow assigning privileged roles or permissions', as
   assert.equal(f.created.length, 0);
 });
 
-test('users:create allows creating an ordinary user without permissions', async () => {
+test('El permiso users:create permite crear un usuario común sin permisos', async () => {
   const f = fixture();
   assert.equal((await f.request('creator', {})).status, 201);
   assert.equal(f.created[0].role, 'user');
@@ -72,7 +72,7 @@ test('users:create allows creating an ordinary user without permissions', async 
   assert.equal(f.created[0].password, 'hashed');
 });
 
-test('administrators can create administrators through both registration endpoints', async () => {
+test('Los administradores pueden crear administradores mediante ambas rutas de registro', async () => {
   const f = fixture();
   for (const url of ['/register', '/']) {
     assert.equal((await f.request('admin', { role: 'admin', permissions: { 'users:view': true } }, url)).status, 201);
@@ -81,7 +81,7 @@ test('administrators can create administrators through both registration endpoin
   assert.equal(f.created[0].role, 'admin');
 });
 
-test('invalid roles, permission shapes and credentials are rejected', async () => {
+test('Se rechazan los roles, formatos de permisos y credenciales inválidos', async () => {
   const f = fixture();
   for (const body of [{ role: 'owner' }, { permissions: [] }, { permissions: 'all' },
     { permissions: { 'users:view': 'true' } }, { username: {} }, { password: [] }]) {
@@ -90,7 +90,7 @@ test('invalid roles, permission shapes and credentials are rejected', async () =
   assert.equal(f.created.length, 0);
 });
 
-test('the service also enforces authorization independently of HTTP routes', async () => {
+test('El servicio también comprueba la autorización de forma independiente de las rutas HTTP', async () => {
   const f = fixture();
   await assert.rejects(f.service.register({ username: 'new-user', role: 'admin' }), { statusCode: 401 });
   assert.equal(f.created.length, 0);

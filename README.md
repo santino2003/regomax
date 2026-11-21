@@ -24,6 +24,11 @@ FIltros: Desde Hasta, tipo, y CNFU/NFU
 
 ## Pruebas
 
+Los nombres, comentarios y mensajes propios de las pruebas se escriben en español.
+La cobertura nueva se incorpora de a un servicio por vez: se crean sus pruebas,
+se ejecutan y se guardan en un commit. El siguiente servicio se inicia cuando se
+indique «seguí».
+
 Ejecutar `npm test` con las dependencias instaladas y Node.js 20 o superior.
 Las pruebas usan el ejecutor incorporado de Node y no requieren `.env`, credenciales
 ni una base de datos activa. Cubren registro y privilegios, transacciones de ventas

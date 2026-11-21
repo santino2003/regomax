@@ -34,7 +34,7 @@ function paymentFixture() {
   }) };
 }
 
-test('payment export reaches its controller with export permission and returns a readable Excel file', async () => {
+test('La exportación de pagos exige el permiso correspondiente y devuelve un archivo Excel válido', async () => {
   const f = paymentFixture();
   const result = await f.request('/exportar', 'exporter', { proveedor_id: '12', pagado: 'true', fecha_desde: '2026-01-01' });
   assert.equal(result.status, 200);
@@ -49,28 +49,28 @@ test('payment export reaches its controller with export permission and returns a
   const sheet = workbook.getWorksheet('Pagos');
   assert.equal(sheet.getCell('G2').value, 123.45);
   assert.equal(sheet.getCell('I2').value, 'Pagado');
-  assert.equal(sheet.getCell('C2').value, '=1+1', 'supplier names remain string cells, not formulas');
+  assert.equal(sheet.getCell('C2').value, '=1+1', 'Los nombres de proveedores se guardan como texto y no como fórmulas');
 });
 
-test('view permission alone cannot bypass export permission via the generic detail route', async () => {
+test('El permiso de consulta no permite evitar el permiso de exportación mediante la ruta de detalle', async () => {
   const f = paymentFixture();
   assert.equal((await f.request('/exportar', 'viewer')).status, 403);
   assert.equal(f.calls.length, 0);
 });
 
-test('payment export still requires authentication', async () => {
+test('La exportación de pagos requiere autenticación', async () => {
   const f = paymentFixture();
   assert.equal((await f.request('/exportar')).status, 302);
   assert.equal(f.calls.length, 0);
 });
 
-test('payment IDs continue to reach the detail controller', async () => {
+test('Los identificadores de pagos llegan al controlador de detalle', async () => {
   const result = await paymentFixture().request('/42', 'viewer');
   assert.equal(result.view, 'pagoDetalle');
   assert.equal(result.data.pago.id, '42');
 });
 
-test('the summary route is resolved independently of payment IDs', async () => {
+test('La ruta del resumen se resuelve de forma independiente de los identificadores de pagos', async () => {
   const result = await paymentFixture().request('/api/resumen', 'viewer', { fecha_inicio: '2026-01-01', fecha_fin: '2026-02-01' });
   assert.equal(result.status, 200);
   assert.equal(result.data.data.total, 123.45);
@@ -94,7 +94,7 @@ function usersFixture() {
   }) };
 }
 
-test('the users page renders HTML while API aliases return JSON without password hashes', async () => {
+test('La página de usuarios devuelve HTML y las rutas de la API devuelven JSON sin hashes de contraseñas', async () => {
   const f = usersFixture();
   assert.equal((await f.request('/users')).view, 'users');
   for (const prefix of ['/api/users', '/api/auth']) {
@@ -106,13 +106,13 @@ test('the users page renders HTML while API aliases return JSON without password
   }
 });
 
-test('user lists still require authentication and users:view', async () => {
+test('Los listados de usuarios requieren autenticación y el permiso users:view', async () => {
   const f = usersFixture();
   assert.equal((await f.request('/api/users', '/', null)).status, 401);
   assert.equal((await f.request('/api/users', '/', 'basic')).status, 403);
 });
 
-test('verify and check validate the session before the generic user ID route', async () => {
+test('Las rutas verify y check validan la sesión antes de la ruta genérica de usuarios', async () => {
   const f = usersFixture();
   for (const url of ['/verify', '/check']) {
     const result = await f.request('/api/auth', url, 'basic');

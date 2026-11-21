@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const Module = require('node:module');
 
-// Substitute external dependencies without importing the live database/configuration.
+// Sustituye dependencias externas sin cargar la base ni la configuración reales.
 function loadModule(file, dependencies = {}) {
   const filename = path.resolve(__dirname, '..', file);
   const isolated = new Module(filename, module);

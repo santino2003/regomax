@@ -7,7 +7,7 @@ const { createRequire } = require('node:module');
 const mysql = require('mysql2/promise');
 const { createPoolOptions } = require('../src/config/dbOptions');
 
-test('the installed driver applies URL credentials and pool limits from a single options object', async () => {
+test('El controlador instalado aplica las credenciales de la URL y los límites del pool desde un único objeto', async () => {
   const pool = mysql.createPool(createPoolOptions({
     DATABASE_URL: 'mysql://review:p%40ss%3Aword@127.0.0.1:3339/regomax',
     DB_CONNECTION_LIMIT: '3', DB_QUEUE_LIMIT: '7', DB_CONNECT_TIMEOUT: '4000', DB_IDLE_TIMEOUT: '9000'
@@ -26,7 +26,7 @@ test('the installed driver applies URL credentials and pool limits from a single
   } finally { await pool.end(); }
 });
 
-test('defaults cap the connection queue and keep idle connections within the pool limit', () => {
+test('Los valores predeterminados limitan la cola y mantienen las conexiones inactivas dentro del límite del pool', () => {
   const options = createPoolOptions({});
   assert.equal(options.connectionLimit, 10);
   assert.equal(options.queueLimit, 10);
@@ -35,7 +35,7 @@ test('defaults cap the connection queue and keep idle connections within the poo
   assert.ok(!Object.hasOwn(options, 'timeout'));
 });
 
-test('invalid environment limits fail early with a useful message', () => {
+test('Los límites de entorno inválidos se rechazan con un mensaje claro', () => {
   for (const value of ['abc', '-1', '1.5', 'Infinity', '2abc', '0']) {
     assert.throws(() => createPoolOptions({ DB_CONNECTION_LIMIT: value }), /DB_CONNECTION_LIMIT/);
   }
@@ -55,13 +55,13 @@ function isolatedDatabase(pool) {
   vm.runInNewContext(fs.readFileSync(filename, 'utf8'), {
     module: mod, exports: mod.exports,
     require: name => Object.hasOwn(dependencies, name) ? dependencies[name] : baseRequire(name),
-    process: { env: { DATABASE_URL: 'mysql://review:fake@127.0.0.1/review', SKIP_DB_CONNECTION_ERROR: '1', DB_RETRY_ATTEMPTS: '1' }, on() {}, exit() { throw new Error('unexpected exit'); } },
+    process: { env: { DATABASE_URL: 'mysql://review:fake@127.0.0.1/review', SKIP_DB_CONNECTION_ERROR: '1', DB_RETRY_ATTEMPTS: '1' }, on() {}, exit() { throw new Error('Salida inesperada del proceso'); } },
     console: { log() {}, error() {} }, global: {}, setInterval: () => 1, clearInterval() {}, setTimeout
   }, { filename });
   return { db: mod.exports, calls };
 }
 
-test('database bootstrap passes one options object and releases verification connections', async () => {
+test('La inicialización de la base pasa un único objeto de opciones y libera las conexiones de verificación', async () => {
   let releases = 0;
   const pool = { async getConnection() { return { async query() { return [[{ db: 'mock' }]]; }, release() { releases++; } }; } };
   const { db, calls } = isolatedDatabase(pool);
@@ -72,20 +72,20 @@ test('database bootstrap passes one options object and releases verification con
   assert.ok(releases >= 1);
 });
 
-test('verification also releases a connection when its query fails', async () => {
+test('La verificación también libera la conexión cuando falla su consulta', async () => {
   let releases = 0;
-  const pool = { async getConnection() { return { async query() { throw new Error('verification failed'); }, release() { releases++; } }; }, async end() {} };
+  const pool = { async getConnection() { return { async query() { throw new Error('Falló la verificación'); }, release() { releases++; } }; }, async end() {} };
   const { db } = isolatedDatabase(pool);
   assert.equal(await db.verifyConnection(1, 0), false);
   assert.ok(releases >= 1);
 });
 
-test('transaction queries unwrap rows and never reconnect or retry after a connection failure', async () => {
+test('Las consultas de una transacción devuelven las filas sin reconectarse ni reintentarse ante una falla de conexión', async () => {
   const pool = { async getConnection() { return { async query() { return [[{}]]; }, release() {} }; } };
   const { db, calls } = isolatedDatabase(pool);
   let attempts = 0;
-  const connection = { async query() { attempts++; throw Object.assign(new Error('disconnected'), { code: 'ECONNRESET' }); } };
-  await assert.rejects(db.query('INSERT INTO example VALUES (?)', [1], connection), /disconnected/);
+  const connection = { async query() { attempts++; throw Object.assign(new Error('Conexión interrumpida'), { code: 'ECONNRESET' }); } };
+  await assert.rejects(db.query('INSERT INTO example VALUES (?)', [1], connection), /Conexión interrumpida/);
   assert.equal(attempts, 1);
   assert.equal(calls.length, 1);
   const rows = await db.query('SELECT 1', [], { async query() { return [[{ value: 1 }]]; } });

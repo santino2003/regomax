@@ -15,7 +15,7 @@ function fixture(failure = () => false) {
     release() { events.push('release'); },
     async query(sql, params) {
       queries.push({ sql, params });
-      if (failure(sql, params)) throw new Error('simulated write failure');
+      if (failure(sql, params)) throw new Error('Falla simulada de escritura');
       if (/^\s*(INSERT|UPDATE|DELETE)/.test(sql)) {
         writes.push({ sql, params });
         return [{ insertId: 1, affectedRows: 1 }];
@@ -26,13 +26,13 @@ function fixture(failure = () => false) {
       if (sql.includes('SELECT * FROM despachos_detalle')) return [[]];
       if (sql.includes('SELECT id, producto, cantidad')) return [[{ id: 1, cantidad: 10 }]];
       if (sql.includes('SUM(cantidad)')) return [[{ total_pendiente: 0 }]];
-      throw new Error(`Unexpected SQL: ${sql}`);
+      throw new Error(`Consulta SQL inesperada: ${sql}`);
     }
   };
   const db = {
     withTransaction: work => withTransaction({ async getConnection() { return connection; } }, work),
     async query(sql, params, current) {
-      assert.equal(current, connection, 'every query must use the reserved connection');
+      assert.equal(current, connection, 'Cada consulta debe usar la conexión reservada');
       const [rows] = await current.query(sql, params);
       return rows;
     }
@@ -57,21 +57,21 @@ function fixture(failure = () => false) {
 const orden = { fecha: '2026-11-21', cliente: 'customer', productosYCantidades: [{ producto: 'product', cantidad: 10 }] };
 const despacho = { ordenVentaId: 1, responsable: 'operator', codigos: ['B1'] };
 
-test('creating an order commits its header and details together on one connection', async () => {
+test('La creación de una orden confirma la cabecera y sus detalles en una misma conexión', async () => {
   const f = fixture();
   assert.equal((await f.ventas.crearOrdenDeVenta(orden)).success, true);
   assert.equal(f.committed.length, 2);
   assert.deepEqual(f.events, ['begin', 'commit', 'release']);
 });
 
-test('a failed order detail rolls back the header', async () => {
+test('Una falla en un detalle de la orden revierte la cabecera', async () => {
   const f = fixture(sql => sql.includes('INSERT INTO ordenes_venta_detalle'));
-  await assert.rejects(f.ventas.crearOrdenDeVenta(orden), /simulated write failure/);
+  await assert.rejects(f.ventas.crearOrdenDeVenta(orden), /Falla simulada de escritura/);
   assert.equal(f.committed.length, 0);
   assert.deepEqual(f.events, ['begin', 'rollback', 'release']);
 });
 
-test('editing an order locks the order and rolls back header and deleted details on failure', async () => {
+test('La edición bloquea la orden y restaura la cabecera y los detalles eliminados si ocurre una falla', async () => {
   const f = fixture(sql => sql.includes('INSERT INTO ordenes_venta_detalle'));
   await assert.rejects(f.ventas.actualizarOrden(1, { productos: [{ producto: 'replacement', cantidad: 2 }] }));
   assert.match(f.queries[0].sql, /FOR UPDATE/);
@@ -80,14 +80,14 @@ test('editing an order locks the order and rolls back header and deleted details
   assert.deepEqual(f.events, ['begin', 'rollback', 'release']);
 });
 
-test('editing an order commits the full replacement and reads its result on the same connection', async () => {
+test('La edición confirma el reemplazo completo y consulta el resultado en la misma conexión', async () => {
   const f = fixture();
   await f.ventas.actualizarOrden(1, { productos: [{ producto: 'replacement', cantidad: 2 }] });
   assert.equal(f.committed.length, 3);
   assert.deepEqual(f.events, ['begin', 'commit', 'release']);
 });
 
-test('scanned dispatch locks order and bags and commits every change together', async () => {
+test('El despacho por escaneo bloquea la orden y los bolsones y confirma todos los cambios juntos', async () => {
   const f = fixture();
   const result = await f.despachos.procesarDespacho(despacho);
   assert.equal(result.ordenCompleta, true);
@@ -97,39 +97,39 @@ test('scanned dispatch locks order and bags and commits every change together', 
   assert.deepEqual(f.events, ['begin', 'commit', 'release']);
 });
 
-test('failure marking a bag rolls back dispatch header and detail', async () => {
+test('Una falla al marcar un bolsón revierte la cabecera y el detalle del despacho', async () => {
   const f = fixture(sql => sql.includes('UPDATE bolsones'));
-  await assert.rejects(f.despachos.procesarDespacho(despacho), /simulated write failure/);
+  await assert.rejects(f.despachos.procesarDespacho(despacho), /Falla simulada de escritura/);
   assert.equal(f.committed.length, 0);
   assert.deepEqual(f.events, ['begin', 'rollback', 'release']);
 });
 
-test('manual dispatch rolls back quantities if recording the detail fails', async () => {
+test('El despacho manual revierte las cantidades si falla el registro del detalle', async () => {
   const f = fixture(sql => sql.includes('INSERT INTO despachos_detalle'));
   await assert.rejects(f.despachos.procesarDespachoManual({ ordenVentaId: 1, productosManual: [{ producto: 'product', cantidad: 10 }] }));
   assert.equal(f.committed.length, 0);
   assert.deepEqual(f.events, ['begin', 'rollback', 'release']);
 });
 
-test('manual dispatch commits the complete operation', async () => {
+test('El despacho manual confirma la operación completa', async () => {
   const f = fixture();
   await f.despachos.procesarDespachoManual({ ordenVentaId: 1, productosManual: [{ producto: 'product', cantidad: 10 }] });
   assert.equal(f.committed.length, 4);
   assert.deepEqual(f.events, ['begin', 'commit', 'release']);
 });
 
-test('commit failures attempt rollback and always release the connection', async () => {
+test('Una falla al confirmar intenta revertir la transacción y libera la conexión', async () => {
   const f = fixture();
-  f.connection.commit = async () => { throw new Error('commit failed'); };
-  await assert.rejects(f.db.withTransaction(async () => 1), /commit failed/);
+  f.connection.commit = async () => { throw new Error('Falló la confirmación de la transacción'); };
+  await assert.rejects(f.db.withTransaction(async () => 1), /Falló la confirmación de la transacción/);
   assert.deepEqual(f.events, ['begin', 'rollback', 'release']);
 });
 
-test('rollback failure preserves the original error and destroys the broken connection', async () => {
+test('Una falla al revertir conserva el error original y destruye la conexión dañada', async () => {
   const f = fixture();
-  f.connection.rollback = async () => { throw new Error('rollback failed'); };
+  f.connection.rollback = async () => { throw new Error('Falló la reversión de la transacción'); };
   f.connection.destroy = () => f.events.push('destroy');
   const original = new Error('original');
-  await assert.rejects(f.db.withTransaction(async () => { throw original; }), error => error === original && error.rollbackError.message === 'rollback failed');
+  await assert.rejects(f.db.withTransaction(async () => { throw original; }), error => error === original && error.rollbackError.message === 'Falló la reversión de la transacción');
   assert.deepEqual(f.events, ['begin', 'destroy', 'release']);
 });
