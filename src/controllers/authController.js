@@ -198,7 +198,7 @@ const authController = {
       
       return res.status(200).json({
         success: true,
-        data: users
+        data: users.map(user => user.toPublicJSON())
       });
     } catch (error) {
       return res.status(500).json({

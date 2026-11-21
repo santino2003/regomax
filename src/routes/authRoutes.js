@@ -17,18 +17,15 @@ router.post('/logout', authMiddleware.verifyToken, authController.logout);
 
 // Rutas protegidas
 router.get('/check', authMiddleware.verifyToken, authController.check);
+router.get('/verify', authMiddleware.verifyToken, authController.check);
 
 // Nuevas rutas para gestión de usuarios (protegidas y requieren permisos)
 router.get('/', 
   authMiddleware.verifyToken,
   permissionsMiddleware.hasPermission('users:view'),
-  authController.viewUsers);
-
-// API para administración de usuarios - CORREGIDAS SIN PREFIJO /api/users
-router.get('/', 
-  authMiddleware.verifyToken, 
-  permissionsMiddleware.hasPermission('users:view'),
-  authController.getAllUsers);
+  (req, res) => req.baseUrl === '/users'
+    ? authController.viewUsers(req, res)
+    : authController.getAllUsers(req, res));
 
 router.get('/:id', 
   authMiddleware.verifyToken, 

@@ -21,3 +21,16 @@ Agregar opcion de eliminar bolson
 
 
 FIltros: Desde Hasta, tipo, y CNFU/NFU
+
+## Pruebas
+
+Ejecutar `npm test` con las dependencias instaladas y Node.js 20 o superior.
+Las pruebas usan el ejecutor incorporado de Node y no requieren `.env`, credenciales
+ni una base de datos activa. Cubren registro y privilegios, transacciones de ventas
+y despachos, concurrencia de stock, kits, movimientos, XSS en pagos, opciones del
+pool MySQL y resolución de rutas. El driver MySQL y el generador de Excel se usan
+sin abrir conexiones de red; las operaciones de base de datos se simulan.
+
+Para validar un archivo por separado: `node --test tests/stock.test.js`.
+Las pruebas simuladas deben complementarse con una prueba de integración contra
+una base de datos de desarrollo antes del despliegue.

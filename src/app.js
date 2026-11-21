@@ -25,7 +25,6 @@ const reporteARRoutes = require('./routes/reporteARRoutes'); // Importamos las r
 const diasHabilesRoutes = require('./routes/diasHabilesRoutes'); // Importamos las rutas de días hábiles
 const viewRoutes = require('./routes/viewRoutes');
 const nfuRoutes = require('./routes/nfuRoutes'); // Importamos las rutas de NFU
-const authMiddleware = require('./middleware/auth');
 const permissionErrorHandler = require('./middleware/permissionErrorHandler');
 const productoRoutes = require('./routes/api/productoRoutes');
 const planificacionRoutes = require('./routes/api/planificacionRoutes'); // Importamos las rutas de planificación
@@ -145,17 +144,6 @@ app.use('/api/users', authRoutes); // Rutas API para operaciones CRUD de usuario
 
 // Rutas de vistas - se montan después de las rutas API para evitar conflictos
 app.use('/', viewRoutes);
-
-// Ruta para API verify
-app.get('/api/auth/verify', authMiddleware.verifyToken, (req, res) => {
-  res.json({
-    success: true,
-    message: 'Token válido',
-    user: {
-      username: req.user.username
-    }
-  });
-});
 
 // Manejo de errores global
 app.use((err, req, res, next) => {

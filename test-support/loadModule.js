@@ -16,12 +16,15 @@ function loadModule(file, dependencies = {}) {
   return isolated.exports;
 }
 
-function dispatch(router, { method = 'GET', url = '/', originalUrl = url, body = {}, headers = {}, cookies = {} } = {}) {
+function dispatch(router, { method = 'GET', url = '/', originalUrl = url, baseUrl = '', body = {}, headers = {}, cookies = {}, query = {} } = {}) {
   return new Promise((resolve, reject) => {
-    const req = { method, url, originalUrl, body, headers, cookies, query: {}, socket: {} };
+    const req = { method, url, originalUrl, baseUrl, body, headers, cookies, query, socket: {} };
     const res = {
       statusCode: 200,
+      headers: {},
       status(code) { this.statusCode = code; return this; },
+      setHeader(name, value) { this.headers[name.toLowerCase()] = value; },
+      send(data) { resolve({ status: this.statusCode, data, headers: this.headers }); return this; },
       json(data) { resolve({ status: this.statusCode, data }); return this; },
       render(view, data) { resolve({ status: this.statusCode, view, data }); return this; },
       redirect(location) { resolve({ status: 302, location }); return this; }
