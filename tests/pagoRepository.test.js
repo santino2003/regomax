@@ -8,7 +8,7 @@ function crearContexto(cambios = {}) {
   const original = Object.freeze({
     id: 9, orden_compra_id: 11, bien_id: 10, proveedor_id: 7, tipo_pago: 'SALDO_COMPLETO',
     cantidad_recibida: 2, precio_unitario: 50, monto_pago: '100', moneda: 'USD',
-    medio_pago: 'Transferencia', pagado: 0, ...cambios.original
+    medio_pago: 'Transferencia', pagado: 0, orden_codigo: 'OC-11', proveedor_nombre: 'Proveedor 7', ...cambios.original
   });
   const eventos = [];
   let siguienteId = 201;
@@ -54,10 +54,12 @@ function comprobarQueLaTransaccionSigueEnManosDelServicio(f) {
 
 test('Pagos, repositorio: leer para refinanciar solicita un bloqueo sobre el identificador indicado', async () => {
   const f = crearContexto();
-  assert.equal(await f.repositorio.obtenerParaRefinanciacion(9, f.conexion), f.original);
+  assert.deepEqual(await f.repositorio.obtenerParaRefinanciacion(9, f.conexion), f.original);
   assert.deepEqual(f.conexion.execute.mock.calls[0].arguments, [
     'SELECT * FROM pagos WHERE id = ? FOR UPDATE', [9]
   ]);
+  assert.equal(f.conexion.execute.mock.callCount(), 2);
+  assert.match(f.conexion.execute.mock.calls[1].arguments[0], /oc.codigo AS orden_codigo, pr.nombre AS proveedor_nombre/);
   comprobarQueLaTransaccionSigueEnManosDelServicio(f);
 });
 
@@ -70,10 +72,23 @@ test('Pagos, repositorio: un pago eliminado por otra solicitud se informa como i
 test('Pagos, repositorio: las cuotas y la eliminación utilizan únicamente la conexión recibida', async () => {
   const f = crearContexto();
   const cuotas = Object.freeze(cuotasValidas().map(cuota => Object.freeze(cuota)));
-  assert.deepEqual(await f.repositorio.refinanciarPagoVariable(9, f.original, cuotas, 'operador', 'Acuerdo', f.conexion), {
-    success: true, cuotasCreadas: [{ id: 201, cuota: 1, fecha: '2026-11-26', monto: 40 },
-      { id: 202, cuota: 2, fecha: '2026-12-03', monto: 60 }], pagoOriginalEliminado: 9, totalRefinanciado: 100
-  });
+  const resultado = await f.repositorio.refinanciarPagoVariable(9, f.original, cuotas, 'operador', 'Acuerdo', f.conexion);
+  assert.equal(resultado.success, true);
+  assert.equal(resultado.pagoOriginal, f.original);
+  assert.equal(resultado.pagoOriginalEliminado, 9);
+  assert.equal(resultado.totalRefinanciado, 100);
+  assert.deepEqual(resultado.cuotasCreadas.map(c => ({ id: c.id, cuota: c.cuota, fecha: c.fecha, monto: c.monto })), [
+    { id: 201, cuota: 1, fecha: '2026-11-26', monto: 40 }, { id: 202, cuota: 2, fecha: '2026-12-03', monto: 60 }
+  ]);
+  for (const cuota of resultado.cuotasCreadas) {
+    assert.equal(cuota.orden_compra_id, 11);
+    assert.equal(cuota.orden_codigo, 'OC-11');
+    assert.equal(cuota.proveedor_id, 7);
+    assert.equal(cuota.proveedor_nombre, 'Proveedor 7');
+    assert.equal(cuota.tipo_pago, 'SALDO_COMPLETO');
+    assert.equal(cuota.fecha_pago, cuota.fecha);
+    assert.equal(cuota.monto_pago, cuota.monto);
+  }
   assert.deepEqual(f.eventos, ['crear cuota', 'crear cuota', 'eliminar original']);
   const consultas = f.conexion.execute.mock.calls;
   assert.deepEqual(consultas[0].arguments[1], [
@@ -100,6 +115,49 @@ test('Pagos, repositorio: las cuotas conservan el número, la observación y los
   assert.equal(parametros[8], null);
   assert.match(parametros[11], /Cuota 3\/1\. Última entrega$/);
   assert.equal(resultado.cuotasCreadas[0].cuota, 3);
+});
+
+test('Pagos, repositorio: refinanciar un servicio conserva su relación sin inventar una orden ni un proveedor', async () => {
+  const f = crearContexto({ original: {
+    orden_compra_id: null, orden_codigo: null, proveedor_id: null, proveedor_nombre: null,
+    servicio_id: 5, tipo_pago: 'SERVICIO'
+  } });
+  const resultado = await f.repositorio.refinanciarPagoVariable(9, f.original, cuotasValidas(), 'operador', null, f.conexion);
+  const inserciones = f.conexion.execute.mock.calls.filter(c => c.arguments[0].includes('INSERT INTO pagos'));
+  for (const llamada of inserciones) {
+    const [sql, valores] = llamada.arguments;
+    const columnas = sql.match(/INSERT INTO pagos \(([^)]+)\)/)[1].split(', ');
+    const registro = Object.fromEntries(columnas.map((columna, indice) => [columna, valores[indice]]));
+    assert.equal(registro.servicio_id, 5);
+    assert.equal(registro.tipo_pago, 'SERVICIO');
+    assert.equal(registro.orden_compra_id, null);
+    assert.equal(registro.proveedor_id, null);
+    assert.equal(valores.length, columnas.length);
+  }
+  assert.equal(inserciones.length, 2);
+  assert.equal(resultado.pagoOriginal.servicio_id, 5);
+  assert.ok(resultado.cuotasCreadas.every(c => c.servicio_id === 5 && c.tipo_pago === 'SERVICIO'));
+});
+
+test('Pagos, repositorio: el formato anterior sin columna de servicio sigue creando cuotas con las referencias originales', async () => {
+  const f = crearContexto();
+  await f.repositorio.refinanciarPagoVariable(9, f.original, cuotasValidas(), 'operador', null, f.conexion);
+  const [sql, valores] = f.conexion.execute.mock.calls[0].arguments;
+  assert.ok(!sql.includes('servicio_id'));
+  assert.deepEqual(valores.slice(0, 4), [11, 10, 7, 'SALDO_COMPLETO']);
+  assert.equal(valores.length, 12);
+});
+
+test('Pagos, repositorio: las etiquetas de orden y proveedor no reemplazan los datos financieros leídos bajo bloqueo', async () => {
+  let lecturas = 0;
+  const f = crearContexto({ conexion: { execute: mock.fn(async () => {
+    if (lecturas++ === 0) return [[{ id: 9, orden_compra_id: 11, proveedor_id: 7, monto_pago: '100', pagado: 0 }]];
+    return [[{ orden_codigo: 'OC-11', proveedor_nombre: 'Proveedor 7', monto_pago: '999', pagado: 1 }]];
+  }) } });
+  assert.deepEqual(await f.repositorio.obtenerParaRefinanciacion(9, f.conexion), {
+    id: 9, orden_compra_id: 11, proveedor_id: 7, monto_pago: '100', pagado: 0,
+    orden_codigo: 'OC-11', proveedor_nombre: 'Proveedor 7'
+  });
 });
 
 for (const filasEliminadas of [0, 2]) {

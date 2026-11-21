@@ -20,7 +20,7 @@ $(document).ready(function() {
                         <label class="form-label">Proveedor <span class="text-danger">*</span></label>
                         <select class="form-select select2-proveedor" data-proveedor-id="${proveedorCounter}" required>
                             <option value="">Seleccionar proveedor...</option>
-                            ${proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
+                            ${proveedores.map(p => `<option value="${escaparHtml(p.id)}">${escaparHtml(p.nombre)}</option>`).join('')}
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -102,7 +102,7 @@ $(document).ready(function() {
             familiasSeleccionadasArray.forEach(familia => {
                 html += `
                     <span class="badge bg-primary me-1 mb-1" style="font-size: 0.9rem;" data-familia-id="${familia.id}">
-                        ${familia.nombre}
+                        ${escaparHtml(familia.nombre)}
                         <button type="button" class="btn-close btn-close-white btn-sm ms-1" style="font-size: 0.6rem;" data-familia-id="${familia.id}"></button>
                     </span>
                 `;
@@ -188,7 +188,7 @@ $(document).ready(function() {
             const file = files[i];
             const size = (file.size / 1024).toFixed(2);
             const sizeClass = file.size > 10 * 1024 * 1024 ? 'text-danger' : '';
-            html += `<li class="${sizeClass}">${file.name} (${size} KB)</li>`;
+            html += `<li class="${sizeClass}">${escaparHtml(file.name)} (${size} KB)</li>`;
         }
         html += '</ul></div>';
         listaArchivosPreview.html(html);
@@ -196,8 +196,8 @@ $(document).ready(function() {
     
     function showAlert(message, type) {
         const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
+            <div class="alert alert-${escaparHtml(type)} alert-dismissible fade show" role="alert">
+                <span style="white-space: pre-line">${escaparHtml(message)}</span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         `;
@@ -297,13 +297,13 @@ $(document).ready(function() {
                 const resultado = await subirArchivos(bienId, files);
                 
                 if (resultado.errores.length > 0) {
-                    let mensaje = 'Bien creado correctamente.<br>';
+                    let mensaje = 'Bien creado correctamente.\n';
                     if (resultado.archivosSubidos.length > 0) {
-                        mensaje += `<strong>Archivos subidos:</strong> ${resultado.archivosSubidos.length}<br>`;
+                        mensaje += `Archivos subidos: ${resultado.archivosSubidos.length}\n`;
                     }
-                    mensaje += `<strong>Errores:</strong><br>`;
+                    mensaje += 'Errores:\n';
                     resultado.errores.forEach(error => {
-                        mensaje += `- ${error}<br>`;
+                        mensaje += `- ${error}\n`;
                     });
                     showAlert(mensaje, 'warning');
                     

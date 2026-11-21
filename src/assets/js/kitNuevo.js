@@ -8,8 +8,8 @@ $(document).ready(function() {
 
     function showAlert(message, type) {
         const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
+            <div class="alert alert-${escaparHtml(type)} alert-dismissible fade show" role="alert">
+                ${escaparHtml(message)}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         `;
@@ -42,11 +42,11 @@ $(document).ready(function() {
                             <select class="form-select select-bien" required>
                                 <option value="">Seleccionar bien...</option>
                                 ${bienesDisponibles.map(bien => `
-                                    <option value="${bien.id}" 
-                                            data-precio="${bien.precio || 0}"
-                                            data-stock="${bien.cantidad_stock}"
-                                            data-codigo="${bien.codigo}">
-                                        ${bien.codigo} - ${bien.nombre} (Stock: ${bien.cantidad_stock})
+                                    <option value="${escaparHtml(bien.id)}"
+                                            data-precio="${escaparHtml(bien.precio || 0)}"
+                                            data-stock="${escaparHtml(bien.cantidad_stock)}"
+                                            data-codigo="${escaparHtml(bien.codigo)}">
+                                        ${escaparHtml(bien.codigo)} - ${escaparHtml(bien.nombre)} (Stock: ${escaparHtml(bien.cantidad_stock)})
                                     </option>
                                 `).join('')}
                             </select>
@@ -95,7 +95,7 @@ $(document).ready(function() {
         if (codigo) {
             const cantidad = parseInt($item.find('.input-cantidad').val()) || 1;
             const subtotal = precio * cantidad;
-            $item.find('.info-precio').html(
+            $item.find('.info-precio').text(
                 `Precio unitario: $${precio.toLocaleString('es-AR', { minimumFractionDigits: 2 })} | 
                  Subtotal: $${subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 })} | 
                  Stock disponible: ${stock}`
@@ -117,7 +117,7 @@ $(document).ready(function() {
         
         if (codigo) {
             const subtotal = precio * cantidad;
-            $item.find('.info-precio').html(
+            $item.find('.info-precio').text(
                 `Precio unitario: $${precio.toLocaleString('es-AR', { minimumFractionDigits: 2 })} | 
                  Subtotal: $${subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 })} | 
                  Stock disponible: ${stock}`

@@ -242,9 +242,10 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         // Pasar datos de proveedores al JavaScript
-        window.proveedoresDisponibles = <%- JSON.stringify(proveedores) %>;
+        window.proveedoresDisponibles = <%- include('partials/jsonSeguro', { valor: proveedores }) %>;
     </script>
     <script src="/assets/js/common.js"></script>
+    <script src="/assets/js/htmlSeguro.js"></script>
     <script src="/assets/js/bienesNuevo.js"></script>
 </body>
 </html>

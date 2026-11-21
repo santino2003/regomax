@@ -10,6 +10,30 @@ const listPath = path.resolve(__dirname, '../views/listarPagos.ejs');
 const payload = '<img src=x onerror="window.xss=1">\n<script>window.xss=2</script>';
 const pago = { id: 1, pagado: true, tipo_pago: 'CONTRAFACTURA', monto_pago: 100, proveedor_nombre: 'Proveedor', orden_codigo: 'OC-1' };
 
+test('El listado y el detalle muestran el tipo Servicio y conservan la referencia al servicio', async () => {
+  const servicio = { ...pago, pagado: false, tipo_pago: 'SERVICIO', servicio_id: 5, orden_compra_id: null, orden_codigo: null, proveedor_nombre: null };
+  const listado = await ejs.renderFile(listPath, {
+    username: 'operador', proveedores: [], pagos: [servicio], filtros: {}, totales: {}, totalesPorMoneda: {}, paginacion: { totalPages: 1 }
+  });
+  assert.ok(listado.includes('Servicio #5'));
+  assert.match(listado, /badge-tipo-pago">Servicio<\/span>/);
+  const detalle = await ejs.renderFile(detailPath, { username: 'operador', pago: servicio });
+  assert.match(detalle, /badge-tipo-pago">Servicio<\/span>/);
+  assert.ok(detalle.includes('Servicio #5'));
+});
+
+test('El listado de cuotas refinanciadas conserva la orden, el proveedor y el tipo de pago', async () => {
+  const listado = await ejs.renderFile(listPath, {
+    username: 'operador', proveedores: [], pagos: [{ ...pago, pagado: false, tipo_pago: 'SALDO_COMPLETO',
+      orden_compra_id: 11, orden_codigo: 'OC-11', proveedor_id: 7, proveedor_nombre: 'Proveedor 7' }],
+    filtros: {}, totales: {}, totalesPorMoneda: {}, paginacion: { totalPages: 1 }
+  });
+  assert.ok(listado.includes('href="/ordenes-compra/11"'));
+  assert.ok(listado.includes('OC-11'));
+  assert.ok(listado.includes('<td>Proveedor 7</td>'));
+  assert.ok(listado.includes('Saldo Completo'));
+});
+
 test('El detalle del pago y el recibo imprimible escapan el HTML almacenado', async () => {
   const html = await ejs.renderFile(detailPath, { username: 'operator', pago: { ...pago, detalle_pago: payload } });
   assert.ok(!html.includes(payload));

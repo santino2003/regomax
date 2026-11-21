@@ -6,8 +6,8 @@ $(document).ready(function() {
 
     function showAlert(message, type) {
         const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
+            <div class="alert alert-${escaparHtml(type)} alert-dismissible fade show" role="alert">
+                ${escaparHtml(message)}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         `;
@@ -40,19 +40,19 @@ $(document).ready(function() {
                             <select class="form-select select-bien" required>
                                 <option value="">Seleccionar bien...</option>
                                 ${bienesDisponibles.map(bien => `
-                                    <option value="${bien.id}" 
-                                            data-precio="${bien.precio || 0}"
-                                            data-stock="${bien.cantidad_stock}"
-                                            data-codigo="${bien.codigo}"
+                                    <option value="${escaparHtml(bien.id)}"
+                                            data-precio="${escaparHtml(bien.precio || 0)}"
+                                            data-stock="${escaparHtml(bien.cantidad_stock)}"
+                                            data-codigo="${escaparHtml(bien.codigo)}"
                                             ${bienId == bien.id ? 'selected' : ''}>
-                                        ${bien.codigo} - ${bien.nombre} (Stock: ${bien.cantidad_stock})
+                                        ${escaparHtml(bien.codigo)} - ${escaparHtml(bien.nombre)} (Stock: ${escaparHtml(bien.cantidad_stock)})
                                     </option>
                                 `).join('')}
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small mb-1">Cantidad</label>
-                            <input type="number" class="form-control input-cantidad" min="1" value="${cantidad}" required>
+                            <input type="number" class="form-control input-cantidad" min="1" value="${escaparHtml(cantidad)}" required>
                         </div>
                         <div class="col-md-2 text-center">
                             <label class="form-label small mb-1">&nbsp;</label>
@@ -94,7 +94,7 @@ $(document).ready(function() {
         
         if (codigo) {
             const subtotal = precio * cantidad;
-            $item.find('.info-precio').html(
+            $item.find('.info-precio').text(
                 `Precio unitario: $${precio.toLocaleString('es-AR', { minimumFractionDigits: 2 })} | 
                  Subtotal: $${subtotal.toLocaleString('es-AR', { minimumFractionDigits: 2 })} | 
                  Stock disponible: ${stock}`
