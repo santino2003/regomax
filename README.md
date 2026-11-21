@@ -31,8 +31,8 @@ requieren `.env`, credenciales ni una base de datos activa.
 
 Los nombres, comentarios y mensajes propios de las pruebas se escriben en español.
 La cobertura nueva se incorpora en bloques de cinco servicios por cada «seguí»,
-manteniendo un archivo por servicio. Se crean y ejecutan las pruebas, y se deja
-la revisión y los commits al usuario. El siguiente bloque se inicia cuando se
+manteniendo un archivo por servicio. La revisión, la ejecución de las pruebas y
+los commits quedan a cargo del usuario. El siguiente bloque se inicia cuando
 indique «seguí».
 
 Ejecutar `npm test` con las dependencias instaladas y Node.js 20 o superior.
