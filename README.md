@@ -22,6 +22,24 @@ Agregar opcion de eliminar bolson
 
 FIltros: Desde Hasta, tipo, y CNFU/NFU
 
+## Dar egreso a una persona o vehículo
+
+En **Ingresos → Ingresos y egresos**, cada ingreso sin una salida vinculada tiene
+el botón **Dar egreso**. La confirmación muestra la persona, la patente, la empresa
+y la fecha de entrada. Al confirmar se guarda otro movimiento, de tipo `EGRESO`,
+con la fecha y hora actuales de la base de datos y un vínculo al ingreso original.
+El ingreso queda en el historial y muestra la hora de salida. Solo se permite un
+egreso vinculado por ingreso, incluso ante solicitudes simultáneas.
+
+Para una base existente, ejecutar una vez
+`src/scripts/ingresos_egresos_vincular_egreso.sql` antes de usar la nueva versión.
+La columna `empresa` debe existir; si falta, aplicar primero
+`src/scripts/ingresos_egresos_empresa.sql`. Las instalaciones nuevas usan
+`src/scripts/ingresos_egresos_table.sql`, que ya incluye ambos cambios.
+Los movimientos históricos se conservan y sus egresos no se vinculan automáticamente:
+el estado «Sin egreso vinculado» indica la ausencia de ese vínculo, no confirma
+que la persona siga dentro del predio.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:

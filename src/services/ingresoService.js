@@ -1,6 +1,7 @@
 const personaRepository = require('../repositories/personaRepository');
 const movimientoIngresoRepository = require('../repositories/movimientoIngresoRepository');
 const clienteNFURepository = require('../repositories/clienteNFURepository');
+const db = require('../config/db');
 
 class IngresoService {
     async obtenerDatosNuevoIngreso() {
@@ -54,9 +55,30 @@ class IngresoService {
         return movimientoIngresoRepository.crear(movimiento);
     }
 
-    errorValidacion(message) {
+    async registrarEgreso(ingresoId) {
+        if (!['string', 'number'].includes(typeof ingresoId) || !/^[1-9]\d*$/.test(String(ingresoId)) || !Number.isSafeInteger(Number(ingresoId))) {
+            throw this.errorValidacion('Seleccione un ingreso válido.');
+        }
+        const id = Number(ingresoId);
+        return db.withTransaction(async connection => {
+            const ingreso = await movimientoIngresoRepository.obtenerParaEgreso(id, connection);
+            if (!ingreso) throw this.errorValidacion('El ingreso seleccionado no existe.', 404);
+            if (ingreso.tipo_movimiento !== 'INGRESO') {
+                throw this.errorValidacion('Solo se puede dar egreso a un ingreso.', 400);
+            }
+            if (await movimientoIngresoRepository.obtenerEgreso(id, connection)) {
+                throw this.errorValidacion('Este ingreso ya tiene un egreso registrado. Actualice el listado.', 409);
+            }
+            const { motivo, nombre, apellido, patente, empresa } = ingreso;
+            return movimientoIngresoRepository.crear({
+                tipo_movimiento: 'EGRESO', ingreso_id: id, motivo, nombre, apellido, patente, empresa
+            }, connection);
+        });
+    }
+
+    errorValidacion(message, status = 400) {
         const error = new Error(message);
-        error.status = 400;
+        error.status = status;
         return error;
     }
 

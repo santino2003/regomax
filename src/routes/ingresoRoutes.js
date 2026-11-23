@@ -8,5 +8,6 @@ router.use(auth.verifyToken, permissionsMiddleware.hasPermission('ingresos:creat
 router.post('/identificar', ingresoController.identificarPersona);
 router.post('/personas', ingresoController.registrarPersona);
 router.post('/movimientos', ingresoController.registrarMovimiento);
+router.post('/movimientos/:id/egreso', ingresoController.registrarEgreso);
 
 module.exports = router;

@@ -1,16 +1,22 @@
 const { test, mock } = require('node:test');
 const assert = require('node:assert/strict');
-const { cargarServicio } = require('../test-support/serviceUnit');
+const { cargarServicio, simularTransaccion } = require('../test-support/serviceUnit');
 
 mock.method(console, 'error', () => {});
 
 function crearContexto() {
+  const { conexion, db } = simularTransaccion();
   const personas = { obtenerPorDni: mock.fn(async () => null), crear: mock.fn(async persona => ({ id: 42, ...persona })) };
-  const movimientos = { contar: mock.fn(async () => 123), listar: mock.fn(async () => []), crear: mock.fn(async datos => ({ id: 42, ...datos })) };
+  const movimientos = {
+    contar: mock.fn(async () => 123), listar: mock.fn(async () => []), crear: mock.fn(async datos => ({ id: 42, ...datos })),
+    obtenerParaEgreso: mock.fn(async () => ({ id: 7, tipo_movimiento: 'INGRESO', motivo: 'CNFU/NFU',
+      nombre: 'Ana', apellido: 'García', patente: 'AB123CD', empresa: 'Empresa de prueba' })),
+    obtenerEgreso: mock.fn(async () => null)
+  };
   const clientes = { obtenerTodos: mock.fn(async () => []), obtenerPorId: mock.fn(async () => ({ id: 2, empresa: 'Empresa de prueba' })) };
-  return { personas, movimientos, clientes, servicio: cargarServicio('ingresoService', {
+  return { personas, movimientos, clientes, conexion, db, servicio: cargarServicio('ingresoService', {
     '../repositories/personaRepository': personas, '../repositories/movimientoIngresoRepository': movimientos,
-    '../repositories/clienteNFURepository': clientes
+    '../repositories/clienteNFURepository': clientes, '../config/db': db
   }) };
 }
 
@@ -135,6 +141,52 @@ test('Ingresos: una empresa inexistente o sin nombre evita registrar el movimien
     assert.equal(f.movimientos.crear.mock.callCount(), 0);
   }
 });
+
+test('Ingresos: dar egreso conserva los datos originales, vincula la salida y usa una sola transacción', async () => {
+  const f = crearContexto();
+  const esperado = { tipo_movimiento: 'EGRESO', ingreso_id: 7, motivo: 'CNFU/NFU', nombre: 'Ana',
+    apellido: 'García', patente: 'AB123CD', empresa: 'Empresa de prueba' };
+  assert.deepEqual(await f.servicio.registrarEgreso('7'), { id: 42, ...esperado });
+  assert.deepEqual(f.movimientos.obtenerParaEgreso.mock.calls[0].arguments, [7, f.conexion]);
+  assert.deepEqual(f.movimientos.obtenerEgreso.mock.calls[0].arguments, [7, f.conexion]);
+  assert.deepEqual(f.movimientos.crear.mock.calls[0].arguments, [esperado, f.conexion]);
+  assert.equal(f.db.withTransaction.mock.callCount(), 1);
+  assert.equal(f.clientes.obtenerPorId.mock.callCount(), 0);
+});
+
+test('Ingresos: dar egreso rechaza identificadores inválidos antes de abrir una transacción', async () => {
+  const f = crearContexto();
+  for (const id of [undefined, null, '', '01', '1.5', '1 OR 1=1', [], [7], {}, true, 0, -1, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    await assert.rejects(f.servicio.registrarEgreso(id), { status: 400 });
+  }
+  assert.equal(f.db.withTransaction.mock.callCount(), 0);
+});
+
+test('Ingresos: no se puede dar egreso a un movimiento inexistente ni a otro egreso', async () => {
+  for (const [ingreso, status] of [[null, 404], [{ id: 7, tipo_movimiento: 'EGRESO' }, 400]]) {
+    const f = crearContexto();
+    f.movimientos.obtenerParaEgreso.mock.mockImplementation(async () => ingreso);
+    await assert.rejects(f.servicio.registrarEgreso(7), { status });
+    assert.equal(f.movimientos.obtenerEgreso.mock.callCount(), 0);
+    assert.equal(f.movimientos.crear.mock.callCount(), 0);
+  }
+});
+
+test('Ingresos: un egreso ya vinculado devuelve conflicto y no crea otra salida', async () => {
+  const f = crearContexto();
+  f.movimientos.obtenerEgreso.mock.mockImplementation(async () => ({ id: 42 }));
+  await assert.rejects(f.servicio.registrarEgreso(7), { status: 409 });
+  assert.equal(f.movimientos.crear.mock.callCount(), 0);
+});
+
+for (const metodo of ['obtenerParaEgreso', 'obtenerEgreso', 'crear']) {
+  test(`Ingresos: una falla en ${metodo} durante el egreso se propaga a la transacción`, async () => {
+    const f = crearContexto();
+    const error = new Error('Falla simulada al registrar la salida');
+    f.movimientos[metodo].mock.mockImplementation(async () => { throw error; });
+    await assert.rejects(f.servicio.registrarEgreso(7), recibido => recibido === error);
+  });
+}
 
 test('Ingresos: normalizar el DNI elimina espacios y ceros iniciales sin aceptar formatos inválidos', () => {
   const f = crearContexto();

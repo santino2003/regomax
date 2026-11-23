@@ -11,14 +11,14 @@ const ingresoController = {
             const resultado = await ingresoService.listarMovimientos(req.query.page);
             res.render('ingresosListado', {
                 title: 'Ingresos y egresos', username: req.user.username, ...resultado,
-                registrado: req.query.registrado === '1', errorListado: false
+                registrado: req.query.registrado === '1', egresoRegistrado: req.query.egreso === '1', errorListado: false
             });
         } catch (error) {
             console.error('Error al listar ingresos y egresos:', error);
             res.status(500).render('ingresosListado', {
                 title: 'Ingresos y egresos', username: req.user.username,
                 movimientos: [], pagina: 1, paginas: 1, total: 0,
-                registrado: false, errorListado: true
+                registrado: false, egresoRegistrado: false, errorListado: true
             });
         }
     },
@@ -31,6 +31,17 @@ const ingresoController = {
             if (!error.status) console.error('Error al registrar ingreso o egreso:', error);
             res.status(error.status || 500).json({ success: false,
                 error: error.status ? error.message : 'No se pudo registrar el movimiento. Intente nuevamente.' });
+        }
+    },
+
+    async registrarEgreso(req, res) {
+        try {
+            const movimiento = await ingresoService.registrarEgreso(req.params.id);
+            res.status(201).json({ success: true, movimiento });
+        } catch (error) {
+            if (!error.status) console.error('Error al registrar egreso:', error);
+            res.status(error.status || 500).json({ success: false,
+                error: error.status ? error.message : 'No se pudo registrar el egreso. Intente nuevamente.' });
         }
     },
 

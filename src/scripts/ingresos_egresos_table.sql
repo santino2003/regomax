@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS ingresos_egresos (
     patente VARCHAR(20) NOT NULL,
     empresa VARCHAR(255) NULL,
     fecha_movimiento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ingreso_id INT NULL,
+    UNIQUE KEY uq_ingresos_egresos_ingreso (ingreso_id),
+    CONSTRAINT fk_ingresos_egresos_ingreso FOREIGN KEY (ingreso_id) REFERENCES ingresos_egresos (id),
     INDEX idx_fecha_movimiento (fecha_movimiento),
     INDEX idx_patente (patente)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

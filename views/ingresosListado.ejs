@@ -8,6 +8,9 @@
         <% if (registrado) { %>
             <div class="alert alert-success" role="status">Ingreso registrado correctamente.</div>
         <% } %>
+        <% if (egresoRegistrado) { %>
+            <div class="alert alert-success" role="status">Egreso registrado correctamente.</div>
+        <% } %>
         <% if (errorListado) { %>
             <div class="alert alert-danger" role="alert">No se pudo cargar el listado. <a href="/ingresos/listado">Reintentar</a></div>
         <% } else { %>
@@ -17,10 +20,11 @@
                     <thead><tr>
                         <th scope="col">ID</th><th scope="col">Fecha y hora</th><th scope="col">Movimiento</th>
                         <th scope="col">Motivo</th><th scope="col">Nombre</th><th scope="col">Apellido</th><th scope="col">Patente</th>
+                        <th scope="col">Empresa</th><th scope="col">Egreso</th><th scope="col">Acciones</th>
                     </tr></thead>
                     <tbody>
                         <% if (!movimientos.length) { %>
-                            <tr><td colspan="7" class="text-center text-muted">No hay ingresos ni egresos registrados.</td></tr>
+                            <tr><td colspan="10" class="text-center text-muted">No hay ingresos ni egresos registrados.</td></tr>
                         <% } %>
                         <% movimientos.forEach(movimiento => { %>
                             <tr>
@@ -31,6 +35,36 @@
                                 <td><%= movimiento.nombre %></td>
                                 <td><%= movimiento.apellido %></td>
                                 <td><%= movimiento.patente %></td>
+                                <td><%= movimiento.empresa || '—' %></td>
+                                <td>
+                                    <% if (movimiento.tipo_movimiento === 'INGRESO') { %>
+                                        <% if (movimiento.egreso_id) { %>
+                                            <span class="badge bg-secondary">Egresado</span>
+                                            <div class="small text-muted"><%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_egreso) %></div>
+                                        <% } else { %>
+                                            <span class="badge bg-warning text-dark">Sin egreso vinculado</span>
+                                        <% } %>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary">Salida registrada</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (movimiento.tipo_movimiento === 'INGRESO' && !movimiento.egreso_id) { %>
+                                        <button type="button" class="btn btn-outline-danger btn-sm text-nowrap" data-dar-egreso
+                                            data-ingreso-id="<%= movimiento.id %>"
+                                            data-persona="<%= movimiento.nombre %> <%= movimiento.apellido %>"
+                                            data-patente="<%= movimiento.patente %>"
+                                            data-empresa="<%= movimiento.empresa || '—' %>"
+                                            data-fecha="<%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_movimiento) %>"
+                                            aria-label="Dar egreso al ingreso <%= movimiento.id %>">
+                                            <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Dar egreso
+                                        </button>
+                                    <% } else if (movimiento.ingreso_id) { %>
+                                        <span class="small text-muted">Ingreso #<%= movimiento.ingreso_id %></span>
+                                    <% } else { %>
+                                        <span class="text-muted">—</span>
+                                    <% } %>
+                                </td>
                             </tr>
                         <% }); %>
                     </tbody>
@@ -47,4 +81,31 @@
         <a href="/home" class="btn btn-outline-secondary mt-3">Volver al inicio</a>
     </div>
 </div>
+<div class="modal fade" id="modalEgreso" tabindex="-1" aria-labelledby="tituloEgreso" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloEgreso">Confirmar egreso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="errorEgreso" class="alert alert-danger d-none" role="alert"></div>
+                <p>Verifique los datos antes de registrar la salida.</p>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Ingreso</dt><dd class="col-sm-8" id="egresoIngreso"></dd>
+                    <dt class="col-sm-4">Persona</dt><dd class="col-sm-8" id="egresoPersona"></dd>
+                    <dt class="col-sm-4">Patente</dt><dd class="col-sm-8" id="egresoPatente"></dd>
+                    <dt class="col-sm-4">Empresa</dt><dd class="col-sm-8" id="egresoEmpresa"></dd>
+                    <dt class="col-sm-4">Fecha de ingreso</dt><dd class="col-sm-8" id="egresoFecha"></dd>
+                </dl>
+                <p class="small text-muted mb-0">La salida se registrará con la fecha y hora actuales.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmarEgreso">Confirmar egreso</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/assets/js/ingresosListado.js?v=egresos-1"></script>
 <%- include('partials/footer') %>
