@@ -92,10 +92,11 @@
                 <form id="formMotivoIngreso" class="needs-validation mb-4" enctype="multipart/form-data" novalidate>
                     <div class="mb-3">
                         <label for="motivoIngreso" class="form-label">Motivo de ingreso <span class="text-danger">*</span></label>
-                        <select class="form-select" id="motivoIngreso" name="motivo" required aria-controls="camposNFU camposLogistica camposVehiculo">
+                        <select class="form-select" id="motivoIngreso" name="motivo" required aria-controls="camposNFU camposLogistica camposBasura camposVehiculo">
                             <option value="">Seleccione un motivo</option>
                             <option value="CNFU/NFU">CNFU/NFU</option>
                             <option value="Logística">Logística</option>
+                            <option value="Basura">Basura</option>
                         </select>
                     </div>
                     <fieldset id="camposNFU" class="d-none" disabled>
@@ -152,6 +153,13 @@
                             </div>
                         </div>
                     </fieldset>
+                    <fieldset id="camposBasura" class="d-none" disabled>
+                        <legend class="fs-6">Datos del ingreso de basura</legend>
+                        <div class="mt-3">
+                            <label for="empresaBasura" class="form-label">Empresa <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="empresaBasura" name="empresa" maxlength="255" required placeholder="Ingrese el nombre de la empresa">
+                        </div>
+                    </fieldset>
                     <fieldset id="camposVehiculo" class="d-none" disabled>
                         <legend class="visually-hidden">Vehículo</legend>
                         <div class="mt-3">
@@ -160,9 +168,9 @@
                         </div>
                     </fieldset>
                     <div id="zonaArchivoIngreso" class="border border-2 rounded p-3 mt-3">
-                        <label for="archivoIngreso" class="form-label fw-semibold"><i class="bi bi-image me-2" aria-hidden="true"></i>Adjuntar JPG (opcional)</label>
-                        <p id="ayudaArchivoIngreso" class="text-muted small mb-2">Arrastre una imagen aquí o selecciónela. JPG o JPEG, hasta 10 MB.</p>
-                        <input type="file" class="form-control" id="archivoIngreso" name="archivo_jpg" accept=".jpg,.jpeg,image/jpeg" aria-describedby="ayudaArchivoIngreso errorArchivoIngreso">
+                        <label for="archivoIngreso" class="form-label fw-semibold"><i class="bi bi-paperclip me-2" aria-hidden="true"></i>Adjuntar PDF o JPG (opcional)</label>
+                        <p id="ayudaArchivoIngreso" class="text-muted small mb-2">Arrastre un archivo aquí o selecciónelo. PDF, JPG o JPEG, hasta 10 MB.</p>
+                        <input type="file" class="form-control" id="archivoIngreso" name="archivo_jpg" accept=".jpg,.jpeg,.pdf,image/jpeg,application/pdf" aria-describedby="ayudaArchivoIngreso errorArchivoIngreso">
                         <div id="errorArchivoIngreso" class="text-danger small mt-2" role="alert"></div>
                         <div id="detalleArchivoIngreso" class="d-none mt-3">
                             <img id="vistaArchivoIngreso" class="img-thumbnail d-block mb-2" style="max-height: 200px; max-width: 100%; object-fit: contain;" alt="Vista previa del JPG adjunto">
@@ -181,6 +189,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="/assets/js/common.js"></script>
-    <script src="/assets/js/ingresosNuevo.js?v=jpg-1"></script>
+    <script src="/assets/js/ingresosNuevo.js?v=adjunto-pdf-1"></script>
 </body>
 </html>

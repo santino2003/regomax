@@ -48,6 +48,14 @@ class IngresoService {
         movimiento.patente = movimiento.patente.toUpperCase();
         movimiento.empresa = null;
         if (archivo) movimiento.archivo_jpg = `/uploads/ingresos/${archivo.filename}`;
+        if (movimiento.motivo === 'Basura') {
+            const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
+            if (!empresa || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) {
+                throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
+            }
+            movimiento.empresa = empresa;
+            return movimientoIngresoRepository.crear(movimiento);
+        }
         if (movimiento.motivo === 'Logística') {
             const ordenId = datos.orden_venta_id;
             if (!['string', 'number'].includes(typeof ordenId) || !/^[1-9]\d*$/.test(String(ordenId)) || !Number.isSafeInteger(Number(ordenId))) {

@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const camposVehiculo = document.getElementById('camposVehiculo');
     const ordenVenta = document.getElementById('orden_venta_id');
     const empresaLogistica = document.getElementById('empresaLogistica');
+    const camposBasura = document.getElementById('camposBasura');
+    const empresaBasura = document.getElementById('empresaBasura');
     let procesando = false;
     let ingresoGuardado = false;
     const archivoInput = document.getElementById('archivoIngreso');
@@ -38,18 +40,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!archivos.length) return;
         document.getElementById('quitarArchivoIngreso').classList.remove('d-none');
         const archivo = archivos[0];
-        const error = archivos.length !== 1 ? 'Seleccione un solo JPG.'
-            : !/\.jpe?g$/i.test(archivo.name) || (archivo.type && !['image/jpeg', 'image/jpg'].includes(archivo.type))
-                ? 'Solo se permite un archivo JPG o JPEG.'
-                : archivo.size > 10 * 1024 * 1024 ? 'El JPG no puede superar los 10 MB.' : '';
+        const esPDF = /\.pdf$/i.test(archivo.name);
+        const tipoValido = !archivo.type || (esPDF ? archivo.type === 'application/pdf' : ['image/jpeg', 'image/jpg'].includes(archivo.type));
+        const error = archivos.length !== 1 ? 'Seleccione un solo archivo.'
+            : !/\.(jpe?g|pdf)$/i.test(archivo.name) || !tipoValido
+                ? 'Solo se permite un archivo JPG, JPEG o PDF.'
+                : archivo.size > 10 * 1024 * 1024 ? 'El archivo no puede superar los 10 MB.' : '';
         if (error) {
             archivoInput.setCustomValidity(error);
             errorArchivo.textContent = error;
             return;
         }
         archivoSeleccionado = archivo;
-        urlArchivo = URL.createObjectURL(archivo);
-        vistaArchivo.src = urlArchivo;
+        vistaArchivo.classList.toggle('d-none', esPDF);
+        if (!esPDF) {
+            urlArchivo = URL.createObjectURL(archivo);
+            vistaArchivo.src = urlArchivo;
+        }
         document.getElementById('nombreArchivoIngreso').textContent = archivo.name;
         document.getElementById('detalleArchivoIngreso').classList.remove('d-none');
     }
@@ -85,11 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function actualizarMotivo() {
         const esNFU = motivo.value === 'CNFU/NFU';
         const esLogistica = motivo.value === 'Logística';
+        const esBasura = motivo.value === 'Basura';
+        camposBasura.classList.toggle('d-none', !esBasura);
+        camposBasura.disabled = !esBasura;
+        if (!esBasura) empresaBasura.value = '';
         camposLogistica.classList.toggle('d-none', !esLogistica);
         camposLogistica.disabled = !esLogistica;
         ordenVenta.disabled = !esLogistica;
-        camposVehiculo.classList.toggle('d-none', !esNFU && !esLogistica);
-        camposVehiculo.disabled = !esNFU && !esLogistica;
+        camposVehiculo.classList.toggle('d-none', !esNFU && !esLogistica && !esBasura);
+        camposVehiculo.disabled = !esNFU && !esLogistica && !esBasura;
         camposNFU.classList.toggle('d-none', !esNFU);
         camposNFU.disabled = !esNFU;
         empresa.disabled = !esNFU;
@@ -110,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('tipo').value = '';
         }
         if (!esLogistica) ordenVenta.value = '';
-        if (!esNFU && !esLogistica) document.getElementById('patente').value = '';
+        if (!esNFU && !esLogistica && !esBasura) document.getElementById('patente').value = '';
         if (esLogistica && window.jQuery?.fn.select2 && !ordenVenta.classList.contains('select2-hidden-accessible')) {
             window.jQuery(ordenVenta).select2({
                 theme: 'bootstrap-5', width: '100%', placeholder: 'Seleccionar orden de venta',
@@ -138,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
             motivo: motivo.value,
             cliente_id: empresa.value,
             orden_venta_id: motivo.value === 'Logística' ? ordenVenta.value : undefined,
+            empresa: motivo.value === 'Basura' ? empresaBasura.value.trim() : undefined,
             nombre: document.getElementById('personaNombre').textContent,
             apellido: document.getElementById('personaApellido').textContent,
             patente: document.getElementById('patente').value.trim()

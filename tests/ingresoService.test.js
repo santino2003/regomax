@@ -82,6 +82,26 @@ test('Ingresos: registrar rechaza entradas que no sean objetos de datos', async 
   assert.equal(f.movimientos.crear.mock.callCount(), 0);
 });
 
+test('Ingresos: Basura guarda empresa manual y patente sin consultar clientes ni órdenes', async () => {
+  const f = crearContexto();
+  const resultado = await f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Basura',
+    empresa: ' Empresa recolectora ', cliente_id: 99, orden_venta_id: 99 });
+  assert.equal(resultado.empresa, 'Empresa recolectora');
+  assert.equal(resultado.patente, 'AB123CD');
+  assert.equal(resultado.motivo, 'Basura');
+  assert.equal(resultado.orden_venta_id, undefined);
+  assert.equal(f.clientes.obtenerPorId.mock.callCount(), 0);
+  assert.equal(f.ordenes.obtenerParaIngresoLogistica.mock.callCount(), 0);
+});
+
+test('Ingresos: Basura exige una empresa de texto válida antes de guardar', async () => {
+  const f = crearContexto();
+  for (const empresa of [undefined, null, '', '   ', 123, {}, 'E'.repeat(256), 'Empresa\nNombre']) {
+    await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Basura', empresa }), { status: 400 });
+  }
+  assert.equal(f.movimientos.crear.mock.callCount(), 0);
+});
+
 test('Ingresos: el JPG se vincula desde la subida del servidor y no desde una ruta enviada por el cliente', async () => {
   const f = crearContexto();
   const datos = { ...movimiento, archivo_jpg: '/uploads/otro-archivo.jpg' };

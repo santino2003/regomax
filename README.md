@@ -55,12 +55,14 @@ Para tablas existentes, aplicar una vez `src/scripts/ingresos_egresos_logistica.
 antes de usar esta versión. Las instalaciones nuevas ya incluyen la columna en
 `src/scripts/ingresos_egresos_table.sql`.
 
-## JPG adjunto en ingresos
+## Adjunto opcional en ingresos
 
-El formulario admite un JPG o JPEG opcional de hasta 10 MB, por selección o
-arrastrando el archivo, con vista previa y opción de quitarlo antes de guardar.
+Todos los motivos, incluido **Basura**, admiten un PDF, JPG o JPEG opcional de
+hasta 10 MB, por selección o arrastrando el archivo. Las imágenes muestran vista
+previa; el PDF muestra su nombre. Se puede quitar el adjunto antes de guardar.
 Se guarda en `uploads/ingresos` (o en `ingresos` dentro de `UPLOADS_PATH`) con
 un nombre único. La base conserva su ruta junto al ingreso.
+Se reutiliza la columna `archivo_jpg` existente también para los PDF.
 Si se rechaza el archivo o falla el registro del ingreso, se elimina la subida.
 
 Para tablas existentes, aplicar una vez `src/scripts/ingresos_egresos_archivo_jpg.sql`
