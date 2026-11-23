@@ -1,6 +1,21 @@
 const db = require('../config/db');
 
 class OrdenDeVentaRepository {
+    async obtenerParaIngresosLogistica() {
+        return db.query(
+            `SELECT id, cliente_final, codigo_venta, estado FROM ordenes_venta
+             WHERE estado IN (?, ?) ORDER BY id DESC`, ['abierta', 'en_logistica']
+        );
+    }
+
+    async obtenerParaIngresoLogistica(id, connection) {
+        const rows = await db.query(
+            'SELECT id, cliente_final, codigo_venta, estado FROM ordenes_venta WHERE id = ? FOR UPDATE',
+            [id], connection
+        );
+        return rows[0] || null;
+    }
+
     // Crear la orden principal
     async crearOrdenVenta(fecha, cliente, clienteFinal, codigoVenta, observaciones, responsable, connection) {
         const result = await db.query(

@@ -20,11 +20,11 @@
                     <thead><tr>
                         <th scope="col">ID</th><th scope="col">Fecha y hora</th><th scope="col">Movimiento</th>
                         <th scope="col">Motivo</th><th scope="col">Nombre</th><th scope="col">Apellido</th><th scope="col">Patente</th>
-                        <th scope="col">Empresa</th><th scope="col">Egreso</th><th scope="col">Acciones</th>
+                        <th scope="col">Empresa</th><th scope="col">Orden de venta</th><th scope="col">Egreso</th><th scope="col">Acciones</th>
                     </tr></thead>
                     <tbody>
                         <% if (!movimientos.length) { %>
-                            <tr><td colspan="10" class="text-center text-muted">No hay ingresos ni egresos registrados.</td></tr>
+                            <tr><td colspan="11" class="text-center text-muted">No hay ingresos ni egresos registrados.</td></tr>
                         <% } %>
                         <% movimientos.forEach(movimiento => { %>
                             <tr>
@@ -36,6 +36,7 @@
                                 <td><%= movimiento.apellido %></td>
                                 <td><%= movimiento.patente %></td>
                                 <td><%= movimiento.empresa || '—' %></td>
+                                <td><%= movimiento.orden_venta_id ? (movimiento.codigo_venta || 'OV-' + movimiento.orden_venta_id) : '—' %></td>
                                 <td>
                                     <% if (movimiento.tipo_movimiento === 'INGRESO') { %>
                                         <% if (movimiento.egreso_id) { %>

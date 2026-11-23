@@ -2,15 +2,21 @@ const personaRepository = require('../repositories/personaRepository');
 const movimientoIngresoRepository = require('../repositories/movimientoIngresoRepository');
 const clienteNFURepository = require('../repositories/clienteNFURepository');
 const db = require('../config/db');
+const ordenDeVentaRepository = require('../repositories/ordenDeVentaRepository');
 
 class IngresoService {
     async obtenerDatosNuevoIngreso() {
-        try {
-            return { clientes: await clienteNFURepository.obtenerTodos() || [], errorClientes: false };
-        } catch (error) {
-            console.error('Error al obtener empresas para ingresos:', error);
-            return { clientes: [], errorClientes: true };
-        }
+        const [clientes, ordenes] = await Promise.allSettled([
+            clienteNFURepository.obtenerTodos(), ordenDeVentaRepository.obtenerParaIngresosLogistica()
+        ]);
+        if (clientes.status === 'rejected') console.error('Error al obtener empresas para ingresos:', clientes.reason);
+        if (ordenes.status === 'rejected') console.error('Error al obtener órdenes para ingresos:', ordenes.reason);
+        return {
+            clientes: clientes.status === 'fulfilled' ? clientes.value || [] : [],
+            errorClientes: clientes.status === 'rejected',
+            ordenesVenta: ordenes.status === 'fulfilled' ? ordenes.value || [] : [],
+            errorOrdenes: ordenes.status === 'rejected'
+        };
     }
 
     async listarMovimientos(pagina) {
@@ -41,6 +47,24 @@ class IngresoService {
         }
         movimiento.patente = movimiento.patente.toUpperCase();
         movimiento.empresa = null;
+        if (movimiento.motivo === 'Logística') {
+            const ordenId = datos.orden_venta_id;
+            if (!['string', 'number'].includes(typeof ordenId) || !/^[1-9]\d*$/.test(String(ordenId)) || !Number.isSafeInteger(Number(ordenId))) {
+                throw this.errorValidacion('Seleccione una orden de venta válida.');
+            }
+            return db.withTransaction(async connection => {
+                const orden = await ordenDeVentaRepository.obtenerParaIngresoLogistica(Number(ordenId), connection);
+                if (!orden || !['abierta', 'en_logistica'].includes(orden.estado)) {
+                    throw this.errorValidacion('La orden debe estar abierta o en logística. Actualice el formulario.');
+                }
+                if (typeof orden.cliente_final !== 'string' || !orden.cliente_final.trim()) {
+                    throw this.errorValidacion('La orden seleccionada no tiene cliente final.');
+                }
+                movimiento.empresa = orden.cliente_final;
+                movimiento.orden_venta_id = orden.id;
+                return movimientoIngresoRepository.crear(movimiento, connection);
+            });
+        }
         if (datos.cliente_id || (movimiento.tipo_movimiento === 'INGRESO' && movimiento.motivo === 'CNFU/NFU')) {
             const clienteId = String(datos.cliente_id ?? '');
             if (!/^[1-9]\d*$/.test(clienteId) || !Number.isSafeInteger(Number(clienteId))) {
@@ -71,7 +95,8 @@ class IngresoService {
             }
             const { motivo, nombre, apellido, patente, empresa } = ingreso;
             return movimientoIngresoRepository.crear({
-                tipo_movimiento: 'EGRESO', ingreso_id: id, motivo, nombre, apellido, patente, empresa
+                tipo_movimiento: 'EGRESO', ingreso_id: id, motivo, nombre, apellido, patente, empresa,
+                ...(ingreso.orden_venta_id != null ? { orden_venta_id: ingreso.orden_venta_id } : {})
             }, connection);
         });
     }

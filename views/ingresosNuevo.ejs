@@ -92,9 +92,10 @@
                 <form id="formMotivoIngreso" class="needs-validation mb-4" novalidate>
                     <div class="mb-3">
                         <label for="motivoIngreso" class="form-label">Motivo de ingreso <span class="text-danger">*</span></label>
-                        <select class="form-select" id="motivoIngreso" name="motivo" required aria-controls="camposNFU">
+                        <select class="form-select" id="motivoIngreso" name="motivo" required aria-controls="camposNFU camposLogistica camposVehiculo">
                             <option value="">Seleccione un motivo</option>
                             <option value="CNFU/NFU">CNFU/NFU</option>
+                            <option value="Logística">Logística</option>
                         </select>
                     </div>
                     <fieldset id="camposNFU" class="d-none" disabled>
@@ -126,6 +127,33 @@
                                 </select>
                             </div>
                         </div>
+                    </fieldset>
+                    <fieldset id="camposLogistica" class="d-none" disabled>
+                        <legend class="fs-6">Datos del ingreso de logística</legend>
+                        <% if (errorOrdenes) { %>
+                            <div class="alert alert-warning" role="alert">No se pudieron cargar las órdenes de venta. Recargue la página para intentar nuevamente.</div>
+                        <% } else if (!ordenesVenta.length) { %>
+                            <div class="alert alert-info">No hay órdenes de venta abiertas o en logística.</div>
+                        <% } %>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="orden_venta_id" class="form-label">Orden de venta <span class="text-danger">*</span></label>
+                                <select class="form-select" id="orden_venta_id" name="orden_venta_id" required aria-describedby="ayudaOrdenVenta">
+                                    <option value="">Seleccionar orden de venta</option>
+                                    <% ordenesVenta.forEach(orden => { %>
+                                        <option value="<%= orden.id %>" data-cliente-final="<%= orden.cliente_final || '' %>"><%= orden.cliente_final || 'Sin cliente final' %> — <%= orden.codigo_venta || 'OV-' + orden.id %> (<%= orden.estado === 'abierta' ? 'Abierta' : 'En logística' %>)</option>
+                                    <% }); %>
+                                </select>
+                                <div id="ayudaOrdenVenta" class="form-text">Busque por cliente final o código de venta.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="empresaLogistica" class="form-label">Empresa <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="empresaLogistica" readonly required placeholder="Se completa al seleccionar la orden">
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset id="camposVehiculo" class="d-none" disabled>
+                        <legend class="visually-hidden">Vehículo</legend>
                         <div class="mt-3">
                             <label for="patente" class="form-label">Patente del vehículo <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="patente" name="patente" maxlength="20" required placeholder="Ej.: AB123CD o ABC123" autocapitalize="characters" spellcheck="false">
@@ -142,6 +170,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="/assets/js/common.js"></script>
-    <script src="/assets/js/ingresosNuevo.js?v=empresa-1"></script>
+    <script src="/assets/js/ingresosNuevo.js?v=logistica-1"></script>
 </body>
 </html>

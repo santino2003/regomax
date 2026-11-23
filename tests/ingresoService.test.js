@@ -14,9 +14,11 @@ function crearContexto() {
     obtenerEgreso: mock.fn(async () => null)
   };
   const clientes = { obtenerTodos: mock.fn(async () => []), obtenerPorId: mock.fn(async () => ({ id: 2, empresa: 'Empresa de prueba' })) };
-  return { personas, movimientos, clientes, conexion, db, servicio: cargarServicio('ingresoService', {
+  const ordenes = { obtenerParaIngresosLogistica: mock.fn(async () => []),
+    obtenerParaIngresoLogistica: mock.fn(async () => ({ id: 5, cliente_final: 'Cliente final', codigo_venta: 'VENTA-5', estado: 'abierta' })) };
+  return { personas, movimientos, clientes, ordenes, conexion, db, servicio: cargarServicio('ingresoService', {
     '../repositories/personaRepository': personas, '../repositories/movimientoIngresoRepository': movimientos,
-    '../repositories/clienteNFURepository': clientes, '../config/db': db
+    '../repositories/clienteNFURepository': clientes, '../repositories/ordenDeVentaRepository': ordenes, '../config/db': db
   }) };
 }
 
@@ -27,14 +29,14 @@ test('Ingresos: obtener los datos del formulario conserva las empresas y admite 
   for (const clientes of [[{ id: 2, empresa: 'Empresa de prueba' }], [], null, undefined]) {
     const f = crearContexto();
     f.clientes.obtenerTodos.mock.mockImplementation(async () => clientes);
-    assert.deepEqual(await f.servicio.obtenerDatosNuevoIngreso(), { clientes: clientes || [], errorClientes: false });
+    assert.deepEqual(await f.servicio.obtenerDatosNuevoIngreso(), { clientes: clientes || [], errorClientes: false, ordenesVenta: [], errorOrdenes: false });
   }
 });
 
 test('Ingresos: una falla al consultar empresas devuelve el indicador de error del formulario', async () => {
   const f = crearContexto();
   f.clientes.obtenerTodos.mock.mockImplementation(async () => { throw new Error('Falló la consulta'); });
-  assert.deepEqual(await f.servicio.obtenerDatosNuevoIngreso(), { clientes: [], errorClientes: true });
+  assert.deepEqual(await f.servicio.obtenerDatosNuevoIngreso(), { clientes: [], errorClientes: true, ordenesVenta: [], errorOrdenes: false });
 });
 
 test('Ingresos: listar utiliza páginas de cincuenta elementos y limita la página al total disponible', async () => {
@@ -195,6 +197,56 @@ test('Ingresos: normalizar el DNI elimina espacios y ceros iniciales sin aceptar
   for (const dni of [undefined, null, 12345678, '123456', '123456789', '00000001', '12.345.678', 'ABC12345']) {
     assert.throws(() => f.servicio.normalizarDni(dni), { status: 400 });
   }
+});
+
+test('Ingresos: logística guarda el cliente final real, la patente y la orden dentro de la transacción', async () => {
+  for (const estado of ['abierta', 'en_logistica']) {
+    const f = crearContexto();
+    f.ordenes.obtenerParaIngresoLogistica.mock.mockImplementation(async () => ({ id: 5, estado, cliente_final: 'Empresa final' }));
+    const resultado = await f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Logística', orden_venta_id: '5',
+      empresa: 'Empresa manipulada', cliente_id: 999 });
+    assert.equal(resultado.empresa, 'Empresa final');
+    assert.equal(resultado.orden_venta_id, 5);
+    assert.equal(resultado.patente, 'AB123CD');
+    assert.deepEqual(f.ordenes.obtenerParaIngresoLogistica.mock.calls[0].arguments, [5, f.conexion]);
+    assert.equal(f.movimientos.crear.mock.calls[0].arguments[1], f.conexion);
+    assert.equal(f.clientes.obtenerPorId.mock.callCount(), 0);
+  }
+});
+
+test('Ingresos: logística exige una orden válida y no guarda órdenes cerradas o sin cliente final', async () => {
+  const f = crearContexto();
+  for (const id of [undefined, null, '', 0, '01', -1, [], {}, '1 OR 1=1', Number.MAX_SAFE_INTEGER + 1]) {
+    await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Logística', orden_venta_id: id }), { status: 400 });
+  }
+  assert.equal(f.db.withTransaction.mock.callCount(), 0);
+  for (const orden of [null, { estado: 'cerrada', cliente_final: 'Cliente' }, { estado: 'cancelada' },
+    { estado: 'abierta', cliente_final: '' }, { estado: 'abierta', cliente_final: '   ' }]) {
+    f.ordenes.obtenerParaIngresoLogistica.mock.mockImplementation(async () => orden);
+    await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Logística', orden_venta_id: 5 }), { status: 400 });
+  }
+  assert.equal(f.movimientos.crear.mock.callCount(), 0);
+});
+
+test('Ingresos: una falla al cargar órdenes conserva las empresas disponibles y señala el error', async () => {
+  const f = crearContexto();
+  f.clientes.obtenerTodos.mock.mockImplementation(async () => [{ id: 2 }]);
+  f.ordenes.obtenerParaIngresosLogistica.mock.mockImplementation(async () => { throw new Error('Falló la consulta'); });
+  assert.deepEqual(await f.servicio.obtenerDatosNuevoIngreso(), {
+    clientes: [{ id: 2 }], errorClientes: false, ordenesVenta: [], errorOrdenes: true
+  });
+});
+
+test('Ingresos: dar egreso a logística conserva el vínculo de la orden sin consultar su estado actual', async () => {
+  const f = crearContexto();
+  f.movimientos.obtenerParaEgreso.mock.mockImplementation(async () => ({
+    tipo_movimiento: 'INGRESO', motivo: 'Logística', orden_venta_id: 5,
+    nombre: 'Ana', apellido: 'García', patente: 'AB123CD', empresa: 'Empresa final'
+  }));
+  const egreso = await f.servicio.registrarEgreso(7);
+  assert.equal(egreso.orden_venta_id, 5);
+  assert.equal(egreso.empresa, 'Empresa final');
+  assert.equal(f.ordenes.obtenerParaIngresoLogistica.mock.callCount(), 0);
 });
 
 test('Ingresos: validar una persona normaliza los nombres y las opciones de sexo admitidas', () => {

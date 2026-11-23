@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const motivo = document.getElementById('motivoIngreso');
     const camposNFU = document.getElementById('camposNFU');
     const empresa = document.getElementById('cliente_id');
+    const camposLogistica = document.getElementById('camposLogistica');
+    const camposVehiculo = document.getElementById('camposVehiculo');
+    const ordenVenta = document.getElementById('orden_venta_id');
+    const empresaLogistica = document.getElementById('empresaLogistica');
     let procesando = false;
     let ingresoGuardado = false;
 
@@ -23,6 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function actualizarMotivo() {
         const esNFU = motivo.value === 'CNFU/NFU';
+        const esLogistica = motivo.value === 'Logística';
+        camposLogistica.classList.toggle('d-none', !esLogistica);
+        camposLogistica.disabled = !esLogistica;
+        ordenVenta.disabled = !esLogistica;
+        camposVehiculo.classList.toggle('d-none', !esNFU && !esLogistica);
+        camposVehiculo.disabled = !esNFU && !esLogistica;
         camposNFU.classList.toggle('d-none', !esNFU);
         camposNFU.disabled = !esNFU;
         empresa.disabled = !esNFU;
@@ -41,10 +51,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!esNFU) {
             empresa.value = '';
             document.getElementById('tipo').value = '';
-            document.getElementById('patente').value = '';
         }
+        if (!esLogistica) ordenVenta.value = '';
+        if (!esNFU && !esLogistica) document.getElementById('patente').value = '';
+        if (esLogistica && window.jQuery?.fn.select2 && !ordenVenta.classList.contains('select2-hidden-accessible')) {
+            window.jQuery(ordenVenta).select2({
+                theme: 'bootstrap-5', width: '100%', placeholder: 'Seleccionar orden de venta',
+                language: { noResults: () => 'No se encontraron órdenes de venta', searching: () => 'Buscando...' }
+            });
+        }
+        actualizarEmpresaLogistica();
         if (window.jQuery?.fn.select2) window.jQuery(empresa).trigger('change');
+        if (window.jQuery?.fn.select2) window.jQuery(ordenVenta).trigger('change');
     }
+
+    function actualizarEmpresaLogistica() {
+        empresaLogistica.value = ordenVenta.selectedOptions[0]?.dataset.clienteFinal || '';
+    }
+    ordenVenta.addEventListener('change', actualizarEmpresaLogistica);
+    if (window.jQuery?.fn.select2) window.jQuery(ordenVenta).on('change', actualizarEmpresaLogistica);
 
     motivo.addEventListener('change', actualizarMotivo);
     formMotivo.addEventListener('submit', event => {
@@ -54,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tipo_movimiento: 'INGRESO',
             motivo: motivo.value,
             cliente_id: empresa.value,
+            orden_venta_id: motivo.value === 'Logística' ? ordenVenta.value : undefined,
             nombre: document.getElementById('personaNombre').textContent,
             apellido: document.getElementById('personaApellido').textContent,
             patente: document.getElementById('patente').value.trim()

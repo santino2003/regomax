@@ -40,6 +40,18 @@ Los movimientos históricos se conservan y sus egresos no se vinculan automátic
 el estado «Sin egreso vinculado» indica la ausencia de ese vínculo, no confirma
 que la persona siga dentro del predio.
 
+## Ingresos por logística
+
+El motivo **Logística** permite seleccionar una orden de venta **Abierta** o
+**En logística**, buscando por cliente final o código de venta. La empresa se
+completa con el cliente final y la patente se ingresa manualmente. Al guardar se
+verifican nuevamente el estado y el cliente final de la orden. El movimiento
+conserva la empresa y el vínculo con la orden, también al dar egreso.
+
+Para tablas existentes, aplicar una vez `src/scripts/ingresos_egresos_logistica.sql`
+antes de usar esta versión. Las instalaciones nuevas ya incluyen la columna en
+`src/scripts/ingresos_egresos_table.sql`.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:
