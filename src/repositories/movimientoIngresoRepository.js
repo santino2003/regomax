@@ -1,6 +1,20 @@
 const db = require('../config/db');
 
 class MovimientoIngresoRepository {
+    async obtenerDetalle(id) {
+        const rows = await db.query(
+            `SELECT movimiento.*, egreso.id AS egreso_id, egreso.fecha_movimiento AS fecha_egreso,
+                    ingreso.fecha_movimiento AS fecha_ingreso, ingreso.archivo_jpg AS archivo_ingreso,
+                    orden.codigo_venta
+             FROM ingresos_egresos movimiento
+             LEFT JOIN ingresos_egresos egreso ON egreso.ingreso_id = movimiento.id
+             LEFT JOIN ingresos_egresos ingreso ON ingreso.id = movimiento.ingreso_id
+             LEFT JOIN ordenes_venta orden ON orden.id = COALESCE(movimiento.orden_venta_id, ingreso.orden_venta_id)
+             WHERE movimiento.id = ?`, [id]
+        );
+        return rows[0] || null;
+    }
+
     async contar() {
         const [resultado] = await db.query('SELECT COUNT(*) AS total FROM ingresos_egresos');
         return Number(resultado.total);

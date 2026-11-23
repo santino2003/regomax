@@ -2,6 +2,24 @@ const ingresoService = require('../services/ingresoService');
 const fs = require('node:fs/promises');
 
 const ingresoController = {
+    async verDetalle(req, res) {
+        const numeroPagina = Number(req.query.page);
+        const pagina = Number.isSafeInteger(numeroPagina) && numeroPagina > 0 ? numeroPagina : 1;
+        try {
+            const movimiento = await ingresoService.obtenerDetalle(req.params.id);
+            res.render('ingresoDetalle', {
+                title: `Detalle del movimiento #${movimiento.id}`, username: req.user.username,
+                movimiento, pagina, errorDetalle: null
+            });
+        } catch (error) {
+            if (!error.status) console.error('Error al consultar el detalle del movimiento:', error);
+            res.status(error.status || 500).render('ingresoDetalle', {
+                title: 'Detalle del movimiento', username: req.user.username, movimiento: null, pagina,
+                errorDetalle: error.status ? error.message : 'No se pudo cargar el detalle. Intente nuevamente.'
+            });
+        }
+    },
+
     async vistaNuevoIngreso(req, res) {
         const datos = await ingresoService.obtenerDatosNuevoIngreso();
         res.render('ingresosNuevo', { username: req.user.username, ...datos });

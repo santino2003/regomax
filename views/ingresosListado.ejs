@@ -48,20 +48,23 @@
                                     <% } %>
                                 </td>
                                 <td>
+                                    <div class="btn-group" role="group" aria-label="Acciones del movimiento <%= movimiento.id %>">
+                                    <a href="/ingresos/<%= movimiento.id %>/detalle?page=<%= pagina %>" class="btn btn-sm btn-outline-primary" title="Ver detalles"
+                                        aria-label="Ver detalles del movimiento <%= movimiento.id %>"><i class="bi bi-eye" aria-hidden="true"></i></a>
                                     <% if (movimiento.tipo_movimiento === 'INGRESO' && !movimiento.egreso_id) { %>
-                                        <button type="button" class="btn btn-outline-danger btn-sm text-nowrap" data-dar-egreso
+                                        <button type="button" class="btn btn-sm btn-outline-danger" title="Dar egreso" data-dar-egreso
                                             data-ingreso-id="<%= movimiento.id %>"
                                             data-persona="<%= movimiento.nombre %> <%= movimiento.apellido %>"
                                             data-patente="<%= movimiento.patente %>"
                                             data-empresa="<%= movimiento.empresa || '—' %>"
                                             data-fecha="<%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_movimiento) %>"
                                             aria-label="Dar egreso al ingreso <%= movimiento.id %>">
-                                            <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Dar egreso
+                                            <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
                                         </button>
-                                    <% } else if (movimiento.ingreso_id) { %>
-                                        <span class="small text-muted">Ingreso #<%= movimiento.ingreso_id %></span>
-                                    <% } else { %>
-                                        <span class="text-muted">—</span>
+                                    <% } %>
+                                    </div>
+                                    <% if (movimiento.ingreso_id) { %>
+                                        <span class="small text-muted d-block mt-1">Ingreso #<%= movimiento.ingreso_id %></span>
                                     <% } %>
                                 </td>
                             </tr>

@@ -5,6 +5,21 @@ const db = require('../config/db');
 const ordenDeVentaRepository = require('../repositories/ordenDeVentaRepository');
 
 class IngresoService {
+    async obtenerDetalle(id) {
+        if (!['string', 'number'].includes(typeof id) || !/^[1-9]\d*$/.test(String(id)) || !Number.isSafeInteger(Number(id))) {
+            throw this.errorValidacion('Seleccione un movimiento válido.');
+        }
+        const movimiento = await movimientoIngresoRepository.obtenerDetalle(Number(id));
+        if (!movimiento) throw this.errorValidacion('El movimiento no existe.', 404);
+        const adjuntos = [];
+        for (const [url, origen] of [[movimiento.archivo_jpg, 'Adjunto del movimiento'], [movimiento.archivo_ingreso, 'Adjunto del ingreso original']]) {
+            if (typeof url === 'string' && /^\/uploads\/ingresos\/[a-z0-9_-]+\.(jpe?g|pdf)$/i.test(url) && !adjuntos.some(adjunto => adjunto.url === url)) {
+                adjuntos.push({ url, origen, esPDF: /\.pdf$/i.test(url) });
+            }
+        }
+        return { ...movimiento, adjuntos };
+    }
+
     async obtenerDatosNuevoIngreso() {
         const [clientes, ordenes] = await Promise.allSettled([
             clienteNFURepository.obtenerTodos(), ordenDeVentaRepository.obtenerParaIngresosLogistica()

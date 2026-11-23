@@ -11,7 +11,7 @@ function crearContexto() {
     contar: mock.fn(async () => 123), listar: mock.fn(async () => []), crear: mock.fn(async datos => ({ id: 42, ...datos })),
     obtenerParaEgreso: mock.fn(async () => ({ id: 7, tipo_movimiento: 'INGRESO', motivo: 'CNFU/NFU',
       nombre: 'Ana', apellido: 'García', patente: 'AB123CD', empresa: 'Empresa de prueba' })),
-    obtenerEgreso: mock.fn(async () => null)
+    obtenerEgreso: mock.fn(async () => null), obtenerDetalle: mock.fn(async () => null)
   };
   const clientes = { obtenerTodos: mock.fn(async () => []), obtenerPorId: mock.fn(async () => ({ id: 2, empresa: 'Empresa de prueba' })) };
   const ordenes = { obtenerParaIngresosLogistica: mock.fn(async () => []),
@@ -24,6 +24,38 @@ function crearContexto() {
 
 const movimiento = Object.freeze({ tipo_movimiento: ' ingreso ', motivo: ' Visita ', nombre: ' Ana ', apellido: ' García ', patente: ' ab123cd ' });
 const persona = Object.freeze({ dni: ' 12345678 ', nombre: ' Ana ', apellido: ' García ', sexo: ' f ' });
+
+test('Ingresos: el detalle incluye la imagen del ingreso original y el PDF del movimiento sin duplicados', async () => {
+  const f = crearContexto();
+  f.movimientos.obtenerDetalle.mock.mockImplementation(async () => ({ id: 42, tipo_movimiento: 'EGRESO',
+    archivo_jpg: '/uploads/ingresos/documento.pdf', archivo_ingreso: '/uploads/ingresos/imagen.jpg' }));
+  const detalle = await f.servicio.obtenerDetalle('42');
+  assert.deepEqual(f.movimientos.obtenerDetalle.mock.calls[0].arguments, [42]);
+  assert.deepEqual(detalle.adjuntos, [
+    { url: '/uploads/ingresos/documento.pdf', origen: 'Adjunto del movimiento', esPDF: true },
+    { url: '/uploads/ingresos/imagen.jpg', origen: 'Adjunto del ingreso original', esPDF: false }
+  ]);
+  f.movimientos.obtenerDetalle.mock.mockImplementation(async () => ({ id: 42,
+    archivo_jpg: '/uploads/ingresos/imagen.jpg', archivo_ingreso: '/uploads/ingresos/imagen.jpg' }));
+  assert.equal((await f.servicio.obtenerDetalle(42)).adjuntos.length, 1);
+});
+
+test('Ingresos: el detalle rechaza identificadores inválidos e informa movimientos inexistentes', async () => {
+  const f = crearContexto();
+  for (const id of [undefined, null, '', 0, -1, '01', [], '1 OR 1=1', Number.MAX_SAFE_INTEGER + 1]) {
+    await assert.rejects(f.servicio.obtenerDetalle(id), { status: 400 });
+  }
+  assert.equal(f.movimientos.obtenerDetalle.mock.callCount(), 0);
+  await assert.rejects(f.servicio.obtenerDetalle(42), { status: 404 });
+});
+
+test('Ingresos: un detalle sin adjuntos o con rutas ajenas no presenta enlaces de archivo', async () => {
+  const f = crearContexto();
+  for (const archivo_jpg of [null, undefined, 'javascript:alert(1)', '/uploads/ingresos/../otro.jpg', 'https://ejemplo.com/imagen.jpg']) {
+    f.movimientos.obtenerDetalle.mock.mockImplementation(async () => ({ id: 42, archivo_jpg }));
+    assert.deepEqual((await f.servicio.obtenerDetalle(42)).adjuntos, []);
+  }
+});
 
 test('Ingresos: obtener los datos del formulario conserva las empresas y admite una lista vacía', async () => {
   for (const clientes of [[{ id: 2, empresa: 'Empresa de prueba' }], [], null, undefined]) {

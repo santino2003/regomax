@@ -62,6 +62,10 @@ hasta 10 MB, por selección o arrastrando el archivo. Las imágenes muestran vis
 previa; el PDF muestra su nombre. Se puede quitar el adjunto antes de guardar.
 Se guarda en `uploads/ingresos` (o en `ingresos` dentro de `UPLOADS_PATH`) con
 un nombre único. La base conserva su ruta junto al ingreso.
+La acción **Ver detalles** del listado abre los datos completos del movimiento,
+muestra los JPG y ofrece un enlace para abrir los PDF. En un egreso también
+se muestra el adjunto de su ingreso original. Al volver se conserva la página
+del listado desde la que se abrió el detalle.
 Se reutiliza la columna `archivo_jpg` existente también para los PDF.
 Si se rechaza el archivo o falla el registro del ingreso, se elimina la subida.
 
