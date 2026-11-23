@@ -35,7 +35,7 @@ function ensureUploadDir(subDir) {
  * Inicializa todos los directorios de uploads necesarios
  */
 function initializeUploadDirs() {
-  const dirs = ['bienes', 'ordenes-compra'];
+  const dirs = ['bienes', 'ordenes-compra', 'ingresos'];
   
   console.log(`📂 Inicializando directorios de uploads en: ${UPLOADS_BASE_PATH}`);
   

@@ -13,6 +13,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const empresaLogistica = document.getElementById('empresaLogistica');
     let procesando = false;
     let ingresoGuardado = false;
+    const archivoInput = document.getElementById('archivoIngreso');
+    const zonaArchivo = document.getElementById('zonaArchivoIngreso');
+    const errorArchivo = document.getElementById('errorArchivoIngreso');
+    const vistaArchivo = document.getElementById('vistaArchivoIngreso');
+    let archivoSeleccionado = null;
+    let urlArchivo = null;
+
+    function limpiarArchivo() {
+        archivoSeleccionado = null;
+        archivoInput.value = '';
+        archivoInput.setCustomValidity('');
+        errorArchivo.textContent = '';
+        if (urlArchivo) URL.revokeObjectURL(urlArchivo);
+        urlArchivo = null;
+        vistaArchivo.removeAttribute('src');
+        document.getElementById('detalleArchivoIngreso').classList.add('d-none');
+        document.getElementById('nombreArchivoIngreso').textContent = '';
+        document.getElementById('quitarArchivoIngreso').classList.add('d-none');
+    }
+
+    function seleccionarArchivo(archivos) {
+        limpiarArchivo();
+        if (!archivos.length) return;
+        document.getElementById('quitarArchivoIngreso').classList.remove('d-none');
+        const archivo = archivos[0];
+        const error = archivos.length !== 1 ? 'Seleccione un solo JPG.'
+            : !/\.jpe?g$/i.test(archivo.name) || (archivo.type && !['image/jpeg', 'image/jpg'].includes(archivo.type))
+                ? 'Solo se permite un archivo JPG o JPEG.'
+                : archivo.size > 10 * 1024 * 1024 ? 'El JPG no puede superar los 10 MB.' : '';
+        if (error) {
+            archivoInput.setCustomValidity(error);
+            errorArchivo.textContent = error;
+            return;
+        }
+        archivoSeleccionado = archivo;
+        urlArchivo = URL.createObjectURL(archivo);
+        vistaArchivo.src = urlArchivo;
+        document.getElementById('nombreArchivoIngreso').textContent = archivo.name;
+        document.getElementById('detalleArchivoIngreso').classList.remove('d-none');
+    }
+
+    archivoInput.addEventListener('change', () => {
+        if (!procesando) seleccionarArchivo(Array.from(archivoInput.files));
+    });
+    zonaArchivo.addEventListener('dragover', event => {
+        event.preventDefault();
+        if (!procesando) zonaArchivo.classList.add('border-primary', 'bg-light');
+    });
+    zonaArchivo.addEventListener('dragleave', () => zonaArchivo.classList.remove('border-primary', 'bg-light'));
+    zonaArchivo.addEventListener('drop', event => {
+        event.preventDefault();
+        zonaArchivo.classList.remove('border-primary', 'bg-light');
+        if (!procesando) seleccionarArchivo(Array.from(event.dataTransfer.files));
+    });
+    document.getElementById('quitarArchivoIngreso').addEventListener('click', () => {
+        if (!procesando) limpiarArchivo();
+    });
 
     const url = new URL(window.location.href);
     if (url.searchParams.get('registrado') === '1') {
@@ -75,7 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
     formMotivo.addEventListener('submit', event => {
         event.preventDefault();
         if (ingresoGuardado || !seleccionada.dataset.personaId) return;
-        enviar(formMotivo, '/api/ingresos/movimientos', {
+        const datos = new FormData();
+        const campos = {
             tipo_movimiento: 'INGRESO',
             motivo: motivo.value,
             cliente_id: empresa.value,
@@ -83,7 +141,12 @@ document.addEventListener('DOMContentLoaded', () => {
             nombre: document.getElementById('personaNombre').textContent,
             apellido: document.getElementById('personaApellido').textContent,
             patente: document.getElementById('patente').value.trim()
-        }, () => {
+        };
+        for (const [campo, valor] of Object.entries(campos)) {
+            if (valor !== undefined) datos.append(campo, valor);
+        }
+        if (archivoSeleccionado) datos.append('archivo_jpg', archivoSeleccionado);
+        enviar(formMotivo, '/api/ingresos/movimientos', datos, () => {
             ingresoGuardado = true;
             window.location.href = '/ingresos?registrado=1';
         });
@@ -115,10 +178,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const texto = submit.innerHTML;
         submit.textContent = 'Procesando...';
         try {
+            const esMultipart = datos instanceof FormData;
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
+                headers: esMultipart ? {} : { 'Content-Type': 'application/json' },
+                body: esMultipart ? datos : JSON.stringify(datos)
             });
             if (response.redirected || response.status === 401) {
                 window.location.href = '/login';
@@ -170,6 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formIdentificar.reset();
             formPersona.reset();
             formMotivo.reset();
+            limpiarArchivo();
             formMotivo.classList.remove('was-validated');
             ingresoGuardado = false;
             actualizarMotivo();

@@ -82,6 +82,14 @@ test('Ingresos: registrar rechaza entradas que no sean objetos de datos', async 
   assert.equal(f.movimientos.crear.mock.callCount(), 0);
 });
 
+test('Ingresos: el JPG se vincula desde la subida del servidor y no desde una ruta enviada por el cliente', async () => {
+  const f = crearContexto();
+  const datos = { ...movimiento, archivo_jpg: '/uploads/otro-archivo.jpg' };
+  assert.equal((await f.servicio.registrarMovimiento(datos)).archivo_jpg, undefined);
+  const resultado = await f.servicio.registrarMovimiento(datos, { filename: 'imagen-generada.jpg' });
+  assert.equal(resultado.archivo_jpg, '/uploads/ingresos/imagen-generada.jpg');
+});
+
 for (const [campo, limite] of Object.entries({ tipo_movimiento: 7, motivo: 100, nombre: 100, apellido: 100, patente: 20 })) {
   test(`Ingresos: ${campo} debe ser texto obligatorio dentro del límite y sin caracteres de control`, async () => {
     const f = crearContexto();

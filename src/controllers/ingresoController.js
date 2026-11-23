@@ -1,4 +1,5 @@
 const ingresoService = require('../services/ingresoService');
+const fs = require('node:fs/promises');
 
 const ingresoController = {
     async vistaNuevoIngreso(req, res) {
@@ -25,9 +26,14 @@ const ingresoController = {
 
     async registrarMovimiento(req, res) {
         try {
-            const movimiento = await ingresoService.registrarMovimiento(req.body);
+            const movimiento = await ingresoService.registrarMovimiento(req.body, req.file);
             res.status(201).json({ success: true, movimiento });
         } catch (error) {
+            if (req.file) {
+                await fs.unlink(req.file.path).catch(fallo => {
+                    if (fallo.code !== 'ENOENT') console.error('No se pudo limpiar el JPG del ingreso rechazado:', fallo);
+                });
+            }
             if (!error.status) console.error('Error al registrar ingreso o egreso:', error);
             res.status(error.status || 500).json({ success: false,
                 error: error.status ? error.message : 'No se pudo registrar el movimiento. Intente nuevamente.' });

@@ -29,7 +29,7 @@ class IngresoService {
         return { movimientos, total, pagina, paginas };
     }
 
-    async registrarMovimiento(datos) {
+    async registrarMovimiento(datos, archivo) {
         if (!datos || typeof datos !== 'object' || Array.isArray(datos)) {
             throw this.errorValidacion('Ingrese los datos del movimiento.');
         }
@@ -47,6 +47,7 @@ class IngresoService {
         }
         movimiento.patente = movimiento.patente.toUpperCase();
         movimiento.empresa = null;
+        if (archivo) movimiento.archivo_jpg = `/uploads/ingresos/${archivo.filename}`;
         if (movimiento.motivo === 'Logística') {
             const ordenId = datos.orden_venta_id;
             if (!['string', 'number'].includes(typeof ordenId) || !/^[1-9]\d*$/.test(String(ordenId)) || !Number.isSafeInteger(Number(ordenId))) {

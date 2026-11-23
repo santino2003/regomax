@@ -10,7 +10,7 @@ class MovimientoIngresoRepository {
         return db.query(
             `SELECT movimiento.id, movimiento.tipo_movimiento, movimiento.motivo, movimiento.nombre,
                     movimiento.apellido, movimiento.patente, movimiento.empresa, movimiento.fecha_movimiento,
-                    movimiento.ingreso_id, movimiento.orden_venta_id, orden.codigo_venta,
+                    movimiento.ingreso_id, movimiento.orden_venta_id, movimiento.archivo_jpg, orden.codigo_venta,
                     egreso.id AS egreso_id, egreso.fecha_movimiento AS fecha_egreso
              FROM ingresos_egresos movimiento
              LEFT JOIN ingresos_egresos egreso ON egreso.ingreso_id = movimiento.id
@@ -35,10 +35,10 @@ class MovimientoIngresoRepository {
     }
 
     async crear(movimiento, connection = null) {
-        const { tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id } = movimiento;
-        const sql = `INSERT INTO ingresos_egresos (tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-        const parametros = [tipo_movimiento, motivo, nombre, apellido, patente, empresa ?? null, ingreso_id ?? null, orden_venta_id ?? null];
+        const { tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id, archivo_jpg } = movimiento;
+        const sql = `INSERT INTO ingresos_egresos (tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id, archivo_jpg)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const parametros = [tipo_movimiento, motivo, nombre, apellido, patente, empresa ?? null, ingreso_id ?? null, orden_venta_id ?? null, archivo_jpg ?? null];
         const resultado = await db.query(sql, parametros, connection);
         return { id: resultado.insertId, ...movimiento };
     }

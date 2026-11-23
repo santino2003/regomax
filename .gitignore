@@ -12,3 +12,5 @@ uploads/bienes/*
 !uploads/bienes/.gitkeep
 uploads/ordenes-compra/*
 !uploads/ordenes-compra/.gitkeep
+uploads/ingresos/*
+!uploads/ingresos/.gitkeep

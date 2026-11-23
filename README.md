@@ -52,6 +52,18 @@ Para tablas existentes, aplicar una vez `src/scripts/ingresos_egresos_logistica.
 antes de usar esta versión. Las instalaciones nuevas ya incluyen la columna en
 `src/scripts/ingresos_egresos_table.sql`.
 
+## JPG adjunto en ingresos
+
+El formulario admite un JPG o JPEG opcional de hasta 10 MB, por selección o
+arrastrando el archivo, con vista previa y opción de quitarlo antes de guardar.
+Se guarda en `uploads/ingresos` (o en `ingresos` dentro de `UPLOADS_PATH`) con
+un nombre único. La base conserva su ruta y el listado ofrece **Ver JPG**.
+Si se rechaza el archivo o falla el registro del ingreso, se elimina la subida.
+
+Para tablas existentes, aplicar una vez `src/scripts/ingresos_egresos_archivo_jpg.sql`
+antes de usar esta versión. Las instalaciones nuevas ya incluyen la columna en
+`src/scripts/ingresos_egresos_table.sql`.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:

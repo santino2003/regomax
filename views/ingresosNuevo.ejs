@@ -89,7 +89,7 @@
                     <dt class="col-sm-3">DNI</dt><dd class="col-sm-9" id="personaDni"></dd>
                     <dt class="col-sm-3">Sexo</dt><dd class="col-sm-9" id="personaSexo"></dd>
                 </dl>
-                <form id="formMotivoIngreso" class="needs-validation mb-4" novalidate>
+                <form id="formMotivoIngreso" class="needs-validation mb-4" enctype="multipart/form-data" novalidate>
                     <div class="mb-3">
                         <label for="motivoIngreso" class="form-label">Motivo de ingreso <span class="text-danger">*</span></label>
                         <select class="form-select" id="motivoIngreso" name="motivo" required aria-controls="camposNFU camposLogistica camposVehiculo">
@@ -159,6 +159,17 @@
                             <input type="text" class="form-control" id="patente" name="patente" maxlength="20" required placeholder="Ej.: AB123CD o ABC123" autocapitalize="characters" spellcheck="false">
                         </div>
                     </fieldset>
+                    <div id="zonaArchivoIngreso" class="border border-2 rounded p-3 mt-3">
+                        <label for="archivoIngreso" class="form-label fw-semibold"><i class="bi bi-image me-2" aria-hidden="true"></i>Adjuntar JPG (opcional)</label>
+                        <p id="ayudaArchivoIngreso" class="text-muted small mb-2">Arrastre una imagen aquí o selecciónela. JPG o JPEG, hasta 10 MB.</p>
+                        <input type="file" class="form-control" id="archivoIngreso" name="archivo_jpg" accept=".jpg,.jpeg,image/jpeg" aria-describedby="ayudaArchivoIngreso errorArchivoIngreso">
+                        <div id="errorArchivoIngreso" class="text-danger small mt-2" role="alert"></div>
+                        <div id="detalleArchivoIngreso" class="d-none mt-3">
+                            <img id="vistaArchivoIngreso" class="img-thumbnail d-block mb-2" style="max-height: 200px; max-width: 100%; object-fit: contain;" alt="Vista previa del JPG adjunto">
+                            <span id="nombreArchivoIngreso" class="small text-break"></span>
+                        </div>
+                        <button type="button" id="quitarArchivoIngreso" class="btn btn-outline-secondary btn-sm mt-2 d-none">Quitar archivo</button>
+                    </div>
                     <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-save me-2"></i>Guardar ingreso</button>
                 </form>
                 <button type="button" class="btn btn-outline-secondary" data-reiniciar>Ingresar otro DNI</button>
@@ -170,6 +181,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="/assets/js/common.js"></script>
-    <script src="/assets/js/ingresosNuevo.js?v=logistica-1"></script>
+    <script src="/assets/js/ingresosNuevo.js?v=jpg-1"></script>
 </body>
 </html>

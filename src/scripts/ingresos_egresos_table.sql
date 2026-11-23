@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS ingresos_egresos (
     fecha_movimiento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ingreso_id INT NULL,
     orden_venta_id INT NULL,
+    archivo_jpg VARCHAR(255) NULL,
     INDEX idx_ingresos_orden_venta (orden_venta_id),
     UNIQUE KEY uq_ingresos_egresos_ingreso (ingreso_id),
     CONSTRAINT fk_ingresos_egresos_ingreso FOREIGN KEY (ingreso_id) REFERENCES ingresos_egresos (id),
