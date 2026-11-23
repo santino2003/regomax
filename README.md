@@ -47,6 +47,9 @@ El motivo **Logística** permite seleccionar una orden de venta **Abierta** o
 completa con el cliente final y la patente se ingresa manualmente. Al guardar se
 verifican nuevamente el estado y el cliente final de la orden. El movimiento
 conserva la empresa y el vínculo con la orden, también al dar egreso.
+El listado muestra nombre y apellido en una sola columna y prioriza los ingresos
+sin egreso vinculado; dentro de cada grupo ordena del más reciente al más antiguo.
+La orden de venta y el JPG adjunto no se muestran como columnas.
 
 Para tablas existentes, aplicar una vez `src/scripts/ingresos_egresos_logistica.sql`
 antes de usar esta versión. Las instalaciones nuevas ya incluyen la columna en
@@ -57,7 +60,7 @@ antes de usar esta versión. Las instalaciones nuevas ya incluyen la columna en
 El formulario admite un JPG o JPEG opcional de hasta 10 MB, por selección o
 arrastrando el archivo, con vista previa y opción de quitarlo antes de guardar.
 Se guarda en `uploads/ingresos` (o en `ingresos` dentro de `UPLOADS_PATH`) con
-un nombre único. La base conserva su ruta y el listado ofrece **Ver JPG**.
+un nombre único. La base conserva su ruta junto al ingreso.
 Si se rechaza el archivo o falla el registro del ingreso, se elimina la subida.
 
 Para tablas existentes, aplicar una vez `src/scripts/ingresos_egresos_archivo_jpg.sql`

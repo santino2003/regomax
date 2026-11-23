@@ -1,5 +1,5 @@
 const ingresoService = require('../services/ingresoService');
-const fs = require('node:fs/promises');
+en ingconst fs = require('node:fs/promises');
 
 const ingresoController = {
     async vistaNuevoIngreso(req, res) {

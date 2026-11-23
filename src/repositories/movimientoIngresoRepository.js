@@ -10,12 +10,12 @@ class MovimientoIngresoRepository {
         return db.query(
             `SELECT movimiento.id, movimiento.tipo_movimiento, movimiento.motivo, movimiento.nombre,
                     movimiento.apellido, movimiento.patente, movimiento.empresa, movimiento.fecha_movimiento,
-                    movimiento.ingreso_id, movimiento.orden_venta_id, movimiento.archivo_jpg, orden.codigo_venta,
+                    movimiento.ingreso_id,
                     egreso.id AS egreso_id, egreso.fecha_movimiento AS fecha_egreso
              FROM ingresos_egresos movimiento
              LEFT JOIN ingresos_egresos egreso ON egreso.ingreso_id = movimiento.id
-             LEFT JOIN ordenes_venta orden ON orden.id = movimiento.orden_venta_id
-             ORDER BY movimiento.fecha_movimiento DESC, movimiento.id DESC LIMIT ${limite} OFFSET ${offset}`
+             ORDER BY CASE WHEN movimiento.tipo_movimiento = 'INGRESO' AND egreso.id IS NULL THEN 0 ELSE 1 END,
+                      movimiento.fecha_movimiento DESC, movimiento.id DESC LIMIT ${limite} OFFSET ${offset}`
         );
     }
 
