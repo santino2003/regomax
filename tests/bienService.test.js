@@ -3,6 +3,37 @@ const assert = require('node:assert/strict');
 const { cargarServicio, simularTransaccion } = require('../test-support/serviceUnit');
 mock.method(console, 'error', () => {});
 
+test('Bienes: exportar todos no pagina ni aplica filtros enviados por el navegador', async () => {
+  const f = crearContexto();
+  f.repositorio.obtenerTodos = mock.fn(async () => ({ data: [{ id: 1 }] }));
+  assert.deepEqual(await f.servicio.obtenerParaExportar({ alcance: 'todos', filtros: { busqueda: 'bulon' }, ids: [99] }), [{ id: 1 }]);
+  assert.deepEqual(f.repositorio.obtenerTodos.mock.calls[0].arguments, [1, null, {}]);
+});
+
+test('Bienes: exportar seleccionados valida y deduplica los identificadores sin aplicar filtros de otra página', async () => {
+  const f = crearContexto();
+  f.repositorio.obtenerTodos = mock.fn(async () => ({ data: [{ id: 1 }, { id: 2 }] }));
+  await f.servicio.obtenerParaExportar({ alcance: 'seleccionados', ids: ['1', 2, 1], filtros: { busqueda: 'otra' } });
+  assert.deepEqual(f.repositorio.obtenerTodos.mock.calls[0].arguments, [1, null, { ids: [1, 2] }]);
+  for (const ids of [undefined, [], '1,2', [0], ['1 OR 1=1'], [true], [Number.MAX_SAFE_INTEGER + 1]]) {
+    await assert.rejects(f.servicio.obtenerParaExportar({ alcance: 'seleccionados', ids }), { status: 400 });
+  }
+  assert.equal(f.repositorio.obtenerTodos.mock.callCount(), 1);
+});
+
+test('Bienes: exportar resultados mantiene búsqueda y filtros con el stock crítico interpretado como booleano', async () => {
+  const f = crearContexto();
+  f.repositorio.obtenerTodos = mock.fn(async () => ({ data: [] }));
+  await f.servicio.obtenerParaExportar({ alcance: 'filtrados', filtros: { busqueda: 'bulon 5/16', familia_id: '3', critico: '1', ids: [99] } });
+  assert.deepEqual(f.repositorio.obtenerTodos.mock.calls[0].arguments, [1, null, { busqueda: 'bulon 5/16', familia_id: '3', critico: true }]);
+});
+
+test('Bienes: exportar informa si un bien seleccionado fue eliminado antes de descargar', async () => {
+  const f = crearContexto();
+  f.repositorio.obtenerTodos = mock.fn(async () => ({ data: [] }));
+  await assert.rejects(f.servicio.obtenerParaExportar({ alcance: 'seleccionados', ids: [1] }), { status: 400 });
+});
+
 function crearContexto(bien = { id: 1, codigo: 'B1', nombre: 'Bien', cantidad_stock: '10.00', cantidad_critica: null }) {
   const { conexion, db } = simularTransaccion();
   const repositorio = { obtenerStockPorId: mock.fn(async () => bien), actualizarStock: mock.fn(async () => true) };

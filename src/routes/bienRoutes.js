@@ -71,6 +71,8 @@ const upload = multer({
 });
 
 // Rutas de API para bienes
+router.post('/exportar', auth.verifyToken, permissionsMiddleware.hasPermission('bien:view'), bienController.exportarExcel);
+
 router.post(
     '/nuevo',
     auth.verifyToken,

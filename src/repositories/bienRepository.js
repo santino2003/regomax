@@ -217,6 +217,10 @@ class BienRepository {
                 whereConditions.push('bf.familia_id = ?');
                 params.push(filtros.familia_id);
             }
+            if (Array.isArray(filtros.ids) && filtros.ids.length) {
+                whereConditions.push(`b.id IN (${filtros.ids.map(() => '?').join(', ')})`);
+                params.push(...filtros.ids);
+            }
             // Cada término debe aparecer en nombre, código o descripción, en cualquier orden.
             const terminos = typeof filtros.busqueda === 'string' ? filtros.busqueda.trim().split(/\s+/).filter(Boolean) : [];
             for (const termino of terminos) {
@@ -260,8 +264,8 @@ class BienRepository {
                 LEFT JOIN almacenes a ON b.almacen_defecto_id = a.id
                 ${whereClause}
                 GROUP BY b.id
-                ORDER BY b.fecha_creacion DESC 
-                LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+                ORDER BY b.fecha_creacion DESC, b.id DESC
+                ${limit === null ? '' : `LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`}
             `;
             
             const result = await db.query(query, params);
@@ -270,9 +274,9 @@ class BienRepository {
                 data: result,
                 pagination: {
                     paginaActual: parseInt(page),
-                    limite: parseInt(limit),
+                    limite: limit === null ? null : parseInt(limit),
                     totalRegistros: totalRegistros,
-                    totalPaginas: Math.ceil(totalRegistros / limit)
+                    totalPaginas: limit === null ? (totalRegistros ? 1 : 0) : Math.ceil(totalRegistros / limit)
                 }
             };
         } catch (error) {

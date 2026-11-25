@@ -155,6 +155,29 @@ class BienService {
         }
     }
 
+    async obtenerParaExportar(datos = {}) {
+        const invalidar = mensaje => { throw Object.assign(new Error(mensaje), { status: 400 }); };
+        if (!datos || !['todos', 'filtrados', 'seleccionados'].includes(datos.alcance)) invalidar('Seleccione qué bienes desea exportar.');
+        const filtros = {};
+        if (datos.alcance === 'seleccionados') {
+            if (!Array.isArray(datos.ids) || !datos.ids.length) invalidar('Seleccione al menos un bien.');
+            if (datos.ids.some(id => !['string', 'number'].includes(typeof id) || !/^[1-9]\d*$/.test(String(id)) || !Number.isSafeInteger(Number(id)))) invalidar('La selección contiene bienes inválidos.');
+            filtros.ids = [...new Set(datos.ids.map(Number))];
+        } else if (datos.alcance === 'filtrados') {
+            const entrada = datos.filtros || {};
+            for (const campo of ['tipo', 'categoria_id', 'familia_id', 'busqueda']) {
+                if (entrada[campo] !== undefined) {
+                    if (typeof entrada[campo] !== 'string') invalidar('Los filtros de exportación son inválidos.');
+                    filtros[campo] = entrada[campo];
+                }
+            }
+            filtros.critico = entrada.critico === true || entrada.critico === '1' || entrada.critico === 'true';
+        }
+        const resultado = await bienRepository.obtenerTodos(1, null, filtros);
+        if (filtros.ids && resultado.data.length !== filtros.ids.length) invalidar('Algunos bienes seleccionados ya no están disponibles. Actualice el listado.');
+        return resultado.data;
+    }
+
     /**
      * Obtener un bien por ID
      */

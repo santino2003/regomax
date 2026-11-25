@@ -83,6 +83,15 @@ se elimina del disco después de guardar. La orden logística ya asociada se pue
 conservar aunque esté cerrada; una orden nueva debe estar abierta o en logística.
 La edición utiliza el mismo permiso `ingresos:create` que el módulo de ingresos.
 
+## Exportar bienes a Excel
+
+En el listado de bienes, **Exportar Excel** permite descargar todos los bienes,
+los resultados del filtro actual de todas las páginas, o los bienes seleccionados
+mediante las casillas. La selección se conserva al cambiar de página y se limpia
+al aplicar o quitar filtros. La casilla del encabezado selecciona la página visible.
+El archivo incluye código, nombre, descripción, tipo, categoría, familias, unidad,
+stock, stock crítico, ubicación y almacén. La exportación requiere `bien:view`.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:
