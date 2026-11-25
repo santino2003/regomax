@@ -73,6 +73,16 @@ Para tablas existentes, aplicar una vez `src/scripts/ingresos_egresos_archivo_jp
 antes de usar esta versión. Las instalaciones nuevas ya incluyen la columna en
 `src/scripts/ingresos_egresos_table.sql`.
 
+## Editar ingresos
+
+El lápiz en las acciones del listado y **Editar ingreso** en el detalle permiten
+modificar nombre, apellido, motivo, empresa, patente y reemplazar el adjunto
+opcional. La fecha de ingreso y los egresos históricos conservan sus datos.
+Sin un archivo nuevo se conserva el adjunto actual. Al reemplazarlo, el anterior
+se elimina del disco después de guardar. La orden logística ya asociada se puede
+conservar aunque esté cerrada; una orden nueva debe estar abierta o en logística.
+La edición utiliza el mismo permiso `ingresos:create` que el módulo de ingresos.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:

@@ -32,6 +32,8 @@ router.get('/ingresos/listado', [authMiddleware.verifyToken, noCacheMiddleware,
     permissionsMiddleware.hasPermission('ingresos:create')], ingresoController.listarMovimientos);
 router.get('/ingresos/:id/detalle', [authMiddleware.verifyToken, noCacheMiddleware,
     permissionsMiddleware.hasPermission('ingresos:create')], ingresoController.verDetalle);
+router.get('/ingresos/:id/editar', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ingresos:create')], ingresoController.vistaEditarIngreso);
 
 // Ruta base - redirigir a login
 router.get('/', (req, res) => {

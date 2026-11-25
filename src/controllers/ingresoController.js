@@ -1,7 +1,46 @@
 const ingresoService = require('../services/ingresoService');
 const fs = require('node:fs/promises');
+const path = require('node:path');
+const { getUploadPath } = require('../config/uploads');
 
 const ingresoController = {
+    async vistaEditarIngreso(req, res) {
+        const numero = Number(req.query.page);
+        const pagina = Number.isSafeInteger(numero) && numero > 0 ? numero : 1;
+        try {
+            const movimiento = await ingresoService.obtenerDetalle(req.params.id);
+            if (movimiento.tipo_movimiento !== 'INGRESO') {
+                return res.status(400).render('ingresoDetalle', { title: 'Editar ingreso', username: req.user.username,
+                    movimiento: null, pagina, errorDetalle: 'Solo se pueden editar ingresos.' });
+            }
+            const datos = await ingresoService.obtenerDatosNuevoIngreso();
+            res.render('ingresosEditar', { title: 'Editar ingreso', username: req.user.username, movimiento, pagina, ...datos });
+        } catch (error) {
+            if (!error.status) console.error('Error al cargar la edición del ingreso:', error);
+            res.status(error.status || 500).render('ingresoDetalle', { title: 'Editar ingreso', username: req.user.username,
+                movimiento: null, pagina, errorDetalle: error.status ? error.message : 'No se pudo cargar el ingreso.' });
+        }
+    },
+
+    async editarIngreso(req, res) {
+        try {
+            const { archivoAnterior, ...movimiento } = await ingresoService.editarIngreso(req.params.id, req.body, req.file);
+            if (typeof archivoAnterior === 'string' && /^\/uploads\/ingresos\/[a-z0-9_-]+\.(jpe?g|pdf)$/i.test(archivoAnterior) && archivoAnterior !== movimiento.archivo_jpg) {
+                await fs.unlink(path.join(getUploadPath('ingresos'), path.basename(archivoAnterior))).catch(fallo => {
+                    if (fallo.code !== 'ENOENT') console.error('No se pudo limpiar el adjunto reemplazado:', fallo);
+                });
+            }
+            res.json({ success: true, movimiento });
+        } catch (error) {
+            if (req.file) await fs.unlink(req.file.path).catch(fallo => {
+                if (fallo.code !== 'ENOENT') console.error('No se pudo limpiar el adjunto de la edición rechazada:', fallo);
+            });
+            if (!error.status) console.error('Error al editar ingreso:', error);
+            res.status(error.status || 500).json({ success: false,
+                error: error.status ? error.message : 'No se pudo guardar el ingreso. Intente nuevamente.' });
+        }
+    },
+
     async verDetalle(req, res) {
         const numeroPagina = Number(req.query.page);
         const pagina = Number.isSafeInteger(numeroPagina) && numeroPagina > 0 ? numeroPagina : 1;

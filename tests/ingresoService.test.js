@@ -11,7 +11,7 @@ function crearContexto() {
     contar: mock.fn(async () => 123), listar: mock.fn(async () => []), crear: mock.fn(async datos => ({ id: 42, ...datos })),
     obtenerParaEgreso: mock.fn(async () => ({ id: 7, tipo_movimiento: 'INGRESO', motivo: 'CNFU/NFU',
       nombre: 'Ana', apellido: 'García', patente: 'AB123CD', empresa: 'Empresa de prueba' })),
-    obtenerEgreso: mock.fn(async () => null), obtenerDetalle: mock.fn(async () => null)
+    obtenerEgreso: mock.fn(async () => null), obtenerDetalle: mock.fn(async () => null), actualizar: mock.fn(async () => {})
   };
   const clientes = { obtenerTodos: mock.fn(async () => []), obtenerPorId: mock.fn(async () => ({ id: 2, empresa: 'Empresa de prueba' })) };
   const ordenes = { obtenerParaIngresosLogistica: mock.fn(async () => []),
@@ -24,6 +24,44 @@ function crearContexto() {
 
 const movimiento = Object.freeze({ tipo_movimiento: ' ingreso ', motivo: ' Visita ', nombre: ' Ana ', apellido: ' García ', patente: ' ab123cd ' });
 const persona = Object.freeze({ dni: ' 12345678 ', nombre: ' Ana ', apellido: ' García ', sexo: ' f ' });
+
+test('Ingresos: editar guarda solo los campos permitidos, conserva el archivo y utiliza una transacción', async () => {
+  const f = crearContexto();
+  f.movimientos.obtenerParaEgreso.mock.mockImplementation(async () => ({ id: 7, tipo_movimiento: 'INGRESO',
+    motivo: 'Basura', empresa: 'Anterior', archivo_jpg: '/uploads/ingresos/anterior.pdf' }));
+  const resultado = await f.servicio.editarIngreso('7', { nombre: ' Ana ', apellido: ' García ', motivo: 'Basura',
+    patente: ' ab123cd ', empresa: ' Nueva empresa ', tipo_movimiento: 'EGRESO', fecha_movimiento: '2000-01-01', ingreso_id: 99 });
+  assert.equal(resultado.tipo_movimiento, 'INGRESO');
+  assert.equal(resultado.empresa, 'Nueva empresa');
+  assert.equal(resultado.patente, 'AB123CD');
+  assert.equal(resultado.archivo_jpg, '/uploads/ingresos/anterior.pdf');
+  assert.equal(resultado.fecha_movimiento, undefined);
+  assert.equal(resultado.ingreso_id, undefined);
+  assert.equal(f.movimientos.crear.mock.callCount(), 0);
+  assert.deepEqual(f.movimientos.obtenerParaEgreso.mock.calls[0].arguments, [7, f.conexion]);
+  assert.equal(f.movimientos.actualizar.mock.calls[0].arguments[2], f.conexion);
+});
+
+test('Ingresos: editar conserva la orden y empresa históricas cuando la orden no cambia', async () => {
+  const f = crearContexto();
+  f.movimientos.obtenerParaEgreso.mock.mockImplementation(async () => ({ id: 7, tipo_movimiento: 'INGRESO',
+    motivo: 'Logística', orden_venta_id: 5, empresa: 'Cliente original', archivo_jpg: '/uploads/ingresos/anterior.jpg' }));
+  const resultado = await f.servicio.editarIngreso(7, { ...movimiento, motivo: 'Logística', orden_venta_id: '5', empresa: 'Manipulada' }, { filename: 'nuevo.pdf' });
+  assert.equal(resultado.empresa, 'Cliente original');
+  assert.equal(resultado.orden_venta_id, 5);
+  assert.equal(resultado.archivo_jpg, '/uploads/ingresos/nuevo.pdf');
+  assert.equal(resultado.archivoAnterior, '/uploads/ingresos/anterior.jpg');
+  assert.equal(f.ordenes.obtenerParaIngresoLogistica.mock.callCount(), 0);
+});
+
+test('Ingresos: editar rechaza un egreso o un movimiento inexistente sin actualizar', async () => {
+  for (const [actual, status] of [[null, 404], [{ tipo_movimiento: 'EGRESO' }, 400]]) {
+    const f = crearContexto();
+    f.movimientos.obtenerParaEgreso.mock.mockImplementation(async () => actual);
+    await assert.rejects(f.servicio.editarIngreso(7, movimiento), { status });
+    assert.equal(f.movimientos.actualizar.mock.callCount(), 0);
+  }
+});
 
 test('Ingresos: el detalle incluye la imagen del ingreso original y el PDF del movimiento sin duplicados', async () => {
   const f = crearContexto();

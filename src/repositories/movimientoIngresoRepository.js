@@ -35,7 +35,7 @@ class MovimientoIngresoRepository {
 
     async obtenerParaEgreso(id, connection) {
         const rows = await db.query(
-            `SELECT id, tipo_movimiento, motivo, nombre, apellido, patente, empresa, orden_venta_id
+            `SELECT id, tipo_movimiento, motivo, nombre, apellido, patente, empresa, orden_venta_id, archivo_jpg
              FROM ingresos_egresos WHERE id = ? FOR UPDATE`, [id], connection
         );
         return rows[0] || null;
@@ -55,6 +55,15 @@ class MovimientoIngresoRepository {
         const parametros = [tipo_movimiento, motivo, nombre, apellido, patente, empresa ?? null, ingreso_id ?? null, orden_venta_id ?? null, archivo_jpg ?? null];
         const resultado = await db.query(sql, parametros, connection);
         return { id: resultado.insertId, ...movimiento };
+    }
+
+    async actualizar(id, movimiento, connection) {
+        const { motivo, nombre, apellido, patente, empresa, orden_venta_id, archivo_jpg } = movimiento;
+        await db.query(
+            `UPDATE ingresos_egresos SET motivo = ?, nombre = ?, apellido = ?, patente = ?,
+             empresa = ?, orden_venta_id = ?, archivo_jpg = ? WHERE id = ? AND tipo_movimiento = 'INGRESO'`,
+            [motivo, nombre, apellido, patente, empresa, orden_venta_id ?? null, archivo_jpg ?? null, id], connection
+        );
     }
 }
 

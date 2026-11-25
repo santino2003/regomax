@@ -44,7 +44,7 @@ class IngresoService {
         return { movimientos, total, pagina, paginas };
     }
 
-    async registrarMovimiento(datos, archivo) {
+    validarCamposMovimiento(datos) {
         if (!datos || typeof datos !== 'object' || Array.isArray(datos)) {
             throw this.errorValidacion('Ingrese los datos del movimiento.');
         }
@@ -62,6 +62,11 @@ class IngresoService {
         }
         movimiento.patente = movimiento.patente.toUpperCase();
         movimiento.empresa = null;
+        return movimiento;
+    }
+
+    async registrarMovimiento(datos, archivo) {
+        const movimiento = this.validarCamposMovimiento(datos);
         if (archivo) movimiento.archivo_jpg = `/uploads/ingresos/${archivo.filename}`;
         if (movimiento.motivo === 'Basura') {
             const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
@@ -101,6 +106,55 @@ class IngresoService {
             movimiento.empresa = cliente.empresa;
         }
         return movimientoIngresoRepository.crear(movimiento);
+    }
+
+    async editarIngreso(id, datos, archivo) {
+        if (!['string', 'number'].includes(typeof id) || !/^[1-9]\d*$/.test(String(id)) || !Number.isSafeInteger(Number(id))) {
+            throw this.errorValidacion('Seleccione un ingreso válido.');
+        }
+        const movimiento = this.validarCamposMovimiento({ ...datos, tipo_movimiento: 'INGRESO' });
+        return db.withTransaction(async connection => {
+            const actual = await movimientoIngresoRepository.obtenerParaEgreso(Number(id), connection);
+            if (!actual) throw this.errorValidacion('El ingreso no existe.', 404);
+            if (actual.tipo_movimiento !== 'INGRESO') throw this.errorValidacion('Solo se pueden editar ingresos.');
+            movimiento.orden_venta_id = null;
+            movimiento.archivo_jpg = archivo ? `/uploads/ingresos/${archivo.filename}` : actual.archivo_jpg;
+            if (movimiento.motivo === 'CNFU/NFU') {
+                if (datos.cliente_id === 'actual' && actual.motivo === 'CNFU/NFU' && actual.empresa) {
+                    movimiento.empresa = actual.empresa;
+                } else {
+                    const clienteId = String(datos.cliente_id ?? '');
+                    if (!/^[1-9]\d*$/.test(clienteId) || !Number.isSafeInteger(Number(clienteId))) throw this.errorValidacion('Seleccione una empresa válida.');
+                    const cliente = await clienteNFURepository.obtenerPorId(Number(clienteId));
+                    if (!cliente?.empresa) throw this.errorValidacion('La empresa seleccionada no existe.');
+                    movimiento.empresa = cliente.empresa;
+                }
+            } else if (movimiento.motivo === 'Logística') {
+                const ordenId = String(datos.orden_venta_id ?? '');
+                if (!/^[1-9]\d*$/.test(ordenId) || !Number.isSafeInteger(Number(ordenId))) throw this.errorValidacion('Seleccione una orden de venta válida.');
+                if (actual.motivo === 'Logística' && Number(actual.orden_venta_id) === Number(ordenId)) {
+                    movimiento.empresa = actual.empresa;
+                    movimiento.orden_venta_id = actual.orden_venta_id;
+                } else {
+                    const orden = await ordenDeVentaRepository.obtenerParaIngresoLogistica(Number(ordenId), connection);
+                    if (!orden || !['abierta', 'en_logistica'].includes(orden.estado)) throw this.errorValidacion('La orden debe estar abierta o en logística.');
+                    if (typeof orden.cliente_final !== 'string' || !orden.cliente_final.trim()) throw this.errorValidacion('La orden seleccionada no tiene cliente final.');
+                    movimiento.empresa = orden.cliente_final;
+                    movimiento.orden_venta_id = orden.id;
+                }
+            } else if (movimiento.motivo === 'Basura') {
+                const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
+                if (!empresa || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
+                movimiento.empresa = empresa;
+            } else if (movimiento.motivo === actual.motivo) {
+                movimiento.empresa = actual.empresa;
+                movimiento.orden_venta_id = actual.orden_venta_id;
+            } else {
+                throw this.errorValidacion('Seleccione un motivo válido.');
+            }
+            await movimientoIngresoRepository.actualizar(Number(id), movimiento, connection);
+            return { id: Number(id), ...movimiento, archivoAnterior: archivo ? actual.archivo_jpg : null };
+        });
     }
 
     async registrarEgreso(ingresoId) {

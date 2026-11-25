@@ -1,0 +1,68 @@
+<%- include('partials/header') %>
+<script>document.body.dataset.allowBackNavigation = 'true';</script>
+<div class="container my-4">
+    <div class="menu-container p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <h4 class="menu-heading mb-0"><i class="bi bi-pencil me-2" aria-hidden="true"></i>Editar ingreso #<%= movimiento.id %></h4>
+            <a href="/ingresos/listado?page=<%= pagina %>" class="btn btn-outline-secondary">Volver al listado</a>
+        </div>
+        <p class="text-muted">Fecha de ingreso: <%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_movimiento) %></p>
+        <div id="alertPlaceholder" role="alert" aria-live="polite"></div>
+        <form id="formEditarIngreso" data-id="<%= movimiento.id %>" data-page="<%= pagina %>" enctype="multipart/form-data">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6"><label for="nombre" class="form-label">Nombre *</label><input id="nombre" name="nombre" class="form-control" maxlength="100" value="<%= movimiento.nombre %>" required></div>
+                <div class="col-md-6"><label for="apellido" class="form-label">Apellido *</label><input id="apellido" name="apellido" class="form-control" maxlength="100" value="<%= movimiento.apellido %>" required></div>
+                <div class="col-md-6">
+                    <label for="motivoEditar" class="form-label">Motivo *</label>
+                    <select id="motivoEditar" name="motivo" class="form-select" required>
+                        <% const motivos = ['CNFU/NFU', 'Logística', 'Basura']; if (!motivos.includes(movimiento.motivo)) motivos.push(movimiento.motivo); %>
+                        <% motivos.forEach(motivo => { %><option value="<%= motivo %>" <%= movimiento.motivo === motivo ? 'selected' : '' %>><%= motivo %></option><% }); %>
+                    </select>
+                </div>
+                <div class="col-md-6"><label for="patente" class="form-label">Patente *</label><input id="patente" name="patente" class="form-control" maxlength="20" value="<%= movimiento.patente %>" required></div>
+            </div>
+            <fieldset id="empresaNFU" class="mb-3">
+                <label for="cliente_id" class="form-label">Empresa *</label>
+                <% if (errorClientes) { %><p class="text-warning">No se pudieron cargar las empresas. Recargue para intentar nuevamente.</p><% } %>
+                <select id="cliente_id" name="cliente_id" class="form-select" required>
+                    <option value="">Seleccionar empresa</option>
+                    <% if (movimiento.motivo === 'CNFU/NFU' && movimiento.empresa) { %><option value="actual" selected><%= movimiento.empresa %> (actual)</option><% } %>
+                    <% clientes.forEach(cliente => { %><option value="<%= cliente.id %>"><%= cliente.empresa %> — <%= cliente.cuit %></option><% }); %>
+                </select>
+            </fieldset>
+            <fieldset id="empresaLogistica" class="mb-3">
+                <label for="orden_venta_id" class="form-label">Orden de venta *</label>
+                <% if (errorOrdenes) { %><p class="text-warning">No se pudieron cargar las órdenes de venta. Recargue para intentar nuevamente.</p><% } %>
+                <select id="orden_venta_id" name="orden_venta_id" class="form-select mb-3" required>
+                    <option value="">Seleccionar orden de venta</option>
+                    <% if (movimiento.motivo === 'Logística' && movimiento.orden_venta_id) { %>
+                        <option value="<%= movimiento.orden_venta_id %>" data-empresa="<%= movimiento.empresa || '' %>" selected><%= movimiento.empresa %> — <%= movimiento.codigo_venta || 'OV-' + movimiento.orden_venta_id %> (actual)</option>
+                    <% } %>
+                    <% ordenesVenta.filter(orden => !(movimiento.motivo === 'Logística' && Number(orden.id) === Number(movimiento.orden_venta_id))).forEach(orden => { %>
+                        <option value="<%= orden.id %>" data-empresa="<%= orden.cliente_final || '' %>"><%= orden.cliente_final %> — <%= orden.codigo_venta || 'OV-' + orden.id %></option>
+                    <% }); %>
+                </select>
+                <label for="empresaOrden" class="form-label">Empresa</label><input id="empresaOrden" class="form-control" readonly>
+            </fieldset>
+            <fieldset id="empresaBasura" class="mb-3">
+                <label for="empresa" class="form-label">Empresa *</label><input id="empresa" name="empresa" class="form-control" maxlength="255" value="<%= movimiento.motivo === 'Basura' ? movimiento.empresa || '' : '' %>" required>
+            </fieldset>
+            <div class="mb-3">
+                <% if (movimiento.adjuntos.length) { %>
+                    <p><a href="/ingresos/<%= movimiento.id %>/detalle?page=<%= pagina %>" target="_blank" rel="noopener noreferrer">Ver adjunto actual</a>. Se conserva si no elige otro archivo.</p>
+                <% } %>
+                <div id="zonaAdjuntoEditar" class="border border-2 rounded p-3">
+                    <label for="archivoEditar" class="form-label">Adjuntar PDF o JPG (opcional)</label>
+                    <p class="small text-muted">Arrastre un archivo o selecciónelo. PDF, JPG o JPEG, hasta 10 MB.</p>
+                    <input type="file" id="archivoEditar" class="form-control" accept=".jpg,.jpeg,.pdf,image/jpeg,application/pdf">
+                    <p id="nombreAdjuntoEditar" class="small mt-2 mb-0" aria-live="polite"></p>
+                    <button type="button" id="quitarAdjuntoEditar" class="btn btn-outline-secondary btn-sm mt-2 d-none">Quitar archivo seleccionado</button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1" aria-hidden="true"></i>Guardar cambios</button>
+            <a href="/ingresos/listado?page=<%= pagina %>" class="btn btn-outline-secondary ms-2">Cancelar</a>
+        </form>
+    </div>
+</div>
+<script src="/assets/js/ingresosEditar.js"></script>
+<%- include('partials/footer') %>

@@ -62,6 +62,9 @@
                                             <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
                                         </button>
                                     <% } %>
+                                    <% if (movimiento.tipo_movimiento === 'INGRESO') { %>
+                                        <a href="/ingresos/<%= movimiento.id %>/editar?page=<%= pagina %>" class="btn btn-sm btn-outline-secondary" title="Editar ingreso" aria-label="Editar ingreso <%= movimiento.id %>"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+                                    <% } %>
                                     </div>
                                     <% if (movimiento.ingreso_id) { %>
                                         <span class="small text-muted d-block mt-1">Ingreso #<%= movimiento.ingreso_id %></span>
