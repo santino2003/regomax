@@ -1,0 +1,31 @@
+<%- include('partials/header') %>
+<script>document.body.dataset.allowBackNavigation = 'true';</script>
+<div class="container my-4"><div class="menu-container p-4">
+    <div class="d-flex flex-wrap justify-content-between gap-2 mb-4"><h4 class="menu-heading mb-0">Ingreso de personal</h4><a href="/ingresos/listado" class="btn btn-outline-primary">Ingresos y egresos</a></div>
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="/ingresos" class="btn btn-outline-primary">Ingreso con DNI</a><a href="/ingresos/personal" class="btn btn-primary" aria-current="page">Ingreso de personal</a><a href="/personal" class="btn btn-outline-secondary">Administrar personal</a>
+    </div>
+    <div id="alertPlaceholder" role="alert"></div>
+    <% if (!personal.length) { %><div class="alert alert-info">No hay personal activo. <a href="/personal/nuevo">Registrar personal</a></div><% } %>
+    <form data-form-personal data-url="/api/ingresos/personal" data-method="POST" data-return="/ingresos/personal?registrado=1" data-ingreso-personal enctype="multipart/form-data">
+        <div class="mb-3"><label for="personal_id" class="form-label">Nombre y apellido *</label>
+            <input id="filtrarPersonalIngreso" class="form-control mb-2" aria-label="Buscar personal" placeholder="Buscar por nombre o apellido">
+            <select id="personal_id" name="personal_id" class="form-select" required>
+                <option value="">Seleccionar personal</option>
+                <% personal.forEach(p => { %><option value="<%= p.id %>" data-patente="<%= p.patente || '' %>" data-auto="<%= p.auto || '' %>" data-cargo="<%= p.cargo || '' %>" data-turno="<%= p.turno || '' %>"><%= p.nombre %> <%= p.apellido %></option><% }); %>
+            </select>
+        </div>
+        <%- include('partials/personalCampos', { personal: null }) %>
+        <div class="border border-2 rounded p-3 mb-3" id="zonaAdjuntoPersonal">
+            <label for="adjuntoPersonal" class="form-label">Adjuntar PDF o JPG (opcional)</label>
+            <p class="small text-muted">Arrastre un archivo o selecciónelo. PDF, JPG o JPEG, hasta 10 MB.</p>
+            <input id="adjuntoPersonal" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg">
+            <div id="nombreAdjuntoPersonal" class="small mt-2" aria-live="polite"></div>
+            <button id="quitarAdjuntoPersonal" type="button" class="btn btn-sm btn-outline-secondary mt-2 d-none">Quitar archivo</button>
+        </div>
+        <button type="submit" class="btn btn-primary" <%= !personal.length ? 'disabled' : '' %>><i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Registrar ingreso</button>
+        <a href="/personal/nuevo" class="btn btn-outline-secondary ms-2">Nuevo personal</a>
+    </form>
+</div></div>
+<script src="/assets/js/personal.js"></script>
+<%- include('partials/footer') %>

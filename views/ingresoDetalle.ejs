@@ -18,7 +18,12 @@
                 <dt class="col-sm-4">Motivo</dt><dd class="col-sm-8"><%= movimiento.motivo %></dd>
                 <dt class="col-sm-4">Nombre y apellido</dt><dd class="col-sm-8"><%= movimiento.nombre %> <%= movimiento.apellido %></dd>
                 <dt class="col-sm-4">Empresa</dt><dd class="col-sm-8"><%= movimiento.empresa || '—' %></dd>
-                <dt class="col-sm-4">Patente</dt><dd class="col-sm-8"><%= movimiento.patente %></dd>
+                <dt class="col-sm-4">Patente</dt><dd class="col-sm-8"><%= movimiento.patente || '—' %></dd>
+                <% if (movimiento.motivo === 'Personal') { %>
+                    <dt class="col-sm-4">Auto</dt><dd class="col-sm-8"><%= movimiento.auto || '—' %></dd>
+                    <dt class="col-sm-4">Cargo</dt><dd class="col-sm-8"><%= movimiento.cargo || '—' %></dd>
+                    <dt class="col-sm-4">Turno</dt><dd class="col-sm-8"><%= movimiento.turno || '—' %></dd>
+                <% } %>
                 <% if (movimiento.orden_venta_id || movimiento.codigo_venta) { %>
                     <dt class="col-sm-4">Orden de venta</dt><dd class="col-sm-8"><%= movimiento.codigo_venta || 'OV-' + movimiento.orden_venta_id %></dd>
                 <% } %>

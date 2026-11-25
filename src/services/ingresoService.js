@@ -3,6 +3,7 @@ const movimientoIngresoRepository = require('../repositories/movimientoIngresoRe
 const clienteNFURepository = require('../repositories/clienteNFURepository');
 const db = require('../config/db');
 const ordenDeVentaRepository = require('../repositories/ordenDeVentaRepository');
+const personalService = require('./personalService');
 
 class IngresoService {
     async obtenerDetalle(id) {
@@ -51,7 +52,7 @@ class IngresoService {
         const movimiento = {};
         for (const [campo, limite] of Object.entries({ tipo_movimiento: 7, motivo: 100, nombre: 100, apellido: 100, patente: 20 })) {
             const valor = typeof datos[campo] === 'string' ? datos[campo].trim() : '';
-            if (!valor || valor.length > limite || /[\x00-\x1f\x7f]/.test(valor)) {
+            if ((!valor && !(campo === 'patente' && datos.motivo === 'Personal')) || valor.length > limite || /[\x00-\x1f\x7f]/.test(valor)) {
                 throw this.errorValidacion(`El campo ${campo} es obligatorio y debe tener hasta ${limite} caracteres.`);
             }
             movimiento[campo] = valor;
@@ -67,6 +68,7 @@ class IngresoService {
 
     async registrarMovimiento(datos, archivo) {
         const movimiento = this.validarCamposMovimiento(datos);
+        if (movimiento.motivo === 'Personal') throw this.errorValidacion('Utilice la opción Ingreso de personal.');
         if (archivo) movimiento.archivo_jpg = `/uploads/ingresos/${archivo.filename}`;
         if (['Basura', 'Acero'].includes(movimiento.motivo)) {
             const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
@@ -117,9 +119,12 @@ class IngresoService {
             const actual = await movimientoIngresoRepository.obtenerParaEgreso(Number(id), connection);
             if (!actual) throw this.errorValidacion('El ingreso no existe.', 404);
             if (actual.tipo_movimiento !== 'INGRESO') throw this.errorValidacion('Solo se pueden editar ingresos.');
+            if ((actual.motivo === 'Personal') !== (movimiento.motivo === 'Personal')) throw this.errorValidacion('Los ingresos de personal deben conservar ese motivo.');
             movimiento.orden_venta_id = null;
             movimiento.archivo_jpg = archivo ? `/uploads/ingresos/${archivo.filename}` : actual.archivo_jpg;
-            if (movimiento.motivo === 'CNFU/NFU') {
+            if (movimiento.motivo === 'Personal') {
+                Object.assign(movimiento, personalService.validarDatos({ ...datos, nombre: movimiento.nombre, apellido: movimiento.apellido }));
+            } else if (movimiento.motivo === 'CNFU/NFU') {
                 if (datos.cliente_id === 'actual' && actual.motivo === 'CNFU/NFU' && actual.empresa) {
                     movimiento.empresa = actual.empresa;
                 } else {
@@ -174,7 +179,8 @@ class IngresoService {
             const { motivo, nombre, apellido, patente, empresa } = ingreso;
             return movimientoIngresoRepository.crear({
                 tipo_movimiento: 'EGRESO', ingreso_id: id, motivo, nombre, apellido, patente, empresa,
-                ...(ingreso.orden_venta_id != null ? { orden_venta_id: ingreso.orden_venta_id } : {})
+                ...(ingreso.orden_venta_id != null ? { orden_venta_id: ingreso.orden_venta_id } : {}),
+                ...(ingreso.personal_id != null ? { personal_id: ingreso.personal_id, auto: ingreso.auto, cargo: ingreso.cargo, turno: ingreso.turno } : {})
             }, connection);
         });
     }

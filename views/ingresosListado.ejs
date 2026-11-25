@@ -33,7 +33,7 @@
                                 <td><%= movimiento.tipo_movimiento %></td>
                                 <td><%= movimiento.motivo %></td>
                                 <td><%= movimiento.nombre %> <%= movimiento.apellido %></td>
-                                <td><%= movimiento.patente %></td>
+                                <td><%= movimiento.patente || '—' %></td>
                                 <td><%= movimiento.empresa || '—' %></td>
                                 <td>
                                     <% if (movimiento.tipo_movimiento === 'INGRESO') { %>
@@ -55,7 +55,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-danger" title="Dar egreso" data-dar-egreso
                                             data-ingreso-id="<%= movimiento.id %>"
                                             data-persona="<%= movimiento.nombre %> <%= movimiento.apellido %>"
-                                            data-patente="<%= movimiento.patente %>"
+                                            data-patente="<%= movimiento.patente || '—' %>"
                                             data-empresa="<%= movimiento.empresa || '—' %>"
                                             data-fecha="<%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_movimiento) %>"
                                             aria-label="Dar egreso al ingreso <%= movimiento.id %>">

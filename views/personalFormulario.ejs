@@ -1,0 +1,21 @@
+<%- include('partials/header') %>
+<script>document.body.dataset.allowBackNavigation = 'true';</script>
+<div class="container my-4"><div class="menu-container p-4">
+    <h4 class="menu-heading"><%= personal ? 'Editar personal' : 'Nuevo personal' %></h4>
+    <div id="alertPlaceholder" role="alert"></div>
+    <form data-form-personal data-url="/api/personal<%= personal ? '/' + personal.id : '' %>" data-method="<%= personal ? 'PUT' : 'POST' %>" data-return="/personal">
+        <div class="row g-3 mb-3">
+            <div class="col-md-6"><label for="nombre" class="form-label">Nombre *</label><input id="nombre" name="nombre" class="form-control" maxlength="100" required value="<%= personal ? personal.nombre : '' %>"></div>
+            <div class="col-md-6"><label for="apellido" class="form-label">Apellido *</label><input id="apellido" name="apellido" class="form-control" maxlength="100" required value="<%= personal ? personal.apellido : '' %>"></div>
+        </div>
+        <%- include('partials/personalCampos', { personal }) %>
+        <% if (personal) { %>
+            <label for="activo" class="form-label">Estado</label>
+            <select id="activo" name="activo" class="form-select mb-3"><option value="1" <%= Number(personal.activo) ? 'selected' : '' %>>Activo</option><option value="0" <%= !Number(personal.activo) ? 'selected' : '' %>>Baja</option></select>
+        <% } %>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1" aria-hidden="true"></i>Guardar personal</button>
+        <a href="/personal" class="btn btn-outline-secondary ms-2">Cancelar</a>
+    </form>
+</div></div>
+<script src="/assets/js/personal.js"></script>
+<%- include('partials/footer') %>

@@ -92,6 +92,28 @@ al aplicar o quitar filtros. La casilla del encabezado selecciona la página vis
 El archivo incluye código, nombre, descripción, tipo, categoría, familias, unidad,
 stock, stock crítico, ubicación y almacén. La exportación requiere `bien:view`.
 
+## Personal e ingresos sin DNI
+
+En la pantalla inicial de ingresos, **Ingreso de personal** permite seleccionar
+personal registrado sin pedir DNI. **Administrar personal** ofrece altas, edición,
+baja y reactivación. Nombre y apellido son obligatorios; patente, auto, cargo y turno
+son opcionales. El adjunto PDF/JPG también es opcional.
+
+Los datos del padrón se guardan en `personal`. Cada entrada y salida se incorpora
+a `ingresos_egresos` con el motivo **Personal**, conservando los datos de ese momento.
+Se pueden ajustar patente, auto, cargo y turno para una entrada sin modificar el
+padrón. No se permite otro ingreso de la misma persona hasta registrar su egreso.
+La baja del padrón conserva su historial y permite cerrar las entradas pendientes.
+Las pantallas y API utilizan el permiso existente `ingresos:create`.
+
+Para una instalación existente, ejecutar en este orden:
+
+1. `src/scripts/personal_table.sql`.
+2. `src/scripts/ingresos_egresos_personal.sql` (una sola vez).
+
+En una instalación nueva, crear `personas` y `personal` con sus scripts antes de
+`ingresos_egresos_table.sql`, que ya incluye las columnas de personal.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:

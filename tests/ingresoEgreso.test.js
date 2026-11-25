@@ -16,7 +16,8 @@ function crearRutas(registrarEgreso = async id => ({ id: 42, ingreso_id: Number(
   };
   const autenticacion = loadModule('src/middleware/auth.js', { '../utils/hash': { verifyToken: token => cuentas[token] } });
   const rutas = loadModule('src/routes/ingresoRoutes.js', {
-    '../controllers/ingresoController': controlador, '../middleware/auth': autenticacion
+    '../controllers/ingresoController': controlador, '../middleware/auth': autenticacion,
+    '../controllers/personalController': { registrarIngreso(req, res) { res.json({ success: true }); } }
   });
   return { servicio, solicitar: token => dispatch(rutas, {
     method: 'POST', url: '/movimientos/7/egreso', originalUrl: '/api/ingresos/movimientos/7/egreso',
@@ -74,9 +75,9 @@ test('Egresos: se guarda el vínculo en la transacción y se deja que la base as
     patente: 'AB123CD', empresa: 'Empresa de prueba' };
   assert.deepEqual(await repositorio.crear(egreso, conexion), { id: 42, ...egreso });
   const [sql, parametros, recibida] = query.mock.calls[0].arguments;
-  assert.match(sql, /empresa, ingreso_id, orden_venta_id, archivo_jpg\)/);
+  assert.match(sql, /empresa, ingreso_id, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno\)/);
   assert.doesNotMatch(sql, /fecha_movimiento/);
-  assert.deepEqual(parametros, ['EGRESO', 'CNFU/NFU', 'Ana', 'García', 'AB123CD', 'Empresa de prueba', 7, null, null]);
+  assert.deepEqual(parametros, ['EGRESO', 'CNFU/NFU', 'Ana', 'García', 'AB123CD', 'Empresa de prueba', 7, null, null, null, null, null, null]);
   assert.equal(recibida, conexion);
 });
 

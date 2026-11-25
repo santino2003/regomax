@@ -97,6 +97,7 @@ app.use(permissionErrorHandler);
 // Rutas API
 app.use('/api/auth', authRoutes);
 app.use('/api/ingresos', ingresoRoutes);
+app.use('/api/personal', require('./routes/personalRoutes'));
 app.use('/api/bolsones', bolsonRoutes);
 app.use('/api/ordenes', ordenDeVentaRoutes);
 app.use('/api/productos', productoRoutes);

@@ -15,12 +15,19 @@
                 <div class="col-md-6">
                     <label for="motivoEditar" class="form-label">Motivo *</label>
                     <select id="motivoEditar" name="motivo" class="form-select" required>
-                        <% const motivos = ['CNFU/NFU', 'Logística', 'Basura', 'Acero']; if (!motivos.includes(movimiento.motivo)) motivos.push(movimiento.motivo); %>
+                        <% const motivos = movimiento.motivo === 'Personal' ? ['Personal'] : ['CNFU/NFU', 'Logística', 'Basura', 'Acero']; if (!motivos.includes(movimiento.motivo)) motivos.push(movimiento.motivo); %>
                         <% motivos.forEach(motivo => { %><option value="<%= motivo %>" <%= movimiento.motivo === motivo ? 'selected' : '' %>><%= motivo %></option><% }); %>
                     </select>
                 </div>
-                <div class="col-md-6"><label for="patente" class="form-label">Patente *</label><input id="patente" name="patente" class="form-control" maxlength="20" value="<%= movimiento.patente %>" required></div>
+                <div class="col-md-6"><label for="patente" class="form-label">Patente <%= movimiento.motivo === 'Personal' ? '(opcional)' : '*' %></label><input id="patente" name="patente" class="form-control" maxlength="20" value="<%= movimiento.patente || '' %>" <%= movimiento.motivo !== 'Personal' ? 'required' : '' %>></div>
             </div>
+            <% if (movimiento.motivo === 'Personal') { %>
+                <div class="row g-3 mb-3">
+                    <% for (const [campo, etiqueta] of [['auto', 'Auto'], ['cargo', 'Cargo'], ['turno', 'Turno']]) { %>
+                        <div class="col-md-4"><label for="<%= campo %>" class="form-label"><%= etiqueta %> (opcional)</label><input id="<%= campo %>" name="<%= campo %>" maxlength="100" class="form-control" value="<%= movimiento[campo] || '' %>"></div>
+                    <% } %>
+                </div>
+            <% } %>
             <fieldset id="empresaNFU" class="mb-3">
                 <label for="cliente_id" class="form-label">Empresa *</label>
                 <% if (errorClientes) { %><p class="text-warning">No se pudieron cargar las empresas. Recargue para intentar nuevamente.</p><% } %>
