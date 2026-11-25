@@ -217,9 +217,11 @@ class BienRepository {
                 whereConditions.push('bf.familia_id = ?');
                 params.push(filtros.familia_id);
             }
-            if (filtros.busqueda) {
+            // Cada término debe aparecer en nombre, código o descripción, en cualquier orden.
+            const terminos = typeof filtros.busqueda === 'string' ? filtros.busqueda.trim().split(/\s+/).filter(Boolean) : [];
+            for (const termino of terminos) {
                 whereConditions.push('(b.nombre LIKE ? OR b.codigo LIKE ? OR b.descripcion LIKE ?)');
-                const searchTerm = `%${filtros.busqueda}%`;
+                const searchTerm = `%${termino}%`;
                 params.push(searchTerm, searchTerm, searchTerm);
             }
             if (filtros.critico) {
