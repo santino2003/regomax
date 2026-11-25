@@ -5,10 +5,11 @@ const { cargarServicio } = require('../test-support/serviceUnit');
 mock.method(console, 'error', () => {});
 
 function crearContexto(cambiosOrden = {}, reemplazos = {}, metodosDocumento = {}) {
-  const documento = { heightOfString: mock.fn(() => 10) };
-  for (const metodo of ['fontSize', 'font', 'text', 'moveTo', 'lineTo', 'stroke', 'end']) {
+  const documento = { page: { height: 841.89, margins: { bottom: 40 } }, y: 40, heightOfString: mock.fn(() => 10) };
+  for (const metodo of ['fontSize', 'font', 'moveTo', 'lineTo', 'stroke', 'end', 'addPage']) {
     documento[metodo] = mock.fn(() => documento);
   }
+  documento.text = mock.fn((texto, x, y) => { documento.y = y + 10; return documento; });
   Object.assign(documento, metodosDocumento);
   const ConstructorPDF = mock.fn(function () { return documento; });
   const orden = {
@@ -80,7 +81,24 @@ test('PDF de órdenes de compra: la altura de los ítems se adapta a las descrip
   const descripcion = f.documento.text.mock.calls.find(c => c.arguments[0] === 'Descripción extensa');
   const y = descripcion.arguments[2];
   assert.equal(descripcion.arguments[3].lineBreak, true);
-  assert.ok(f.documento.moveTo.mock.calls.some(c => c.arguments[0] === 40 && c.arguments[1] === y + 66));
+  assert.ok(descripcion.arguments[3].height >= 60);
+  assert.ok(f.documento.moveTo.mock.calls.some(c => c.arguments[0] === 40 && c.arguments[1] >= y + 60));
+});
+
+test('PDF de órdenes de compra: los renglones cambian de página juntos y repiten los encabezados', async () => {
+  const f = crearContexto({ items: Array.from({ length: 60 }, (_, i) => ({
+    bien_nombre: `Bien ${i + 1}`, cantidad: 1, unidad_medida_nombre: 'UNIDAD', medio_pago: 'Efectivo'
+  })) });
+  await f.servicio.generarPDF(11);
+  assert.ok(f.documento.addPage.mock.callCount() > 0);
+  assert.equal(f.textos().filter(texto => texto === 'Bien').length, f.documento.addPage.mock.callCount() + 1);
+  for (const llamada of f.documento.text.mock.calls) {
+    const [texto, x, y, opciones] = llamada.arguments;
+    if (String(texto).startsWith('Bien ') || texto === 'UNIDAD' || texto === 'Efectivo') {
+      assert.ok(y >= 40);
+      assert.ok(y + opciones.height <= f.documento.page.height - 40);
+    }
+  }
 });
 
 test('PDF de órdenes de compra: contrafactura agrupa importes por moneda y aplica ajustes a la primera', async () => {
