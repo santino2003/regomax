@@ -33,10 +33,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (url.searchParams.has('personal_id')) selector.value = url.searchParams.get('personal_id');
         selector.addEventListener('change', cargarPersonal); cargarPersonal();
-        document.getElementById('filtrarPersonalIngreso').addEventListener('input', event => {
-            const palabras = event.target.value.toLocaleLowerCase('es').trim().split(/\s+/);
-            for (const opcion of selector.options) opcion.hidden = !!opcion.value && !palabras.every(palabra => opcion.textContent.toLocaleLowerCase('es').includes(palabra));
-        });
+        const normalizar = texto => String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es');
+        const coincide = (texto, busqueda) => normalizar(busqueda).trim().split(/\s+/).every(palabra => normalizar(texto).includes(palabra));
+        const opciones = Array.from(selector.options, opcion => opcion.cloneNode(true));
+        const filtroTurno = document.getElementById('filtroTurnoIngreso');
+        const busquedaAlternativa = document.getElementById('filtrarPersonalIngreso');
+        const usaSelect2 = !!window.jQuery?.fn.select2;
+        if (usaSelect2) {
+            window.jQuery(selector).select2({
+                theme: 'bootstrap-5', width: '100%', placeholder: 'Buscar personal por nombre, apellido o turno',
+                allowClear: true,
+                matcher(params, data) {
+                    if (!params.term?.trim()) return data;
+                    return data.id && coincide(`${data.text} ${data.element?.dataset.turno || ''}`, params.term) ? data : null;
+                },
+                language: { noResults: () => 'No hay personal que coincida con la búsqueda', searching: () => 'Buscando...' }
+            }).on('change', cargarPersonal);
+        } else {
+            busquedaAlternativa.classList.remove('d-none');
+            document.getElementById('ayudaSeleccionPersonal').textContent = 'Busque por nombre, apellido o turno y seleccione una persona.';
+        }
+        function filtrarOpciones() {
+            const anterior = selector.value;
+            const visibles = opciones.filter(opcion => !opcion.value || (
+                (!filtroTurno.value || opcion.dataset.turno === filtroTurno.value) &&
+                (usaSelect2 || coincide(opcion.textContent, busquedaAlternativa.value))
+            ));
+            selector.replaceChildren(...visibles.map(opcion => opcion.cloneNode(true)));
+            selector.value = visibles.some(opcion => opcion.value === anterior) ? anterior : '';
+            if (usaSelect2) window.jQuery(selector).trigger('change');
+            else cargarPersonal();
+        }
+        filtroTurno.addEventListener('change', filtrarOpciones);
+        if (!usaSelect2) busquedaAlternativa.addEventListener('input', filtrarOpciones);
     }
     let archivo = null;
     let procesando = false;

@@ -35,6 +35,8 @@ router.get('/personal/nuevo', [authMiddleware.verifyToken, noCacheMiddleware,
     permissionsMiddleware.hasPermission('ingresos:create')], personalController.formulario);
 router.get('/personal/:id/editar', [authMiddleware.verifyToken, noCacheMiddleware,
     permissionsMiddleware.hasPermission('ingresos:create')], personalController.formulario);
+router.get('/personal/:id', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ingresos:create')], personalController.detalle);
 router.get('/ingresos', [authMiddleware.verifyToken, noCacheMiddleware,
     permissionsMiddleware.hasPermission('ingresos:create')], ingresoController.vistaNuevoIngreso);
 router.get('/ingresos/listado', [authMiddleware.verifyToken, noCacheMiddleware,

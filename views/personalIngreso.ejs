@@ -1,4 +1,6 @@
 <%- include('partials/header') %>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
 <script>document.body.dataset.allowBackNavigation = 'true';</script>
 <div class="container my-4"><div class="menu-container p-4">
     <div class="d-flex flex-wrap justify-content-between gap-2 mb-4"><h4 class="menu-heading mb-0">Ingreso de personal</h4><a href="/ingresos/listado" class="btn btn-outline-primary">Ingresos y egresos</a></div>
@@ -8,12 +10,19 @@
     <div id="alertPlaceholder" role="alert"></div>
     <% if (!personal.length) { %><div class="alert alert-info">No hay personal activo. <a href="/personal/nuevo">Registrar personal</a></div><% } %>
     <form data-form-personal data-url="/api/ingresos/personal" data-method="POST" data-return="/ingresos/personal?registrado=1" data-ingreso-personal enctype="multipart/form-data">
-        <div class="mb-3"><label for="personal_id" class="form-label">Nombre y apellido *</label>
-            <input id="filtrarPersonalIngreso" class="form-control mb-2" aria-label="Buscar personal" placeholder="Buscar por nombre o apellido">
-            <select id="personal_id" name="personal_id" class="form-select" required>
-                <option value="">Seleccionar personal</option>
-                <% personal.forEach(p => { %><option value="<%= p.id %>" data-patente="<%= p.patente || '' %>" data-auto="<%= p.auto || '' %>" data-cargo="<%= p.cargo || '' %>" data-turno="<%= p.turno || '' %>"><%= p.nombre %> <%= p.apellido %></option><% }); %>
+        <div class="mb-3"><label for="filtroTurnoIngreso" class="form-label">Filtrar por turno</label>
+            <select id="filtroTurnoIngreso" class="form-select">
+                <option value="">Todos los turnos</option>
+                <% [...new Set(personal.map(p => p.turno).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es')).forEach(turno => { %><option value="<%= turno %>"><%= turno %></option><% }); %>
             </select>
+        </div>
+        <div class="mb-3"><label for="personal_id" class="form-label">Nombre y apellido *</label>
+            <input id="filtrarPersonalIngreso" class="form-control mb-2 d-none" aria-label="Buscar personal por nombre, apellido o turno" placeholder="Buscar por nombre, apellido o turno">
+            <select id="personal_id" name="personal_id" class="form-select" required aria-describedby="ayudaSeleccionPersonal">
+                <option value="">Seleccionar personal</option>
+                <% personal.forEach(p => { %><option value="<%= p.id %>" data-patente="<%= p.patente || '' %>" data-auto="<%= p.auto || '' %>" data-cargo="<%= p.cargo || '' %>" data-turno="<%= p.turno || '' %>"><%= p.nombre %> <%= p.apellido %><%= p.turno ? ' — ' + p.turno : '' %></option><% }); %>
+            </select>
+            <div id="ayudaSeleccionPersonal" class="form-text">Abra el desplegable y escriba nombre, apellido o turno.</div>
         </div>
         <%- include('partials/personalCampos', { personal: null }) %>
         <div class="border border-2 rounded p-3 mb-3" id="zonaAdjuntoPersonal">
@@ -27,5 +36,6 @@
         <a href="/personal/nuevo" class="btn btn-outline-secondary ms-2">Nuevo personal</a>
     </form>
 </div></div>
-<script src="/assets/js/personal.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script defer src="/assets/js/personal.js?v=busqueda-turno-1"></script>
 <%- include('partials/footer') %>

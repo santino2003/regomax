@@ -106,6 +106,13 @@ padrón. No se permite otro ingreso de la misma persona hasta registrar su egres
 La baja del padrón conserva su historial y permite cerrar las entradas pendientes.
 Las pantallas y API utilizan el permiso existente `ingresos:create`.
 
+El **ojito** en las acciones de Personal abre su ficha con los datos actuales del
+padrón y su historial de ingresos y egresos, ordenado por fecha descendente y
+paginado de a 50 movimientos. Cada fila conserva patente, auto, cargo y turno
+del movimiento, y permite abrir su detalle con adjuntos. El historial se vincula
+por el identificador de personal y permanece disponible después de una baja.
+Desde un movimiento se puede volver a la misma página de la ficha.
+
 Para una instalación existente, ejecutar en este orden:
 
 1. `src/scripts/personal_table.sql`.

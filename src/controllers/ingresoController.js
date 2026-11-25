@@ -42,13 +42,15 @@ const ingresoController = {
     },
 
     async verDetalle(req, res) {
+        const numeroPaginaPersonal = Number(req.query.personal_page);
+        const paginaPersonal = Number.isSafeInteger(numeroPaginaPersonal) && numeroPaginaPersonal > 0 ? numeroPaginaPersonal : 1;
         const numeroPagina = Number(req.query.page);
         const pagina = Number.isSafeInteger(numeroPagina) && numeroPagina > 0 ? numeroPagina : 1;
         try {
             const movimiento = await ingresoService.obtenerDetalle(req.params.id);
             res.render('ingresoDetalle', {
                 title: `Detalle del movimiento #${movimiento.id}`, username: req.user.username,
-                movimiento, pagina, errorDetalle: null
+                movimiento, pagina, paginaPersonal, errorDetalle: null
             });
         } catch (error) {
             if (!error.status) console.error('Error al consultar el detalle del movimiento:', error);

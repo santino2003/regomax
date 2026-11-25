@@ -6,7 +6,8 @@ function contexto() {
   const { db, conexion } = simularTransaccion();
   const persona = { id: 7, nombre: 'Ana', apellido: 'García', patente: null, auto: null, cargo: 'Operaria', turno: 'Mañana', activo: 1 };
   const repositorio = { obtenerPorId: mock.fn(async () => persona), listar: mock.fn(async () => [persona]),
-    guardar: mock.fn(async (datos, id) => ({ id: id || 7, ...datos })), darDeBaja: mock.fn(async () => {}) };
+    guardar: mock.fn(async (datos, id) => ({ id: id || 7, ...datos })), darDeBaja: mock.fn(async () => {}),
+    contarMovimientos: mock.fn(async () => 0), listarMovimientos: mock.fn(async () => []) };
   const movimientos = { obtenerIngresoPersonalPendiente: mock.fn(async () => null), crear: mock.fn(async datos => ({ id: 42, ...datos })) };
   return { repositorio, movimientos, db, conexion, persona, servicio: cargarServicio('personalService', {
     '../config/db': db, '../repositories/personalRepository': repositorio, '../repositories/movimientoIngresoRepository': movimientos
@@ -78,4 +79,37 @@ test('Personal: los identificadores inválidos se rechazan antes de abrir una tr
   const f = contexto();
   for (const id of [null, undefined, [], true, 0, -1, '01', '7 OR 1=1']) await assert.rejects(f.servicio.registrarIngreso(id), { status: 400 });
   assert.equal(f.db.withTransaction.mock.callCount(), 0);
+});
+
+test('Personal: la ficha pagina el historial por identificador y permite consultar personal dado de baja', async () => {
+  const f = contexto();
+  f.persona.activo = 0;
+  f.repositorio.contarMovimientos.mock.mockImplementation(async () => 51);
+  const movimientos = [{ id: 99, tipo_movimiento: 'INGRESO', patente: 'AB123CD' }];
+  f.repositorio.listarMovimientos.mock.mockImplementation(async () => movimientos);
+  const ficha = await f.servicio.obtenerFicha('7', '999');
+  assert.equal(ficha.personal.activo, 0);
+  assert.equal(ficha.pagina, 2);
+  assert.equal(ficha.paginas, 2);
+  assert.equal(ficha.total, 51);
+  assert.deepEqual(ficha.movimientos, movimientos);
+  assert.deepEqual(f.repositorio.contarMovimientos.mock.calls[0].arguments, [7]);
+  assert.deepEqual(f.repositorio.listarMovimientos.mock.calls[0].arguments, [7, 50, 50]);
+});
+
+test('Personal: una ficha sin movimientos conserva una página válida', async () => {
+  const f = contexto();
+  const ficha = await f.servicio.obtenerFicha(7, '-1');
+  assert.equal(ficha.total, 0);
+  assert.equal(ficha.pagina, 1);
+  assert.equal(ficha.paginas, 1);
+  assert.deepEqual(ficha.movimientos, []);
+});
+
+test('Personal: no se consulta el historial de un registro inexistente', async () => {
+  const f = contexto();
+  f.repositorio.obtenerPorId.mock.mockImplementation(async () => null);
+  await assert.rejects(f.servicio.obtenerFicha(7), { status: 404 });
+  assert.equal(f.repositorio.contarMovimientos.mock.callCount(), 0);
+  assert.equal(f.repositorio.listarMovimientos.mock.callCount(), 0);
 });

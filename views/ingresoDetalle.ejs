@@ -1,9 +1,13 @@
 <%- include('partials/header') %>
+<% const paginaFichaPersonal = typeof paginaPersonal !== 'undefined' ? paginaPersonal : 1; %>
 <script>document.body.dataset.allowBackNavigation = 'true';</script>
 <div class="container my-4">
     <div class="menu-container p-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <h4 class="menu-heading mb-0">Detalle del movimiento<% if (movimiento) { %> #<%= movimiento.id %><% } %></h4>
+            <% if (movimiento && movimiento.personal_id) { %>
+                <a href="/personal/<%= movimiento.personal_id %>?page=<%= paginaFichaPersonal %>" class="btn btn-outline-primary"><i class="bi bi-person-vcard me-1" aria-hidden="true"></i>Volver a ficha de personal</a>
+            <% } %>
             <% if (movimiento && movimiento.tipo_movimiento === 'INGRESO') { %>
                 <a href="/ingresos/<%= movimiento.id %>/editar?page=<%= pagina %>" class="btn btn-outline-secondary" title="Editar ingreso"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar ingreso</a>
             <% } %>
@@ -30,10 +34,10 @@
                 <% if (movimiento.tipo_movimiento === 'INGRESO') { %>
                     <dt class="col-sm-4">Estado</dt><dd class="col-sm-8"><%= movimiento.egreso_id ? 'Egresado' : 'Sin egreso vinculado' %></dd>
                     <% if (movimiento.egreso_id) { %>
-                        <dt class="col-sm-4">Egreso</dt><dd class="col-sm-8"><a href="/ingresos/<%= movimiento.egreso_id %>/detalle?page=<%= pagina %>">Movimiento #<%= movimiento.egreso_id %></a> — <%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_egreso) %></dd>
+                        <dt class="col-sm-4">Egreso</dt><dd class="col-sm-8"><a href="/ingresos/<%= movimiento.egreso_id %>/detalle?page=<%= pagina %>&amp;personal_page=<%= paginaFichaPersonal %>">Movimiento #<%= movimiento.egreso_id %></a> — <%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_egreso) %></dd>
                     <% } %>
                 <% } else if (movimiento.ingreso_id) { %>
-                    <dt class="col-sm-4">Ingreso original</dt><dd class="col-sm-8"><a href="/ingresos/<%= movimiento.ingreso_id %>/detalle?page=<%= pagina %>">Movimiento #<%= movimiento.ingreso_id %></a> — <%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_ingreso) %></dd>
+                    <dt class="col-sm-4">Ingreso original</dt><dd class="col-sm-8"><a href="/ingresos/<%= movimiento.ingreso_id %>/detalle?page=<%= pagina %>&amp;personal_page=<%= paginaFichaPersonal %>">Movimiento #<%= movimiento.ingreso_id %></a> — <%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_ingreso) %></dd>
                 <% } %>
             </dl>
             <h5 class="mt-4">Archivos adjuntos</h5>

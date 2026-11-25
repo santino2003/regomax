@@ -7,6 +7,12 @@ function errorVista(req, res, error) {
         mensaje: error.status ? error.message : 'No se pudo cargar personal. Intente nuevamente.' });
 }
 const controlador = {
+    async detalle(req, res) {
+        try {
+            const datos = await servicio.obtenerFicha(req.params.id, req.query.page);
+            res.render('personalDetalle', { title: 'Ficha de personal', username: req.user.username, ...datos });
+        } catch (error) { errorVista(req, res, error); }
+    },
     async listado(req, res) {
         try { res.render('personalListado', { title: 'Personal', username: req.user.username, personal: await servicio.listar() }); }
         catch (error) { errorVista(req, res, error); }

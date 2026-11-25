@@ -31,6 +31,17 @@ class PersonalService {
         return personal;
     }
 
+    async obtenerFicha(id, paginaSolicitada) {
+        const personal = await this.obtener(id);
+        const total = await personalRepository.contarMovimientos(personal.id);
+        const limite = 50;
+        const paginas = Math.max(1, Math.ceil(total / limite));
+        const numero = Number(paginaSolicitada);
+        const pagina = Math.min(Number.isSafeInteger(numero) && numero > 0 ? numero : 1, paginas);
+        const movimientos = await personalRepository.listarMovimientos(personal.id, limite, (pagina - 1) * limite);
+        return { personal, movimientos, pagina, paginas, total };
+    }
+
     async guardar(datos, id) {
         const personal = this.validarDatos(datos);
         personal.activo = datos.activo === false || datos.activo === '0' ? 0 : 1;

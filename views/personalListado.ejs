@@ -17,6 +17,7 @@
                     <td><%= p.nombre %> <%= p.apellido %></td><td><%= p.patente || '—' %></td><td><%= p.auto || '—' %></td><td><%= p.cargo || '—' %></td><td><%= p.turno || '—' %></td>
                     <td><span class="badge <%= Number(p.activo) ? 'bg-success' : 'bg-secondary' %>"><%= Number(p.activo) ? 'Activo' : 'Baja' %></span></td>
                     <td><div class="btn-group" role="group" aria-label="Acciones del personal <%= p.id %>">
+                        <a href="/personal/<%= p.id %>" class="btn btn-sm btn-outline-primary" title="Ver detalles" aria-label="Ver ficha del personal <%= p.id %>"><i class="bi bi-eye" aria-hidden="true"></i></a>
                         <a href="/personal/<%= p.id %>/editar" class="btn btn-sm btn-outline-secondary" title="Editar personal" aria-label="Editar personal <%= p.id %>"><i class="bi bi-pencil" aria-hidden="true"></i></a>
                         <% if (Number(p.activo)) { %>
                             <a href="/ingresos/personal?personal_id=<%= p.id %>" class="btn btn-sm btn-outline-primary" title="Registrar ingreso" aria-label="Registrar ingreso del personal <%= p.id %>"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i></a>
