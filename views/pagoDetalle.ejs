@@ -11,6 +11,10 @@
     <!-- Custom styles -->
     <link rel="stylesheet" href="/assets/css/home.css">
     <style>
+        .payment-notes {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
         @media print {
             @page {
                 size: A4 portrait;
@@ -203,12 +207,14 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <div class="detail-label">Orden de Compra</div>
+                                        <div class="detail-label">Orden de Compra / Servicio</div>
                                         <div class="detail-value">
                                             <% if (pago.orden_compra_id) { %>
                                                 <a href="/ordenes-compra/<%= pago.orden_compra_id %>" class="text-decoration-none">
                                                     <i class="bi bi-box-seam me-1"></i><%= pago.orden_codigo %>
                                                 </a>
+                                            <% } else if (pago.servicio_id) { %>
+                                                <span class="text-muted">Servicio #<%= pago.servicio_id %></span>
                                             <% } else { %>
                                                 <span class="text-muted">-</span>
                                             <% } %>
@@ -239,6 +245,10 @@
                                                 <span class="badge bg-secondary badge-tipo-pago">
                                                     <i class="bi bi-collection me-1"></i>Pago Múltiple
                                                 </span>
+                                            <% } else if (pago.tipo_pago === 'SERVICIO') { %>
+                                                <span class="badge bg-info text-dark badge-tipo-pago">Servicio</span>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary badge-tipo-pago"><%= pago.tipo_pago || '-' %></span>
                                             <% } %>
                                         </div>
                                     </div>
@@ -390,7 +400,7 @@
                                         <hr>
                                         <div>
                                             <span class="detail-label">Detalle:</span>
-                                            <p class="mb-0 detail-value mt-2"><%- (pago.detalle_pago || '').replace(/\n/g, '<br>') %></p>
+                                            <p class="mb-0 detail-value mt-2 payment-notes"><%= pago.detalle_pago || '' %></p>
                                         </div>
                                     </div>
                                 </div>
@@ -442,9 +452,9 @@
                                         </p>
 
                                         <% if (pago.detalle_pago) { %>
-                                            <p class="mb-3"><strong>Detalle / Observaciones:</strong> <%- (pago.detalle_pago || '').replace(/\n/g, '<br>') %></p>
+                                            <p class="mb-3 payment-notes"><strong>Detalle / Observaciones:</strong> <%= pago.detalle_pago || '' %></p>
                                         <% } else if (pago.observaciones) { %>
-                                            <p class="mb-3"><strong>Detalle / Observaciones:</strong> <%- (pago.observaciones || '').replace(/\n/g, '<br>') %></p>
+                                            <p class="mb-3 payment-notes"><strong>Detalle / Observaciones:</strong> <%= pago.observaciones || '' %></p>
                                         <% } %>
 
                                         <div class="row mt-4">

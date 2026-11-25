@@ -2,6 +2,10 @@ const historialRepository = require('../repositories/historialRepository');
 const { fechaActual } = require('../utils/fecha');
 
 class HistorialService {
+    async obtenerOpciones() {
+        return historialRepository.obtenerOpciones();
+    }
+
     /**
      * Registra una acción en el historial
      */

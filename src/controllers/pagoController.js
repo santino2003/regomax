@@ -2,6 +2,7 @@ const pagosService = require('../services/pagosService');
 const ordenCompraService = require('../services/ordenCompraService');
 const pagoRepository = require('../repositories/pagoRepository');
 const proveedorRepository = require('../repositories/proveedorRepository');
+const ExcelJS = require('exceljs');
 
 class PagoController {
     /**
@@ -205,24 +206,48 @@ class PagoController {
             // Obtener filtros de la query string
             const filtros = {
                 orden_codigo: req.query.orden_codigo || '',
+                proveedor_id: req.query.proveedor_id || '',
                 proveedor: req.query.proveedor || '',
                 tipo_pago: req.query.tipo_pago || '',
                 medio_pago: req.query.medio_pago || '',
                 fecha_desde: req.query.fecha_desde || '',
                 fecha_hasta: req.query.fecha_hasta || '',
-                bien_nombre: req.query.bien_nombre || ''
+                bien_nombre: req.query.bien_nombre || '',
+                pagado: req.query.pagado
             };
 
             // Obtener todos los pagos sin paginación para exportar
             const resultado = await pagoRepository.obtenerPagosConFiltros(filtros, null, null);
 
-            // Aquí podrías implementar la lógica de exportación a Excel
-            // Por ahora, devolvemos JSON
-            res.json({
-                success: true,
-                data: resultado.pagos,
-                total: resultado.total
-            });
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('Pagos');
+            sheet.columns = [
+                { header: 'ID', key: 'id', width: 10 },
+                { header: 'Orden de compra', key: 'orden_codigo', width: 20 },
+                { header: 'Proveedor', key: 'proveedor_nombre', width: 30 },
+                { header: 'Bien', key: 'bien_nombre', width: 30 },
+                { header: 'Tipo de pago', key: 'tipo_pago', width: 22 },
+                { header: 'Moneda', key: 'moneda', width: 12 },
+                { header: 'Monto', key: 'monto_pago', width: 18, style: { numFmt: '#,##0.00' } },
+                { header: 'Fecha de pago', key: 'fecha_pago', width: 20, style: { numFmt: 'dd/mm/yyyy' } },
+                { header: 'Estado', key: 'estado', width: 15 },
+                { header: 'Observaciones', key: 'observaciones', width: 45 }
+            ];
+            sheet.getRow(1).font = { bold: true };
+            sheet.autoFilter = 'A1:J1';
+            for (const pago of resultado.pagos) {
+                sheet.addRow({
+                    ...pago,
+                    moneda: pago.moneda || 'ARS',
+                    monto_pago: Number(pago.monto_pago) || 0,
+                    estado: pago.pagado ? 'Pagado' : 'Pendiente',
+                    observaciones: pago.detalle_pago || pago.observaciones || ''
+                });
+            }
+            const buffer = await workbook.xlsx.writeBuffer();
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', 'attachment; filename="pagos.xlsx"');
+            res.send(Buffer.from(buffer));
         } catch (error) {
             console.error('Error en PagoController.exportarExcel:', error);
             res.status(500).json({
@@ -328,7 +353,7 @@ class PagoController {
 
         } catch (error) {
             console.error('Error en PagoController.refinanciarPago:', error);
-            res.status(500).json({
+            res.status(error.statusCode || 500).json({
                 success: false,
                 message: 'Error al refinanciar el pago',
                 error: error.message

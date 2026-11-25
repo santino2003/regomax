@@ -256,14 +256,33 @@ class OrdenCompraRepository {
         }
     }
 
+    // Bloquear primero la orden y luego el ítem para serializar las recepciones.
+    async obtenerParaRecepcion(ordenId, itemId, connection) {
+        const ordenes = await db.query(
+            'SELECT id, codigo, estado, contrafactura FROM ordenes_compra WHERE id = ? FOR UPDATE',
+            [ordenId],
+            connection
+        );
+        if (!ordenes.length) return null;
+
+        const items = await db.query(
+            `SELECT id, bien_id, cantidad_recibida, precio_unitario
+             FROM ordenes_compra_items WHERE orden_compra_id = ? AND id = ? FOR UPDATE`,
+            [ordenId, itemId],
+            connection
+        );
+        return { ...ordenes[0], items };
+    }
+
     /**
      * Actualizar cantidad recibida de un item (solo en estado En Proceso)
      */
-    async actualizarCantidadRecibida(itemId, cantidadRecibida) {
+    async actualizarCantidadRecibida(itemId, cantidadRecibida, connection = null) {
         try {
             await db.query(
                 'UPDATE ordenes_compra_items SET cantidad_recibida = ? WHERE id = ?',
-                [cantidadRecibida, itemId]
+                [cantidadRecibida, itemId],
+                connection
             );
             return true;
         } catch (error) {
@@ -588,7 +607,7 @@ class OrdenCompraRepository {
     }
 
 
-    async obtenerProveedorDeItem(ordenId, itemId) {
+    async obtenerProveedorDeItem(ordenId, itemId, connection = null) {
         const query = `
             SELECT 
                 oci.id as item_id,
@@ -613,7 +632,7 @@ class OrdenCompraRepository {
             AND oci.id = ?
         `;
 
-        const result = await db.query(query, [ordenId, itemId]);
+        const result = await db.query(query, [ordenId, itemId], connection);
         
         // db.query puede devolver [rows, fields] o solo rows dependiendo de la configuración
         const rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : 

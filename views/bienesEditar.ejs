@@ -247,7 +247,7 @@
                                                 <a href="/<%= archivo.ruta_archivo %>" target="_blank" class="btn btn-sm btn-outline-primary" title="Ver/Descargar">
                                                     <i class="bi bi-download"></i>
                                                 </a>
-                                                <button class="btn btn-sm btn-outline-danger ms-1" onclick="eliminarArchivo(<%= archivo.id %>, '<%= archivo.nombre_archivo.replace(/'/g, "\\'") %>')" title="Eliminar">
+                                                <button class="btn btn-sm btn-outline-danger ms-1" data-archivo-id="<%= archivo.id %>" data-archivo-nombre="<%= archivo.nombre_archivo %>" onclick="eliminarArchivo(this.dataset.archivoId, this.dataset.archivoNombre)" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </div>
@@ -332,10 +332,11 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         // Pasar datos al JavaScript
-        window.proveedoresDisponibles = <%- JSON.stringify(proveedores) %>;
-        window.proveedoresActuales = <%- JSON.stringify(bien.proveedores || []) %>;
+        window.proveedoresDisponibles = <%- include('partials/jsonSeguro', { valor: proveedores }) %>;
+        window.proveedoresActuales = <%- include('partials/jsonSeguro', { valor: bien.proveedores || [] }) %>;
     </script>
     <script src="/assets/js/common.js"></script>
+    <script src="/assets/js/htmlSeguro.js"></script>
     <script src="/assets/js/bienesEditar.js"></script>
 </body>
 </html>

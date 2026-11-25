@@ -84,7 +84,7 @@ const authController = {
       const { username, password, email, role, permissions } = req.body;
       
       // Validación básica
-      if (!username || !password) {
+      if (typeof username !== 'string' || !username.trim() || typeof password !== 'string' || !password) {
         return res.status(400).json({ 
           success: false, 
           message: 'El nombre de usuario y contraseña son requeridos' 
@@ -97,8 +97,8 @@ const authController = {
         password, 
         email, 
         role,
-        permissions // Incluimos los permisos seleccionados
-      });
+        permissions
+      }, req.user);
       
       // Devolver respuesta exitosa
       return res.status(201).json({
@@ -108,6 +108,9 @@ const authController = {
       });
     } catch (error) {
       // Manejar errores específicos
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({ success: false, message: error.message });
+      }
       if (error.message === 'El nombre de usuario ya está en uso') {
         return res.status(409).json({
           success: false,
@@ -195,7 +198,7 @@ const authController = {
       
       return res.status(200).json({
         success: true,
-        data: users
+        data: users.map(user => user.toPublicJSON())
       });
     } catch (error) {
       return res.status(500).json({

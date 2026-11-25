@@ -1,4 +1,5 @@
 const historialService = require('../services/historialService');
+const { etiqueta, filasDetalles } = require('../utils/historial');
 const { formatearFechaHoraLocal, fechaActual, formatMySQLLocal } = require('../utils/fecha');
 
 class HistorialController {
@@ -11,31 +12,13 @@ class HistorialController {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 50;
             
-            // Construir objeto de filtros desde la query
             const filtros = {};
-            
-            if (req.query.usuario) {
-                filtros.usuario = req.query.usuario;
+            for (const clave of ['buscar', 'usuario', 'accion', 'entidad', 'fechaDesde', 'fechaHasta']) {
+                if (typeof req.query[clave] === 'string' && req.query[clave].trim()) {
+                    filtros[clave] = req.query[clave].trim();
+                }
             }
-            
-            if (req.query.accion) {
-                filtros.accion = req.query.accion;
-            }
-            
-            if (req.query.entidad) {
-                filtros.entidad = req.query.entidad;
-            }
-            
-            // Ya no filtramos por entidadId
-            
-            if (req.query.fechaDesde) {
-                filtros.fechaDesde = req.query.fechaDesde;
-            }
-            
-            if (req.query.fechaHasta) {
-                filtros.fechaHasta = req.query.fechaHasta;
-            }
-            
+
             // Obtener historial con paginación y filtros
             const resultado = await historialService.obtenerHistorial(page, limit, filtros);
             
@@ -43,7 +26,11 @@ class HistorialController {
             res.render('historial', {
                 historial: resultado.data,
                 pagination: resultado.pagination,
-                filtros: req.query,
+                filtros,
+                opciones: await historialService.obtenerOpciones(),
+                etiqueta,
+                filasDetalles,
+                exportUrl: `/api/historial/exportar?${new URLSearchParams(filtros)}`,
                 username: req.user ? req.user.username : 'Usuario'
             });
             
@@ -75,11 +62,12 @@ class HistorialController {
                 // Convertir detalles a string, escapando comillas
                 let detallesStr = '';
                 if (item.detalles) {
-                    detallesStr = JSON.stringify(item.detalles).replace(/"/g, '""');
+                    detallesStr = filasDetalles(item.detalles).map(f => `${f.campo}: ${f.valor}`).join('; ');
                 }
                 
                 // Agregar fila
-                csv += `${item.id},"${fecha}","${item.usuario}","${item.accion}","${item.entidad}","${detallesStr}"\n`;
+                csv += [item.id, fecha, item.usuario, etiqueta(item.accion), etiqueta(item.entidad), detallesStr]
+                    .map(valor => `"${String(valor ?? '').replace(/"/g, '""')}"`).join(',') + '\n';
             });
             
             // Configurar headers para descarga

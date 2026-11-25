@@ -4,7 +4,71 @@ $(document).ready(function() {
     let currentLimit = 50;
     let currentFilters = {};
     let bienIdToDelete = null;
+    const seleccionados = new Set();
+    let bienesVisibles = [];
+    let exportando = false;
     const modalEliminar = new bootstrap.Modal('#modalEliminar');
+
+    function actualizarSeleccion() {
+        const marcados = bienesVisibles.filter(id => seleccionados.has(id)).length;
+        $('#seleccionarPaginaBienes').prop('checked', bienesVisibles.length > 0 && marcados === bienesVisibles.length)
+            .prop('indeterminate', marcados > 0 && marcados < bienesVisibles.length).prop('disabled', !bienesVisibles.length);
+        $('#cantidadSeleccionados').text(`${seleccionados.size} seleccionados`);
+        $('#exportarSeleccionados').prop('disabled', exportando || !seleccionados.size);
+        $('#limpiarSeleccionBienes').prop('disabled', !seleccionados.size);
+        $('#tablaBienes .seleccionar-bien').each(function() { this.checked = seleccionados.has(Number(this.value)); });
+    }
+
+    $('#tablaBienes').on('change', '.seleccionar-bien', function() {
+        const id = Number(this.value);
+        if (this.checked) seleccionados.add(id); else seleccionados.delete(id);
+        actualizarSeleccion();
+    });
+    $('#seleccionarPaginaBienes').on('change', function() {
+        for (const id of bienesVisibles) { if (this.checked) seleccionados.add(id); else seleccionados.delete(id); }
+        actualizarSeleccion();
+    });
+    $('#limpiarSeleccionBienes').on('click', function() { seleccionados.clear(); actualizarSeleccion(); });
+
+    $('.exportar-bienes').on('click', async function() {
+        if (exportando) return;
+        const alcance = this.dataset.alcance;
+        if (alcance === 'seleccionados' && !seleccionados.size) return;
+        exportando = true;
+        $('.exportar-bienes').prop('disabled', true);
+        $('#estadoExportacion').text('Generando Excel...');
+        try {
+            const respuesta = await fetch('/api/bienes/exportar', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ alcance, ids: [...seleccionados], filtros: currentFilters })
+            });
+            if (respuesta.redirected || respuesta.status === 401) { window.location.href = '/login'; return; }
+            if (!respuesta.ok) {
+                const error = await respuesta.json();
+                throw new Error(error.message || error.error || 'No se pudieron exportar los bienes.');
+            }
+            if (!respuesta.headers.get('Content-Type')?.includes('spreadsheetml')) throw new Error('No se recibió un archivo Excel válido.');
+            const blob = await respuesta.blob();
+            const url = URL.createObjectURL(blob);
+            const enlace = document.createElement('a');
+            enlace.href = url;
+            enlace.download = `bienes-${alcance}.xlsx`;
+            document.body.appendChild(enlace);
+            enlace.click();
+            enlace.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+            const mensaje = document.createElement('div');
+            mensaje.className = 'alert alert-danger';
+            mensaje.textContent = error.message || 'No se pudieron exportar los bienes. Intente nuevamente.';
+            document.getElementById('alertPlaceholder').replaceChildren(mensaje);
+        } finally {
+            exportando = false;
+            $('.exportar-bienes').prop('disabled', false);
+            $('#estadoExportacion').text('');
+            actualizarSeleccion();
+        }
+    });
 
     function leerEstadoDesdeUrl() {
         const params = new URLSearchParams(window.location.search);
@@ -91,9 +155,11 @@ $(document).ready(function() {
 
     function renderTabla(bienes) {
         const tbody = $('#tablaBienes');
+        bienesVisibles = bienes.map(bien => Number(bien.id));
         
         if (bienes.length === 0) {
-            tbody.html('<tr><td colspan="8" class="text-center">No se encontraron bienes</td></tr>');
+            tbody.html('<tr><td colspan="9" class="text-center">No se encontraron bienes</td></tr>');
+            actualizarSeleccion();
             return;
         }
         
@@ -115,6 +181,7 @@ $(document).ready(function() {
             
             html += `
                 <tr>
+                    <td><input type="checkbox" class="form-check-input seleccionar-bien" value="${Number(bien.id)}" aria-label="Seleccionar bien ${Number(bien.id)}"></td>
                     <td>${bien.codigo}</td>
                     <td>${bien.nombre}</td>
                     <td><span class="badge ${bien.tipo === 'Uso' ? 'bg-info' : 'bg-warning'}">${bien.tipo}</span></td>
@@ -144,6 +211,7 @@ $(document).ready(function() {
         });
         
         tbody.html(html);
+        actualizarSeleccion();
     }
     
     function renderPaginacion(paginacion) {
@@ -274,6 +342,8 @@ $(document).ready(function() {
         .then(data => {
             if (data.success) {
                 showAlert('Bien eliminado correctamente', 'success');
+                seleccionados.delete(Number(bienIdToDelete));
+                actualizarSeleccion();
                 modalEliminar.hide();
                 cargarBienes(currentPage);
             } else {
@@ -291,6 +361,8 @@ $(document).ready(function() {
     });
     
     $('#btnFiltrar').on('click', function() {
+        seleccionados.clear();
+        actualizarSeleccion();
         currentFilters = {};
         
         const tipo = $('#filtroTipo').val();
@@ -309,6 +381,8 @@ $(document).ready(function() {
     });
     
     $('#btnLimpiar').on('click', function() {
+        seleccionados.clear();
+        actualizarSeleccion();
         $('#filtroTipo').val('');
         $('#filtroCategoria').val('');
         $('#filtroFamilia').val('');
@@ -462,6 +536,8 @@ $(document).ready(function() {
     }
     
     window.addEventListener('popstate', function() {
+        seleccionados.clear();
+        actualizarSeleccion();
         leerEstadoDesdeUrl();
         aplicarEstadoEnFormulario();
         actualizarUrl('replace');

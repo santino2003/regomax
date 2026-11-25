@@ -217,9 +217,15 @@ class BienRepository {
                 whereConditions.push('bf.familia_id = ?');
                 params.push(filtros.familia_id);
             }
-            if (filtros.busqueda) {
+            if (Array.isArray(filtros.ids) && filtros.ids.length) {
+                whereConditions.push(`b.id IN (${filtros.ids.map(() => '?').join(', ')})`);
+                params.push(...filtros.ids);
+            }
+            // Cada término debe aparecer en nombre, código o descripción, en cualquier orden.
+            const terminos = typeof filtros.busqueda === 'string' ? filtros.busqueda.trim().split(/\s+/).filter(Boolean) : [];
+            for (const termino of terminos) {
                 whereConditions.push('(b.nombre LIKE ? OR b.codigo LIKE ? OR b.descripcion LIKE ?)');
-                const searchTerm = `%${filtros.busqueda}%`;
+                const searchTerm = `%${termino}%`;
                 params.push(searchTerm, searchTerm, searchTerm);
             }
             if (filtros.critico) {
@@ -258,8 +264,8 @@ class BienRepository {
                 LEFT JOIN almacenes a ON b.almacen_defecto_id = a.id
                 ${whereClause}
                 GROUP BY b.id
-                ORDER BY b.fecha_creacion DESC 
-                LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+                ORDER BY b.fecha_creacion DESC, b.id DESC
+                ${limit === null ? '' : `LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`}
             `;
             
             const result = await db.query(query, params);
@@ -268,9 +274,9 @@ class BienRepository {
                 data: result,
                 pagination: {
                     paginaActual: parseInt(page),
-                    limite: parseInt(limit),
+                    limite: limit === null ? null : parseInt(limit),
                     totalRegistros: totalRegistros,
-                    totalPaginas: Math.ceil(totalRegistros / limit)
+                    totalPaginas: limit === null ? (totalRegistros ? 1 : 0) : Math.ceil(totalRegistros / limit)
                 }
             };
         } catch (error) {
@@ -355,11 +361,16 @@ class BienRepository {
     /**
      * Actualizar cantidad en stock
      */
-    async actualizarStock(id, cantidad) {
+    async obtenerStockPorId(id, connection) {
+        const rows = await db.query(`SELECT * FROM bienes WHERE id = ?${connection ? ' FOR UPDATE' : ''}`, [id], connection);
+        return rows[0] || null;
+    }
+
+    async actualizarStock(id, cantidad, connection) {
         try {
             await db.query(
                 'UPDATE bienes SET cantidad_stock = ? WHERE id = ?',
-                [cantidad, id]
+                [cantidad, id], connection
             );
             return true;
         } catch (error) {

@@ -241,8 +241,11 @@ class KitRepository {
     /**
      * Obtener un kit por ID con todos sus componentes
      */
-    async obtenerPorId(id) {
+    async obtenerPorId(id, connection) {
         try {
+            if (connection) {
+                await db.query('SELECT id FROM bienes WHERE id = ? FOR UPDATE', [id], connection);
+            }
             const query = `
                 SELECT 
                     b.*,
@@ -261,7 +264,7 @@ class KitRepository {
                 WHERE b.id = ? AND b.es_kit = TRUE
             `;
             
-            const result = await db.query(query, [id]);
+            const result = await db.query(query, [id], connection);
             if (result.length === 0) return null;
             
             const kit = result[0];
@@ -280,7 +283,9 @@ class KitRepository {
                 INNER JOIN bienes b ON bc.bien_componente_id = b.id
                 LEFT JOIN unidades_medida um ON b.unidad_medida_id = um.id
                 WHERE bc.bien_kit_id = ?
-            `, [id]);
+                ORDER BY bc.bien_componente_id
+                ${connection ? 'FOR UPDATE' : ''}
+            `, [id], connection);
             
             kit.componentes = componentes;
             
@@ -301,7 +306,7 @@ class KitRepository {
             // Obtener archivos adjuntos
             const archivos = await db.query(`
                 SELECT * FROM bienes_archivos WHERE bien_id = ?
-            `, [id]);
+            `, [id], connection);
             
             kit.archivos = archivos;
             

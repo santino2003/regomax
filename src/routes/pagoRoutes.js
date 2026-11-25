@@ -46,13 +46,6 @@ router.post(
 	pagoController.refinanciarPago
 );
 
-// Ruta para mostrar detalle de un pago
-router.get(
-	'/:id',
-	permissionsMiddleware.hasPermission(PERMISSIONS.PAGOS.VIEW),
-	pagoController.mostrarDetalle
-);
-
 // Ruta para obtener resumen de pagos (API)
 router.get(
 	'/api/resumen',
@@ -65,6 +58,13 @@ router.get(
 	'/exportar',
 	permissionsMiddleware.hasPermission(PERMISSIONS.PAGOS.EXPORT),
 	pagoController.exportarExcel
+);
+
+// Las rutas con parámetros deben ir después de las rutas específicas.
+router.get(
+	'/:id',
+	permissionsMiddleware.hasPermission(PERMISSIONS.PAGOS.VIEW),
+	pagoController.mostrarDetalle
 );
 
 module.exports = router;

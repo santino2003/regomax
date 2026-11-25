@@ -937,7 +937,14 @@ const almacen = {
  */
 const bienDetalles = {
     crear: (req, res, body) => {
+        let respuesta = body;
+        if (typeof body === 'string') {
+            try { respuesta = JSON.parse(body); } catch { respuesta = null; }
+        }
         return {
+            bien_id: respuesta?.data?.id,
+
+            codigo: req.body?.codigo,
             nombre: req.body?.nombre,
             tipo: req.body?.tipo,
             categoria_id: req.body?.categoria_id,
@@ -950,6 +957,7 @@ const bienDetalles = {
     editar: (req, res, body) => {
         return {
             bien_id: req.params?.id,
+            codigo: req.body?.codigo,
             nombre: req.body?.nombre,
             tipo: req.body?.tipo,
             categoria_id: req.body?.categoria_id,
@@ -1151,7 +1159,12 @@ const pagoDetalles = {
                         pagado: !!po.pagado,
                         monto_original: po.monto_pago,
                         fecha_pago_original: po.fecha_pago,
-                        tipo_pago_original: po.tipo_pago
+                        tipo_pago_original: po.tipo_pago,
+                        orden_compra_id: po.orden_compra_id ?? null,
+                        orden: po.orden_codigo ?? null,
+                        proveedor_id: po.proveedor_id ?? null,
+                        proveedor: po.proveedor_nombre ?? null,
+                        servicio_id: po.servicio_id ?? null
                     };
                 }
 
@@ -1166,9 +1179,13 @@ const pagoDetalles = {
                 // Pagos/cuotas generadas por la refinanciación
                 if (data.data && data.data.cuotasCreadas) {
                     detallesRefinanciacion.cuotas_generadas = data.data.cuotasCreadas.map(c => ({
-                        orden_venta: c.orden_codigo || c.orden_id || undefined,
-                        fecha: c.fecha_pago,
-                        monto: c.monto_pago,
+                        orden: c.orden_codigo ?? c.orden_compra_id ?? c.orden_id ?? null,
+                        orden_compra_id: c.orden_compra_id ?? null,
+                        proveedor: c.proveedor_nombre ?? c.proveedor_id ?? null,
+                        proveedor_id: c.proveedor_id ?? null,
+                        servicio_id: c.servicio_id ?? null,
+                        fecha: c.fecha_pago ?? c.fecha,
+                        monto: c.monto_pago ?? c.monto,
                         tipo_pago: c.tipo_pago,
                         pagado: !!c.pagado
                     }));

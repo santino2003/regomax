@@ -1,4 +1,6 @@
 const salidaRepository = require('../repositories/salidaRepository');
+const db = require('../config/db');
+const { stockQuantity } = require('../utils/stockQuantity');
 const bienService = require('./bienService');
 const kitService = require('./kitService');
 const bienRepository = require('../repositories/bienRepository');
@@ -84,60 +86,24 @@ class SalidaService {
                 throw new Error('Todos los campos son requeridos');
             }
 
-            if (cantidad <= 0) {
-                throw new Error('La cantidad debe ser mayor a 0');
-            }
+            const unidades = stockQuantity(cantidad);
+            if (!['bien', 'kit'].includes(tipo_item)) throw new Error('Tipo de item no válido');
 
-            // Obtener datos actuales del item antes de descontar
-            let itemActual;
-            if (tipo_item === 'bien') {
-                itemActual = await bienService.obtenerPorId(item_id);
-            } else if (tipo_item === 'kit') {
-                itemActual = await kitService.obtenerPorId(item_id);
-            } else {
-                throw new Error('Tipo de item no válido');
-            }
-
-            const stockAnterior = itemActual.cantidad_stock;
-
-            // Descontar stock según el tipo
-            if (tipo_item === 'bien') {
-                await bienService.descontarStock(item_id, cantidad);
-            } else if (tipo_item === 'kit') {
-                await kitService.descontarStock(item_id, cantidad);
-            }
-
-            // Obtener stock nuevo después del descuento
-            let itemNuevo;
-            if (tipo_item === 'bien') {
-                itemNuevo = await bienService.obtenerPorId(item_id);
-            } else {
-                itemNuevo = await kitService.obtenerPorId(item_id);
-            }
-            const stockNuevo = itemNuevo.cantidad_stock;
-
-            // Registrar movimiento en tabla de movimientos_stock
-            await salidaRepository.registrarMovimiento({
-                tipo_movimiento: 'SALIDA',
-                tipo_item,
-                item_id,
-                codigo: itemActual.codigo,
-                nombre: itemActual.nombre,
-                cantidad,
-                stock_anterior: stockAnterior,
-                stock_nuevo: stockNuevo,
-                responsable: responsable_salida,
-                usuario_sistema
+            return await db.withTransaction(async connection => {
+                const service = tipo_item === 'bien' ? bienService : kitService;
+                const cambio = await service.descontarStock(item_id, unidades, connection);
+                await salidaRepository.registrarMovimiento({
+                    tipo_movimiento: 'SALIDA', tipo_item, item_id,
+                    codigo: cambio.item.codigo, nombre: cambio.item.nombre, cantidad: unidades,
+                    stock_anterior: cambio.stock_anterior, stock_nuevo: cambio.stock_nuevo,
+                    responsable: responsable_salida, usuario_sistema
+                }, connection);
+                return {
+                    success: true,
+                    message: `Salida procesada exitosamente. Se descontaron ${unidades} unidades.`,
+                    data: { stock_anterior: cambio.stock_anterior, stock_nuevo: cambio.stock_nuevo }
+                };
             });
-
-            return {
-                success: true,
-                message: `Salida procesada exitosamente. Se descontaron ${cantidad} unidades.`,
-                data: {
-                    stock_anterior: stockAnterior,
-                    stock_nuevo: stockNuevo
-                }
-            };
         } catch (error) {
             console.error('Error al procesar salida:', error);
             throw error;

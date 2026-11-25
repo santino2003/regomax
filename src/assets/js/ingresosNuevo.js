@@ -7,8 +7,76 @@ document.addEventListener('DOMContentLoaded', () => {
     const motivo = document.getElementById('motivoIngreso');
     const camposNFU = document.getElementById('camposNFU');
     const empresa = document.getElementById('cliente_id');
+    const camposLogistica = document.getElementById('camposLogistica');
+    const camposVehiculo = document.getElementById('camposVehiculo');
+    const ordenVenta = document.getElementById('orden_venta_id');
+    const empresaLogistica = document.getElementById('empresaLogistica');
+    const camposBasura = document.getElementById('camposBasura');
+    const empresaBasura = document.getElementById('empresaBasura');
     let procesando = false;
     let ingresoGuardado = false;
+    const archivoInput = document.getElementById('archivoIngreso');
+    const zonaArchivo = document.getElementById('zonaArchivoIngreso');
+    const errorArchivo = document.getElementById('errorArchivoIngreso');
+    const vistaArchivo = document.getElementById('vistaArchivoIngreso');
+    let archivoSeleccionado = null;
+    let urlArchivo = null;
+
+    function limpiarArchivo() {
+        archivoSeleccionado = null;
+        archivoInput.value = '';
+        archivoInput.setCustomValidity('');
+        errorArchivo.textContent = '';
+        if (urlArchivo) URL.revokeObjectURL(urlArchivo);
+        urlArchivo = null;
+        vistaArchivo.removeAttribute('src');
+        document.getElementById('detalleArchivoIngreso').classList.add('d-none');
+        document.getElementById('nombreArchivoIngreso').textContent = '';
+        document.getElementById('quitarArchivoIngreso').classList.add('d-none');
+    }
+
+    function seleccionarArchivo(archivos) {
+        limpiarArchivo();
+        if (!archivos.length) return;
+        document.getElementById('quitarArchivoIngreso').classList.remove('d-none');
+        const archivo = archivos[0];
+        const esPDF = /\.pdf$/i.test(archivo.name);
+        const tipoValido = !archivo.type || (esPDF ? archivo.type === 'application/pdf' : ['image/jpeg', 'image/jpg'].includes(archivo.type));
+        const error = archivos.length !== 1 ? 'Seleccione un solo archivo.'
+            : !/\.(jpe?g|pdf)$/i.test(archivo.name) || !tipoValido
+                ? 'Solo se permite un archivo JPG, JPEG o PDF.'
+                : archivo.size > 10 * 1024 * 1024 ? 'El archivo no puede superar los 10 MB.' : '';
+        if (error) {
+            archivoInput.setCustomValidity(error);
+            errorArchivo.textContent = error;
+            return;
+        }
+        archivoSeleccionado = archivo;
+        vistaArchivo.classList.toggle('d-none', esPDF);
+        if (!esPDF) {
+            urlArchivo = URL.createObjectURL(archivo);
+            vistaArchivo.src = urlArchivo;
+        }
+        document.getElementById('nombreArchivoIngreso').textContent = archivo.name;
+        document.getElementById('detalleArchivoIngreso').classList.remove('d-none');
+    }
+
+    archivoInput.addEventListener('change', () => {
+        if (!procesando) seleccionarArchivo(Array.from(archivoInput.files));
+    });
+    zonaArchivo.addEventListener('dragover', event => {
+        event.preventDefault();
+        if (!procesando) zonaArchivo.classList.add('border-primary', 'bg-light');
+    });
+    zonaArchivo.addEventListener('dragleave', () => zonaArchivo.classList.remove('border-primary', 'bg-light'));
+    zonaArchivo.addEventListener('drop', event => {
+        event.preventDefault();
+        zonaArchivo.classList.remove('border-primary', 'bg-light');
+        if (!procesando) seleccionarArchivo(Array.from(event.dataTransfer.files));
+    });
+    document.getElementById('quitarArchivoIngreso').addEventListener('click', () => {
+        if (!procesando) limpiarArchivo();
+    });
 
     const url = new URL(window.location.href);
     if (url.searchParams.get('registrado') === '1') {
@@ -23,6 +91,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function actualizarMotivo() {
         const esNFU = motivo.value === 'CNFU/NFU';
+        const esLogistica = motivo.value === 'Logística';
+        const esBasura = motivo.value === 'Basura';
+        camposBasura.classList.toggle('d-none', !esBasura);
+        camposBasura.disabled = !esBasura;
+        if (!esBasura) empresaBasura.value = '';
+        camposLogistica.classList.toggle('d-none', !esLogistica);
+        camposLogistica.disabled = !esLogistica;
+        ordenVenta.disabled = !esLogistica;
+        camposVehiculo.classList.toggle('d-none', !esNFU && !esLogistica && !esBasura);
+        camposVehiculo.disabled = !esNFU && !esLogistica && !esBasura;
         camposNFU.classList.toggle('d-none', !esNFU);
         camposNFU.disabled = !esNFU;
         empresa.disabled = !esNFU;
@@ -41,22 +119,46 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!esNFU) {
             empresa.value = '';
             document.getElementById('tipo').value = '';
-            document.getElementById('patente').value = '';
         }
+        if (!esLogistica) ordenVenta.value = '';
+        if (!esNFU && !esLogistica && !esBasura) document.getElementById('patente').value = '';
+        if (esLogistica && window.jQuery?.fn.select2 && !ordenVenta.classList.contains('select2-hidden-accessible')) {
+            window.jQuery(ordenVenta).select2({
+                theme: 'bootstrap-5', width: '100%', placeholder: 'Seleccionar orden de venta',
+                language: { noResults: () => 'No se encontraron órdenes de venta', searching: () => 'Buscando...' }
+            });
+        }
+        actualizarEmpresaLogistica();
         if (window.jQuery?.fn.select2) window.jQuery(empresa).trigger('change');
+        if (window.jQuery?.fn.select2) window.jQuery(ordenVenta).trigger('change');
     }
+
+    function actualizarEmpresaLogistica() {
+        empresaLogistica.value = ordenVenta.selectedOptions[0]?.dataset.clienteFinal || '';
+    }
+    ordenVenta.addEventListener('change', actualizarEmpresaLogistica);
+    if (window.jQuery?.fn.select2) window.jQuery(ordenVenta).on('change', actualizarEmpresaLogistica);
 
     motivo.addEventListener('change', actualizarMotivo);
     formMotivo.addEventListener('submit', event => {
         event.preventDefault();
         if (ingresoGuardado || !seleccionada.dataset.personaId) return;
-        enviar(formMotivo, '/api/ingresos/movimientos', {
+        const datos = new FormData();
+        const campos = {
             tipo_movimiento: 'INGRESO',
             motivo: motivo.value,
+            cliente_id: empresa.value,
+            orden_venta_id: motivo.value === 'Logística' ? ordenVenta.value : undefined,
+            empresa: motivo.value === 'Basura' ? empresaBasura.value.trim() : undefined,
             nombre: document.getElementById('personaNombre').textContent,
             apellido: document.getElementById('personaApellido').textContent,
             patente: document.getElementById('patente').value.trim()
-        }, () => {
+        };
+        for (const [campo, valor] of Object.entries(campos)) {
+            if (valor !== undefined) datos.append(campo, valor);
+        }
+        if (archivoSeleccionado) datos.append('archivo_jpg', archivoSeleccionado);
+        enviar(formMotivo, '/api/ingresos/movimientos', datos, () => {
             ingresoGuardado = true;
             window.location.href = '/ingresos?registrado=1';
         });
@@ -88,10 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const texto = submit.innerHTML;
         submit.textContent = 'Procesando...';
         try {
+            const esMultipart = datos instanceof FormData;
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
+                headers: esMultipart ? {} : { 'Content-Type': 'application/json' },
+                body: esMultipart ? datos : JSON.stringify(datos)
             });
             if (response.redirected || response.status === 401) {
                 window.location.href = '/login';
@@ -143,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formIdentificar.reset();
             formPersona.reset();
             formMotivo.reset();
+            limpiarArchivo();
             formMotivo.classList.remove('was-validated');
             ingresoGuardado = false;
             actualizarMotivo();

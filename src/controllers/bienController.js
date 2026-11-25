@@ -4,8 +4,48 @@ const { UPLOADS_BASE_PATH } = require('../config/uploads');
 const path = require('path');
 const fs = require('fs').promises;
 const generarBarcodeBase64 = require('../utils/imageBarcode');
+const ExcelJS = require('exceljs');
 
 const bienController = {
+    async exportarExcel(req, res) {
+        try {
+            const bienes = await bienService.obtenerParaExportar(req.body);
+            const libro = new ExcelJS.Workbook();
+            const hoja = libro.addWorksheet('Bienes', { views: [{ state: 'frozen', ySplit: 1 }] });
+            hoja.columns = [
+                { header: 'Código', key: 'codigo', width: 20 },
+                { header: 'Nombre', key: 'nombre', width: 60 },
+                { header: 'Descripción', key: 'descripcion', width: 60 },
+                { header: 'Tipo', key: 'tipo', width: 16 },
+                { header: 'Categoría', key: 'categoria_nombre', width: 25 },
+                { header: 'Familias', key: 'familias_nombres', width: 35 },
+                { header: 'Unidad de medida', key: 'unidad_medida_nombre', width: 20 },
+                { header: 'Stock', key: 'cantidad_stock', width: 16, style: { numFmt: '#,##0.##' } },
+                { header: 'Stock crítico', key: 'cantidad_critica', width: 16, style: { numFmt: '#,##0.##' } },
+                { header: 'Ubicación', key: 'ubicacion', width: 25 },
+                { header: 'Almacén', key: 'almacen_nombre', width: 25 }
+            ];
+            hoja.getRow(1).font = { bold: true };
+            hoja.autoFilter = 'A1:K1';
+            const numero = valor => valor === null || valor === undefined || valor === '' ? null : (Number.isFinite(Number(valor)) ? Number(valor) : null);
+            for (const bien of bienes) {
+                const fila = {};
+                for (const columna of hoja.columns) fila[columna.key] = String(bien[columna.key] ?? '');
+                fila.cantidad_stock = numero(bien.cantidad_stock);
+                fila.cantidad_critica = numero(bien.cantidad_critica);
+                hoja.addRow(fila);
+            }
+            const buffer = await libro.xlsx.writeBuffer();
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', 'attachment; filename="bienes.xlsx"');
+            res.send(Buffer.from(buffer));
+        } catch (error) {
+            if (!error.status) console.error('Error al exportar bienes:', error);
+            res.status(error.status || 500).json({ success: false,
+                error: error.status ? error.message : 'No se pudieron exportar los bienes. Intente nuevamente.' });
+        }
+    },
+
     /**
      * Crear nuevo bien
      */
@@ -156,7 +196,7 @@ const bienController = {
                 return res.status(400).json({ error: 'La cantidad es requerida' });
             }
             
-            await bienService.actualizarStock(id, parseFloat(cantidad));
+            await bienService.actualizarStock(id, cantidad);
             return res.status(200).json({
                 success: true,
                 message: 'Stock actualizado exitosamente',

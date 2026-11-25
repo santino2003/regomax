@@ -72,6 +72,11 @@ function mostrarConfirmacion(mensaje, callback) {
  * Inicialización cuando el DOM está listo
  */
 $(document).ready(function() {
+    document.querySelectorAll('.js-refinanciar-pago').forEach(button => {
+        button.addEventListener('click', () => abrirModalRefinanciar(
+            button.dataset.pagoId, button.dataset.proveedorNombre, button.dataset.monto
+        ));
+    });
     // Inicializar Select2
     $('#proveedor_id').select2({
         theme: 'bootstrap-5',
@@ -230,19 +235,20 @@ function abrirModalPagoMultiple() {
     const total = pagosArray.reduce((sum, p) => sum + (p.monto || 0), 0);
 
     if (lista) {
-        lista.innerHTML = pagosArray.map(p => {
+        const filas = pagosArray.map(p => {
             const item = p.bienNombre
                 ? `${p.bienNombre}${p.bienCodigo ? ` (${p.bienCodigo})` : ''}`
                 : 'Sin bien';
             const montoFmt = `${moneda} ${p.monto.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            return `
-                <tr>
-                    <td>${p.ordenCodigo}</td>
-                    <td>${item}</td>
-                    <td>${montoFmt}</td>
-                </tr>
-            `;
-        }).join('');
+            const fila = document.createElement('tr');
+            for (const texto of [p.ordenCodigo, item, montoFmt]) {
+                const celda = document.createElement('td');
+                celda.textContent = texto;
+                fila.appendChild(celda);
+            }
+            return fila;
+        });
+        lista.replaceChildren(...filas);
     }
 
     if (totalEl) {

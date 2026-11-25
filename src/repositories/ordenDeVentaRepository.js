@@ -1,31 +1,33 @@
 const db = require('../config/db');
 
 class OrdenDeVentaRepository {
-    // Métodos para transacciones
-    async iniciarTransaccion() {
-        await db.query('START TRANSACTION');
+    async obtenerParaIngresosLogistica() {
+        return db.query(
+            `SELECT id, cliente_final, codigo_venta, estado FROM ordenes_venta
+             WHERE estado IN (?, ?) ORDER BY id DESC`, ['abierta', 'en_logistica']
+        );
     }
-    
-    async confirmarTransaccion() {
-        await db.query('COMMIT');
+
+    async obtenerParaIngresoLogistica(id, connection) {
+        const rows = await db.query(
+            'SELECT id, cliente_final, codigo_venta, estado FROM ordenes_venta WHERE id = ? FOR UPDATE',
+            [id], connection
+        );
+        return rows[0] || null;
     }
-    
-    async revertirTransaccion() {
-        await db.query('ROLLBACK');
-    }
-    
+
     // Crear la orden principal
-    async crearOrdenVenta(fecha, cliente, clienteFinal, codigoVenta, observaciones, responsable) {
+    async crearOrdenVenta(fecha, cliente, clienteFinal, codigoVenta, observaciones, responsable, connection) {
         const result = await db.query(
             `INSERT INTO ordenes_venta (fecha, cliente, cliente_final, codigo_venta, observaciones, responsable) 
              VALUES (?, ?, ?, ?, ?, ?)`,
-            [fecha, cliente, clienteFinal, codigoVenta, observaciones, responsable]
+            [fecha, cliente, clienteFinal, codigoVenta, observaciones, responsable], connection
         );
         return result.insertId;
     }
     
     // Agregar detalle de producto (ahora guarda cantidad_inicial)
-    async agregarDetalleOrden(ordenId, producto, cantidad) {
+    async agregarDetalleOrden(ordenId, producto, cantidad, connection) {
         // Soporta tanto producto como string u objeto {producto, cantidad}
         const prod = producto?.producto ?? producto ?? null;
         const cant = producto?.cantidad ?? cantidad ?? null;
@@ -33,12 +35,12 @@ class OrdenDeVentaRepository {
         await db.query(
             `INSERT INTO ordenes_venta_detalle (orden_venta_id, producto, cantidad, cantidad_inicial) 
              VALUES (?, ?, ?, ?)`,
-            [ordenId, prod, cant, cant]
+            [ordenId, prod, cant, cant], connection
         );
     }
     
     // Agregar detalle de producto con cantidad inicial explícita (para edición de órdenes)
-    async agregarDetalleConCantidadInicial(ordenId, producto, cantidad, cantidadInicial) {
+    async agregarDetalleConCantidadInicial(ordenId, producto, cantidad, cantidadInicial, connection) {
         if (!producto) throw new Error('Producto no definido al agregar detalle de orden');
         
         // Si la cantidad inicial no está definida, usamos la cantidad como valor predeterminado
@@ -49,18 +51,21 @@ class OrdenDeVentaRepository {
         await db.query(
             `INSERT INTO ordenes_venta_detalle (orden_venta_id, producto, cantidad, cantidad_inicial) 
              VALUES (?, ?, ?, ?)`,
-            [ordenId, producto, cantidad, cantInicial]
+            [ordenId, producto, cantidad, cantInicial], connection
         );
     }
     
     // Obtener orden completa con sus productos
-    async obtenerPorId(id) {
+    async obtenerPorId(id, connection) {
+        if (connection) {
+            await db.query('SELECT id FROM ordenes_venta WHERE id = ? FOR UPDATE', [id], connection);
+        }
         const results = await db.query(
             `SELECT ov.*, ovd.id as detalle_id, ovd.producto, ovd.cantidad, ovd.cantidad_inicial 
              FROM ordenes_venta ov
              LEFT JOIN ordenes_venta_detalle ovd ON ov.id = ovd.orden_venta_id
              WHERE ov.id = ?`,
-            [id]
+            [id], connection
         );
         
         if (!results || results.length === 0) return null;
@@ -182,7 +187,7 @@ class OrdenDeVentaRepository {
     }
     
     // Actualizar los datos básicos de una orden
-    async actualizarDatosOrden(id, datosOrden) {
+    async actualizarDatosOrden(id, datosOrden, connection) {
         // Construir la consulta SQL dinámicamente basada en los campos proporcionados
         const campos = [];
         const valores = [];
@@ -226,12 +231,12 @@ class OrdenDeVentaRepository {
         
         // Construir y ejecutar la consulta
         const query = `UPDATE ordenes_venta SET ${campos.join(', ')} WHERE id = ?`;
-        await db.query(query, valores);
+        await db.query(query, valores, connection);
     }
     
     // Eliminar los detalles (productos) de una orden
-    async eliminarDetallesOrden(ordenId) {
-        await db.query('DELETE FROM ordenes_venta_detalle WHERE orden_venta_id = ?', [ordenId]);
+    async eliminarDetallesOrden(ordenId, connection) {
+        await db.query('DELETE FROM ordenes_venta_detalle WHERE orden_venta_id = ?', [ordenId], connection);
     }
     
     // Obtener todas las órdenes por estado y con productos en stock

@@ -903,16 +903,33 @@ class PagoRepository {
         }
     }
 
-    /**
-     * Refinanciar un pago existente con cuotas variables
-     * Elimina el pago original y crea nuevos pagos con montos y fechas personalizadas
-     */
-    async refinanciarPagoVariable(pagoId, pagoOriginal, cuotas, username, observacionesGenerales = null) {
-        const connection = await db.pool.getConnection();
-        
-        try {
-            await connection.beginTransaction();
+    async obtenerParaRefinanciacion(pagoId, connection) {
+        if (!connection) throw new Error('La refinanciación requiere una conexión de transacción');
+        const [pagos] = await connection.execute('SELECT * FROM pagos WHERE id = ? FOR UPDATE', [pagoId]);
+        if (!pagos[0]) return null;
 
+        const [referencias] = await connection.execute(
+            `SELECT oc.codigo AS orden_codigo, pr.nombre AS proveedor_nombre
+             FROM pagos p
+             LEFT JOIN ordenes_compra oc ON oc.id = p.orden_compra_id
+             LEFT JOIN proveedores pr ON pr.id = p.proveedor_id
+             WHERE p.id = ?`,
+            [pagoId]
+        );
+        return {
+            ...pagos[0],
+            orden_codigo: referencias[0]?.orden_codigo ?? null,
+            proveedor_nombre: referencias[0]?.proveedor_nombre ?? null
+        };
+    }
+
+    /**
+     * Crear cuotas y eliminar el pago bloqueado usando la transacción del servicio.
+     */
+    async refinanciarPagoVariable(pagoId, pagoOriginal, cuotas, username, observacionesGenerales = null, connection) {
+        if (!connection) throw new Error('La refinanciación requiere una conexión de transacción');
+
+        try {
             // Calcular total refinanciado
             const totalRefinanciado = cuotas.reduce((sum, c) => sum + parseFloat(c.monto), 0);
 
@@ -921,6 +938,13 @@ class PagoRepository {
 
             // Crear las nuevas cuotas con montos y fechas personalizadas
             const cuotasCreadas = [];
+            const columnas = [
+                'orden_compra_id', 'bien_id', 'proveedor_id', 'tipo_pago', 'cantidad_recibida',
+                'precio_unitario', 'monto_pago', 'moneda', 'medio_pago', 'fecha_pago', 'registrado_por', 'observaciones'
+            ];
+            // Las bases que incluyen pagos de servicios agregan esta relación al registro original.
+            const incluyeServicio = Object.hasOwn(pagoOriginal, 'servicio_id');
+            if (incluyeServicio) columnas.push('servicio_id');
 
             for (let i = 0; i < cuotas.length; i++) {
                 const cuota = cuotas[i];
@@ -928,65 +952,66 @@ class PagoRepository {
                 // Combinar observaciones
                 const observacionesCuota = `${observacionesBase} - Cuota ${cuota.numeroCuota || i + 1}/${cuotas.length}${cuota.observacion ? '. ' + cuota.observacion : ''}`;
 
+                const valores = [
+                    pagoOriginal.orden_compra_id,
+                    pagoOriginal.bien_id || null,
+                    pagoOriginal.proveedor_id,
+                    pagoOriginal.tipo_pago,
+                    pagoOriginal.cantidad_recibida || null,
+                    pagoOriginal.precio_unitario || null,
+                    parseFloat(cuota.monto),
+                    pagoOriginal.moneda || 'ARS',
+                    pagoOriginal.medio_pago || null,
+                    cuota.fecha,
+                    username,
+                    observacionesCuota
+                ];
+                if (incluyeServicio) valores.push(pagoOriginal.servicio_id ?? null);
+
                 const [result] = await connection.execute(
-                    `INSERT INTO pagos (
-                        orden_compra_id,
-                        bien_id,
-                        proveedor_id,
-                        tipo_pago,
-                        cantidad_recibida,
-                        precio_unitario,
-                        monto_pago,
-                        moneda,
-                        medio_pago,
-                        fecha_pago,
-                        registrado_por,
-                        observaciones
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        pagoOriginal.orden_compra_id,
-                        pagoOriginal.bien_id || null,
-                        pagoOriginal.proveedor_id,
-                        pagoOriginal.tipo_pago,
-                        pagoOriginal.cantidad_recibida || null,
-                        pagoOriginal.precio_unitario || null,
-                        parseFloat(cuota.monto),
-                        pagoOriginal.moneda || 'ARS',
-                        pagoOriginal.medio_pago || null,
-                        cuota.fecha,
-                        username,
-                        observacionesCuota
-                    ]
+                    `INSERT INTO pagos (${columnas.join(', ')}) VALUES (${columnas.map(() => '?').join(', ')})`,
+                    valores
                 );
 
                 cuotasCreadas.push({
                     id: result.insertId,
                     cuota: cuota.numeroCuota || i + 1,
                     fecha: cuota.fecha,
-                    monto: parseFloat(cuota.monto)
+                    monto: parseFloat(cuota.monto),
+                    orden_compra_id: pagoOriginal.orden_compra_id ?? null,
+                    orden_codigo: pagoOriginal.orden_codigo ?? null,
+                    proveedor_id: pagoOriginal.proveedor_id ?? null,
+                    proveedor_nombre: pagoOriginal.proveedor_nombre ?? null,
+                    servicio_id: pagoOriginal.servicio_id ?? null,
+                    tipo_pago: pagoOriginal.tipo_pago,
+                    fecha_pago: cuota.fecha,
+                    monto_pago: parseFloat(cuota.monto),
+                    moneda: pagoOriginal.moneda || 'ARS',
+                    pagado: false
                 });
             }
 
             // Eliminar el pago original
-            await connection.execute(
-                'DELETE FROM pagos WHERE id = ?',
+            const [eliminacion] = await connection.execute(
+                'DELETE FROM pagos WHERE id = ? AND COALESCE(pagado, FALSE) = FALSE',
                 [pagoId]
             );
-
-            await connection.commit();
+            if (eliminacion.affectedRows !== 1) {
+                throw Object.assign(new Error('El pago cambió durante la refinanciación. Actualice el listado e intente nuevamente.'), {
+                    statusCode: 409
+                });
+            }
 
             return {
                 success: true,
                 cuotasCreadas,
+                pagoOriginal,
                 pagoOriginalEliminado: pagoId,
                 totalRefinanciado
             };
         } catch (error) {
-            await connection.rollback();
             console.error('Error en PagoRepository.refinanciarPagoVariable:', error);
             throw error;
-        } finally {
-            connection.release();
         }
     }
 

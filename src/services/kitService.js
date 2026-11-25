@@ -1,4 +1,6 @@
 const kitRepository = require('../repositories/kitRepository');
+const db = require('../config/db');
+const { stockQuantity } = require('../utils/stockQuantity');
 const bienRepository = require('../repositories/bienRepository');
 const bienService = require('./bienService');
 const categoriaRepository = require('../repositories/categoriaRepository');
@@ -145,9 +147,9 @@ class KitService {
     /**
      * Obtener un kit por ID
      */
-    async obtenerPorId(id) {
+    async obtenerPorId(id, connection) {
         try {
-            const kit = await kitRepository.obtenerPorId(id);
+            const kit = await kitRepository.obtenerPorId(id, connection);
             if (!kit) {
                 throw new Error('Kit no encontrado');
             }
@@ -158,68 +160,40 @@ class KitService {
         }
     }
 
-    /**
-     * Descontar stock de un kit y sus componentes
-     */
-    async descontarStock(id, cantidad) {
-        try {
-            if (cantidad <= 0) {
-                throw new Error('La cantidad debe ser mayor a 0');
-            }
-            
-            // Obtener el kit con sus componentes
-            const kit = await kitRepository.obtenerPorId(id);
-            if (!kit) {
-                throw new Error('Kit no encontrado');
-            }
-            
-            // Descontar stock de cada componente
-            // (No se descuenta del kit principal porque su stock es calculado)
-            for (const componente of kit.componentes) {
-                const cantidadDescontar = componente.cantidad * cantidad;
-                await bienService.descontarStock(componente.bien_componente_id, cantidadDescontar);
-            }
-            
-            return {
-                success: true,
-                message: `Se descontó ${cantidad} unidad(es) del kit y sus componentes`,
-            };
-        } catch (error) {
-            console.error('Error en KitService.descontarStock:', error);
-            throw error;
-        }
+    async descontarStock(id, cantidad, connection) {
+        return this.cambiarStock(id, cantidad, -1, connection);
     }
 
-    /**
-     * Incrementar stock de un kit y sus componentes
-     */
-    async incrementarStock(id, cantidad) {
-        try {
-            if (cantidad <= 0) {
-                throw new Error('La cantidad debe ser mayor a 0');
-            }
-            
-            // Obtener el kit con sus componentes
-            const kit = await kitRepository.obtenerPorId(id);
-            if (!kit) {
-                throw new Error('Kit no encontrado');
-            }
-            
-            // Incrementar stock de cada componente
-            // (No se incrementa el kit principal porque su stock es calculado)
-            for (const componente of kit.componentes) {
-                const cantidadIncrementar = componente.cantidad * cantidad;
-                await bienService.incrementarStock(componente.bien_componente_id, cantidadIncrementar);
-            }
-            
-            return {
-                success: true,
-                message: `Se agregó ${cantidad} unidad(es) al kit y sus componentes`,
-            };
-        } catch (error) {
-            console.error('Error en KitService.incrementarStock:', error);
-            throw error;
+    async incrementarStock(id, cantidad, connection) {
+        return this.cambiarStock(id, cantidad, 1, connection);
+    }
+
+    async cambiarStock(id, cantidad, direccion, connection) {
+        cantidad = stockQuantity(cantidad);
+        if (!connection) {
+            return db.withTransaction(tx => this.cambiarStock(id, cantidad, direccion, tx));
         }
+        const kit = await kitRepository.obtenerPorId(id, connection);
+        if (!kit) throw new Error('Kit no encontrado');
+        if (!kit.componentes.length) throw new Error('El kit no tiene componentes');
+
+        const componentes = [...kit.componentes].sort((a, b) => a.bien_componente_id - b.bien_componente_id);
+        for (const componente of componentes) {
+            const unidades = stockQuantity(componente.cantidad) * cantidad;
+            if (direccion < 0) {
+                await bienService.descontarStock(componente.bien_componente_id, unidades, connection);
+            } else {
+                await bienService.incrementarStock(componente.bien_componente_id, unidades, connection);
+            }
+        }
+        const actualizado = await kitRepository.obtenerPorId(id, connection);
+        return {
+            success: true,
+            message: `Stock del kit actualizado en ${direccion * cantidad} unidad(es)`,
+            stock_anterior: kit.cantidad_stock,
+            stock_nuevo: actualizado.cantidad_stock,
+            item: kit
+        };
     }
 
     /**

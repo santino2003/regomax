@@ -40,7 +40,7 @@ function actualizarFamiliasUI() {
         familiasSeleccionadasArray.forEach(familia => {
             html += `
                 <span class="badge bg-primary me-1 mb-1" style="font-size: 0.9rem;">
-                    ${familia.nombre}
+                    ${escaparHtml(familia.nombre)}
                     <button type="button" class="btn-close btn-close-white btn-sm ms-1" style="font-size: 0.6rem;" onclick="eliminarFamilia(${familia.id})"></button>
                 </span>
             `;
@@ -79,7 +79,7 @@ function agregarProveedorVacio() {
                     <label class="form-label">Proveedor <span class="text-danger">*</span></label>
                     <select class="form-select select2-proveedor" data-proveedor-id="${proveedorCounter}" required>
                         <option value="">Seleccionar proveedor...</option>
-                        ${proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}
+                        ${proveedores.map(p => `<option value="${escaparHtml(p.id)}">${escaparHtml(p.nombre)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -136,13 +136,13 @@ function agregarProveedorConDatos(proveedorId, precio, moneda) {
                     <label class="form-label">Proveedor <span class="text-danger">*</span></label>
                     <select class="form-select select2-proveedor" data-proveedor-id="${proveedorCounter}" required>
                         <option value="">Seleccionar proveedor...</option>
-                        ${proveedores.map(p => `<option value="${p.id}" ${p.id === proveedorId ? 'selected' : ''}>${p.nombre}</option>`).join('')}
+                        ${proveedores.map(p => `<option value="${escaparHtml(p.id)}" ${p.id === proveedorId ? 'selected' : ''}>${escaparHtml(p.nombre)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Precio <span class="text-danger">*</span></label>
                     <input type="number" class="form-control proveedor-precio" data-proveedor-id="${proveedorCounter}" 
-                           step="0.01" min="0" value="${precioValue}" required>
+                           step="0.01" min="0" value="${escaparHtml(precioValue)}" required>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Moneda <span class="text-danger">*</span></label>
@@ -267,8 +267,8 @@ $(document).ready(function() {
     
     function showAlert(message, type) {
         const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
+            <div class="alert alert-${escaparHtml(type)} alert-dismissible fade show" role="alert">
+                ${escaparHtml(message)}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         `;
@@ -354,7 +354,7 @@ $(document).ready(function() {
             const file = files[i];
             const size = (file.size / 1024).toFixed(2);
             const sizeClass = file.size > 10 * 1024 * 1024 ? 'text-danger' : '';
-            html += `<li class="${sizeClass}">${file.name} (${size} KB)</li>`;
+            html += `<li class="${sizeClass}">${escaparHtml(file.name)} (${size} KB)</li>`;
         }
         html += '</ul></div>';
         container.html(html);

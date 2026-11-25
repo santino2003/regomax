@@ -1,19 +1,9 @@
 const mysql = require('mysql2/promise');
+const { withTransaction } = require('../utils/transaction');
+const { createPoolOptions } = require('./dbOptions');
 require('dotenv').config();
 
-// Pool sizing can be overridden via environment variables DB_CONNECTION_LIMIT and DB_QUEUE_LIMIT
-const connectionOptions = {
-  waitForConnections: true,
-  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'), // 10 concurrent connections for production
-  queueLimit: parseInt(process.env.DB_QUEUE_LIMIT || '10'), // cap queue to prevent unbounded memory growth
-  connectTimeout: parseInt(process.env.DB_CONNECT_TIMEOUT || '10000'),
-  acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '10000'),
-  timeout: parseInt(process.env.DB_TIMEOUT || '10000'),
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-  idleTimeout: 15000, // release idle connections faster to free memory
-  maxIdle: 2
-};
+const connectionOptions = createPoolOptions(process.env);
 
 console.log('🔌 Inicializando conexión a base de datos...');
 
@@ -28,7 +18,7 @@ function createPool() {
     return null;
   }
   console.log('🟢 Creando pool MySQL - Límite:', connectionOptions.connectionLimit, 'conexiones');
-  return mysql.createPool(process.env.DATABASE_URL, connectionOptions);
+  return mysql.createPool({ ...connectionOptions });
 }
 
 function getPool() {
@@ -45,20 +35,21 @@ async function verifyConnection(retries = parseInt(process.env.DB_RETRY_ATTEMPTS
     try {
       console.log(`🔄 Intento de conexión ${attempt} de ${retries}...`);
       const connection = await getPool().getConnection();
-      
-      // Obtener detalles de la conexión y configuración
-      const [rows] = await connection.query(`
-        SELECT 
-          DATABASE() as db, 
-          USER() as user, 
-          @@hostname as host,
-          @@max_connections as max_conn,
-          @@version as version
-      `);
-      console.log('🟢 Conexión establecida:', rows[0]);
-      
-      connection.release(); // ⚠️ CRÍTICO: Siempre liberar la conexión
-      return true;
+      try {
+        // Obtener detalles de la conexión y configuración
+        const [rows] = await connection.query(`
+          SELECT
+            DATABASE() as db,
+            USER() as user,
+            @@hostname as host,
+            @@max_connections as max_conn,
+            @@version as version
+        `);
+        console.log('🟢 Conexión establecida:', rows[0]);
+        return true;
+      } finally {
+        connection.release();
+      }
     } catch (err) {
       console.error(`🔴 Error en intento ${attempt}:`, err.code || err.message);
       
@@ -148,7 +139,12 @@ function countPlaceholders(sql) {
   return count;
 }
 
-async function query(text, params) {
+async function query(text, params, connection) {
+  // Transaction queries must stay on their connection and must never be retried on another one.
+  if (connection) {
+    const [rows] = await connection.query(text, params);
+    return rows;
+  }
   try {
     const currentPool = getPool();
     if (!currentPool) {
@@ -236,6 +232,7 @@ verifyConnection();
 
 module.exports = {
   query,
+  withTransaction: work => withTransaction(getPool(), work),
   get pool() {
     return getPool();
   },

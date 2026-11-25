@@ -9,12 +9,12 @@ class PagosService {
         return `${proveedorId || ''}::${medioPago || ''}`;
     }
 
-    async registrarPagoPorRecepcion(ordenId, itemId, cantidadRecibida, username) {
+    async registrarPagoPorRecepcion(ordenId, itemId, cantidadRecibida, username, connection = null) {
         try {
             console.log('💰 [PAGOS] Procesando recepción:', { ordenId, itemId, cantidadRecibida, usuario: username });
 
             // 1. Obtener el item con su proveedor sugerido directamente del repository
-            const itemInfo = await ordenCompraRepository.obtenerProveedorDeItem(ordenId, itemId);
+            const itemInfo = await ordenCompraRepository.obtenerProveedorDeItem(ordenId, itemId, connection);
 
             // Validar que se encontró el item
             if (!itemInfo) {
@@ -46,7 +46,8 @@ class PagosService {
             try {
                 precioInfo = await bienProveedorRepository.obtenerPrecioProveedorBien(
                     itemInfo.bien_id,
-                    itemInfo.proveedor_sugerido_id
+                    itemInfo.proveedor_sugerido_id,
+                    connection
                 );
                 console.log('💱 [PAGOS] Precio proveedor recibido:', {
                     bienId: itemInfo.bien_id,
@@ -55,6 +56,8 @@ class PagosService {
                     moneda: precioInfo && precioInfo.moneda
                 });
             } catch (error) {
+                // Una falla de consulta dentro de la recepción debe revertir la transacción completa.
+                if (connection) throw error;
                 console.warn(`⚠️ [PAGOS] Error al consultar precio:`, error.message);
                 return {
                     success: false,
@@ -102,7 +105,8 @@ class PagosService {
                 registradoPor: username,
                 observaciones: `Pago por recepción de ${cantidadRecibida} unidades de "${itemInfo.bien_nombre}"`,
                 moneda: precioInfo.moneda || 'ARS',
-                medioPago: itemInfo.medio_pago || null
+                medioPago: itemInfo.medio_pago || null,
+                connection
             });
 
             console.log('💾 [PAGOS] Pago registrado con ID:', pagoRegistrado.id);
@@ -1198,106 +1202,54 @@ class PagosService {
      */
     async refinanciarPago(pagoId, cuotas, username, observacionesGenerales = null) {
         try {
-            console.log('🔄 [PAGOS] Iniciando refinanciación:', { 
-                pagoId, 
-                cantidadCuotas: cuotas.length, 
-                usuario: username 
-            });
-
-            // 1. Obtener el pago original
-            const pagoOriginal = await pagoRepository.obtenerPorId(pagoId);
-            
-            if (!pagoOriginal) {
-                console.error('❌ [PAGOS] Pago no encontrado:', pagoId);
-                return {
-                    success: false,
-                    message: 'Pago no encontrado'
-                };
-            }
-
-            // 2. Validar que el pago no esté marcado como pagado
-            if (pagoOriginal.pagado) {
-                console.warn('⚠️ [PAGOS] Intento de refinanciar pago ya pagado:', pagoId);
-                return {
-                    success: false,
-                    message: 'No se puede refinanciar un pago que ya fue marcado como pagado'
-                };
-            }
-
-            // 3. Validar cantidad de cuotas
-            if (!cuotas || cuotas.length < 1 || cuotas.length > 60) {
-                console.error('❌ [PAGOS] Cantidad de cuotas inválida:', cuotas?.length);
-                return {
-                    success: false,
-                    message: 'La cantidad de cuotas debe estar entre 1 y 60'
-                };
-            }
-
-            // 4. Validar cada cuota
-            for (let i = 0; i < cuotas.length; i++) {
-                const cuota = cuotas[i];
-                
-                if (!cuota.fecha) {
-                    console.error('❌ [PAGOS] Cuota sin fecha:', i + 1);
-                    return {
-                        success: false,
-                        message: `La cuota ${i + 1} debe tener una fecha`
-                    };
-                }
-
-                if (!cuota.monto || cuota.monto <= 0) {
-                    console.error('❌ [PAGOS] Cuota con monto inválido:', i + 1);
-                    return {
-                        success: false,
-                        message: `La cuota ${i + 1} debe tener un monto mayor a 0`
-                    };
-                }
-            }
-
-            // 5. Calcular totales
-            const montoOriginal = parseFloat(pagoOriginal.monto_pago);
-            const totalRefinanciado = cuotas.reduce((sum, c) => sum + parseFloat(c.monto), 0);
-            const diferencia = totalRefinanciado - montoOriginal;
-
-            // 6. Validar que el total no sea mayor al monto original
-            if (diferencia > 0.01) {
-                console.warn('⚠️ [PAGOS] Total refinanciado mayor al original:', {
-                    original: montoOriginal,
-                    refinanciado: totalRefinanciado,
-                    diferencia
+            return await db.withTransaction(async connection => {
+                console.log('🔄 [PAGOS] Iniciando refinanciación:', {
+                    pagoId,
+                    cantidadCuotas: Array.isArray(cuotas) ? cuotas.length : 0,
+                    usuario: username
                 });
+
+                // Leer y validar el estado actual después de bloquear el pago.
+                const pagoOriginal = await pagoRepository.obtenerParaRefinanciacion(pagoId, connection);
+                if (!pagoOriginal) {
+                    return { success: false, message: 'Pago no encontrado' };
+                }
+                if (pagoOriginal.pagado) {
+                    return { success: false, message: 'No se puede refinanciar un pago que ya fue marcado como pagado' };
+                }
+                if (!Array.isArray(cuotas) || cuotas.length < 1 || cuotas.length > 60) {
+                    return { success: false, message: 'La cantidad de cuotas debe estar entre 1 y 60' };
+                }
+
+                for (let i = 0; i < cuotas.length; i++) {
+                    const cuota = cuotas[i];
+                    if (!cuota || !cuota.fecha) {
+                        return { success: false, message: `La cuota ${i + 1} debe tener una fecha` };
+                    }
+                    if (!cuota.monto || cuota.monto <= 0) {
+                        return { success: false, message: `La cuota ${i + 1} debe tener un monto mayor a 0` };
+                    }
+                }
+
+                const montoOriginal = parseFloat(pagoOriginal.monto_pago);
+                const totalRefinanciado = cuotas.reduce((sum, c) => sum + parseFloat(c.monto), 0);
+                if (totalRefinanciado - montoOriginal > 0.01) {
+                    return {
+                        success: false,
+                        message: `El total refinanciado ($${totalRefinanciado.toFixed(2)}) no puede ser mayor al monto original ($${montoOriginal.toFixed(2)})`
+                    };
+                }
+
+                const resultado = await pagoRepository.refinanciarPagoVariable(
+                    pagoId, pagoOriginal, cuotas, username, observacionesGenerales, connection
+                );
+
                 return {
-                    success: false,
-                    message: `El total refinanciado ($${totalRefinanciado.toFixed(2)}) no puede ser mayor al monto original ($${montoOriginal.toFixed(2)})`
+                    success: true,
+                    message: `Pago refinanciado exitosamente en ${cuotas.length} cuotas`,
+                    data: resultado
                 };
-            }
-
-            console.log('✓ [PAGOS] Validaciones exitosas:', {
-                montoOriginal: `$${montoOriginal.toFixed(2)}`,
-                totalRefinanciado: `$${totalRefinanciado.toFixed(2)}`,
-                diferencia: `$${diferencia.toFixed(2)}`
             });
-
-            // 7. Realizar la refinanciación en el repositorio (transacción)
-            const resultado = await pagoRepository.refinanciarPagoVariable(
-                pagoId,
-                pagoOriginal,
-                cuotas,
-                username,
-                observacionesGenerales
-            );
-
-            console.log('✅ [PAGOS] Refinanciación completada:', {
-                pagoOriginalEliminado: resultado.pagoOriginalEliminado,
-                cuotasCreadas: resultado.cuotasCreadas.length,
-                totalRefinanciado: `$${resultado.totalRefinanciado.toFixed(2)}`
-            });
-
-            return {
-                success: true,
-                message: `Pago refinanciado exitosamente en ${cuotas.length} cuotas`,
-                data: resultado
-            };
 
         } catch (error) {
             console.error('❌ [PAGOS] Error en refinanciarPago:', error);
