@@ -114,9 +114,9 @@ test('Ingresos: listar utiliza páginas de cincuenta elementos y limita la pági
   const registros = [{ id: 42 }];
   f.movimientos.listar.mock.mockImplementation(async () => registros);
   assert.deepEqual(await f.servicio.listarMovimientos('2'), { movimientos: registros, total: 123, pagina: 2, paginas: 3 });
-  assert.deepEqual(f.movimientos.listar.mock.calls[0].arguments, [50, 50]);
+  assert.deepEqual(f.movimientos.listar.mock.calls[0].arguments, [50, 50, {}]);
   assert.equal((await f.servicio.listarMovimientos(99)).pagina, 3);
-  assert.deepEqual(f.movimientos.listar.mock.calls[1].arguments, [50, 100]);
+  assert.deepEqual(f.movimientos.listar.mock.calls[1].arguments, [50, 100, {}]);
 });
 
 test('Ingresos: listar utiliza la primera página ante valores inválidos', async () => {
@@ -131,7 +131,25 @@ test('Ingresos: un listado vacío mantiene una página válida sin desplazamient
   const f = crearContexto();
   f.movimientos.contar.mock.mockImplementation(async () => 0);
   assert.deepEqual(await f.servicio.listarMovimientos(99), { movimientos: [], total: 0, pagina: 1, paginas: 1 });
-  assert.deepEqual(f.movimientos.listar.mock.calls[0].arguments, [50, 0]);
+  assert.deepEqual(f.movimientos.listar.mock.calls[0].arguments, [50, 0, {}]);
+});
+
+test('Ingresos: la búsqueda filtra tanto el total como la página solicitada', async () => {
+  const f = crearContexto();
+  const filtros = { persona: 'Ana García', motivo: 'Personal', estado: 'pendientes', fecha_desde: '2026-11-01', fecha_hasta: '2026-11-25' };
+  await f.servicio.listarMovimientos(2, { ...filtros, page: '2', empresa: '  ' });
+  assert.deepEqual(f.movimientos.contar.mock.calls[0].arguments, [filtros]);
+  assert.deepEqual(f.movimientos.listar.mock.calls[0].arguments, [50, 50, filtros]);
+});
+
+test('Ingresos: fechas y opciones de filtro inválidas se rechazan antes de consultar', async () => {
+  const f = crearContexto();
+  for (const filtros of [{ fecha_desde: '2026-02-30' }, { fecha_hasta: 'ayer' },
+    { fecha_desde: '2026-11-25', fecha_hasta: '2026-11-01' }, { tipo_movimiento: 'OTRO' },
+    { estado: 'otro' }, { persona: ['Ana'] }]) {
+    await assert.rejects(f.servicio.listarMovimientos(1, filtros), { status: 400 });
+  }
+  assert.equal(f.movimientos.contar.mock.callCount(), 0);
 });
 
 test('Ingresos: registrar normaliza los campos y descarta propiedades ajenas al movimiento', async () => {

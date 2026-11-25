@@ -121,3 +121,27 @@ test('Egresos: el listado vacío y un error de carga no ofrecen acciones sobre i
     assert.match(html, errorListado ? /No se pudo cargar el listado/ : /No hay ingresos ni egresos registrados/);
   }
 });
+
+test('Ingresos y egresos: los filtros conservan la búsqueda en la paginación y escapan los textos', async () => {
+  const html = await renderizarListado([], { filtros: { persona: 'Ana & García', motivo: 'Personal', estado: 'pendientes' } });
+  assert.match(html, /value="Ana &amp; García"/);
+  assert.match(html, /persona=Ana\+%26\+Garc%C3%ADa/);
+  assert.match(html, /estado=pendientes/);
+  assert.match(html, /page=3/);
+});
+
+test('Ingresos y egresos: contar y listar usan los mismos filtros y la fecha hasta incluye todo el día', async () => {
+  const query = mock.fn(async sql => sql.includes('COUNT(*)') ? [{ total: 1 }] : []);
+  const repositorio = loadModule('src/repositories/movimientoIngresoRepository.js', { '../config/db': { query } });
+  const filtros = { persona: 'Ana García', patente: 'AB123', estado: 'pendientes', fecha_hasta: '2026-11-25' };
+  await repositorio.contar(filtros);
+  await repositorio.listar(50, 0, filtros);
+  const [conteo, listado] = query.mock.calls.map(llamada => llamada.arguments);
+  assert.deepEqual(conteo[1], ['%Ana%', '%García%', '%AB123%', '2026-11-25 00:00:00']);
+  assert.deepEqual(listado[1], conteo[1]);
+  for (const [sql] of [conteo, listado]) {
+    assert.match(sql, /movimiento.tipo_movimiento = 'INGRESO' AND egreso.id IS NULL/);
+    assert.match(sql, /fecha_movimiento < DATE_ADD\(\?, INTERVAL 1 DAY\)/);
+  }
+  assert.match(listado[0], /ORDER BY CASE WHEN/);
+});

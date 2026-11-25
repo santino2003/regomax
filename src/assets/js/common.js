@@ -177,6 +177,7 @@ function setupListStateNavigation() {
         { listPath: '/bienes', prefixes: ['/bienes', '/salida', '/config-alertas-stock'] },
         { listPath: '/kits', prefixes: ['/kits'] },
         { listPath: '/ajuste-inventario/historial', prefixes: ['/ajuste-inventario'] },
+        { listPath: '/ingresos/listado', prefixes: ['/ingresos'] },
         { listPath: '/users', prefixes: ['/users'] },
         { listPath: '/historial', prefixes: ['/historial'] },
         { listPath: '/ordenes', prefixes: ['/ordenes'] },

@@ -65,18 +65,21 @@ const ingresoController = {
     },
 
     async listarMovimientos(req, res) {
+        let filtros = {};
         try {
-            const resultado = await ingresoService.listarMovimientos(req.query.page);
+            filtros = ingresoService.normalizarFiltros(req.query);
+            const resultado = await ingresoService.listarMovimientos(req.query.page, filtros);
             res.render('ingresosListado', {
                 title: 'Ingresos y egresos', username: req.user.username, ...resultado,
-                registrado: req.query.registrado === '1', egresoRegistrado: req.query.egreso === '1', errorListado: false
+                registrado: req.query.registrado === '1', egresoRegistrado: req.query.egreso === '1', errorListado: false, filtros
             });
         } catch (error) {
-            console.error('Error al listar ingresos y egresos:', error);
-            res.status(500).render('ingresosListado', {
+            if (!error.status) console.error('Error al listar ingresos y egresos:', error);
+            res.status(error.status || 500).render('ingresosListado', {
                 title: 'Ingresos y egresos', username: req.user.username,
                 movimientos: [], pagina: 1, paginas: 1, total: 0,
-                registrado: false, egresoRegistrado: false, errorListado: true
+                registrado: false, egresoRegistrado: false, errorListado: true, filtros,
+                errorFiltros: error.status ? error.message : null
             });
         }
     },

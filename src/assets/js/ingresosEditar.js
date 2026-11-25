@@ -70,7 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const resultado = await respuesta.json();
             if (!respuesta.ok || !resultado.success) throw new Error(resultado.message || resultado.error || 'No se pudo guardar el ingreso.');
             guardado = true;
-            window.location.href = `/ingresos/${encodeURIComponent(form.dataset.id)}/detalle?page=${encodeURIComponent(form.dataset.page)}`;
+            const destino = new URL(`/ingresos/${encodeURIComponent(form.dataset.id)}/detalle`, window.location.origin);
+            destino.searchParams.set('page', form.dataset.page);
+            if (window.listReturnTo) destino.searchParams.set('returnTo', window.listReturnTo);
+            window.location.href = destino.href;
         } catch (error) {
             const mensaje = document.createElement('div');
             mensaje.className = 'alert alert-danger';

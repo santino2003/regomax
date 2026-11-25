@@ -114,6 +114,15 @@ Para una instalación existente, ejecutar en este orden:
 En una instalación nueva, crear `personas` y `personal` con sus scripts antes de
 `ingresos_egresos_table.sql`, que ya incluye las columnas de personal.
 
+## Buscar ingresos y egresos
+
+El listado permite combinar nombre y apellido, patente, empresa, motivo, tipo de
+movimiento, estado y fechas del movimiento desde/hasta (ambos días incluidos).
+La búsqueda por texto admite términos separados y en cualquier orden. Los filtros
+se aplican al historial completo antes de paginar, y se conservan al navegar por
+las páginas o volver del detalle o la edición. Los ingresos sin egreso vinculado
+mantienen la prioridad. **Limpiar** vuelve al historial completo.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:

@@ -35,13 +35,33 @@ class IngresoService {
         };
     }
 
-    async listarMovimientos(pagina) {
+    normalizarFiltros(entrada = {}) {
+        const filtros = {};
+        for (const [campo, limite] of Object.entries({ persona: 200, patente: 20, empresa: 255, motivo: 100, tipo_movimiento: 7, estado: 20, fecha_desde: 10, fecha_hasta: 10 })) {
+            if (entrada[campo] == null || entrada[campo] === '') continue;
+            if (typeof entrada[campo] !== 'string' || entrada[campo].length > limite || /[\x00-\x1f\x7f]/.test(entrada[campo])) throw this.errorValidacion(`Revise el filtro ${campo}.`);
+            const valor = entrada[campo].trim();
+            if (valor) filtros[campo] = valor;
+        }
+        if (filtros.tipo_movimiento && !['INGRESO', 'EGRESO'].includes(filtros.tipo_movimiento)) throw this.errorValidacion('Seleccione un tipo de movimiento válido.');
+        if (filtros.estado && !['pendientes', 'egresados'].includes(filtros.estado)) throw this.errorValidacion('Seleccione un estado válido.');
+        for (const campo of ['fecha_desde', 'fecha_hasta']) {
+            if (!filtros[campo]) continue;
+            const fecha = new Date(`${filtros[campo]}T12:00:00Z`);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(filtros[campo]) || !Number.isFinite(fecha.getTime()) || fecha.toISOString().slice(0, 10) !== filtros[campo]) throw this.errorValidacion('Ingrese fechas válidas.');
+        }
+        if (filtros.fecha_desde && filtros.fecha_hasta && filtros.fecha_desde > filtros.fecha_hasta) throw this.errorValidacion('La fecha desde no puede ser posterior a la fecha hasta.');
+        return filtros;
+    }
+
+    async listarMovimientos(pagina, entrada = {}) {
+        const filtros = this.normalizarFiltros(entrada);
         const numero = Number(pagina);
         const limite = 50;
-        const total = await movimientoIngresoRepository.contar();
+        const total = await movimientoIngresoRepository.contar(filtros);
         const paginas = Math.max(1, Math.ceil(total / limite));
         pagina = Math.min(Number.isSafeInteger(numero) && numero > 0 ? numero : 1, paginas);
-        const movimientos = await movimientoIngresoRepository.listar(limite, (pagina - 1) * limite);
+        const movimientos = await movimientoIngresoRepository.listar(limite, (pagina - 1) * limite, filtros);
         return { movimientos, total, pagina, paginas };
     }
 
