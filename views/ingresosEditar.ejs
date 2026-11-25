@@ -15,7 +15,7 @@
                 <div class="col-md-6">
                     <label for="motivoEditar" class="form-label">Motivo *</label>
                     <select id="motivoEditar" name="motivo" class="form-select" required>
-                        <% const motivos = ['CNFU/NFU', 'Logística', 'Basura']; if (!motivos.includes(movimiento.motivo)) motivos.push(movimiento.motivo); %>
+                        <% const motivos = ['CNFU/NFU', 'Logística', 'Basura', 'Acero']; if (!motivos.includes(movimiento.motivo)) motivos.push(movimiento.motivo); %>
                         <% motivos.forEach(motivo => { %><option value="<%= motivo %>" <%= movimiento.motivo === motivo ? 'selected' : '' %>><%= motivo %></option><% }); %>
                     </select>
                 </div>
@@ -45,7 +45,7 @@
                 <label for="empresaOrden" class="form-label">Empresa</label><input id="empresaOrden" class="form-control" readonly>
             </fieldset>
             <fieldset id="empresaBasura" class="mb-3">
-                <label for="empresa" class="form-label">Empresa *</label><input id="empresa" name="empresa" class="form-control" maxlength="255" value="<%= movimiento.motivo === 'Basura' ? movimiento.empresa || '' : '' %>" required>
+                <label for="empresa" class="form-label">Empresa *</label><input id="empresa" name="empresa" class="form-control" maxlength="255" value="<%= ['Basura', 'Acero'].includes(movimiento.motivo) ? movimiento.empresa || '' : '' %>" required>
             </fieldset>
             <div class="mb-3">
                 <% if (movimiento.adjuntos.length) { %>
@@ -64,5 +64,5 @@
         </form>
     </div>
 </div>
-<script src="/assets/js/ingresosEditar.js"></script>
+<script src="/assets/js/ingresosEditar.js?v=acero-1"></script>
 <%- include('partials/footer') %>

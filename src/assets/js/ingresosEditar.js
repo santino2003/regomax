@@ -14,9 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('empresaOrden').value = orden.selectedOptions[0]?.dataset.empresa || '';
     }
     function actualizarMotivo() {
-        for (const [id, valor] of [['empresaNFU', 'CNFU/NFU'], ['empresaLogistica', 'Logística'], ['empresaBasura', 'Basura']]) {
+        for (const [id, valores] of [['empresaNFU', ['CNFU/NFU']], ['empresaLogistica', ['Logística']], ['empresaBasura', ['Basura', 'Acero']]]) {
             const campo = document.getElementById(id);
-            campo.disabled = motivo.value !== valor;
+            campo.disabled = !valores.includes(motivo.value);
             campo.classList.toggle('d-none', campo.disabled);
         }
         actualizarEmpresa();

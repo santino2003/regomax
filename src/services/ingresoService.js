@@ -68,7 +68,7 @@ class IngresoService {
     async registrarMovimiento(datos, archivo) {
         const movimiento = this.validarCamposMovimiento(datos);
         if (archivo) movimiento.archivo_jpg = `/uploads/ingresos/${archivo.filename}`;
-        if (movimiento.motivo === 'Basura') {
+        if (['Basura', 'Acero'].includes(movimiento.motivo)) {
             const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
             if (!empresa || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) {
                 throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
@@ -142,7 +142,7 @@ class IngresoService {
                     movimiento.empresa = orden.cliente_final;
                     movimiento.orden_venta_id = orden.id;
                 }
-            } else if (movimiento.motivo === 'Basura') {
+            } else if (['Basura', 'Acero'].includes(movimiento.motivo)) {
                 const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
                 if (!empresa || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
                 movimiento.empresa = empresa;
