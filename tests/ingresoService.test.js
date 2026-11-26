@@ -16,7 +16,8 @@ function crearContexto() {
   const clientes = { obtenerTodos: mock.fn(async () => []), obtenerPorId: mock.fn(async () => ({ id: 2, empresa: 'Empresa de prueba' })) };
   const ordenes = { obtenerParaIngresosLogistica: mock.fn(async () => []),
     obtenerParaIngresoLogistica: mock.fn(async () => ({ id: 5, cliente_final: 'Cliente final', codigo_venta: 'VENTA-5', estado: 'abierta' })) };
-  const empresas = { listar: mock.fn(async () => []), obtener: mock.fn(async () => ({ id: 3, nombre: 'Empresa del padrón', activo: 1 })) };
+  const empresas = { listar: mock.fn(async () => []),
+    obtener: mock.fn(async id => id === 3 ? { id: 3, nombre: 'Empresa del padrón', activo: 1 } : null) };
   return { personas, movimientos, clientes, ordenes, empresas, conexion, db, servicio: cargarServicio('ingresoService', {
     '../repositories/personaRepository': personas, '../repositories/movimientoIngresoRepository': movimientos,
     '../repositories/clienteNFURepository': clientes, '../repositories/ordenDeVentaRepository': ordenes, '../repositories/empresaIngresoRepository': empresas, '../config/db': db
@@ -195,13 +196,14 @@ test('Ingresos: Basura resuelve la empresa del padrón sin consultar clientes NF
 
 test('Ingresos: Basura exige un identificador válido de empresa antes de guardar', async () => {
   const f = crearContexto();
-  for (const empresa of [undefined, null, '', '   ', 123, {}, 'E'.repeat(256), 'Empresa\nNombre']) {
+  for (const empresa of [undefined, null, '', '   ', 0, -1, 1.5, '01', true, [], {}, 'E'.repeat(256), 'Empresa\nNombre', Number.MAX_SAFE_INTEGER + 1]) {
     await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Basura', empresa_ingreso_id: empresa }), { status: 400 });
   }
+  assert.equal(f.empresas.obtener.mock.callCount(), 0);
   assert.equal(f.movimientos.crear.mock.callCount(), 0);
 });
 
-test('Ingresos: Proveedor exige empresa manual y conserva patente, descripción y adjunto', async () => {
+test('Ingresos: Proveedor exige empresa del padrón y conserva patente, descripción y adjunto', async () => {
   const f = crearContexto();
   await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Proveedor' }), { status: 400 });
   const resultado = await f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Proveedor', empresa_ingreso_id: 3, empresa: 'Texto manipulado', descripcion: 'Entrega' }, { filename: 'remito.pdf' });
@@ -218,10 +220,25 @@ test('Ingresos: Visita permite empresa vacía, pero valida una empresa informada
     assert.equal((await f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Visita', empresa_ingreso_id: empresa })).empresa, null);
   }
   assert.equal((await f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Visita', empresa_ingreso_id: 3, empresa: 'Manipulada' })).empresa, 'Empresa del padrón');
-  for (const empresa of [123, {}, 'E'.repeat(256), 'Empresa\nOtra']) {
+  for (const empresa of ['   ', 0, -1, 1.5, '01', true, [], {}, 'E'.repeat(256), 'Empresa\nOtra', Number.MAX_SAFE_INTEGER + 1]) {
     await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Visita', empresa_ingreso_id: empresa }), { status: 400 });
   }
   await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Visita', patente: '' }), { status: 400 });
+  assert.equal(f.empresas.obtener.mock.callCount(), 1);
+  assert.equal(f.movimientos.crear.mock.callCount(), 4);
+});
+
+test('Ingresos: un identificador válido de empresa inexistente se rechaza antes de guardar', async () => {
+  for (const motivo of ['Basura', 'Acero', 'Proveedor', 'Visita']) {
+    for (const empresa_ingreso_id of [123, '123']) {
+      const f = crearContexto();
+      await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo, empresa_ingreso_id }), {
+        status: 400, message: 'La empresa no existe o está dada de baja.'
+      });
+      assert.deepEqual(f.empresas.obtener.mock.calls[0].arguments, [123, f.conexion]);
+      assert.equal(f.movimientos.crear.mock.callCount(), 0);
+    }
+  }
 });
 
 test('Ingresos: editar permite quitar la empresa de una visita y exige empresa al cambiar a proveedor', async () => {
