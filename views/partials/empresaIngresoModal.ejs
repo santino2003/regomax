@@ -1,0 +1,14 @@
+<div class="modal fade" id="modalEmpresaIngreso" tabindex="-1" aria-labelledby="tituloEmpresaIngreso" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog"><div class="modal-content">
+        <form id="formEmpresaIngreso">
+            <div class="modal-header"><h5 id="tituloEmpresaIngreso" class="modal-title">Nueva empresa</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+            <div class="modal-body">
+                <div id="errorEmpresaIngreso" class="alert alert-danger d-none" role="alert"></div>
+                <label for="nombreEmpresaIngreso" class="form-label">Nombre *</label><input id="nombreEmpresaIngreso" name="nombre" class="form-control mb-3" maxlength="255" required>
+                <label for="descripcionEmpresaIngreso" class="form-label">Descripción (opcional)</label><textarea id="descripcionEmpresaIngreso" name="descripcion" class="form-control mb-3" rows="3" maxlength="2000"></textarea>
+                <div id="estadoEmpresaIngreso" class="d-none"><label for="activoEmpresaIngreso" class="form-label">Estado</label><select id="activoEmpresaIngreso" name="activo" class="form-select"><option value="1">Activa</option><option value="0">Baja</option></select></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-save me-1" aria-hidden="true"></i>Guardar empresa</button></div>
+        </form>
+    </div></div>
+</div>

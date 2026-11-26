@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
             campo.classList.toggle('d-none', campo.disabled);
         }
         document.getElementById('empresa').required = motivo.value !== 'Visita';
+        document.getElementById('empresa').disabled = document.getElementById('empresaBasura').disabled;
         document.getElementById('etiquetaEmpresaManual').textContent = motivo.value === 'Visita' ? 'Empresa (opcional)' : 'Empresa *';
         actualizarEmpresa();
     }

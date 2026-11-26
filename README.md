@@ -144,10 +144,29 @@ las columnas en `personal_table.sql` e `ingresos_egresos_table.sql`.
 ## Motivos Proveedor y Visita
 
 Ambos motivos están disponibles al registrar, editar y filtrar ingresos.
-**Proveedor** utiliza empresa manual y patente obligatorias, igual que Basura.
+**Proveedor** utiliza empresa del padrón y patente obligatorias, igual que Basura.
 En **Visita** la empresa es opcional y la patente sigue siendo obligatoria.
 La descripción y el adjunto PDF/JPG son opcionales en ambos casos.
 No requieren cambios adicionales en la base de datos.
+
+## Empresas de ingresos
+
+**Empresas de ingresos** administra las empresas de Basura, Acero, Proveedor y
+Visita, con nombre, descripción opcional, edición y baja/reactivación. Los
+formularios de alta y edición de ingresos usan un desplegable con un botón **+**
+que permite crear y seleccionar una empresa sin salir ni perder los otros datos.
+Visita sigue admitiendo empresa vacía. NFU y Logística conservan sus selectores.
+Los movimientos guardan el nombre de la empresa como estaba al registrarlos.
+
+Para una base existente ejecutar, en orden:
+
+1. `src/scripts/empresas_ingresos_table.sql`.
+2. `src/scripts/ingresos_egresos_empresa_abm.sql` (una sola vez).
+
+El segundo script recupera las empresas cargadas anteriormente en los cuatro
+motivos y vincula sus movimientos. No modifica las empresas de NFU o Logística.
+En bases nuevas, crear `empresas_ingresos` antes de `ingresos_egresos_table.sql`.
+El módulo utiliza el permiso existente `ingresos:create`.
 
 ## Pruebas
 

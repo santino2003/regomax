@@ -4,6 +4,7 @@ const clienteNFURepository = require('../repositories/clienteNFURepository');
 const db = require('../config/db');
 const ordenDeVentaRepository = require('../repositories/ordenDeVentaRepository');
 const personalService = require('./personalService');
+const empresaIngresoRepository = require('../repositories/empresaIngresoRepository');
 
 class IngresoService {
     async obtenerDetalle(id) {
@@ -22,16 +23,18 @@ class IngresoService {
     }
 
     async obtenerDatosNuevoIngreso() {
-        const [clientes, ordenes] = await Promise.allSettled([
-            clienteNFURepository.obtenerTodos(), ordenDeVentaRepository.obtenerParaIngresosLogistica()
+        const [clientes, ordenes, empresas] = await Promise.allSettled([
+            clienteNFURepository.obtenerTodos(), ordenDeVentaRepository.obtenerParaIngresosLogistica(), empresaIngresoRepository.listar(true)
         ]);
         if (clientes.status === 'rejected') console.error('Error al obtener empresas para ingresos:', clientes.reason);
         if (ordenes.status === 'rejected') console.error('Error al obtener órdenes para ingresos:', ordenes.reason);
+        if (empresas.status === 'rejected') console.error('Error al obtener empresas de ingresos:', empresas.reason);
         return {
             clientes: clientes.status === 'fulfilled' ? clientes.value || [] : [],
             errorClientes: clientes.status === 'rejected',
             ordenesVenta: ordenes.status === 'fulfilled' ? ordenes.value || [] : [],
-            errorOrdenes: ordenes.status === 'rejected'
+            errorOrdenes: ordenes.status === 'rejected',
+            empresasIngresos: empresas.status === 'fulfilled' ? empresas.value || [] : [], errorEmpresasIngresos: empresas.status === 'rejected'
         };
     }
 
@@ -92,11 +95,15 @@ class IngresoService {
         return movimiento;
     }
 
-    validarEmpresaManual(valor, obligatoria = true) {
-        if (valor != null && typeof valor !== 'string') throw this.errorValidacion('La empresa debe ser texto.');
-        const empresa = (valor || '').trim();
-        if ((obligatoria && !empresa) || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
-        return empresa || null;
+    async resolverEmpresaIngreso(id, obligatoria, connection, actual) {
+        if (id === 'actual' && actual && ['Basura', 'Acero', 'Proveedor', 'Visita'].includes(actual.motivo) && actual.empresa) {
+            return { empresa: actual.empresa, empresa_ingreso_id: actual.empresa_ingreso_id ?? null };
+        }
+        if ((id === undefined || id === null || id === '') && !obligatoria) return { empresa: null, empresa_ingreso_id: null };
+        if (!['string', 'number'].includes(typeof id) || !/^[1-9]\d*$/.test(String(id)) || !Number.isSafeInteger(Number(id))) throw this.errorValidacion('Seleccione una empresa válida del padrón.');
+        const empresa = await empresaIngresoRepository.obtener(Number(id), connection);
+        if (!empresa || !Number(empresa.activo)) throw this.errorValidacion('La empresa no existe o está dada de baja.');
+        return { empresa: empresa.nombre, empresa_ingreso_id: empresa.id };
     }
 
     async registrarMovimiento(datos, archivo) {
@@ -104,8 +111,10 @@ class IngresoService {
         if (movimiento.motivo === 'Personal') throw this.errorValidacion('Utilice la opción Ingreso de personal.');
         if (archivo) movimiento.archivo_jpg = `/uploads/ingresos/${archivo.filename}`;
         if (['Basura', 'Acero', 'Proveedor', 'Visita'].includes(movimiento.motivo)) {
-            movimiento.empresa = this.validarEmpresaManual(datos.empresa, movimiento.motivo !== 'Visita');
-            return movimientoIngresoRepository.crear(movimiento);
+            return db.withTransaction(async connection => {
+                Object.assign(movimiento, await this.resolverEmpresaIngreso(datos.empresa_ingreso_id, movimiento.motivo !== 'Visita', connection));
+                return movimientoIngresoRepository.crear(movimiento, connection);
+            });
         }
         if (movimiento.motivo === 'Logística') {
             const ordenId = datos.orden_venta_id;
@@ -150,6 +159,7 @@ class IngresoService {
             if (actual.tipo_movimiento !== 'INGRESO') throw this.errorValidacion('Solo se pueden editar ingresos.');
             if ((actual.motivo === 'Personal') !== (movimiento.motivo === 'Personal')) throw this.errorValidacion('Los ingresos de personal deben conservar ese motivo.');
             movimiento.orden_venta_id = null;
+            movimiento.empresa_ingreso_id = null;
             movimiento.archivo_jpg = archivo ? `/uploads/ingresos/${archivo.filename}` : actual.archivo_jpg;
             if (datos.descripcion === undefined && actual.descripcion !== undefined) movimiento.descripcion = actual.descripcion;
             if (movimiento.motivo === 'Personal') {
@@ -178,7 +188,7 @@ class IngresoService {
                     movimiento.orden_venta_id = orden.id;
                 }
             } else if (['Basura', 'Acero', 'Proveedor', 'Visita'].includes(movimiento.motivo)) {
-                movimiento.empresa = this.validarEmpresaManual(datos.empresa, movimiento.motivo !== 'Visita');
+                Object.assign(movimiento, await this.resolverEmpresaIngreso(datos.empresa_ingreso_id, movimiento.motivo !== 'Visita', connection, actual));
             } else if (movimiento.motivo === actual.motivo) {
                 movimiento.empresa = actual.empresa;
                 movimiento.orden_venta_id = actual.orden_venta_id;
@@ -209,7 +219,8 @@ class IngresoService {
                 tipo_movimiento: 'EGRESO', ingreso_id: id, motivo, nombre, apellido, patente, empresa,
                 ...(ingreso.orden_venta_id != null ? { orden_venta_id: ingreso.orden_venta_id } : {}),
                 ...(ingreso.personal_id != null ? { personal_id: ingreso.personal_id, auto: ingreso.auto, cargo: ingreso.cargo, turno: ingreso.turno } : {}),
-                ...(ingreso.descripcion !== undefined ? { descripcion: ingreso.descripcion } : {})
+                ...(ingreso.descripcion !== undefined ? { descripcion: ingreso.descripcion } : {}),
+                ...(ingreso.empresa_ingreso_id != null ? { empresa_ingreso_id: ingreso.empresa_ingreso_id } : {})
             }, connection);
         });
     }

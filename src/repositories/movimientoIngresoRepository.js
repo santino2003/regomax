@@ -64,7 +64,7 @@ class MovimientoIngresoRepository {
 
     async obtenerParaEgreso(id, connection) {
         const rows = await db.query(
-            `SELECT id, tipo_movimiento, motivo, nombre, apellido, patente, empresa, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno, descripcion
+            `SELECT id, tipo_movimiento, motivo, nombre, apellido, patente, empresa, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno, descripcion, empresa_ingreso_id
              FROM ingresos_egresos WHERE id = ? FOR UPDATE`, [id], connection
         );
         return rows[0] || null;
@@ -79,10 +79,10 @@ class MovimientoIngresoRepository {
 
     async crear(movimiento, connection = null) {
         const { tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id, archivo_jpg } = movimiento;
-        const sql = `INSERT INTO ingresos_egresos (tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno, descripcion)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const sql = `INSERT INTO ingresos_egresos (tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno, descripcion, empresa_ingreso_id)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const parametros = [tipo_movimiento, motivo, nombre, apellido, patente, empresa ?? null, ingreso_id ?? null, orden_venta_id ?? null, archivo_jpg ?? null,
-            movimiento.personal_id ?? null, movimiento.auto ?? null, movimiento.cargo ?? null, movimiento.turno ?? null, movimiento.descripcion ?? null];
+            movimiento.personal_id ?? null, movimiento.auto ?? null, movimiento.cargo ?? null, movimiento.turno ?? null, movimiento.descripcion ?? null, movimiento.empresa_ingreso_id ?? null];
         const resultado = await db.query(sql, parametros, connection);
         return { id: resultado.insertId, ...movimiento };
     }
@@ -91,9 +91,9 @@ class MovimientoIngresoRepository {
         const { motivo, nombre, apellido, patente, empresa, orden_venta_id, archivo_jpg } = movimiento;
         await db.query(
             `UPDATE ingresos_egresos SET motivo = ?, nombre = ?, apellido = ?, patente = ?,
-             empresa = ?, orden_venta_id = ?, archivo_jpg = ?, auto = ?, cargo = ?, turno = ?, descripcion = ? WHERE id = ? AND tipo_movimiento = 'INGRESO'`,
+             empresa = ?, orden_venta_id = ?, archivo_jpg = ?, auto = ?, cargo = ?, turno = ?, descripcion = ?, empresa_ingreso_id = ? WHERE id = ? AND tipo_movimiento = 'INGRESO'`,
             [motivo, nombre, apellido, patente || null, empresa, orden_venta_id ?? null, archivo_jpg ?? null,
-                movimiento.auto ?? null, movimiento.cargo ?? null, movimiento.turno ?? null, movimiento.descripcion ?? null, id], connection
+                movimiento.auto ?? null, movimiento.cargo ?? null, movimiento.turno ?? null, movimiento.descripcion ?? null, movimiento.empresa_ingreso_id ?? null, id], connection
         );
     }
 }

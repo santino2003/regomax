@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('etiquetaEmpresaManual').textContent = motivo.value === 'Visita' ? 'Empresa (opcional)' : 'Empresa *';
         camposBasura.classList.toggle('d-none', !esEmpresaManual);
         camposBasura.disabled = !esEmpresaManual;
+        empresaBasura.disabled = !esEmpresaManual;
         if (!esEmpresaManual) empresaBasura.value = '';
         camposLogistica.classList.toggle('d-none', !esLogistica);
         camposLogistica.disabled = !esLogistica;
@@ -133,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         actualizarEmpresaLogistica();
         if (window.jQuery?.fn.select2) window.jQuery(empresa).trigger('change');
         if (window.jQuery?.fn.select2) window.jQuery(ordenVenta).trigger('change');
+        if (window.jQuery?.fn.select2) window.jQuery(empresaBasura).trigger('change');
     }
 
     function actualizarEmpresaLogistica() {
@@ -151,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             motivo: motivo.value,
             cliente_id: empresa.value,
             orden_venta_id: motivo.value === 'Logística' ? ordenVenta.value : undefined,
-            empresa: ['Basura', 'Acero', 'Proveedor', 'Visita'].includes(motivo.value) ? empresaBasura.value.trim() : undefined,
+            empresa_ingreso_id: ['Basura', 'Acero', 'Proveedor', 'Visita'].includes(motivo.value) ? empresaBasura.value : undefined,
             nombre: document.getElementById('personaNombre').textContent,
             apellido: document.getElementById('personaApellido').textContent,
             patente: document.getElementById('patente').value.trim(),
