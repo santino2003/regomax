@@ -75,9 +75,9 @@ test('Egresos: se guarda el vínculo en la transacción y se deja que la base as
     patente: 'AB123CD', empresa: 'Empresa de prueba' };
   assert.deepEqual(await repositorio.crear(egreso, conexion), { id: 42, ...egreso });
   const [sql, parametros, recibida] = query.mock.calls[0].arguments;
-  assert.match(sql, /empresa, ingreso_id, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno\)/);
+  assert.match(sql, /empresa, ingreso_id, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno, descripcion\)/);
   assert.doesNotMatch(sql, /fecha_movimiento/);
-  assert.deepEqual(parametros, ['EGRESO', 'CNFU/NFU', 'Ana', 'García', 'AB123CD', 'Empresa de prueba', 7, null, null, null, null, null, null]);
+  assert.deepEqual(parametros, ['EGRESO', 'CNFU/NFU', 'Ana', 'García', 'AB123CD', 'Empresa de prueba', 7, null, null, null, null, null, null, null]);
   assert.equal(recibida, conexion);
 });
 

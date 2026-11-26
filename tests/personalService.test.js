@@ -25,6 +25,16 @@ test('Personal: el alta no pide DNI y solo exige nombre y apellido', async () =>
   assert.equal(f.repositorio.guardar.mock.callCount(), 1);
 });
 
+test('Personal: la descripción se guarda en el padrón y puede ajustarse para cada ingreso', async () => {
+  const f = contexto();
+  const personal = await f.servicio.guardar({ nombre: 'Ana', apellido: 'García', descripcion: '  Descripción general  ' });
+  assert.equal(personal.descripcion, 'Descripción general');
+  f.persona.descripcion = 'Descripción general';
+  assert.equal((await f.servicio.registrarIngreso(7)).descripcion, 'Descripción general');
+  assert.equal((await f.servicio.registrarIngreso(7, { descripcion: 'Observación del día\nOtra línea' })).descripcion, 'Observación del día\nOtra línea');
+  assert.equal(f.persona.descripcion, 'Descripción general');
+});
+
 test('Personal: registrar ingreso toma la identidad del padrón y conserva los datos opcionales del movimiento', async () => {
   const f = contexto();
   const movimiento = await f.servicio.registrarIngreso('7', { nombre: 'Nombre adulterado', apellido: 'Otro', patente: ' ab123cd ', auto: 'Camioneta', cargo: '', turno: 'Tarde' }, { filename: 'adjunto.pdf' });

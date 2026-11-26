@@ -83,6 +83,12 @@ class IngresoService {
         }
         movimiento.patente = movimiento.patente.toUpperCase();
         movimiento.empresa = null;
+        if (datos.descripcion !== undefined) {
+            if (datos.descripcion !== null && typeof datos.descripcion !== 'string') throw this.errorValidacion('La descripción debe ser texto.');
+            const descripcion = (datos.descripcion || '').trim();
+            if (descripcion.length > 2000 || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(descripcion)) throw this.errorValidacion('La descripción debe tener hasta 2000 caracteres.');
+            movimiento.descripcion = descripcion || null;
+        }
         return movimiento;
     }
 
@@ -142,8 +148,9 @@ class IngresoService {
             if ((actual.motivo === 'Personal') !== (movimiento.motivo === 'Personal')) throw this.errorValidacion('Los ingresos de personal deben conservar ese motivo.');
             movimiento.orden_venta_id = null;
             movimiento.archivo_jpg = archivo ? `/uploads/ingresos/${archivo.filename}` : actual.archivo_jpg;
+            if (datos.descripcion === undefined && actual.descripcion !== undefined) movimiento.descripcion = actual.descripcion;
             if (movimiento.motivo === 'Personal') {
-                Object.assign(movimiento, personalService.validarDatos({ ...datos, nombre: movimiento.nombre, apellido: movimiento.apellido }));
+                Object.assign(movimiento, personalService.validarDatos({ ...datos, nombre: movimiento.nombre, apellido: movimiento.apellido, descripcion: movimiento.descripcion }));
             } else if (movimiento.motivo === 'CNFU/NFU') {
                 if (datos.cliente_id === 'actual' && actual.motivo === 'CNFU/NFU' && actual.empresa) {
                     movimiento.empresa = actual.empresa;
@@ -200,7 +207,8 @@ class IngresoService {
             return movimientoIngresoRepository.crear({
                 tipo_movimiento: 'EGRESO', ingreso_id: id, motivo, nombre, apellido, patente, empresa,
                 ...(ingreso.orden_venta_id != null ? { orden_venta_id: ingreso.orden_venta_id } : {}),
-                ...(ingreso.personal_id != null ? { personal_id: ingreso.personal_id, auto: ingreso.auto, cargo: ingreso.cargo, turno: ingreso.turno } : {})
+                ...(ingreso.personal_id != null ? { personal_id: ingreso.personal_id, auto: ingreso.auto, cargo: ingreso.cargo, turno: ingreso.turno } : {}),
+                ...(ingreso.descripcion !== undefined ? { descripcion: ingreso.descripcion } : {})
             }, connection);
         });
     }

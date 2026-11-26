@@ -14,6 +14,7 @@
         <dt class="col-sm-3">Auto</dt><dd class="col-sm-9"><%= personal.auto || '—' %></dd>
         <dt class="col-sm-3">Cargo</dt><dd class="col-sm-9"><%= personal.cargo || '—' %></dd>
         <dt class="col-sm-3">Turno</dt><dd class="col-sm-9"><%= personal.turno || '—' %></dd>
+        <dt class="col-sm-3">Descripción</dt><dd class="col-sm-9" style="white-space: pre-wrap;"><%= personal.descripcion || '—' %></dd>
         <dt class="col-sm-3">Estado del padrón</dt><dd class="col-sm-9"><span class="badge <%= Number(personal.activo) ? 'bg-success' : 'bg-secondary' %>"><%= Number(personal.activo) ? 'Activo' : 'Baja' %></span></dd>
     </dl>
     <h5>Historial de ingresos y egresos</h5>

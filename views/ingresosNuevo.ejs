@@ -173,6 +173,10 @@
                             <input type="text" class="form-control" id="patente" name="patente" maxlength="20" required placeholder="Ej.: AB123CD o ABC123" autocapitalize="characters" spellcheck="false">
                         </div>
                     </fieldset>
+                    <div class="mt-3">
+                        <label for="descripcion" class="form-label">Descripción (opcional)</label>
+                        <textarea id="descripcion" name="descripcion" class="form-control" rows="3" maxlength="2000" placeholder="Observaciones del ingreso"></textarea>
+                    </div>
                     <div id="zonaArchivoIngreso" class="border border-2 rounded p-3 mt-3">
                         <label for="archivoIngreso" class="form-label fw-semibold"><i class="bi bi-paperclip me-2" aria-hidden="true"></i>Adjuntar PDF o JPG (opcional)</label>
                         <p id="ayudaArchivoIngreso" class="text-muted small mb-2">Arrastre un archivo aquí o selecciónelo. PDF, JPG o JPEG, hasta 10 MB.</p>
@@ -195,6 +199,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="/assets/js/common.js"></script>
-    <script src="/assets/js/ingresosNuevo.js?v=acero-1"></script>
+    <script src="/assets/js/ingresosNuevo.js?v=descripcion-1"></script>
 </body>
 </html>

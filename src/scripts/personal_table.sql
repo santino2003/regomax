@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS personal (
     auto VARCHAR(100) NULL,
     cargo VARCHAR(100) NULL,
     turno VARCHAR(100) NULL,
+    descripcion TEXT NULL,
     activo TINYINT(1) NOT NULL DEFAULT 1,
     fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_personal_nombre (apellido, nombre)

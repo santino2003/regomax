@@ -20,6 +20,12 @@ class PersonalService {
             resultado[campo] = valor || null;
         }
         if (resultado.patente) resultado.patente = resultado.patente.toUpperCase();
+        if (datos.descripcion !== undefined) {
+            if (datos.descripcion !== null && typeof datos.descripcion !== 'string') throw this.error('La descripción debe ser texto.');
+            const descripcion = (datos.descripcion || '').trim();
+            if (descripcion.length > 2000 || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(descripcion)) throw this.error('La descripción debe tener hasta 2000 caracteres.');
+            resultado.descripcion = descripcion || null;
+        }
         return resultado;
     }
 
@@ -45,7 +51,11 @@ class PersonalService {
     async guardar(datos, id) {
         const personal = this.validarDatos(datos);
         personal.activo = datos.activo === false || datos.activo === '0' ? 0 : 1;
-        if (id !== undefined) id = (await this.obtener(id)).id;
+        if (id !== undefined) {
+            const actual = await this.obtener(id);
+            id = actual.id;
+            if (datos.descripcion === undefined && actual.descripcion !== undefined) personal.descripcion = actual.descripcion;
+        }
         return personalRepository.guardar(personal, id);
     }
 
@@ -61,7 +71,7 @@ class PersonalService {
             if (!personal || !Number(personal.activo)) throw this.error('Seleccione personal activo.');
             if (await movimientos.obtenerIngresoPersonalPendiente(id, connection)) throw this.error('Esta persona ya tiene un ingreso sin egreso.', 409);
             const campos = this.validarDatos({ nombre: personal.nombre, apellido: personal.apellido,
-                ...Object.fromEntries(['patente', 'auto', 'cargo', 'turno'].map(campo => [campo, datos[campo] === undefined ? personal[campo] : datos[campo]])) });
+                ...Object.fromEntries(['patente', 'auto', 'cargo', 'turno', 'descripcion'].map(campo => [campo, datos[campo] === undefined ? personal[campo] : datos[campo]])) });
             return movimientos.crear({ tipo_movimiento: 'INGRESO', motivo: 'Personal', personal_id: id,
                 ...campos, empresa: null, ...(archivo ? { archivo_jpg: `/uploads/ingresos/${archivo.filename}` } : {}) }, connection);
         });

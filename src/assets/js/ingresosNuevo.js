@@ -152,7 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
             empresa: ['Basura', 'Acero'].includes(motivo.value) ? empresaBasura.value.trim() : undefined,
             nombre: document.getElementById('personaNombre').textContent,
             apellido: document.getElementById('personaApellido').textContent,
-            patente: document.getElementById('patente').value.trim()
+            patente: document.getElementById('patente').value.trim(),
+            descripcion: document.getElementById('descripcion').value.trim()
         };
         for (const [campo, valor] of Object.entries(campos)) {
             if (valor !== undefined) datos.append(campo, valor);

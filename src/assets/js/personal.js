@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selector = document.getElementById('personal_id');
     function cargarPersonal() {
         const opcion = selector?.selectedOptions[0];
-        for (const campo of ['patente', 'auto', 'cargo', 'turno']) document.getElementById(campo).value = opcion?.dataset[campo] || '';
+        for (const campo of ['patente', 'auto', 'cargo', 'turno', 'descripcion']) document.getElementById(campo).value = opcion?.dataset[campo] || '';
     }
     if (selector) {
         const url = new URL(window.location.href);

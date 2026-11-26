@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS ingresos_egresos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tipo_movimiento ENUM('INGRESO', 'EGRESO') NOT NULL,
     motivo VARCHAR(100) NOT NULL,
+    descripcion TEXT NULL,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     patente VARCHAR(20) NULL,

@@ -20,6 +20,7 @@
                 <dt class="col-sm-4">Movimiento</dt><dd class="col-sm-8"><%= movimiento.tipo_movimiento %></dd>
                 <dt class="col-sm-4">Fecha y hora</dt><dd class="col-sm-8"><%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_movimiento) %></dd>
                 <dt class="col-sm-4">Motivo</dt><dd class="col-sm-8"><%= movimiento.motivo %></dd>
+                <dt class="col-sm-4">Descripción</dt><dd class="col-sm-8" style="white-space: pre-wrap;"><%= movimiento.descripcion || '—' %></dd>
                 <dt class="col-sm-4">Nombre y apellido</dt><dd class="col-sm-8"><%= movimiento.nombre %> <%= movimiento.apellido %></dd>
                 <dt class="col-sm-4">Empresa</dt><dd class="col-sm-8"><%= movimiento.empresa || '—' %></dd>
                 <dt class="col-sm-4">Patente</dt><dd class="col-sm-8"><%= movimiento.patente || '—' %></dd>

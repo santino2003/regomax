@@ -130,6 +130,17 @@ se aplican al historial completo antes de paginar, y se conservan al navegar por
 las páginas o volver del detalle o la edición. Los ingresos sin egreso vinculado
 mantienen la prioridad. **Limpiar** vuelve al historial completo.
 
+## Descripción de ingresos y personal
+
+Todos los motivos de ingreso y el padrón de personal admiten una descripción
+opcional de hasta 2000 caracteres, visible y editable en sus fichas. En el ingreso
+de personal se propone la descripción del padrón y puede ajustarse para ese
+movimiento sin modificar el padrón. El egreso conserva la descripción del ingreso.
+
+Para bases existentes, ejecutar una vez
+`src/scripts/ingresos_personal_descripcion.sql`. Las tablas nuevas ya incluyen
+las columnas en `personal_table.sql` e `ingresos_egresos_table.sql`.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:

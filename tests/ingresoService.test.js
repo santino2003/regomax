@@ -170,6 +170,16 @@ test('Ingresos: registrar rechaza entradas que no sean objetos de datos', async 
   assert.equal(f.movimientos.crear.mock.callCount(), 0);
 });
 
+test('Ingresos: la descripción opcional conserva saltos de línea y valida longitud y tipo', async () => {
+  const f = crearContexto();
+  const resultado = await f.servicio.registrarMovimiento({ ...movimiento, descripcion: '  Primera línea\nSegunda línea  ' });
+  assert.equal(resultado.descripcion, 'Primera línea\nSegunda línea');
+  assert.equal((await f.servicio.registrarMovimiento({ ...movimiento, descripcion: '   ' })).descripcion, null);
+  for (const descripcion of [123, [], {}, 'A'.repeat(2001), 'Texto\x00oculto']) {
+    await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, descripcion }), { status: 400 });
+  }
+});
+
 test('Ingresos: Basura guarda empresa manual y patente sin consultar clientes ni órdenes', async () => {
   const f = crearContexto();
   const resultado = await f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Basura',

@@ -20,7 +20,7 @@
             <input id="filtrarPersonalIngreso" class="form-control mb-2 d-none" aria-label="Buscar personal por nombre, apellido o turno" placeholder="Buscar por nombre, apellido o turno">
             <select id="personal_id" name="personal_id" class="form-select" required aria-describedby="ayudaSeleccionPersonal">
                 <option value="">Seleccionar personal</option>
-                <% personal.forEach(p => { %><option value="<%= p.id %>" data-patente="<%= p.patente || '' %>" data-auto="<%= p.auto || '' %>" data-cargo="<%= p.cargo || '' %>" data-turno="<%= p.turno || '' %>"><%= p.nombre %> <%= p.apellido %><%= p.turno ? ' — ' + p.turno : '' %></option><% }); %>
+                <% personal.forEach(p => { %><option value="<%= p.id %>" data-patente="<%= p.patente || '' %>" data-auto="<%= p.auto || '' %>" data-cargo="<%= p.cargo || '' %>" data-turno="<%= p.turno || '' %>" data-descripcion="<%= p.descripcion || '' %>"><%= p.nombre %> <%= p.apellido %><%= p.turno ? ' — ' + p.turno : '' %></option><% }); %>
             </select>
             <div id="ayudaSeleccionPersonal" class="form-text">Abra el desplegable y escriba nombre, apellido o turno.</div>
         </div>
@@ -37,5 +37,5 @@
     </form>
 </div></div>
 <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script defer src="/assets/js/personal.js?v=busqueda-turno-1"></script>
+<script defer src="/assets/js/personal.js?v=descripcion-1"></script>
 <%- include('partials/footer') %>
