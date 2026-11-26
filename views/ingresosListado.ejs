@@ -23,7 +23,7 @@
                 <div class="col-md-4"><label for="filtro_motivo" class="form-label">Motivo</label>
                     <select id="filtro_motivo" name="motivo" class="form-select">
                         <option value="">Todos</option>
-                        <% const motivosFiltro = ['CNFU/NFU', 'Logística', 'Basura', 'Acero', 'Personal']; if (filtrosActuales.motivo && !motivosFiltro.includes(filtrosActuales.motivo)) motivosFiltro.push(filtrosActuales.motivo); %>
+                        <% const motivosFiltro = ['CNFU/NFU', 'Logística', 'Basura', 'Acero', 'Proveedor', 'Visita', 'Personal']; if (filtrosActuales.motivo && !motivosFiltro.includes(filtrosActuales.motivo)) motivosFiltro.push(filtrosActuales.motivo); %>
                         <% motivosFiltro.forEach(motivo => { %><option value="<%= motivo %>" <%= filtrosActuales.motivo === motivo ? 'selected' : '' %>><%= motivo %></option><% }); %>
                     </select>
                 </div>

@@ -14,11 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('empresaOrden').value = orden.selectedOptions[0]?.dataset.empresa || '';
     }
     function actualizarMotivo() {
-        for (const [id, valores] of [['empresaNFU', ['CNFU/NFU']], ['empresaLogistica', ['Logística']], ['empresaBasura', ['Basura', 'Acero']]]) {
+        for (const [id, valores] of [['empresaNFU', ['CNFU/NFU']], ['empresaLogistica', ['Logística']], ['empresaBasura', ['Basura', 'Acero', 'Proveedor', 'Visita']]]) {
             const campo = document.getElementById(id);
             campo.disabled = !valores.includes(motivo.value);
             campo.classList.toggle('d-none', campo.disabled);
         }
+        document.getElementById('empresa').required = motivo.value !== 'Visita';
+        document.getElementById('etiquetaEmpresaManual').textContent = motivo.value === 'Visita' ? 'Empresa (opcional)' : 'Empresa *';
         actualizarEmpresa();
     }
     motivo.addEventListener('change', actualizarMotivo);

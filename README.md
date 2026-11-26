@@ -141,6 +141,14 @@ Para bases existentes, ejecutar una vez
 `src/scripts/ingresos_personal_descripcion.sql`. Las tablas nuevas ya incluyen
 las columnas en `personal_table.sql` e `ingresos_egresos_table.sql`.
 
+## Motivos Proveedor y Visita
+
+Ambos motivos están disponibles al registrar, editar y filtrar ingresos.
+**Proveedor** utiliza empresa manual y patente obligatorias, igual que Basura.
+En **Visita** la empresa es opcional y la patente sigue siendo obligatoria.
+La descripción y el adjunto PDF/JPG son opcionales en ambos casos.
+No requieren cambios adicionales en la base de datos.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:

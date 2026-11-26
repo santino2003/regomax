@@ -92,7 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function actualizarMotivo() {
         const esNFU = motivo.value === 'CNFU/NFU';
         const esLogistica = motivo.value === 'Logística';
-        const esEmpresaManual = ['Basura', 'Acero'].includes(motivo.value);
+        const esEmpresaManual = ['Basura', 'Acero', 'Proveedor', 'Visita'].includes(motivo.value);
+        empresaBasura.required = motivo.value !== 'Visita';
+        document.getElementById('etiquetaEmpresaManual').textContent = motivo.value === 'Visita' ? 'Empresa (opcional)' : 'Empresa *';
         camposBasura.classList.toggle('d-none', !esEmpresaManual);
         camposBasura.disabled = !esEmpresaManual;
         if (!esEmpresaManual) empresaBasura.value = '';
@@ -149,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
             motivo: motivo.value,
             cliente_id: empresa.value,
             orden_venta_id: motivo.value === 'Logística' ? ordenVenta.value : undefined,
-            empresa: ['Basura', 'Acero'].includes(motivo.value) ? empresaBasura.value.trim() : undefined,
+            empresa: ['Basura', 'Acero', 'Proveedor', 'Visita'].includes(motivo.value) ? empresaBasura.value.trim() : undefined,
             nombre: document.getElementById('personaNombre').textContent,
             apellido: document.getElementById('personaApellido').textContent,
             patente: document.getElementById('patente').value.trim(),

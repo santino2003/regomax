@@ -92,16 +92,19 @@ class IngresoService {
         return movimiento;
     }
 
+    validarEmpresaManual(valor, obligatoria = true) {
+        if (valor != null && typeof valor !== 'string') throw this.errorValidacion('La empresa debe ser texto.');
+        const empresa = (valor || '').trim();
+        if ((obligatoria && !empresa) || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
+        return empresa || null;
+    }
+
     async registrarMovimiento(datos, archivo) {
         const movimiento = this.validarCamposMovimiento(datos);
         if (movimiento.motivo === 'Personal') throw this.errorValidacion('Utilice la opción Ingreso de personal.');
         if (archivo) movimiento.archivo_jpg = `/uploads/ingresos/${archivo.filename}`;
-        if (['Basura', 'Acero'].includes(movimiento.motivo)) {
-            const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
-            if (!empresa || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) {
-                throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
-            }
-            movimiento.empresa = empresa;
+        if (['Basura', 'Acero', 'Proveedor', 'Visita'].includes(movimiento.motivo)) {
+            movimiento.empresa = this.validarEmpresaManual(datos.empresa, movimiento.motivo !== 'Visita');
             return movimientoIngresoRepository.crear(movimiento);
         }
         if (movimiento.motivo === 'Logística') {
@@ -174,10 +177,8 @@ class IngresoService {
                     movimiento.empresa = orden.cliente_final;
                     movimiento.orden_venta_id = orden.id;
                 }
-            } else if (['Basura', 'Acero'].includes(movimiento.motivo)) {
-                const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
-                if (!empresa || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
-                movimiento.empresa = empresa;
+            } else if (['Basura', 'Acero', 'Proveedor', 'Visita'].includes(movimiento.motivo)) {
+                movimiento.empresa = this.validarEmpresaManual(datos.empresa, movimiento.motivo !== 'Visita');
             } else if (movimiento.motivo === actual.motivo) {
                 movimiento.empresa = actual.empresa;
                 movimiento.orden_venta_id = actual.orden_venta_id;

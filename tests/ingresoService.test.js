@@ -22,7 +22,7 @@ function crearContexto() {
   }) };
 }
 
-const movimiento = Object.freeze({ tipo_movimiento: ' ingreso ', motivo: ' Visita ', nombre: ' Ana ', apellido: ' García ', patente: ' ab123cd ' });
+const movimiento = Object.freeze({ tipo_movimiento: ' ingreso ', motivo: ' Otro ', nombre: ' Ana ', apellido: ' García ', patente: ' ab123cd ' });
 const persona = Object.freeze({ dni: ' 12345678 ', nombre: ' Ana ', apellido: ' García ', sexo: ' f ' });
 
 test('Ingresos: editar guarda solo los campos permitidos, conserva el archivo y utiliza una transacción', async () => {
@@ -155,7 +155,7 @@ test('Ingresos: fechas y opciones de filtro inválidas se rechazan antes de cons
 test('Ingresos: registrar normaliza los campos y descarta propiedades ajenas al movimiento', async () => {
   const f = crearContexto();
   const entrada = Object.freeze({ ...movimiento, empresa: 'Empresa enviada sin autorización', id: 900 });
-  const esperado = { tipo_movimiento: 'INGRESO', motivo: 'Visita', nombre: 'Ana', apellido: 'García', patente: 'AB123CD', empresa: null };
+  const esperado = { tipo_movimiento: 'INGRESO', motivo: 'Otro', nombre: 'Ana', apellido: 'García', patente: 'AB123CD', empresa: null };
   assert.deepEqual(await f.servicio.registrarMovimiento(entrada), { id: 42, ...esperado });
   assert.deepEqual(f.movimientos.crear.mock.calls[0].arguments, [esperado]);
   assert.equal(f.clientes.obtenerPorId.mock.callCount(), 0);
@@ -198,6 +198,36 @@ test('Ingresos: Basura exige una empresa de texto válida antes de guardar', asy
     await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Basura', empresa }), { status: 400 });
   }
   assert.equal(f.movimientos.crear.mock.callCount(), 0);
+});
+
+test('Ingresos: Proveedor exige empresa manual y conserva patente, descripción y adjunto', async () => {
+  const f = crearContexto();
+  await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Proveedor' }), { status: 400 });
+  const resultado = await f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Proveedor', empresa: ' Proveedor de prueba ', descripcion: 'Entrega' }, { filename: 'remito.pdf' });
+  assert.equal(resultado.empresa, 'Proveedor de prueba');
+  assert.equal(resultado.patente, 'AB123CD');
+  assert.equal(resultado.descripcion, 'Entrega');
+  assert.equal(resultado.archivo_jpg, '/uploads/ingresos/remito.pdf');
+  assert.equal(f.clientes.obtenerPorId.mock.callCount(), 0);
+});
+
+test('Ingresos: Visita permite empresa vacía, pero valida una empresa informada y exige patente', async () => {
+  const f = crearContexto();
+  for (const empresa of [undefined, null, '', '   ']) {
+    assert.equal((await f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Visita', empresa })).empresa, null);
+  }
+  assert.equal((await f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Visita', empresa: ' Empresa visitante ' })).empresa, 'Empresa visitante');
+  for (const empresa of [123, {}, 'E'.repeat(256), 'Empresa\nOtra']) {
+    await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Visita', empresa }), { status: 400 });
+  }
+  await assert.rejects(f.servicio.registrarMovimiento({ ...movimiento, motivo: 'Visita', patente: '' }), { status: 400 });
+});
+
+test('Ingresos: editar permite quitar la empresa de una visita y exige empresa al cambiar a proveedor', async () => {
+  const f = crearContexto();
+  f.movimientos.obtenerParaEgreso.mock.mockImplementation(async () => ({ id: 7, tipo_movimiento: 'INGRESO', motivo: 'Visita', empresa: 'Anterior' }));
+  assert.equal((await f.servicio.editarIngreso(7, { ...movimiento, motivo: 'Visita', empresa: '' })).empresa, null);
+  await assert.rejects(f.servicio.editarIngreso(7, { ...movimiento, motivo: 'Proveedor', empresa: '' }), { status: 400 });
 });
 
 test('Ingresos: el JPG se vincula desde la subida del servidor y no desde una ruta enviada por el cliente', async () => {
