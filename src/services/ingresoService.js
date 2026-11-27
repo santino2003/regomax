@@ -259,7 +259,13 @@ class IngresoService {
         if (typeof entrada !== 'string' || entrada.length > 1000) {
             throw this.errorValidacion('Ingrese el DNI o escanee el documento.');
         }
-        const campos = entrada.trim().split(/\\*@/).map(valor => valor.trim());
+        const texto = entrada.trim();
+        let campos = texto.split(/\\*@/).map(valor => valor.trim());
+        if (campos.length === 1) {
+            // Algunos lectores envían 2 en lugar de @. No reemplazar los 2 del trámite o del DNI.
+            const escaneo = texto.match(/^(\d+)2([\p{L}\p{M} .’'-]+)2([\p{L}\p{M} .’'-]+)2([MFX])2(\d{7,8})(?:2[A-Z](?:2[^\r\n]*)?)?$/iu);
+            if (escaneo) campos = escaneo.slice(1, 6).map(valor => valor.trim());
+        }
         const escaneado = campos.length > 1;
         if (escaneado && campos.length < 5) {
             throw this.errorValidacion('El escaneo del DNI está incompleto. Vuelva a escanearlo.');
