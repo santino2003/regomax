@@ -10,6 +10,7 @@ function createPoolOptions(env = process.env) {
   const connectionLimit = integer('DB_CONNECTION_LIMIT', 10);
   return {
     uri: env.DATABASE_URL,
+    timezone: '-03:00',
     waitForConnections: true,
     connectionLimit,
     queueLimit: integer('DB_QUEUE_LIMIT', 10, 0),

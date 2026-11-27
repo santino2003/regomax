@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { formatMySQLLocal } = require('../utils/fecha');
 
 class MovimientoIngresoRepository {
     async obtenerIngresoPersonalPendiente(personalId, connection) {
@@ -79,12 +80,15 @@ class MovimientoIngresoRepository {
 
     async crear(movimiento, connection = null) {
         const { tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id, archivo_jpg } = movimiento;
-        const sql = `INSERT INTO ingresos_egresos (tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno, descripcion, empresa_ingreso_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const fechaMovimiento = new Date();
+        fechaMovimiento.setMilliseconds(0);
+        const sql = `INSERT INTO ingresos_egresos (tipo_movimiento, motivo, nombre, apellido, patente, empresa, ingreso_id, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno, descripcion, empresa_ingreso_id, fecha_movimiento)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const parametros = [tipo_movimiento, motivo, nombre, apellido, patente, empresa ?? null, ingreso_id ?? null, orden_venta_id ?? null, archivo_jpg ?? null,
-            movimiento.personal_id ?? null, movimiento.auto ?? null, movimiento.cargo ?? null, movimiento.turno ?? null, movimiento.descripcion ?? null, movimiento.empresa_ingreso_id ?? null];
+            movimiento.personal_id ?? null, movimiento.auto ?? null, movimiento.cargo ?? null, movimiento.turno ?? null, movimiento.descripcion ?? null, movimiento.empresa_ingreso_id ?? null,
+            formatMySQLLocal(fechaMovimiento)];
         const resultado = await db.query(sql, parametros, connection);
-        return { id: resultado.insertId, ...movimiento };
+        return { id: resultado.insertId, ...movimiento, fecha_movimiento: fechaMovimiento };
     }
 
     async actualizar(id, movimiento, connection) {

@@ -67,18 +67,29 @@ test('Egresos: el repositorio bloquea el ingreso y consulta la salida usando la 
   assert.match(query.mock.calls[1].arguments[0], /WHERE ingreso_id = \?/);
 });
 
-test('Egresos: se guarda el vínculo en la transacción y se deja que la base asigne la hora actual', async () => {
+test('Ingresos y egresos: guardan la hora argentina aunque el servidor esté en Estados Unidos', async t => {
+  const zonaOriginal = process.env.TZ;
+  process.env.TZ = 'America/New_York';
+  t.after(() => {
+    if (zonaOriginal === undefined) delete process.env.TZ;
+    else process.env.TZ = zonaOriginal;
+  });
+  const ahora = new Date('2026-11-28T02:30:00Z');
+  t.mock.timers.enable({ apis: ['Date'], now: ahora });
   const conexion = {};
   const query = mock.fn(async () => ({ insertId: 42 }));
   const repositorio = loadModule('src/repositories/movimientoIngresoRepository.js', { '../config/db': { query } });
-  const egreso = { tipo_movimiento: 'EGRESO', ingreso_id: 7, motivo: 'CNFU/NFU', nombre: 'Ana', apellido: 'García',
-    patente: 'AB123CD', empresa: 'Empresa de prueba' };
-  assert.deepEqual(await repositorio.crear(egreso, conexion), { id: 42, ...egreso });
-  const [sql, parametros, recibida] = query.mock.calls[0].arguments;
-  assert.match(sql, /empresa, ingreso_id, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno, descripcion, empresa_ingreso_id\)/);
-  assert.doesNotMatch(sql, /fecha_movimiento/);
-  assert.deepEqual(parametros, ['EGRESO', 'CNFU/NFU', 'Ana', 'García', 'AB123CD', 'Empresa de prueba', 7, null, null, null, null, null, null, null, null]);
-  assert.equal(recibida, conexion);
+  for (const tipo of ['INGRESO', 'EGRESO']) {
+    const movimiento = { tipo_movimiento: tipo, ingreso_id: tipo === 'EGRESO' ? 7 : null, motivo: 'CNFU/NFU',
+      nombre: 'Ana', apellido: 'García', patente: 'AB123CD', empresa: 'Empresa de prueba',
+      fecha_movimiento: '2000-01-01 00:00:00' };
+    assert.deepEqual(await repositorio.crear(movimiento, conexion), { id: 42, ...movimiento, fecha_movimiento: ahora });
+    const [sql, parametros, recibida] = query.mock.calls.at(-1).arguments;
+    assert.match(sql, /empresa_ingreso_id, fecha_movimiento\)/);
+    assert.deepEqual(parametros, [tipo, 'CNFU/NFU', 'Ana', 'García', 'AB123CD', 'Empresa de prueba',
+      movimiento.ingreso_id, null, null, null, null, null, null, null, null, '2026-11-27 23:30:00']);
+    assert.equal(recibida, conexion);
+  }
 });
 
 async function renderizarListado(movimientos, extras = {}) {
