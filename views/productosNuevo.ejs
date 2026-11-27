@@ -142,48 +142,6 @@
                             </div>
                         </div>
                         
-                        <!-- Modal para agregar bien -->
-                        <div class="modal fade" id="modalAgregarBien" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Agregar Bien</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="mb-3">
-                                            <label for="modalBienSelect" class="form-label">Bien *</label>
-                                            <select class="form-select" id="modalBienSelect" required>
-                                                <option value="">-- Seleccione un bien --</option>
-                                                <% if(bienes && bienes.length > 0) { %>
-                                                    <% bienes.forEach(bien => { %>
-                                                        <option value="<%= bien.id %>" 
-                                                                data-nombre="<%= bien.nombre %>"
-                                                                data-stock="<%= bien.cantidad_stock %>"
-                                                                data-unidad="<%= bien.unidad_medida || '' %>">
-                                                            <%= bien.nombre %> (Stock: <%= bien.cantidad_stock %> <%= bien.unidad_medida || '' %>)
-                                                        </option>
-                                                    <% }) %>
-                                                <% } %>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="modalCantidad" class="form-label">Cantidad a Descontar *</label>
-                                            <input type="number" class="form-control" id="modalCantidad" 
-                                                   value="1" min="0.01" step="0.01" required>
-                                            <div class="form-text">Cantidad que se descontará por cada bolsón creado</div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="button" class="btn btn-primary" id="btnGuardarBien">
-                                            <i class="bi bi-check-lg me-1"></i>Agregar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <div class="row mb-3">
                             <div class="col">
                                 <button type="submit" id="submitBtn" class="btn btn-primary">
@@ -195,6 +153,48 @@
                             </div>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar bien -->
+    <div class="modal fade" id="modalAgregarBien" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Bien</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modalBienSelect" class="form-label">Bien *</label>
+                        <select class="form-select" id="modalBienSelect" required>
+                            <option value="">-- Seleccione un bien --</option>
+                            <% if(bienes && bienes.length > 0) { %>
+                                <% bienes.forEach(bien => { %>
+                                    <option value="<%= bien.id %>"
+                                            data-nombre="<%= bien.nombre %>"
+                                            data-stock="<%= bien.cantidad_stock %>"
+                                            data-unidad="<%= bien.unidad_medida || '' %>">
+                                        <%= bien.nombre %> (Stock: <%= bien.cantidad_stock %> <%= bien.unidad_medida || '' %>)
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalCantidad" class="form-label">Cantidad a Descontar *</label>
+                        <input type="number" class="form-control" id="modalCantidad"
+                               value="1" min="0.01" step="0.01" required>
+                        <div class="form-text">Cantidad que se descontará por cada bolsón creado</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarBien">
+                        <i class="bi bi-check-lg me-1"></i>Agregar
+                    </button>
                 </div>
             </div>
         </div>
