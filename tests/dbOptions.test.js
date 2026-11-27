@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { EventEmitter } = require('node:events');
 const { createRequire } = require('node:module');
 const mysql = require('mysql2/promise');
 const { createPoolOptions } = require('../src/config/dbOptions');
@@ -23,6 +24,7 @@ test('El controlador instalado aplica las credenciales de la URL y los límites 
     assert.equal(options.connectionConfig.password, 'p@ss:word');
     assert.equal(options.connectionConfig.port, 3339);
     assert.equal(options.connectionConfig.database, 'regomax');
+    assert.equal(options.connectionConfig.timezone, '-03:00');
   } finally { await pool.end(); }
 });
 
@@ -47,6 +49,8 @@ function isolatedDatabase(pool) {
   const filename = path.resolve(__dirname, '../src/config/db.js');
   const baseRequire = createRequire(filename);
   const calls = [];
+  const events = new EventEmitter();
+  pool.on = events.on.bind(events);
   const dependencies = {
     'mysql2/promise': { createPool(...args) { calls.push(args); return pool; } },
     dotenv: { config() {} }
@@ -58,8 +62,29 @@ function isolatedDatabase(pool) {
     process: { env: { DATABASE_URL: 'mysql://review:fake@127.0.0.1/review', SKIP_DB_CONNECTION_ERROR: '1', DB_RETRY_ATTEMPTS: '1' }, on() {}, exit() { throw new Error('Salida inesperada del proceso'); } },
     console: { log() {}, error() {} }, global: {}, setInterval: () => 1, clearInterval() {}, setTimeout
   }, { filename });
-  return { db: mod.exports, calls };
+  return { db: mod.exports, calls, events };
 }
+
+test('Las conexiones nuevas fijan la sesión de MySQL en horario argentino', () => {
+  const pool = { async getConnection() { return { async query() { return [[{}]]; }, release() {} }; } };
+  const { events } = isolatedDatabase(pool);
+  const consultas = [];
+  events.emit('connection', {
+    query(sql, callback) { consultas.push(sql); callback(null); }
+  });
+  assert.deepEqual(consultas, ["SET SESSION time_zone = '-03:00'"]);
+});
+
+test('Una conexión que no puede configurar la hora argentina se descarta', () => {
+  const pool = { async getConnection() { return { async query() { return [[{}]]; }, release() {} }; } };
+  const { events } = isolatedDatabase(pool);
+  let destruida = false;
+  events.emit('connection', {
+    query(sql, callback) { callback(new Error('No se pudo configurar la sesión')); },
+    destroy() { destruida = true; }
+  });
+  assert.equal(destruida, true);
+});
 
 test('La inicialización de la base pasa un único objeto de opciones y libera las conexiones de verificación', async () => {
   let releases = 0;

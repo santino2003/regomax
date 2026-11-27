@@ -35,9 +35,16 @@ Este ajuste no requiere cambios en la base de datos.
 En **Ingresos → Ingresos y egresos**, cada ingreso sin una salida vinculada tiene
 el botón **Dar egreso**. La confirmación muestra la persona, la patente, la empresa
 y la fecha de entrada. Al confirmar se guarda otro movimiento, de tipo `EGRESO`,
-con la fecha y hora actuales de la base de datos y un vínculo al ingreso original.
+con la fecha y hora actuales de Argentina y un vínculo al ingreso original.
 El ingreso queda en el historial y muestra la hora de salida. Solo se permite un
 egreso vinculado por ingreso, incluso ante solicitudes simultáneas.
+
+La aplicación fija `America/Argentina/Buenos_Aires` y cada conexión de MySQL
+usa `-03:00` tanto para la sesión como para interpretar las fechas. Los ingresos
+y egresos, incluidos los de personal, guardan explícitamente la hora argentina;
+el listado, los detalles y los filtros por día usan la misma zona. El hosting
+puede estar en otra zona horaria. Este ajuste requiere reiniciar la aplicación
+y no necesita ejecutar una migración ni modificar los movimientos históricos.
 
 Para una base existente, ejecutar una vez
 `src/scripts/ingresos_egresos_vincular_egreso.sql` antes de usar la nueva versión.

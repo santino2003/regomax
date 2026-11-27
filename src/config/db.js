@@ -18,7 +18,17 @@ function createPool() {
     return null;
   }
   console.log('🟢 Creando pool MySQL - Límite:', connectionOptions.connectionLimit, 'conexiones');
-  return mysql.createPool({ ...connectionOptions });
+  const nuevoPool = mysql.createPool({ ...connectionOptions });
+  nuevoPool.on('connection', connection => {
+    // Se encola antes de las consultas, también al abrir conexiones tras una reconexión.
+    connection.query("SET SESSION time_zone = '-03:00'", error => {
+      if (error) {
+        console.error('No se pudo configurar la hora argentina en MySQL:', error.message);
+        connection.destroy();
+      }
+    });
+  });
+  return nuevoPool;
 }
 
 function getPool() {

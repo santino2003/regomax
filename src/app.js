@@ -4,11 +4,11 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
+// Usar siempre la zona de Argentina, aunque el hosting defina otra TZ.
+process.env.TZ = 'America/Argentina/Buenos_Aires';
+
 // Configuración de uploads
 const { initializeUploadDirs, UPLOADS_BASE_PATH } = require('./config/uploads');
-
-// Configurar zona horaria para Argentina/Buenos Aires
-process.env.TZ = process.env.TZ || 'America/Argentina/Buenos_Aires';
 
 // Inicializar directorios de uploads
 initializeUploadDirs();
