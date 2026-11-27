@@ -15,12 +15,19 @@
                 <div class="col-md-6">
                     <label for="motivoEditar" class="form-label">Motivo *</label>
                     <select id="motivoEditar" name="motivo" class="form-select" required>
-                        <% const motivos = ['CNFU/NFU', 'Logística', 'Basura']; if (!motivos.includes(movimiento.motivo)) motivos.push(movimiento.motivo); %>
+                        <% const motivos = movimiento.motivo === 'Personal' ? ['Personal'] : ['CNFU/NFU', 'Logística', 'Basura', 'Acero', 'Proveedor', 'Visita']; if (!motivos.includes(movimiento.motivo)) motivos.push(movimiento.motivo); %>
                         <% motivos.forEach(motivo => { %><option value="<%= motivo %>" <%= movimiento.motivo === motivo ? 'selected' : '' %>><%= motivo %></option><% }); %>
                     </select>
                 </div>
-                <div class="col-md-6"><label for="patente" class="form-label">Patente *</label><input id="patente" name="patente" class="form-control" maxlength="20" value="<%= movimiento.patente %>" required></div>
+                <div class="col-md-6"><label for="patente" class="form-label">Patente <%= movimiento.motivo === 'Personal' ? '(opcional)' : '*' %></label><input id="patente" name="patente" class="form-control" maxlength="20" value="<%= movimiento.patente || '' %>" <%= movimiento.motivo !== 'Personal' ? 'required' : '' %>></div>
             </div>
+            <% if (movimiento.motivo === 'Personal') { %>
+                <div class="row g-3 mb-3">
+                    <% for (const [campo, etiqueta] of [['auto', 'Auto'], ['cargo', 'Cargo'], ['turno', 'Turno']]) { %>
+                        <div class="col-md-4"><label for="<%= campo %>" class="form-label"><%= etiqueta %> (opcional)</label><input id="<%= campo %>" name="<%= campo %>" maxlength="100" class="form-control" value="<%= movimiento[campo] || '' %>"></div>
+                    <% } %>
+                </div>
+            <% } %>
             <fieldset id="empresaNFU" class="mb-3">
                 <label for="cliente_id" class="form-label">Empresa *</label>
                 <% if (errorClientes) { %><p class="text-warning">No se pudieron cargar las empresas. Recargue para intentar nuevamente.</p><% } %>
@@ -45,8 +52,12 @@
                 <label for="empresaOrden" class="form-label">Empresa</label><input id="empresaOrden" class="form-control" readonly>
             </fieldset>
             <fieldset id="empresaBasura" class="mb-3">
-                <label for="empresa" class="form-label">Empresa *</label><input id="empresa" name="empresa" class="form-control" maxlength="255" value="<%= movimiento.motivo === 'Basura' ? movimiento.empresa || '' : '' %>" required>
+                <%- include('partials/empresaIngresoSelector', { selectorEmpresaId: 'empresa' }) %>
             </fieldset>
+            <div class="mb-3">
+                <label for="descripcion" class="form-label">Descripción (opcional)</label>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="3" maxlength="2000"><%= movimiento.descripcion || '' %></textarea>
+            </div>
             <div class="mb-3">
                 <% if (movimiento.adjuntos.length) { %>
                     <p><a href="/ingresos/<%= movimiento.id %>/detalle?page=<%= pagina %>" target="_blank" rel="noopener noreferrer">Ver adjunto actual</a>. Se conserva si no elige otro archivo.</p>
@@ -64,5 +75,7 @@
         </form>
     </div>
 </div>
-<script src="/assets/js/ingresosEditar.js"></script>
+<%- include('partials/empresaIngresoModal') %>
+<script src="/assets/js/empresasIngresos.js?v=abm-1"></script>
+<script src="/assets/js/ingresosEditar.js?v=empresa-abm-1"></script>
 <%- include('partials/footer') %>

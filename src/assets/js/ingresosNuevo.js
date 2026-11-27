@@ -92,15 +92,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function actualizarMotivo() {
         const esNFU = motivo.value === 'CNFU/NFU';
         const esLogistica = motivo.value === 'Logística';
-        const esBasura = motivo.value === 'Basura';
-        camposBasura.classList.toggle('d-none', !esBasura);
-        camposBasura.disabled = !esBasura;
-        if (!esBasura) empresaBasura.value = '';
+        const esEmpresaManual = ['Basura', 'Acero', 'Proveedor', 'Visita'].includes(motivo.value);
+        empresaBasura.required = motivo.value !== 'Visita';
+        document.getElementById('etiquetaEmpresaManual').textContent = motivo.value === 'Visita' ? 'Empresa (opcional)' : 'Empresa *';
+        camposBasura.classList.toggle('d-none', !esEmpresaManual);
+        camposBasura.disabled = !esEmpresaManual;
+        empresaBasura.disabled = !esEmpresaManual;
+        if (!esEmpresaManual) empresaBasura.value = '';
         camposLogistica.classList.toggle('d-none', !esLogistica);
         camposLogistica.disabled = !esLogistica;
         ordenVenta.disabled = !esLogistica;
-        camposVehiculo.classList.toggle('d-none', !esNFU && !esLogistica && !esBasura);
-        camposVehiculo.disabled = !esNFU && !esLogistica && !esBasura;
+        camposVehiculo.classList.toggle('d-none', !esNFU && !esLogistica && !esEmpresaManual);
+        camposVehiculo.disabled = !esNFU && !esLogistica && !esEmpresaManual;
         camposNFU.classList.toggle('d-none', !esNFU);
         camposNFU.disabled = !esNFU;
         empresa.disabled = !esNFU;
@@ -121,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('tipo').value = '';
         }
         if (!esLogistica) ordenVenta.value = '';
-        if (!esNFU && !esLogistica && !esBasura) document.getElementById('patente').value = '';
+        if (!esNFU && !esLogistica && !esEmpresaManual) document.getElementById('patente').value = '';
         if (esLogistica && window.jQuery?.fn.select2 && !ordenVenta.classList.contains('select2-hidden-accessible')) {
             window.jQuery(ordenVenta).select2({
                 theme: 'bootstrap-5', width: '100%', placeholder: 'Seleccionar orden de venta',
@@ -131,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         actualizarEmpresaLogistica();
         if (window.jQuery?.fn.select2) window.jQuery(empresa).trigger('change');
         if (window.jQuery?.fn.select2) window.jQuery(ordenVenta).trigger('change');
+        if (window.jQuery?.fn.select2) window.jQuery(empresaBasura).trigger('change');
     }
 
     function actualizarEmpresaLogistica() {
@@ -149,10 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
             motivo: motivo.value,
             cliente_id: empresa.value,
             orden_venta_id: motivo.value === 'Logística' ? ordenVenta.value : undefined,
-            empresa: motivo.value === 'Basura' ? empresaBasura.value.trim() : undefined,
+            empresa_ingreso_id: ['Basura', 'Acero', 'Proveedor', 'Visita'].includes(motivo.value) ? empresaBasura.value : undefined,
             nombre: document.getElementById('personaNombre').textContent,
             apellido: document.getElementById('personaApellido').textContent,
-            patente: document.getElementById('patente').value.trim()
+            patente: document.getElementById('patente').value.trim(),
+            descripcion: document.getElementById('descripcion').value.trim()
         };
         for (const [campo, valor] of Object.entries(campos)) {
             if (valor !== undefined) datos.append(campo, valor);

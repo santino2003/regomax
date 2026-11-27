@@ -1,4 +1,6 @@
 <%- include('partials/header') %>
+<% const filtrosActuales = typeof filtros !== 'undefined' ? filtros : {};
+   const urlPagina = numero => '/ingresos/listado?' + new URLSearchParams({ ...filtrosActuales, page: numero }).toString(); %>
 <div class="container my-4">
     <div class="menu-container p-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
@@ -11,8 +13,33 @@
         <% if (egresoRegistrado) { %>
             <div class="alert alert-success" role="status">Egreso registrado correctamente.</div>
         <% } %>
+        <form action="/ingresos/listado" method="get" class="card card-body mb-4">
+            <div class="row g-3">
+                <% for (const [campo, etiqueta, limite, ayuda] of [['persona', 'Nombre y apellido', 200, 'Ej.: Juan Pérez'], ['patente', 'Patente', 20, 'Ej.: AB123CD'], ['empresa', 'Empresa', 255, 'Nombre de la empresa']]) { %>
+                    <div class="col-md-4"><label for="filtro_<%= campo %>" class="form-label"><%= etiqueta %></label>
+                        <input type="search" class="form-control" id="filtro_<%= campo %>" name="<%= campo %>" maxlength="<%= limite %>" value="<%= filtrosActuales[campo] || '' %>" placeholder="<%= ayuda %>">
+                    </div>
+                <% } %>
+                <div class="col-md-4"><label for="filtro_motivo" class="form-label">Motivo</label>
+                    <select id="filtro_motivo" name="motivo" class="form-select">
+                        <option value="">Todos</option>
+                        <% const motivosFiltro = ['CNFU/NFU', 'Logística', 'Basura', 'Acero', 'Proveedor', 'Visita', 'Personal']; if (filtrosActuales.motivo && !motivosFiltro.includes(filtrosActuales.motivo)) motivosFiltro.push(filtrosActuales.motivo); %>
+                        <% motivosFiltro.forEach(motivo => { %><option value="<%= motivo %>" <%= filtrosActuales.motivo === motivo ? 'selected' : '' %>><%= motivo %></option><% }); %>
+                    </select>
+                </div>
+                <div class="col-md-4"><label for="filtro_tipo" class="form-label">Movimiento</label>
+                    <select id="filtro_tipo" name="tipo_movimiento" class="form-select"><option value="">Todos</option><option value="INGRESO" <%= filtrosActuales.tipo_movimiento === 'INGRESO' ? 'selected' : '' %>>Ingreso</option><option value="EGRESO" <%= filtrosActuales.tipo_movimiento === 'EGRESO' ? 'selected' : '' %>>Egreso</option></select>
+                </div>
+                <div class="col-md-4"><label for="filtro_estado" class="form-label">Estado</label>
+                    <select id="filtro_estado" name="estado" class="form-select"><option value="">Todos</option><option value="pendientes" <%= filtrosActuales.estado === 'pendientes' ? 'selected' : '' %>>Sin egreso</option><option value="egresados" <%= filtrosActuales.estado === 'egresados' ? 'selected' : '' %>>Egresados</option></select>
+                </div>
+                <div class="col-md-4"><label for="filtro_desde" class="form-label">Fecha del movimiento desde</label><input id="filtro_desde" name="fecha_desde" type="date" class="form-control" value="<%= filtrosActuales.fecha_desde || '' %>"></div>
+                <div class="col-md-4"><label for="filtro_hasta" class="form-label">Fecha del movimiento hasta</label><input id="filtro_hasta" name="fecha_hasta" type="date" class="form-control" value="<%= filtrosActuales.fecha_hasta || '' %>"></div>
+                <div class="col-md-4 d-flex align-items-end gap-2"><button type="submit" class="btn btn-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Buscar</button><a href="/ingresos/listado" class="btn btn-outline-secondary">Limpiar</a></div>
+            </div>
+        </form>
         <% if (errorListado) { %>
-            <div class="alert alert-danger" role="alert">No se pudo cargar el listado. <a href="/ingresos/listado">Reintentar</a></div>
+            <div class="alert alert-danger" role="alert"><%= typeof errorFiltros !== 'undefined' && errorFiltros ? errorFiltros : 'No se pudo cargar el listado.' %> <a href="<%= urlPagina(1) %>">Reintentar</a></div>
         <% } else { %>
             <p class="text-muted">Total de movimientos: <%= total %></p>
             <div class="table-responsive">
@@ -24,7 +51,7 @@
                     </tr></thead>
                     <tbody>
                         <% if (!movimientos.length) { %>
-                            <tr><td colspan="9" class="text-center text-muted">No hay ingresos ni egresos registrados.</td></tr>
+                            <tr><td colspan="9" class="text-center text-muted">No hay ingresos ni egresos registrados para esta búsqueda.</td></tr>
                         <% } %>
                         <% movimientos.forEach(movimiento => { %>
                             <tr>
@@ -33,7 +60,7 @@
                                 <td><%= movimiento.tipo_movimiento %></td>
                                 <td><%= movimiento.motivo %></td>
                                 <td><%= movimiento.nombre %> <%= movimiento.apellido %></td>
-                                <td><%= movimiento.patente %></td>
+                                <td><%= movimiento.patente || '—' %></td>
                                 <td><%= movimiento.empresa || '—' %></td>
                                 <td>
                                     <% if (movimiento.tipo_movimiento === 'INGRESO') { %>
@@ -55,7 +82,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-danger" title="Dar egreso" data-dar-egreso
                                             data-ingreso-id="<%= movimiento.id %>"
                                             data-persona="<%= movimiento.nombre %> <%= movimiento.apellido %>"
-                                            data-patente="<%= movimiento.patente %>"
+                                            data-patente="<%= movimiento.patente || '—' %>"
                                             data-empresa="<%= movimiento.empresa || '—' %>"
                                             data-fecha="<%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_movimiento) %>"
                                             aria-label="Dar egreso al ingreso <%= movimiento.id %>">
@@ -77,9 +104,9 @@
             </div>
             <% if (paginas > 1) { %>
                 <nav aria-label="Paginación de movimientos" class="d-flex align-items-center gap-3 my-3">
-                    <% if (pagina > 1) { %><a class="btn btn-outline-primary" href="/ingresos/listado?page=<%= pagina - 1 %>">Anterior</a><% } %>
+                    <% if (pagina > 1) { %><a class="btn btn-outline-primary" href="<%= urlPagina(pagina - 1) %>">Anterior</a><% } %>
                     <span>Página <%= pagina %> de <%= paginas %></span>
-                    <% if (pagina < paginas) { %><a class="btn btn-outline-primary" href="/ingresos/listado?page=<%= pagina + 1 %>">Siguiente</a><% } %>
+                    <% if (pagina < paginas) { %><a class="btn btn-outline-primary" href="<%= urlPagina(pagina + 1) %>">Siguiente</a><% } %>
                 </nav>
             <% } %>
         <% } %>

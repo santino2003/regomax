@@ -3,6 +3,8 @@ const movimientoIngresoRepository = require('../repositories/movimientoIngresoRe
 const clienteNFURepository = require('../repositories/clienteNFURepository');
 const db = require('../config/db');
 const ordenDeVentaRepository = require('../repositories/ordenDeVentaRepository');
+const personalService = require('./personalService');
+const empresaIngresoRepository = require('../repositories/empresaIngresoRepository');
 
 class IngresoService {
     async obtenerDetalle(id) {
@@ -21,26 +23,48 @@ class IngresoService {
     }
 
     async obtenerDatosNuevoIngreso() {
-        const [clientes, ordenes] = await Promise.allSettled([
-            clienteNFURepository.obtenerTodos(), ordenDeVentaRepository.obtenerParaIngresosLogistica()
+        const [clientes, ordenes, empresas] = await Promise.allSettled([
+            clienteNFURepository.obtenerTodos(), ordenDeVentaRepository.obtenerParaIngresosLogistica(), empresaIngresoRepository.listar(true)
         ]);
         if (clientes.status === 'rejected') console.error('Error al obtener empresas para ingresos:', clientes.reason);
         if (ordenes.status === 'rejected') console.error('Error al obtener órdenes para ingresos:', ordenes.reason);
+        if (empresas.status === 'rejected') console.error('Error al obtener empresas de ingresos:', empresas.reason);
         return {
             clientes: clientes.status === 'fulfilled' ? clientes.value || [] : [],
             errorClientes: clientes.status === 'rejected',
             ordenesVenta: ordenes.status === 'fulfilled' ? ordenes.value || [] : [],
-            errorOrdenes: ordenes.status === 'rejected'
+            errorOrdenes: ordenes.status === 'rejected',
+            empresasIngresos: empresas.status === 'fulfilled' ? empresas.value || [] : [], errorEmpresasIngresos: empresas.status === 'rejected'
         };
     }
 
-    async listarMovimientos(pagina) {
+    normalizarFiltros(entrada = {}) {
+        const filtros = {};
+        for (const [campo, limite] of Object.entries({ persona: 200, patente: 20, empresa: 255, motivo: 100, tipo_movimiento: 7, estado: 20, fecha_desde: 10, fecha_hasta: 10 })) {
+            if (entrada[campo] == null || entrada[campo] === '') continue;
+            if (typeof entrada[campo] !== 'string' || entrada[campo].length > limite || /[\x00-\x1f\x7f]/.test(entrada[campo])) throw this.errorValidacion(`Revise el filtro ${campo}.`);
+            const valor = entrada[campo].trim();
+            if (valor) filtros[campo] = valor;
+        }
+        if (filtros.tipo_movimiento && !['INGRESO', 'EGRESO'].includes(filtros.tipo_movimiento)) throw this.errorValidacion('Seleccione un tipo de movimiento válido.');
+        if (filtros.estado && !['pendientes', 'egresados'].includes(filtros.estado)) throw this.errorValidacion('Seleccione un estado válido.');
+        for (const campo of ['fecha_desde', 'fecha_hasta']) {
+            if (!filtros[campo]) continue;
+            const fecha = new Date(`${filtros[campo]}T12:00:00Z`);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(filtros[campo]) || !Number.isFinite(fecha.getTime()) || fecha.toISOString().slice(0, 10) !== filtros[campo]) throw this.errorValidacion('Ingrese fechas válidas.');
+        }
+        if (filtros.fecha_desde && filtros.fecha_hasta && filtros.fecha_desde > filtros.fecha_hasta) throw this.errorValidacion('La fecha desde no puede ser posterior a la fecha hasta.');
+        return filtros;
+    }
+
+    async listarMovimientos(pagina, entrada = {}) {
+        const filtros = this.normalizarFiltros(entrada);
         const numero = Number(pagina);
         const limite = 50;
-        const total = await movimientoIngresoRepository.contar();
+        const total = await movimientoIngresoRepository.contar(filtros);
         const paginas = Math.max(1, Math.ceil(total / limite));
         pagina = Math.min(Number.isSafeInteger(numero) && numero > 0 ? numero : 1, paginas);
-        const movimientos = await movimientoIngresoRepository.listar(limite, (pagina - 1) * limite);
+        const movimientos = await movimientoIngresoRepository.listar(limite, (pagina - 1) * limite, filtros);
         return { movimientos, total, pagina, paginas };
     }
 
@@ -51,7 +75,7 @@ class IngresoService {
         const movimiento = {};
         for (const [campo, limite] of Object.entries({ tipo_movimiento: 7, motivo: 100, nombre: 100, apellido: 100, patente: 20 })) {
             const valor = typeof datos[campo] === 'string' ? datos[campo].trim() : '';
-            if (!valor || valor.length > limite || /[\x00-\x1f\x7f]/.test(valor)) {
+            if ((!valor && !(campo === 'patente' && datos.motivo === 'Personal')) || valor.length > limite || /[\x00-\x1f\x7f]/.test(valor)) {
                 throw this.errorValidacion(`El campo ${campo} es obligatorio y debe tener hasta ${limite} caracteres.`);
             }
             movimiento[campo] = valor;
@@ -62,19 +86,35 @@ class IngresoService {
         }
         movimiento.patente = movimiento.patente.toUpperCase();
         movimiento.empresa = null;
+        if (datos.descripcion !== undefined) {
+            if (datos.descripcion !== null && typeof datos.descripcion !== 'string') throw this.errorValidacion('La descripción debe ser texto.');
+            const descripcion = (datos.descripcion || '').trim();
+            if (descripcion.length > 2000 || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(descripcion)) throw this.errorValidacion('La descripción debe tener hasta 2000 caracteres.');
+            movimiento.descripcion = descripcion || null;
+        }
         return movimiento;
+    }
+
+    async resolverEmpresaIngreso(id, obligatoria, connection, actual) {
+        if (id === 'actual' && actual && ['Basura', 'Acero', 'Proveedor', 'Visita'].includes(actual.motivo) && actual.empresa) {
+            return { empresa: actual.empresa, empresa_ingreso_id: actual.empresa_ingreso_id ?? null };
+        }
+        if ((id === undefined || id === null || id === '') && !obligatoria) return { empresa: null, empresa_ingreso_id: null };
+        if (!['string', 'number'].includes(typeof id) || !/^[1-9]\d*$/.test(String(id)) || !Number.isSafeInteger(Number(id))) throw this.errorValidacion('Seleccione una empresa válida del padrón.');
+        const empresa = await empresaIngresoRepository.obtener(Number(id), connection);
+        if (!empresa || !Number(empresa.activo)) throw this.errorValidacion('La empresa no existe o está dada de baja.');
+        return { empresa: empresa.nombre, empresa_ingreso_id: empresa.id };
     }
 
     async registrarMovimiento(datos, archivo) {
         const movimiento = this.validarCamposMovimiento(datos);
+        if (movimiento.motivo === 'Personal') throw this.errorValidacion('Utilice la opción Ingreso de personal.');
         if (archivo) movimiento.archivo_jpg = `/uploads/ingresos/${archivo.filename}`;
-        if (movimiento.motivo === 'Basura') {
-            const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
-            if (!empresa || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) {
-                throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
-            }
-            movimiento.empresa = empresa;
-            return movimientoIngresoRepository.crear(movimiento);
+        if (['Basura', 'Acero', 'Proveedor', 'Visita'].includes(movimiento.motivo)) {
+            return db.withTransaction(async connection => {
+                Object.assign(movimiento, await this.resolverEmpresaIngreso(datos.empresa_ingreso_id, movimiento.motivo !== 'Visita', connection));
+                return movimientoIngresoRepository.crear(movimiento, connection);
+            });
         }
         if (movimiento.motivo === 'Logística') {
             const ordenId = datos.orden_venta_id;
@@ -117,9 +157,14 @@ class IngresoService {
             const actual = await movimientoIngresoRepository.obtenerParaEgreso(Number(id), connection);
             if (!actual) throw this.errorValidacion('El ingreso no existe.', 404);
             if (actual.tipo_movimiento !== 'INGRESO') throw this.errorValidacion('Solo se pueden editar ingresos.');
+            if ((actual.motivo === 'Personal') !== (movimiento.motivo === 'Personal')) throw this.errorValidacion('Los ingresos de personal deben conservar ese motivo.');
             movimiento.orden_venta_id = null;
+            movimiento.empresa_ingreso_id = null;
             movimiento.archivo_jpg = archivo ? `/uploads/ingresos/${archivo.filename}` : actual.archivo_jpg;
-            if (movimiento.motivo === 'CNFU/NFU') {
+            if (datos.descripcion === undefined && actual.descripcion !== undefined) movimiento.descripcion = actual.descripcion;
+            if (movimiento.motivo === 'Personal') {
+                Object.assign(movimiento, personalService.validarDatos({ ...datos, nombre: movimiento.nombre, apellido: movimiento.apellido, descripcion: movimiento.descripcion }));
+            } else if (movimiento.motivo === 'CNFU/NFU') {
                 if (datos.cliente_id === 'actual' && actual.motivo === 'CNFU/NFU' && actual.empresa) {
                     movimiento.empresa = actual.empresa;
                 } else {
@@ -142,10 +187,8 @@ class IngresoService {
                     movimiento.empresa = orden.cliente_final;
                     movimiento.orden_venta_id = orden.id;
                 }
-            } else if (movimiento.motivo === 'Basura') {
-                const empresa = typeof datos.empresa === 'string' ? datos.empresa.trim() : '';
-                if (!empresa || empresa.length > 255 || /[\x00-\x1f\x7f]/.test(empresa)) throw this.errorValidacion('Ingrese una empresa válida de hasta 255 caracteres.');
-                movimiento.empresa = empresa;
+            } else if (['Basura', 'Acero', 'Proveedor', 'Visita'].includes(movimiento.motivo)) {
+                Object.assign(movimiento, await this.resolverEmpresaIngreso(datos.empresa_ingreso_id, movimiento.motivo !== 'Visita', connection, actual));
             } else if (movimiento.motivo === actual.motivo) {
                 movimiento.empresa = actual.empresa;
                 movimiento.orden_venta_id = actual.orden_venta_id;
@@ -174,7 +217,10 @@ class IngresoService {
             const { motivo, nombre, apellido, patente, empresa } = ingreso;
             return movimientoIngresoRepository.crear({
                 tipo_movimiento: 'EGRESO', ingreso_id: id, motivo, nombre, apellido, patente, empresa,
-                ...(ingreso.orden_venta_id != null ? { orden_venta_id: ingreso.orden_venta_id } : {})
+                ...(ingreso.orden_venta_id != null ? { orden_venta_id: ingreso.orden_venta_id } : {}),
+                ...(ingreso.personal_id != null ? { personal_id: ingreso.personal_id, auto: ingreso.auto, cargo: ingreso.cargo, turno: ingreso.turno } : {}),
+                ...(ingreso.descripcion !== undefined ? { descripcion: ingreso.descripcion } : {}),
+                ...(ingreso.empresa_ingreso_id != null ? { empresa_ingreso_id: ingreso.empresa_ingreso_id } : {})
             }, connection);
         });
     }

@@ -14,11 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('empresaOrden').value = orden.selectedOptions[0]?.dataset.empresa || '';
     }
     function actualizarMotivo() {
-        for (const [id, valor] of [['empresaNFU', 'CNFU/NFU'], ['empresaLogistica', 'Logística'], ['empresaBasura', 'Basura']]) {
+        for (const [id, valores] of [['empresaNFU', ['CNFU/NFU']], ['empresaLogistica', ['Logística']], ['empresaBasura', ['Basura', 'Acero', 'Proveedor', 'Visita']]]) {
             const campo = document.getElementById(id);
-            campo.disabled = motivo.value !== valor;
+            campo.disabled = !valores.includes(motivo.value);
             campo.classList.toggle('d-none', campo.disabled);
         }
+        document.getElementById('empresa').required = motivo.value !== 'Visita';
+        document.getElementById('empresa').disabled = document.getElementById('empresaBasura').disabled;
+        document.getElementById('etiquetaEmpresaManual').textContent = motivo.value === 'Visita' ? 'Empresa (opcional)' : 'Empresa *';
         actualizarEmpresa();
     }
     motivo.addEventListener('change', actualizarMotivo);
@@ -70,7 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const resultado = await respuesta.json();
             if (!respuesta.ok || !resultado.success) throw new Error(resultado.message || resultado.error || 'No se pudo guardar el ingreso.');
             guardado = true;
-            window.location.href = `/ingresos/${encodeURIComponent(form.dataset.id)}/detalle?page=${encodeURIComponent(form.dataset.page)}`;
+            const destino = new URL(`/ingresos/${encodeURIComponent(form.dataset.id)}/detalle`, window.location.origin);
+            destino.searchParams.set('page', form.dataset.page);
+            if (window.listReturnTo) destino.searchParams.set('returnTo', window.listReturnTo);
+            window.location.href = destino.href;
         } catch (error) {
             const mensaje = document.createElement('div');
             mensaje.className = 'alert alert-danger';

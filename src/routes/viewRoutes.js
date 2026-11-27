@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const ingresoController = require('../controllers/ingresoController');
+const personalController = require('../controllers/personalController');
+const empresaIngresoController = require('../controllers/empresaIngresoController');
 const path = require('path');
 const authMiddleware = require('../middleware/auth');
 const noCacheMiddleware = require('../middleware/noCacheMiddleware');
@@ -26,6 +28,18 @@ router.use((req, res, next) => {
     next();
 });
 
+router.get('/ingresos/personal', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ingresos:create')], personalController.ingreso);
+router.get('/empresas-ingresos', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ingresos:create')], empresaIngresoController.listado);
+router.get('/personal', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ingresos:create')], personalController.listado);
+router.get('/personal/nuevo', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ingresos:create')], personalController.formulario);
+router.get('/personal/:id/editar', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ingresos:create')], personalController.formulario);
+router.get('/personal/:id', [authMiddleware.verifyToken, noCacheMiddleware,
+    permissionsMiddleware.hasPermission('ingresos:create')], personalController.detalle);
 router.get('/ingresos', [authMiddleware.verifyToken, noCacheMiddleware,
     permissionsMiddleware.hasPermission('ingresos:create')], ingresoController.vistaNuevoIngreso);
 router.get('/ingresos/listado', [authMiddleware.verifyToken, noCacheMiddleware,

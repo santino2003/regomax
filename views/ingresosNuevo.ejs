@@ -37,6 +37,11 @@
                 <a href="/ingresos/listado" class="btn btn-outline-primary">Ver listado</a>
             </div>
             <div id="alertPlaceholder" role="status" aria-live="polite"></div>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <a href="/ingresos" class="btn btn-primary" aria-current="page"><i class="bi bi-person-vcard me-1" aria-hidden="true"></i>Ingreso con DNI</a>
+                <a href="/ingresos/personal" class="btn btn-outline-primary"><i class="bi bi-people me-1" aria-hidden="true"></i>Ingreso de personal</a>
+                <a href="/personal" class="btn btn-outline-secondary">Administrar personal</a>
+            </div>
 
             <form id="formIdentificar" class="needs-validation" novalidate>
                 <div class="mb-3">
@@ -97,6 +102,9 @@
                             <option value="CNFU/NFU">CNFU/NFU</option>
                             <option value="Logística">Logística</option>
                             <option value="Basura">Basura</option>
+                            <option value="Acero">Acero</option>
+                            <option value="Proveedor">Proveedor</option>
+                            <option value="Visita">Visita</option>
                         </select>
                     </div>
                     <fieldset id="camposNFU" class="d-none" disabled>
@@ -154,10 +162,9 @@
                         </div>
                     </fieldset>
                     <fieldset id="camposBasura" class="d-none" disabled>
-                        <legend class="fs-6">Datos del ingreso de basura</legend>
+                        <legend class="fs-6">Datos de la empresa</legend>
                         <div class="mt-3">
-                            <label for="empresaBasura" class="form-label">Empresa <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="empresaBasura" name="empresa" maxlength="255" required placeholder="Ingrese el nombre de la empresa">
+                            <%- include('partials/empresaIngresoSelector', { selectorEmpresaId: 'empresaBasura' }) %>
                         </div>
                     </fieldset>
                     <fieldset id="camposVehiculo" class="d-none" disabled>
@@ -167,6 +174,10 @@
                             <input type="text" class="form-control" id="patente" name="patente" maxlength="20" required placeholder="Ej.: AB123CD o ABC123" autocapitalize="characters" spellcheck="false">
                         </div>
                     </fieldset>
+                    <div class="mt-3">
+                        <label for="descripcion" class="form-label">Descripción (opcional)</label>
+                        <textarea id="descripcion" name="descripcion" class="form-control" rows="3" maxlength="2000" placeholder="Observaciones del ingreso"></textarea>
+                    </div>
                     <div id="zonaArchivoIngreso" class="border border-2 rounded p-3 mt-3">
                         <label for="archivoIngreso" class="form-label fw-semibold"><i class="bi bi-paperclip me-2" aria-hidden="true"></i>Adjuntar PDF o JPG (opcional)</label>
                         <p id="ayudaArchivoIngreso" class="text-muted small mb-2">Arrastre un archivo aquí o selecciónelo. PDF, JPG o JPEG, hasta 10 MB.</p>
@@ -189,6 +200,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="/assets/js/common.js"></script>
-    <script src="/assets/js/ingresosNuevo.js?v=adjunto-pdf-1"></script>
+    <%- include('partials/empresaIngresoModal') %>
+    <script src="/assets/js/empresasIngresos.js?v=abm-1"></script>
+    <script src="/assets/js/ingresosNuevo.js?v=empresa-abm-1"></script>
 </body>
 </html>

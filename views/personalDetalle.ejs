@@ -1,0 +1,49 @@
+<%- include('partials/header') %>
+<script>document.body.dataset.allowBackNavigation = 'true';</script>
+<div class="container my-4"><div class="menu-container p-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <h4 class="menu-heading mb-0"><i class="bi bi-person-vcard me-2" aria-hidden="true"></i>Ficha de personal</h4>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/personal/<%= personal.id %>/editar" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar personal</a>
+            <a href="/personal" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver a personal</a>
+        </div>
+    </div>
+    <dl class="row mb-4">
+        <dt class="col-sm-3">Nombre y apellido</dt><dd class="col-sm-9"><%= personal.nombre %> <%= personal.apellido %></dd>
+        <dt class="col-sm-3">Patente</dt><dd class="col-sm-9"><%= personal.patente || '—' %></dd>
+        <dt class="col-sm-3">Auto</dt><dd class="col-sm-9"><%= personal.auto || '—' %></dd>
+        <dt class="col-sm-3">Cargo</dt><dd class="col-sm-9"><%= personal.cargo || '—' %></dd>
+        <dt class="col-sm-3">Turno</dt><dd class="col-sm-9"><%= personal.turno || '—' %></dd>
+        <dt class="col-sm-3">Descripción</dt><dd class="col-sm-9" style="white-space: pre-wrap;"><%= personal.descripcion || '—' %></dd>
+        <dt class="col-sm-3">Estado del padrón</dt><dd class="col-sm-9"><span class="badge <%= Number(personal.activo) ? 'bg-success' : 'bg-secondary' %>"><%= Number(personal.activo) ? 'Activo' : 'Baja' %></span></dd>
+    </dl>
+    <h5>Historial de ingresos y egresos</h5>
+    <p class="text-muted">Total de movimientos: <%= total %>. Del más reciente al más antiguo.</p>
+    <div class="table-responsive"><table class="table table-striped align-middle">
+        <thead><tr><th>ID</th><th>Fecha y hora</th><th>Movimiento</th><th>Patente</th><th>Auto</th><th>Cargo</th><th>Turno</th><th>Acciones</th></tr></thead>
+        <tbody>
+            <% if (!movimientos.length) { %><tr><td colspan="8" class="text-center text-muted">Esta persona todavía no tiene ingresos ni egresos registrados.</td></tr><% } %>
+            <% movimientos.forEach(movimiento => { %>
+                <tr>
+                    <td><%= movimiento.id %></td>
+                    <td><%= fechaUtils.formatearFechaHoraLocal(movimiento.fecha_movimiento) %></td>
+                    <td><span class="badge <%= movimiento.tipo_movimiento === 'INGRESO' ? 'bg-primary' : 'bg-secondary' %>"><%= movimiento.tipo_movimiento %></span></td>
+                    <td><%= movimiento.patente || '—' %></td><td><%= movimiento.auto || '—' %></td><td><%= movimiento.cargo || '—' %></td><td><%= movimiento.turno || '—' %></td>
+                    <td>
+                        <a href="/ingresos/<%= movimiento.id %>/detalle?personal_page=<%= pagina %>" class="btn btn-sm btn-outline-primary" title="Ver movimiento" aria-label="Ver movimiento <%= movimiento.id %>"><i class="bi bi-eye" aria-hidden="true"></i></a>
+                        <% if (movimiento.ingreso_id) { %><div class="small text-muted mt-1">Ingreso #<%= movimiento.ingreso_id %></div><% } %>
+                        <% if (movimiento.egreso_id) { %><div class="small text-muted mt-1">Egreso #<%= movimiento.egreso_id %></div><% } %>
+                    </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table></div>
+    <% if (paginas > 1) { %>
+        <nav aria-label="Paginación del historial de personal" class="d-flex align-items-center gap-3 mt-3">
+            <% if (pagina > 1) { %><a href="/personal/<%= personal.id %>?page=<%= pagina - 1 %>" class="btn btn-outline-primary">Anterior</a><% } %>
+            <span>Página <%= pagina %> de <%= paginas %></span>
+            <% if (pagina < paginas) { %><a href="/personal/<%= personal.id %>?page=<%= pagina + 1 %>" class="btn btn-outline-primary">Siguiente</a><% } %>
+        </nav>
+    <% } %>
+</div></div>
+<%- include('partials/footer') %>

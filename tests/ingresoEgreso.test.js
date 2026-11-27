@@ -16,7 +16,8 @@ function crearRutas(registrarEgreso = async id => ({ id: 42, ingreso_id: Number(
   };
   const autenticacion = loadModule('src/middleware/auth.js', { '../utils/hash': { verifyToken: token => cuentas[token] } });
   const rutas = loadModule('src/routes/ingresoRoutes.js', {
-    '../controllers/ingresoController': controlador, '../middleware/auth': autenticacion
+    '../controllers/ingresoController': controlador, '../middleware/auth': autenticacion,
+    '../controllers/personalController': { registrarIngreso(req, res) { res.json({ success: true }); } }
   });
   return { servicio, solicitar: token => dispatch(rutas, {
     method: 'POST', url: '/movimientos/7/egreso', originalUrl: '/api/ingresos/movimientos/7/egreso',
@@ -74,9 +75,9 @@ test('Egresos: se guarda el vínculo en la transacción y se deja que la base as
     patente: 'AB123CD', empresa: 'Empresa de prueba' };
   assert.deepEqual(await repositorio.crear(egreso, conexion), { id: 42, ...egreso });
   const [sql, parametros, recibida] = query.mock.calls[0].arguments;
-  assert.match(sql, /empresa, ingreso_id, orden_venta_id, archivo_jpg\)/);
+  assert.match(sql, /empresa, ingreso_id, orden_venta_id, archivo_jpg, personal_id, auto, cargo, turno, descripcion, empresa_ingreso_id\)/);
   assert.doesNotMatch(sql, /fecha_movimiento/);
-  assert.deepEqual(parametros, ['EGRESO', 'CNFU/NFU', 'Ana', 'García', 'AB123CD', 'Empresa de prueba', 7, null, null]);
+  assert.deepEqual(parametros, ['EGRESO', 'CNFU/NFU', 'Ana', 'García', 'AB123CD', 'Empresa de prueba', 7, null, null, null, null, null, null, null, null]);
   assert.equal(recibida, conexion);
 });
 
@@ -119,4 +120,28 @@ test('Egresos: el listado vacío y un error de carga no ofrecen acciones sobre i
     assert.doesNotMatch(html, /data-dar-egreso/);
     assert.match(html, errorListado ? /No se pudo cargar el listado/ : /No hay ingresos ni egresos registrados/);
   }
+});
+
+test('Ingresos y egresos: los filtros conservan la búsqueda en la paginación y escapan los textos', async () => {
+  const html = await renderizarListado([], { filtros: { persona: 'Ana & García', motivo: 'Personal', estado: 'pendientes' } });
+  assert.match(html, /value="Ana &amp; García"/);
+  assert.match(html, /persona=Ana\+%26\+Garc%C3%ADa/);
+  assert.match(html, /estado=pendientes/);
+  assert.match(html, /page=3/);
+});
+
+test('Ingresos y egresos: contar y listar usan los mismos filtros y la fecha hasta incluye todo el día', async () => {
+  const query = mock.fn(async sql => sql.includes('COUNT(*)') ? [{ total: 1 }] : []);
+  const repositorio = loadModule('src/repositories/movimientoIngresoRepository.js', { '../config/db': { query } });
+  const filtros = { persona: 'Ana García', patente: 'AB123', estado: 'pendientes', fecha_hasta: '2026-11-25' };
+  await repositorio.contar(filtros);
+  await repositorio.listar(50, 0, filtros);
+  const [conteo, listado] = query.mock.calls.map(llamada => llamada.arguments);
+  assert.deepEqual(conteo[1], ['%Ana%', '%García%', '%AB123%', '2026-11-25 00:00:00']);
+  assert.deepEqual(listado[1], conteo[1]);
+  for (const [sql] of [conteo, listado]) {
+    assert.match(sql, /movimiento.tipo_movimiento = 'INGRESO' AND egreso.id IS NULL/);
+    assert.match(sql, /fecha_movimiento < DATE_ADD\(\?, INTERVAL 1 DAY\)/);
+  }
+  assert.match(listado[0], /ORDER BY CASE WHEN/);
 });

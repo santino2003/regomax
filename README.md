@@ -92,6 +92,82 @@ al aplicar o quitar filtros. La casilla del encabezado selecciona la página vis
 El archivo incluye código, nombre, descripción, tipo, categoría, familias, unidad,
 stock, stock crítico, ubicación y almacén. La exportación requiere `bien:view`.
 
+## Personal e ingresos sin DNI
+
+En la pantalla inicial de ingresos, **Ingreso de personal** permite seleccionar
+personal registrado sin pedir DNI. **Administrar personal** ofrece altas, edición,
+baja y reactivación. Nombre y apellido son obligatorios; patente, auto, cargo y turno
+son opcionales. El adjunto PDF/JPG también es opcional.
+
+Los datos del padrón se guardan en `personal`. Cada entrada y salida se incorpora
+a `ingresos_egresos` con el motivo **Personal**, conservando los datos de ese momento.
+Se pueden ajustar patente, auto, cargo y turno para una entrada sin modificar el
+padrón. No se permite otro ingreso de la misma persona hasta registrar su egreso.
+La baja del padrón conserva su historial y permite cerrar las entradas pendientes.
+Las pantallas y API utilizan el permiso existente `ingresos:create`.
+
+El **ojito** en las acciones de Personal abre su ficha con los datos actuales del
+padrón y su historial de ingresos y egresos, ordenado por fecha descendente y
+paginado de a 50 movimientos. Cada fila conserva patente, auto, cargo y turno
+del movimiento, y permite abrir su detalle con adjuntos. El historial se vincula
+por el identificador de personal y permanece disponible después de una baja.
+Desde un movimiento se puede volver a la misma página de la ficha.
+
+Para una instalación existente, ejecutar en este orden:
+
+1. `src/scripts/personal_table.sql`.
+2. `src/scripts/ingresos_egresos_personal.sql` (una sola vez).
+
+En una instalación nueva, crear `personas` y `personal` con sus scripts antes de
+`ingresos_egresos_table.sql`, que ya incluye las columnas de personal.
+
+## Buscar ingresos y egresos
+
+El listado permite combinar nombre y apellido, patente, empresa, motivo, tipo de
+movimiento, estado y fechas del movimiento desde/hasta (ambos días incluidos).
+La búsqueda por texto admite términos separados y en cualquier orden. Los filtros
+se aplican al historial completo antes de paginar, y se conservan al navegar por
+las páginas o volver del detalle o la edición. Los ingresos sin egreso vinculado
+mantienen la prioridad. **Limpiar** vuelve al historial completo.
+
+## Descripción de ingresos y personal
+
+Todos los motivos de ingreso y el padrón de personal admiten una descripción
+opcional de hasta 2000 caracteres, visible y editable en sus fichas. En el ingreso
+de personal se propone la descripción del padrón y puede ajustarse para ese
+movimiento sin modificar el padrón. El egreso conserva la descripción del ingreso.
+
+Para bases existentes, ejecutar una vez
+`src/scripts/ingresos_personal_descripcion.sql`. Las tablas nuevas ya incluyen
+las columnas en `personal_table.sql` e `ingresos_egresos_table.sql`.
+
+## Motivos Proveedor y Visita
+
+Ambos motivos están disponibles al registrar, editar y filtrar ingresos.
+**Proveedor** utiliza empresa del padrón y patente obligatorias, igual que Basura.
+En **Visita** la empresa es opcional y la patente sigue siendo obligatoria.
+La descripción y el adjunto PDF/JPG son opcionales en ambos casos.
+No requieren cambios adicionales en la base de datos.
+
+## Empresas de ingresos
+
+**Empresas de ingresos** administra las empresas de Basura, Acero, Proveedor y
+Visita, con nombre, descripción opcional, edición y baja/reactivación. Los
+formularios de alta y edición de ingresos usan un desplegable con un botón **+**
+que permite crear y seleccionar una empresa sin salir ni perder los otros datos.
+Visita sigue admitiendo empresa vacía. NFU y Logística conservan sus selectores.
+Los movimientos guardan el nombre de la empresa como estaba al registrarlos.
+
+Para una base existente ejecutar, en orden:
+
+1. `src/scripts/empresas_ingresos_table.sql`.
+2. `src/scripts/ingresos_egresos_empresa_abm.sql` (una sola vez).
+
+El segundo script recupera las empresas cargadas anteriormente en los cuatro
+motivos y vincula sus movimientos. No modifica las empresas de NFU o Logística.
+En bases nuevas, crear `empresas_ingresos` antes de `ingresos_egresos_table.sql`.
+El módulo utiliza el permiso existente `ingresos:create`.
+
 ## Pruebas
 
 Las pruebas de los servicios son unitarias y se guardan en un archivo por servicio:
