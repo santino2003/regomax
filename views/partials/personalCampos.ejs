@@ -1,7 +1,16 @@
 <div class="row g-3 mb-3">
     <% for (const [campo, etiqueta, limite] of [['patente', 'Patente', 20], ['auto', 'Auto', 100], ['cargo', 'Cargo', 100], ['turno', 'Turno', 100]]) { %>
         <div class="col-md-6"><label for="<%= campo %>" class="form-label"><%= etiqueta %> (opcional)</label>
+            <% if (campo === 'turno' && typeof turnoDesplegable !== 'undefined' && turnoDesplegable) { %>
+                <select class="form-select" id="turno" name="turno">
+                    <option value="">Seleccionar turno</option>
+                    <% for (const turno of ['TM', 'TT', 'TN']) { %>
+                        <option value="<%= turno %>"><%= turno %></option>
+                    <% } %>
+                </select>
+            <% } else { %>
             <input type="text" class="form-control" id="<%= campo %>" name="<%= campo %>" maxlength="<%= limite %>" value="<%= personal && personal[campo] || '' %>">
+            <% } %>
         </div>
     <% } %>
 </div>
