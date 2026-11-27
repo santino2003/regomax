@@ -487,6 +487,52 @@ test('Ingresos: escanear un DNI nuevo interpreta separadores normales o escapado
   }
 });
 
+test('Ingresos: interpreta el escaneo del lector que envía 2 como separador y & en las fechas', async () => {
+  const f = crearContexto();
+  const entrada = '007219412202GARCIA2ANA2F2223242522B205&04&2003201&07&20242204';
+  const esperado = { dni: '22324252', nombre: 'ANA', apellido: 'GARCIA', sexo: 'F' };
+  assert.deepEqual(await f.servicio.identificar(entrada), { persona: { id: 42, ...esperado }, requiereRegistro: false });
+  assert.deepEqual(f.personas.obtenerPorDni.mock.calls[0].arguments, [esperado.dni]);
+  assert.deepEqual(f.personas.crear.mock.calls[0].arguments, [esperado]);
+});
+
+test('Ingresos: el separador 2 conserva los dígitos del DNI y los nombres compuestos con acentos', async () => {
+  for (const dni of ['1234567', '1232422', '12345678', '22324252', '22222222']) {
+    for (const sexo of ['M', 'F', 'X']) {
+      const f = crearContexto();
+      const entrada = ['00222112222', 'PÉREZ LÓPEZ', 'MARÍA JOSÉ', sexo, dni, 'A', '05/04/2003', '01/07/2024', '204'].join('2');
+      const esperado = { dni, nombre: 'MARÍA JOSÉ', apellido: 'PÉREZ LÓPEZ', sexo };
+      await f.servicio.identificar(entrada);
+      assert.deepEqual(f.personas.crear.mock.calls[0].arguments, [esperado]);
+    }
+  }
+});
+
+test('Ingresos: el escaneo con separador 2 recupera la persona existente sin modificarla', async () => {
+  const f = crearContexto();
+  const existente = Object.freeze({ id: 42, dni: '22324252', nombre: 'Nombre registrado' });
+  f.personas.obtenerPorDni.mock.mockImplementation(async () => existente);
+  const entrada = '007219412202GARCIA2ANA2F2223242522B205&04&2003201&07&20242204';
+  assert.deepEqual(await f.servicio.identificar(entrada), { persona: existente, requiereRegistro: false });
+  assert.deepEqual(f.personas.obtenerPorDni.mock.calls[0].arguments, [existente.dni]);
+  assert.equal(f.personas.crear.mock.callCount(), 0);
+});
+
+test('Ingresos: rechaza escaneos con separador 2 incompletos o con un DNI de longitud incorrecta', async () => {
+  const f = crearContexto();
+  for (const entrada of [
+    '007219412202GARCIA2ANA',
+    '0072194122022ANA2F2223242522B',
+    '007219412202GARCIA22F2223242522B',
+    '007219412202GARCIA2ANA2O2223242522B',
+    ...['123456', '123456782', '00000001'].map(dni => ['00721941220', 'GARCIA', 'ANA', 'F', dni, 'B'].join('2'))
+  ]) {
+    await assert.rejects(f.servicio.identificar(entrada), { status: 400 });
+  }
+  assert.equal(f.personas.obtenerPorDni.mock.callCount(), 0);
+  assert.equal(f.personas.crear.mock.callCount(), 0);
+});
+
 test('Ingresos: escanear un DNI existente conserva sus datos sin sobrescribirlos', async () => {
   const f = crearContexto();
   const existente = Object.freeze({ id: 42, dni: '12345678', nombre: 'Nombre registrado' });

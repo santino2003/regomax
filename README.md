@@ -22,6 +22,14 @@ Agregar opcion de eliminar bolson
 
 FIltros: Desde Hasta, tipo, y CNFU/NFU
 
+## Escaneo de DNI en ingresos
+
+El ingreso con DNI admite el número manual y los escaneos con separador `@`
+o `\@`. También reconoce lectores que envían `2` como separador y `&` en las
+fechas, conservando los dígitos `2` del trámite y del DNI. Si la persona ya
+está registrada, se recuperan sus datos sin sobrescribirlos.
+Este ajuste no requiere cambios en la base de datos.
+
 ## Dar egreso a una persona o vehículo
 
 En **Ingresos → Ingresos y egresos**, cada ingreso sin una salida vinculada tiene
